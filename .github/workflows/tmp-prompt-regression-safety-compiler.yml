@@ -4,19 +4,31 @@ on:
   pull_request:
     paths:
       - .github/workflows/tmp-prompt-regression-safety-compiler.yml
+      - harness/contracts/prompt-regression-safety.v1.json
+      - harness/evals/prompt-regression/defect-families.v1.json
+      - scripts/validate_prompt_regression_safety.py
+      - tests/test_prompt_regression_safety_prompt.py
   workflow_dispatch:
 
 permissions:
   contents: write
 
+concurrency:
+  group: prompt-regression-safety-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+env:
+  TARGET_BRANCH: ${{ github.event.pull_request.head.ref || github.ref_name }}
+  CANDIDATE_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+
 jobs:
   compile-regression-safety:
-    if: ${{ github.event_name == 'workflow_dispatch' || (github.event.pull_request.head.repo.full_name == github.repository && github.event.pull_request.head.ref == 'feat/prompt-regression-safety-loop-20260917') }}
+    if: ${{ github.event_name == 'workflow_dispatch' || github.event.pull_request.head.repo.full_name == github.repository }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
         with:
-          ref: feat/prompt-regression-safety-loop-20260917
+          ref: ${{ env.CANDIDATE_SHA }}
           fetch-depth: 0
       - uses: actions/setup-python@v5
         with:
@@ -36,7 +48,7 @@ jobs:
           policy = json.loads(policy_path.read_text(encoding='utf-8'))
           marker = 'REGRESSION SAFETY / RECURRING DEFECT CONTRACT'
           appendix = '''REGRESSION SAFETY / RECURRING DEFECT CONTRACT
-          - Treat validator, local-gate, hosted-CI, review, runtime, operator-feedback, retrospective, and commit-history failures as defect incidents rather than disposable cleanup. Repair the immediate instance, then classify its defect family.
+          - Treat validator, local required-check, hosted-CI, review, runtime, operator-feedback, retrospective, and commit-history failures as defect incidents rather than disposable cleanup. Repair the immediate instance, then classify its defect family.
           - When the same defect family has two or more independently evidenced occurrences, treat recurrence as a system defect. Repeating the local cleanup or editing one prompt is not completion when a shared owner exists.
           - Find and strengthen the smallest canonical prevention owner: shared policy, generator, validator, hook, required-check profile, schema, or test floor. P13 owns recurring-process hardening; P94 owns regression design/live behavior preservation; P100 may contribute transcript judgment incidents; P79 remains the Prompt Kit identity gate.
           - Every systemic repair requires a reproducing negative fixture or mutation case plus a positive control, and the focused semantic regression must be registered in the deterministic floor when repository convention applies.
@@ -62,34 +74,33 @@ jobs:
               floor_text = floor_text.replace(anchor, anchor + f'    "{test_path}",\n', 1)
               floor_path.write_text(floor_text, encoding='utf-8')
 
-          validator_path = root / 'scripts/validate_prompt_regression_safety.py'
-          validator_text = validator_path.read_text(encoding='utf-8')
-          broken = '"matrix_is_exhaustive": false if False else False,'
-          fixed = '"matrix_is_exhaustive": False,'
-          if broken in validator_text:
-              validator_path.write_text(validator_text.replace(broken, fixed, 1), encoding='utf-8')
-          elif fixed not in validator_text:
-              raise SystemExit('validator matrix boolean line is neither known pre-fix nor fixed form')
-
           retro_path = root / 'docs/PROMPT_RETROSPECTIVE_EVALUATION.md'
           retro = retro_path.read_text(encoding='utf-8').rstrip()
           heading = '## Regression safety is a separate layer'
           if heading not in retro:
               retro += '''\n\n## Regression safety is a separate layer
 
-          The retrospective matrix evaluates prompt uses; it is not the complete defect detector. Repeated failures discovered by local validators, required checks, hosted CI, review, runtime observation, operator feedback, or commit history belong to the separate regression-safety loop in `docs/PROMPT_REGRESSION_SAFETY.md` and `harness/contracts/prompt-regression-safety.v1.json`.
+The retrospective matrix evaluates prompt uses; it is not the complete defect detector. Repeated failures discovered by local validators, required checks, hosted CI, review, runtime observation, operator feedback, or commit history belong to the separate regression-safety loop in `docs/PROMPT_REGRESSION_SAFETY.md` and `harness/contracts/prompt-regression-safety.v1.json`.
 
-          That loop can strengthen a shared Prompt Kit policy even when no single matrix row captures the defect. Trailing whitespace is the first registered example: repeated cross-repository incidents are owned as a patch-hygiene system defect rather than another one-off cleanup.\n'''
+That loop can strengthen a shared Prompt Kit policy even when no single matrix row captures the defect. Trailing whitespace is the first registered example: repeated cross-repository incidents are owned as a patch-hygiene system defect rather than another one-off cleanup.\n'''
               retro_path.write_text(retro, encoding='utf-8')
           PY
       - name: Validate focused regression safety
         shell: bash
         run: |
           set -euo pipefail
+          exec > >(tee /tmp/prompt-regression-focused.log) 2>&1
           python -m py_compile scripts/validate_prompt_regression_safety.py tests/test_prompt_regression_safety_prompt.py
           python scripts/validate_prompt_regression_safety.py --summary
           python -m unittest tests.test_prompt_regression_safety_prompt -v
           python -m unittest tests.test_actionable_prompt_registry -v
+      - name: Upload focused failure diagnostic
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: prompt-regression-focused-diagnostic-${{ env.CANDIDATE_SHA }}
+          path: /tmp/prompt-regression-focused.log
+          if-no-files-found: ignore
       - name: Rebuild and prove canonical Prompt Kit
         shell: bash
         run: |
@@ -106,6 +117,9 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
+          test "$(git rev-parse HEAD)" = "$CANDIDATE_SHA"
+          git fetch origin "$TARGET_BRANCH"
+          test "$(git rev-parse FETCH_HEAD)" = "$CANDIDATE_SHA"
           rm .github/workflows/tmp-prompt-regression-safety-compiler.yml
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
@@ -122,4 +136,4 @@ jobs:
             .github/workflows/tmp-prompt-regression-safety-compiler.yml
           git diff --cached --check
           git commit -m 'feat(prompt-kit): make recurring defects regression-safe'
-          git push origin HEAD:feat/prompt-regression-safety-loop-20260917
+          git push origin HEAD:"$TARGET_BRANCH"
