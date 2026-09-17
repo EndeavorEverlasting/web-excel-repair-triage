@@ -1,0 +1,108 @@
+name: TEMP P13 replacement-proof finalize
+
+on:
+  push:
+    branches:
+      - fix/p13-owner-displacement-20260914
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: tmp-p13-replacement-proof-finalize
+  cancel-in-progress: false
+
+jobs:
+  finalize:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: fix/p13-owner-displacement-20260914
+          fetch-depth: 0
+
+      - name: Configure repository writer
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git fetch origin main
+
+      - name: Prove required isolation slice on refreshed main
+        run: |
+          git merge-base --is-ancestor 017f78369f22e13a54f5992c683c30b1b6013a9f origin/main
+          grep -F "ISOLATED WRITER / CONVERGENCE CONTRACT" registry/prompts/actionable-next-step-policy.v1.json
+          python -m unittest tests.test_isolated_writer_convergence_policy -v
+
+      - name: Reconcile current main without overwriting source owners
+        shell: bash
+        run: |
+          set -euo pipefail
+          set +e
+          git merge --no-edit origin/main
+          rc=$?
+          set -e
+          if [ "$rc" -ne 0 ]; then
+            mapfile -t conflicts < <(git diff --name-only --diff-filter=U)
+            if [ "${#conflicts[@]}" -eq 0 ]; then
+              echo "merge failed without content conflicts" >&2
+              exit "$rc"
+            fi
+            if [ "${#conflicts[@]}" -ne 1 ] || [ "${conflicts[0]}" != "web/prompt-kit/index.html" ]; then
+              printf 'unexpected merge conflicts:\n%s\n' "${conflicts[*]}" >&2
+              exit 1
+            fi
+            git checkout --ours -- web/prompt-kit/index.html
+            git add web/prompt-kit/index.html
+            git commit --no-edit
+          fi
+
+      - name: Harden P13 replacement proof
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+
+          path = Path("registry/prompts/prompt-overrides.v1.json")
+          payload = json.loads(path.read_text(encoding="utf-8"))
+          p13 = next(item for item in payload["overrides"] if item["id"] == "P13")
+          old = """0B. OWNER DISPLACEMENT / STALE-LANE CONVERGENCE
+          - After each material refresh and before an overlapping write, resolve the canonical owner; newer overlapping work/ownership is a state transition.
+          - If it supersedes this lane, mark `SUPERSEDED WRITER` and stop competing writes. Do not rebase, spawn sidecars, or keep mutating because authority remains.
+          - Hand off branch/PR/SHA, reusable findings/tests, passed/failed proof, and unsafe work in the existing PR/ledger/handoff; retire the stale integration vehicle when authorized.
+          - Rejoin the surviving owner at its first unproven gate. Exhaustive compute/full authority apply there, never as permission for a superseded writer to continue."""
+          new = """0B. OWNER DISPLACEMENT / STALE-LANE CONVERGENCE
+          - After each material refresh and before overlapping writes, resolve the canonical owner; newer overlapping work/ownership is a state transition. Displace only if replacement slices are contained in refreshed default and materially present under owning validators; otherwise retain/reconcile this writer.
+          - If it supersedes this lane, mark `SUPERSEDED WRITER`; stop competing writes. Do not rebase, spawn sidecars, or mutate because authority remains.
+          - Preserve branch/PR/SHA, reusable findings/tests, passed/failed proof, unsafe work in existing PR/ledger/handoff; retire the stale integration vehicle.
+          - Rejoin the surviving owner. Exhaustive compute/full authority apply there, never as permission for a superseded writer to continue."""
+          copy = p13["copyContent"]
+          if copy.count(old) != 1:
+              raise SystemExit(f"expected one P13 owner-displacement block, found {copy.count(old)}")
+          p13["copyContent"] = copy.replace(old, new, 1)
+          if len(p13["copyContent"]) >= 18000:
+              raise SystemExit(f"P13 exceeds 18k guardrail: {len(p13['copyContent'])}")
+          path.write_text(json.dumps(payload, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
+          print(f"P13 copyContent length: {len(p13['copyContent'])}")
+          PY
+
+      - name: Rebuild and validate canonical Prompt Kit
+        run: |
+          python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html
+          python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html --check
+          python -m unittest tests.test_p13_owner_displacement -v
+          python -m unittest tests.test_remote_freshness_p13_iteration -v
+          python -m unittest tests.test_skill_prompt_registry -v
+          python scripts/evaluate_prompt_language.py --summary
+          git diff --check
+
+      - name: Commit durable repair and self-remove carrier
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm .github/workflows/tmp-p13-replacement-proof-finalize.yml
+          git add registry/prompts/prompt-overrides.v1.json web/prompt-kit/index.html .github/workflows/tmp-p13-replacement-proof-finalize.yml
+          git diff --cached --check
+          git commit -m "fix(p13): require proven replacement before displacement"
+          git push origin HEAD:fix/p13-owner-displacement-20260914
