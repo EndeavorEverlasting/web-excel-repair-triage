@@ -1,0 +1,8 @@
+{
+  "schema_version": "prompt-semantic-migrations/v1",
+  "effective_identity_change_values": [
+    "preserve_canonical",
+    "replacement_authorized"
+  ],
+  "migrations": []
+}
