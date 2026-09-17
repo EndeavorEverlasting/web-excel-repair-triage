@@ -1,37 +1,48 @@
 {
   "schema_version": "prompt-strength-phase0-validation-receipt/v1",
-  "status": "TEMPLATE",
+  "status": "TEMPLATE_NOT_PROOF",
   "repository": "EndeavorEverlasting/web-excel-repair-triage",
   "branch": "feat/prompt-strength-contract-matrix-20260917",
-  "head_sha": null,
+  "validated_behavioral_head_sha": null,
+  "proof_relevance_fingerprint": [],
+  "provider_checks": [],
+  "local_execution": {
+    "status": null,
+    "boundary": null
+  },
   "dispatch_seed": "harness/evals/prompt-strength/parallel-dispatch-manifest.seed.v1.json",
   "runtime_manifest": "Outputs/prompt-parallel-dispatch/manifest.json",
   "commands": [
     {
       "argv": ["python", "scripts/validate_prompt_strength.py", "--summary"],
+      "execution_surface": "local_repository",
       "exit_code": null,
       "stdout_tail": null
     },
     {
-      "argv": ["python", "-m", "unittest", "tests.test_prompt_strength_contract", "-v"],
+      "argv": ["python", "-m", "unittest", "tests.test_prompt_strength_contract_prompt", "-v"],
+      "execution_surface": "local_repository",
       "exit_code": null,
       "stdout_tail": null
     },
     {
       "operation": "materialize_dispatch_seed_to_runtime_manifest",
+      "execution_surface": "local_repository",
       "exit_code": null,
       "stdout_tail": null
     },
     {
       "argv": ["python", "scripts/prompt_parallel_dispatch.py", "validate", "--manifest", "Outputs/prompt-parallel-dispatch/manifest.json"],
+      "execution_surface": "local_repository",
       "exit_code": null,
       "stdout_tail": null
     },
     {
       "argv": ["git", "diff", "--check"],
+      "execution_surface": "local_repository",
       "exit_code": null,
       "stdout_tail": null
     }
   ],
-  "proof_ceiling": "A populated receipt proves only the exact listed repository/static checks on the exact recorded head. It does not prove downstream model obedience, actual parallel agent dispatch, hosted CI, deployment, or runtime observation."
+  "proof_ceiling": "This template is not evidence. A populated receipt proves only the exact recorded checks on the exact proof-relevance fingerprint and validated behavioral head. Provider checks and local execution remain separately typed; neither may impersonate the other. It does not prove downstream model obedience, deployment, live runtime behavior, or operator acceptance."
 }
