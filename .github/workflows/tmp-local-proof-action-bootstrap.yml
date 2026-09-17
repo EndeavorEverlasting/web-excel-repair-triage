@@ -1,0 +1,524 @@
+name: Temporary repository local action bootstrap
+
+on:
+  push:
+    branches:
+      - fix/local-proof-continuity-20260917
+    paths:
+      - .github/workflows/tmp-local-proof-action-bootstrap.yml
+
+permissions:
+  contents: write
+
+env:
+  PYTHONHASHSEED: "0"
+  TZ: UTC
+  LC_ALL: C.UTF-8
+  LANG: C.UTF-8
+  CI: "true"
+
+jobs:
+  bootstrap:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: fix/local-proof-continuity-20260917
+          fetch-depth: 0
+
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.11"
+
+      - name: Install repository test floor dependencies
+        shell: bash
+        run: |
+          set -euo pipefail
+          python -m pip install --upgrade pip
+          python -m pip install -r requirements-test-floor.txt
+
+      - name: Materialize durable local-action seam
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          from pathlib import Path
+          import json
+
+          root = Path('.')
+
+          registry = {
+              "schema_version": "repository-actions/v1",
+              "registry_id": "web-excel-repair-triage-local-actions",
+              "purpose": "Provide reviewed, allow-listed repository-local build and proof actions that remain executable when hosted-provider quota or connector capacity is unavailable.",
+              "runner": "scripts/run_repository_action.py",
+              "provider_adapter": ".github/workflows/repository-local-action.yml",
+              "receipt_schema_version": "repository-action-receipt/v1",
+              "principles": [
+                  "Local action definitions are tracked repository authority; callers select an action id and may not inject arbitrary shell.",
+                  "The local runner is canonical; hosted workflows are optional thin adapters that delegate to the same action id.",
+                  "A local PASS proves only the declared local proof ceiling and never silently proves hosted, deployed, live-runtime, device, or operator acceptance.",
+                  "When a needed action is missing and the active lane owns the seam, add the smallest reviewed action plus focused regression before relying on hosted CI."
+              ],
+              "actions": [
+                  {
+                      "id": "prompt-kit-build-proof",
+                      "description": "Rebuild the canonical Prompt Kit and prove quota-resilient prompt/local-action semantics.",
+                      "mutation_authority": "canonical_generated_prompt_kit_only",
+                      "provider_safe": True,
+                      "steps": [
+                          {"id": "build", "argv": ["{python}", "scripts/build_prompt_kit_registry.py", "--output", "web/prompt-kit/index.html"], "timeout_seconds": 180, "proof_ceiling": "Deterministic canonical Prompt Kit generation."},
+                          {"id": "local-proof-regressions", "argv": ["{python}", "-m", "unittest", "tests.test_repository_actions", "tests.test_repository_local_proof_continuity", "tests.test_prompt_compilation", "-v"], "timeout_seconds": 180, "proof_ceiling": "Executable local-action and P07 local-proof semantic regression."},
+                          {"id": "actionability-regressions", "argv": ["{python}", "-m", "unittest", "tests.test_actionable_prompt_registry", "tests.test_skill_prompt_registry", "-v"], "timeout_seconds": 240, "proof_ceiling": "Effective Prompt Kit shared-policy and specialist-registry regression."},
+                          {"id": "language-audit", "argv": ["{python}", "scripts/evaluate_prompt_language.py", "--summary"], "timeout_seconds": 180, "proof_ceiling": "Static complete prompt-language coverage."},
+                          {"id": "parity", "argv": ["{python}", "scripts/build_prompt_kit_registry.py", "--output", "web/prompt-kit/index.html", "--check"], "timeout_seconds": 180, "proof_ceiling": "Canonical source-to-generated-site parity."},
+                          {"id": "diff-hygiene", "argv": ["git", "diff", "--check"], "timeout_seconds": 60, "proof_ceiling": "Whitespace and conflict-marker proof for the working diff."}
+                      ]
+                  },
+                  {
+                      "id": "prompt-kit-proof",
+                      "description": "Prove Prompt Kit/local-action semantics without regenerating tracked output.",
+                      "mutation_authority": "none",
+                      "provider_safe": True,
+                      "steps": [
+                          {"id": "local-proof-regressions", "argv": ["{python}", "-m", "unittest", "tests.test_repository_actions", "tests.test_repository_local_proof_continuity", "tests.test_prompt_compilation", "-v"], "timeout_seconds": 180, "proof_ceiling": "Executable local-action and P07 local-proof semantic regression."},
+                          {"id": "actionability-regressions", "argv": ["{python}", "-m", "unittest", "tests.test_actionable_prompt_registry", "tests.test_skill_prompt_registry", "-v"], "timeout_seconds": 240, "proof_ceiling": "Effective Prompt Kit shared-policy and specialist-registry regression."},
+                          {"id": "language-audit", "argv": ["{python}", "scripts/evaluate_prompt_language.py", "--summary"], "timeout_seconds": 180, "proof_ceiling": "Static complete prompt-language coverage."},
+                          {"id": "parity", "argv": ["{python}", "scripts/build_prompt_kit_registry.py", "--output", "web/prompt-kit/index.html", "--check"], "timeout_seconds": 180, "proof_ceiling": "Canonical source-to-generated-site parity."},
+                          {"id": "diff-hygiene", "argv": ["git", "diff", "--check"], "timeout_seconds": 60, "proof_ceiling": "Whitespace and conflict-marker proof for the working diff."}
+                      ]
+                  },
+                  {
+                      "id": "pre-push-proof",
+                      "description": "Run the repository-owned pre-push validator profile without requiring hosted CI.",
+                      "mutation_authority": "ephemeral_outputs_only",
+                      "provider_safe": True,
+                      "steps": [
+                          {"id": "validator-profile", "argv": ["{python}", "scripts/run_validator_profile.py", "--profile", "pre_push", "--report", "Outputs/repository-actions/pre-push-validator-profile.json"], "timeout_seconds": 1200, "proof_ceiling": "Repository-defined pre-push validation profile on the observed checkout."},
+                          {"id": "diff-hygiene", "argv": ["git", "diff", "--check"], "timeout_seconds": 60, "proof_ceiling": "Whitespace and conflict-marker proof for the working diff."}
+                      ]
+                  },
+                  {
+                      "id": "repo-native-update-check",
+                      "description": "Prove the existing repository-native generator path without hosted Actions.",
+                      "mutation_authority": "ephemeral_outputs_only",
+                      "provider_safe": True,
+                      "steps": [
+                          {"id": "generator-parity", "argv": ["{python}", "scripts/run_repo_native_update.py", "generate", "--surface", "canary-constants", "--check"], "timeout_seconds": 120, "proof_ceiling": "Declared repo-native generated-surface parity."},
+                          {"id": "generator-tests", "argv": ["{python}", "-m", "unittest", "tests.test_repo_native_update", "-v"], "timeout_seconds": 180, "proof_ceiling": "Executable repo-native update fail-closed and idempotency regression."}
+                      ]
+                  }
+              ]
+          }
+          (root / 'harness/repository-actions.v1.json').write_text(json.dumps(registry, indent=2) + '\n', encoding='utf-8')
+
+          runner = '''#!/usr/bin/env python3
+          """Run reviewed repository-local actions without arbitrary shell injection."""
+          from __future__ import annotations
+
+          import argparse
+          import hashlib
+          import json
+          import subprocess
+          import sys
+          from datetime import datetime, timezone
+          from pathlib import Path
+          from typing import Any
+
+          ROOT = Path(__file__).resolve().parents[1]
+          REGISTRY = ROOT / "harness" / "repository-actions.v1.json"
+          DEFAULT_REPORT_ROOT = ROOT / "Outputs" / "repository-actions"
+
+
+          class RepositoryActionError(RuntimeError):
+              pass
+
+
+          def load_registry() -> dict[str, Any]:
+              try:
+                  payload = json.loads(REGISTRY.read_text(encoding="utf-8"))
+              except (OSError, json.JSONDecodeError) as exc:
+                  raise RepositoryActionError(f"cannot load repository action registry: {exc}") from exc
+              if payload.get("schema_version") != "repository-actions/v1":
+                  raise RepositoryActionError("unsupported repository action registry schema")
+              actions = payload.get("actions")
+              if not isinstance(actions, list) or not actions:
+                  raise RepositoryActionError("repository action registry must define actions")
+              seen: set[str] = set()
+              for action in actions:
+                  action_id = str(action.get("id", "")).strip()
+                  if not action_id or action_id in seen:
+                      raise RepositoryActionError(f"invalid or duplicate action id: {action_id!r}")
+                  seen.add(action_id)
+                  steps = action.get("steps")
+                  if not isinstance(steps, list) or not steps:
+                      raise RepositoryActionError(f"action {action_id} must define steps")
+                  for step in steps:
+                      argv = step.get("argv")
+                      if not isinstance(argv, list) or not argv or any(not isinstance(part, str) or not part for part in argv):
+                          raise RepositoryActionError(f"action {action_id} has invalid argv")
+                      if int(step.get("timeout_seconds", 0)) <= 0:
+                          raise RepositoryActionError(f"action {action_id} has invalid timeout")
+              return payload
+
+
+          def resolve_action(payload: dict[str, Any], action_id: str) -> dict[str, Any]:
+              for action in payload["actions"]:
+                  if action["id"] == action_id:
+                      return action
+              raise RepositoryActionError(f"unknown repository action: {action_id}")
+
+
+          def resolve_argv(argv: list[str]) -> list[str]:
+              resolved: list[str] = []
+              for part in argv:
+                  if part == "{python}":
+                      resolved.append(sys.executable)
+                  elif "{" in part or "}" in part:
+                      raise RepositoryActionError(f"unsupported action placeholder: {part}")
+                  else:
+                      resolved.append(part)
+              return resolved
+
+
+          def git_text(*args: str) -> str:
+              result = subprocess.run(["git", *args], cwd=ROOT, stdin=subprocess.DEVNULL, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, check=False, timeout=30)
+              return result.stdout.strip() if result.returncode == 0 else "UNKNOWN"
+
+
+          def canonical_sha256(value: Any) -> str:
+              raw = json.dumps(value, sort_keys=True, separators=(",", ":"), ensure_ascii=True)
+              return hashlib.sha256(raw.encode("utf-8")).hexdigest()
+
+
+          def safe_report_path(raw: str | None, action_id: str) -> Path:
+              target = Path(raw) if raw else DEFAULT_REPORT_ROOT / f"{action_id}.json"
+              if not target.is_absolute():
+                  target = ROOT / target
+              target = target.resolve()
+              try:
+                  target.relative_to(ROOT.resolve())
+              except ValueError as exc:
+                  raise RepositoryActionError("report path must stay inside repository") from exc
+              target.parent.mkdir(parents=True, exist_ok=True)
+              return target
+
+
+          def run_action(action: dict[str, Any], registry: dict[str, Any], report_path: Path) -> int:
+              results: list[dict[str, Any]] = []
+              status = "PASS"
+              for step in action["steps"]:
+                  argv = resolve_argv(step["argv"])
+                  started = datetime.now(timezone.utc)
+                  try:
+                      result = subprocess.run(argv, cwd=ROOT, stdin=subprocess.DEVNULL, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, check=False, timeout=int(step["timeout_seconds"]))
+                      returncode = result.returncode
+                      stdout = result.stdout[-12000:]
+                      stderr = result.stderr[-12000:]
+                  except subprocess.TimeoutExpired as exc:
+                      returncode = 124
+                      stdout = (exc.stdout or "")[-12000:] if isinstance(exc.stdout, str) else ""
+                      stderr = f"timeout after {step['timeout_seconds']}s"
+                  finished = datetime.now(timezone.utc)
+                  results.append({
+                      "id": step["id"],
+                      "argv": argv,
+                      "returncode": returncode,
+                      "status": "PASS" if returncode == 0 else "FAIL",
+                      "proof_ceiling": step["proof_ceiling"],
+                      "started_at": started.isoformat(),
+                      "finished_at": finished.isoformat(),
+                      "stdout_tail": stdout,
+                      "stderr_tail": stderr,
+                  })
+                  if returncode != 0:
+                      status = "FAIL"
+                      break
+              receipt = {
+                  "schema_version": registry["receipt_schema_version"],
+                  "registry_id": registry["registry_id"],
+                  "registry_sha256": canonical_sha256(registry),
+                  "action_id": action["id"],
+                  "mutation_authority": action["mutation_authority"],
+                  "candidate_head": git_text("rev-parse", "HEAD"),
+                  "branch": git_text("branch", "--show-current"),
+                  "base_floor": git_text("rev-parse", "origin/main"),
+                  "working_tree_status": git_text("status", "--porcelain=v1"),
+                  "proof_relevance_fingerprint": canonical_sha256({"registry": registry["registry_id"], "action": action}),
+                  "status": status,
+                  "steps": results,
+                  "proof_ceiling": "Repository-local action proof only; hosted runner, deployment, live runtime, device, and operator acceptance remain separately typed unless directly observed.",
+              }
+              report_path.write_text(json.dumps(receipt, indent=2) + "\n", encoding="utf-8")
+              print(f"repository action {action['id']}: {status}")
+              print(f"receipt: {report_path.relative_to(ROOT)}")
+              return 0 if status == "PASS" else 1
+
+
+          def main(argv: list[str] | None = None) -> int:
+              parser = argparse.ArgumentParser(description=__doc__)
+              parser.add_argument("--list", action="store_true", help="List registered repository-local actions")
+              parser.add_argument("--action", help="Registered action id to run")
+              parser.add_argument("--report", help="Receipt path inside the repository")
+              args = parser.parse_args(argv)
+              try:
+                  registry = load_registry()
+                  if args.list:
+                      for action in registry["actions"]:
+                          print(f"{action['id']}: {action['description']}")
+                      return 0
+                  if not args.action:
+                      raise RepositoryActionError("--action is required unless --list is used")
+                  action = resolve_action(registry, args.action)
+                  return run_action(action, registry, safe_report_path(args.report, action["id"]))
+              except RepositoryActionError as exc:
+                  print(f"ERROR: {exc}", file=sys.stderr)
+                  return 2
+
+
+          if __name__ == "__main__":
+              raise SystemExit(main())
+          '''
+          # Dedent the intentionally indented heredoc payload.
+          import textwrap
+          (root / 'scripts/run_repository_action.py').write_text(textwrap.dedent(runner), encoding='utf-8')
+
+          test = '''from __future__ import annotations
+
+          import json
+          import sys
+          import unittest
+          from pathlib import Path
+
+          ROOT = Path(__file__).resolve().parents[1]
+          if str(ROOT / "scripts") not in sys.path:
+              sys.path.insert(0, str(ROOT / "scripts"))
+
+          import build_prompt_kit_registry
+          import run_repository_action
+
+          REGISTRY = ROOT / "harness" / "repository-actions.v1.json"
+          CONTRACT = ROOT / "harness" / "contracts" / "repository-local-proof-continuity.v1.json"
+          POLICY = ROOT / "registry" / "prompts" / "actionable-next-step-policy.v1.json"
+          MARKER = "REPOSITORY LOCAL ACTION CONTINUITY CONTRACT"
+
+
+          class RepositoryActionTests(unittest.TestCase):
+              @classmethod
+              def setUpClass(cls) -> None:
+                  cls.registry = json.loads(REGISTRY.read_text(encoding="utf-8"))
+                  cls.contract = json.loads(CONTRACT.read_text(encoding="utf-8"))
+                  cls.policy = json.loads(POLICY.read_text(encoding="utf-8"))
+
+              def test_registry_is_allowlisted_and_local_first(self) -> None:
+                  self.assertEqual(self.registry["schema_version"], "repository-actions/v1")
+                  self.assertEqual(self.registry["runner"], "scripts/run_repository_action.py")
+                  self.assertEqual(self.registry["provider_adapter"], ".github/workflows/repository-local-action.yml")
+                  ids = [item["id"] for item in self.registry["actions"]]
+                  self.assertEqual(len(ids), len(set(ids)))
+                  self.assertIn("prompt-kit-build-proof", ids)
+                  self.assertIn("pre-push-proof", ids)
+                  for action in self.registry["actions"]:
+                      for step in action["steps"]:
+                          self.assertIsInstance(step["argv"], list)
+                          self.assertNotIn("sh -c", " ".join(step["argv"]))
+
+              def test_runner_resolves_only_declared_python_placeholder(self) -> None:
+                  self.assertEqual(run_repository_action.resolve_argv(["{python}", "-V"])[0], sys.executable)
+                  with self.assertRaises(run_repository_action.RepositoryActionError):
+                      run_repository_action.resolve_argv(["{operator_shell}"])
+
+              def test_contract_points_to_executable_local_action_owner(self) -> None:
+                  self.assertEqual(self.contract["canonical_local_action_registry"], "harness/repository-actions.v1.json")
+                  self.assertEqual(self.contract["canonical_local_action_runner"], "scripts/run_repository_action.py")
+                  self.assertEqual(self.contract["provider_adapter"], ".github/workflows/repository-local-action.yml")
+                  self.assertIn("thin optional delegate", self.contract["provider_adapter_rule"])
+
+              def test_shared_policy_reaches_every_effective_prompt(self) -> None:
+                  self.assertIn(MARKER, self.policy["copy_content_appendix"])
+                  prompts = build_prompt_kit_registry.load_prompt_registry()
+                  self.assertGreater(len(prompts), 100)
+                  missing = [p["id"] for p in prompts if MARKER not in p["copyContent"]]
+                  self.assertEqual(missing, [])
+
+              def test_provider_adapter_is_dispatch_only_and_delegates_to_runner(self) -> None:
+                  workflow = (ROOT / ".github/workflows/repository-local-action.yml").read_text(encoding="utf-8")
+                  self.assertIn("workflow_dispatch:", workflow)
+                  self.assertNotIn("pull_request:", workflow)
+                  self.assertNotIn("push:", workflow)
+                  self.assertIn("scripts/run_repository_action.py", workflow)
+                  self.assertIn("persist-credentials: false", workflow)
+                  self.assertIn("contents: read", workflow)
+
+
+          if __name__ == "__main__":
+              unittest.main()
+          '''
+          (root / 'tests/test_repository_actions.py').write_text(textwrap.dedent(test), encoding='utf-8')
+
+          provider = '''name: Repository local action adapter
+
+          on:
+            workflow_dispatch:
+              inputs:
+                action:
+                  description: Reviewed repository-local action id
+                  required: true
+                  type: choice
+                  options:
+                    - prompt-kit-proof
+                    - prompt-kit-build-proof
+                    - pre-push-proof
+                    - repo-native-update-check
+
+          permissions:
+            contents: read
+
+          concurrency:
+            group: repository-local-action-${{ github.ref }}-${{ inputs.action }}
+            cancel-in-progress: false
+
+          env:
+            PYTHONHASHSEED: "0"
+            TZ: UTC
+            LC_ALL: C.UTF-8
+            LANG: C.UTF-8
+            CI: "true"
+
+          jobs:
+            repository-action:
+              runs-on: ubuntu-latest
+              timeout-minutes: 30
+              steps:
+                - uses: actions/checkout@v7
+                  with:
+                    ref: ${{ github.sha }}
+                    persist-credentials: false
+                    fetch-depth: 1
+                - uses: actions/setup-python@v7
+                  with:
+                    python-version: "3.11"
+                - name: Install pinned repository test dependencies
+                  shell: bash
+                  run: |
+                    set -euo pipefail
+                    python -m pip install --upgrade pip
+                    python -m pip install -r requirements-test-floor.txt
+                - name: Run reviewed repository-local action
+                  shell: bash
+                  run: |
+                    set -euo pipefail
+                    python scripts/run_repository_action.py \
+                      --action "${{ inputs.action }}" \
+                      --report "Outputs/repository-actions/${{ inputs.action }}.json"
+                - name: Upload local-action receipt
+                  if: always()
+                  uses: actions/upload-artifact@v7
+                  with:
+                    name: repository-local-action-${{ inputs.action }}
+                    path: Outputs/repository-actions/${{ inputs.action }}.json
+                    if-no-files-found: error
+          '''
+          (root / '.github/workflows/repository-local-action.yml').write_text(textwrap.dedent(provider), encoding='utf-8')
+
+          contract_path = root / 'harness/contracts/repository-local-proof-continuity.v1.json'
+          contract = json.loads(contract_path.read_text(encoding='utf-8'))
+          contract['canonical_local_action_registry'] = 'harness/repository-actions.v1.json'
+          contract['canonical_local_action_runner'] = 'scripts/run_repository_action.py'
+          contract['provider_adapter'] = '.github/workflows/repository-local-action.yml'
+          contract['provider_adapter_rule'] = 'The provider workflow is a thin optional delegate to a reviewed local action id; it is never the sole proof owner and accepts no arbitrary shell input.'
+          contract['local_action_bootstrap_rule'] = 'Planning/build lanes must establish or reuse the smallest reviewed repository-local action before hosted provider quota becomes a single point of failure.'
+          contract_path.write_text(json.dumps(contract, indent=2) + '\n', encoding='utf-8')
+
+          ops_path = root / 'harness/specs/prompt-operations.md'
+          ops = ops_path.read_text(encoding='utf-8')
+          anchor = '- P07\'s Prompt Semantic IR carries the executable MUST obligation. P112/P113 remain the specialized deterministic test-floor bootstrap/evolution owners; P32 remains the established failing-CI repair owner. This contract does not merge those responsibilities.\n'
+          addition = '- The executable repository action seam is `harness/repository-actions.v1.json` + `scripts/run_repository_action.py`. Planning/build prompts should name or add the smallest reviewed action id instead of inventing ad hoc shell; `.github/workflows/repository-local-action.yml` is only a thin optional provider adapter.\n'
+          if addition not in ops:
+              if anchor not in ops:
+                  raise SystemExit('Prompt Operations local-proof anchor not found')
+              ops = ops.replace(anchor, anchor + addition)
+              ops_path.write_text(ops, encoding='utf-8')
+
+          policy_path = root / 'registry/prompts/actionable-next-step-policy.v1.json'
+          policy = json.loads(policy_path.read_text(encoding='utf-8'))
+          marker = 'REPOSITORY LOCAL ACTION CONTINUITY CONTRACT'
+          appendix = '''\n\nREPOSITORY LOCAL ACTION CONTINUITY CONTRACT\n- For repository planning, build/repair, validation, or integration work, establish or reuse the repository-native local action/proof seam before hosted CI or provider quota becomes a dependency. When present, resolve `harness/contracts/repository-local-proof-continuity.v1.json` and the local action registry it names.\n- Prefer the reviewed local action runner over ad hoc shell. Invoke a declared action id (for this repository: `python scripts/run_repository_action.py --action <id> --report <repo-local-receipt>`); if the required action is missing and this lane owns the seam, add the smallest allow-listed action plus focused regression instead of making hosted CI the only route.\n- Hosted quota exhaustion, rate limiting, runner unavailability, connector limits, or permission denial block only the gates that truly require that provider. Continue every locally provable build/test/integration-preparation gate, suppress blind retries of known non-transient provider failures, and keep hosted-only gates typed BLOCKED.\n- A provider workflow is a thin optional delegate to the same reviewed local action, never a competing proof authority. Local PASS never promotes to hosted, deployed, live-runtime, device, or operator-acceptance proof.\n'''
+          if marker not in policy['copy_content_appendix']:
+              policy['copy_content_appendix'] = policy['copy_content_appendix'].rstrip() + appendix
+          suffix = ' For repository planning/build/repair/validation/integration, resolve or establish the reviewed repository-local action/proof seam before hosted provider quota becomes a dependency; provider limits block only provider-required gates while locally provable work continues.'
+          if suffix.strip() not in policy['next_step_suffix']:
+              policy['next_step_suffix'] = policy['next_step_suffix'].rstrip() + suffix
+          policy_path.write_text(json.dumps(policy, indent=2, ensure_ascii=False) + '\n', encoding='utf-8')
+          PY
+
+      - name: Execute the new canonical local action
+        shell: bash
+        run: |
+          set -euo pipefail
+          python scripts/run_repository_action.py \
+            --action prompt-kit-build-proof \
+            --report Outputs/repository-actions/bootstrap-proof.json
+
+      - name: Run owning harness proof
+        shell: bash
+        run: |
+          set -euo pipefail
+          python scripts/validate_harness.py --report Outputs/harness-completeness-report.json
+          python -m unittest tests.test_harness_contract -v
+          git diff --check
+
+      - name: Enforce bounded durable diff and self-remove carrier
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm .github/workflows/tmp-local-proof-action-bootstrap.yml
+          python - <<'PY'
+          import subprocess
+          allowed = {
+              '.github/workflows/repository-local-action.yml',
+              '.github/workflows/tmp-local-proof-action-bootstrap.yml',
+              'harness/contracts/repository-local-proof-continuity.v1.json',
+              'harness/repository-actions.v1.json',
+              'harness/specs/prompt-operations.md',
+              'registry/prompts/actionable-next-step-policy.v1.json',
+              'scripts/run_repository_action.py',
+              'tests/test_repository_actions.py',
+              'web/prompt-kit/index.html',
+          }
+          out = subprocess.check_output(['git', 'status', '--porcelain=v1'], text=True)
+          changed = set()
+          for line in out.splitlines():
+              path = line[3:]
+              if ' -> ' in path:
+                  path = path.split(' -> ', 1)[1]
+              if path.startswith('Outputs/'):
+                  continue
+              changed.add(path)
+          extra = sorted(changed - allowed)
+          if extra:
+              raise SystemExit(f'unexpected durable paths: {extra}')
+          print('bounded durable paths:', *sorted(changed), sep='\n- ')
+          PY
+          git diff --check
+
+      - name: Commit durable seam to owned branch
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "EndeavorEverlasting"
+          git config user.email "71802818+EndeavorEverlasting@users.noreply.github.com"
+          git add \
+            .github/workflows/repository-local-action.yml \
+            .github/workflows/tmp-local-proof-action-bootstrap.yml \
+            harness/contracts/repository-local-proof-continuity.v1.json \
+            harness/repository-actions.v1.json \
+            harness/specs/prompt-operations.md \
+            registry/prompts/actionable-next-step-policy.v1.json \
+            scripts/run_repository_action.py \
+            tests/test_repository_actions.py \
+            web/prompt-kit/index.html
+          git diff --cached --check
+          git commit -m "feat(prompt-kit): add quota-resilient repository local actions"
+          git push origin HEAD:fix/local-proof-continuity-20260917
