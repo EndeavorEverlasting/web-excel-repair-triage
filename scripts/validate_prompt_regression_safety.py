@@ -10,6 +10,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import re
 from pathlib import Path
 from typing import Any
 
@@ -22,6 +23,7 @@ REQUIRED_CHECKS_PATH = ROOT / "harness" / "promotion" / "required-checks.v1.json
 PRE_COMMIT_PATH = ROOT / ".githooks" / "pre-commit"
 VALIDATORS_PATH = ROOT / "harness" / "validators.v1.json"
 FOCUSED_TEST = "tests/test_prompt_regression_safety_prompt.py"
+COMMIT_RE = re.compile(r"^[0-9a-f]{40}$")
 
 
 class RegressionSafetyError(ValueError):
@@ -42,6 +44,17 @@ def _text(value: Any, field: str) -> str:
     if not isinstance(value, str) or not value.strip():
         raise RegressionSafetyError(f"{field} must be a non-empty string")
     return value.strip()
+
+
+def _string_list(value: Any, field: str, *, min_items: int = 1) -> list[str]:
+    if not isinstance(value, list) or len(value) < min_items:
+        raise RegressionSafetyError(f"{field} must be a list with at least {min_items} item(s)")
+    result: list[str] = []
+    for index, item in enumerate(value):
+        result.append(_text(item, f"{field}[{index}]"))
+    if len(result) != len(set(result)):
+        raise RegressionSafetyError(f"{field} must contain unique strings")
+    return result
 
 
 def validate_contract(contract: dict[str, Any]) -> None:
@@ -72,18 +85,48 @@ def validate_contract(contract: dict[str, Any]) -> None:
     if authority.get("hosted_provider_is_semantic_owner") is not False:
         raise RegressionSafetyError("hosted provider may not become semantic owner")
 
+    family_contract = contract.get("defect_family_contract")
+    if not isinstance(family_contract, dict):
+        raise RegressionSafetyError("defect_family_contract must be an object")
+    if set(family_contract) != {
+        "allowed_statuses",
+        "allowed_classifications",
+        "allowed_prompt_strengthening",
+        "occurrence_commit_format",
+    }:
+        raise RegressionSafetyError("defect_family_contract fields do not match schema")
+    _string_list(family_contract.get("allowed_statuses"), "defect_family_contract.allowed_statuses")
+    _string_list(
+        family_contract.get("allowed_classifications"),
+        "defect_family_contract.allowed_classifications",
+    )
+    _string_list(
+        family_contract.get("allowed_prompt_strengthening"),
+        "defect_family_contract.allowed_prompt_strengthening",
+    )
+    if family_contract.get("occurrence_commit_format") != "lowercase-40-hex":
+        raise RegressionSafetyError("occurrence_commit_format must be lowercase-40-hex")
+
     recurrence = contract.get("recurrence")
     if not isinstance(recurrence, dict):
         raise RegressionSafetyError("recurrence must be an object")
     threshold = recurrence.get("systemic_threshold")
     if type(threshold) is not int or threshold < 2:
         raise RegressionSafetyError("systemic recurrence threshold must be >= 2")
-    sources = recurrence.get("incident_sources")
-    if not isinstance(sources, list) or len(sources) < 5 or len(sources) != len(set(sources)):
-        raise RegressionSafetyError("incident_sources must be a unique multi-source list")
-    for required_source in ("local_validator", "hosted_ci", "code_review", "runtime_observation", "operator_feedback", "retrospective_matrix", "commit_history"):
+    sources = _string_list(recurrence.get("incident_sources"), "recurrence.incident_sources", min_items=5)
+    for required_source in (
+        "local_validator",
+        "local_required_check",
+        "hosted_ci",
+        "code_review",
+        "runtime_observation",
+        "operator_feedback",
+        "retrospective_matrix",
+        "commit_history",
+    ):
         if required_source not in sources:
             raise RegressionSafetyError(f"missing incident source: {required_source}")
+    _text(recurrence.get("rule"), "recurrence.rule")
 
     loop = contract.get("required_loop")
     expected_loop = [
@@ -104,10 +147,8 @@ def validate_contract(contract: dict[str, Any]) -> None:
     if not isinstance(local_first, dict):
         raise RegressionSafetyError("local_first_proof must be an object")
     _text(local_first.get("semantic_authority"), "local_first_proof.semantic_authority")
-    rules = local_first.get("rules")
-    if not isinstance(rules, list) or len(rules) < 4:
-        raise RegressionSafetyError("local_first_proof.rules must define local/provider boundaries")
-    joined = " ".join(str(item) for item in rules).lower()
+    rules = _string_list(local_first.get("rules"), "local_first_proof.rules", min_items=4)
+    joined = " ".join(rules).lower()
     for phrase in ("local profile", "exact base/head", "provider", "merge authority"):
         if phrase not in joined:
             raise RegressionSafetyError(f"local-first proof is missing concept: {phrase}")
@@ -115,23 +156,27 @@ def validate_contract(contract: dict[str, Any]) -> None:
     hygiene = contract.get("repository_hygiene")
     if not isinstance(hygiene, dict):
         raise RegressionSafetyError("repository_hygiene must be an object")
-    commands = hygiene.get("patch_hygiene_commands")
+    commands = _string_list(hygiene.get("patch_hygiene_commands"), "repository_hygiene.patch_hygiene_commands")
     expected_commands = {
         "git diff --check",
         "git diff --cached --check",
         "git diff --check {base_sha}...{head_sha}",
     }
-    if not isinstance(commands, list) or set(commands) != expected_commands:
+    if set(commands) != expected_commands:
         raise RegressionSafetyError("patch-hygiene commands must cover working, staged, and exact candidates")
+    _text(hygiene.get("rule"), "repository_hygiene.rule")
     _text(contract.get("matrix_boundary"), "matrix_boundary")
 
-    requirements = contract.get("systemic_repair_requirements")
-    if not isinstance(requirements, list) or len(requirements) < 6:
-        raise RegressionSafetyError("systemic repair requirements are incomplete")
-    requirement_text = " ".join(str(item) for item in requirements).lower()
+    requirements = _string_list(
+        contract.get("systemic_repair_requirements"),
+        "systemic_repair_requirements",
+        min_items=6,
+    )
+    requirement_text = " ".join(requirements).lower()
     for phrase in ("negative fixture", "positive control", "shared owner", "deterministic floor", "local required checks"):
         if phrase not in requirement_text:
             raise RegressionSafetyError(f"systemic repair requirement missing: {phrase}")
+    _text(contract.get("proof_ceiling"), "proof_ceiling")
 
 
 def validate_register(register: dict[str, Any], contract: dict[str, Any]) -> dict[str, Any]:
@@ -145,8 +190,13 @@ def validate_register(register: dict[str, Any], contract: dict[str, Any]) -> dic
         raise RegressionSafetyError("defect register must contain at least one family")
 
     threshold = contract["recurrence"]["systemic_threshold"]
+    family_contract = contract["defect_family_contract"]
+    allowed_statuses = set(family_contract["allowed_statuses"])
+    allowed_classifications = set(family_contract["allowed_classifications"])
+    allowed_strengthening = set(family_contract["allowed_prompt_strengthening"])
     seen: set[str] = set()
     occurrence_count = 0
+
     for index, family in enumerate(families):
         if not isinstance(family, dict):
             raise RegressionSafetyError(f"family[{index}] must be an object")
@@ -170,22 +220,28 @@ def validate_register(register: dict[str, Any], contract: dict[str, Any]) -> dic
         if family_id in seen:
             raise RegressionSafetyError(f"duplicate defect family: {family_id}")
         seen.add(family_id)
-        if family.get("status") != "SYSTEMIC":
-            raise RegressionSafetyError(f"registered recurring family must be SYSTEMIC: {family_id}")
-        if family.get("prompt_strengthening") != "GLOBAL_SHARED_POLICY":
+
+        if family.get("status") not in allowed_statuses:
+            raise RegressionSafetyError(f"invalid defect-family status: {family_id}")
+        if family.get("classification") not in allowed_classifications:
+            raise RegressionSafetyError(f"invalid defect-family classification: {family_id}")
+        if family.get("prompt_strengthening") not in allowed_strengthening:
+            raise RegressionSafetyError(f"invalid prompt-strengthening mode: {family_id}")
+        if family.get("status") == "SYSTEMIC" and family.get("prompt_strengthening") != "GLOBAL_SHARED_POLICY":
             raise RegressionSafetyError(f"systemic family must strengthen shared prompt policy: {family_id}")
+        if type(family.get("recurring_across_repositories")) is not bool:
+            raise RegressionSafetyError("recurring_across_repositories must be boolean")
         if type(family.get("matrix_capture_required")) is not bool:
             raise RegressionSafetyError("matrix_capture_required must be boolean")
         _text(family.get("canonical_owner"), f"{family_id}.canonical_owner")
         _text(family.get("regression_gate"), f"{family_id}.regression_gate")
         _text(family.get("local_first_requirement"), f"{family_id}.local_first_requirement")
 
-        detectors = family.get("detector_commands")
-        if not isinstance(detectors, list) or not detectors:
-            raise RegressionSafetyError(f"{family_id} requires detector commands")
-        prevention = family.get("prevention_surfaces")
-        if not isinstance(prevention, list) or len(prevention) < 2:
-            raise RegressionSafetyError(f"{family_id} requires shared prevention surfaces")
+        detectors = _string_list(family.get("detector_commands"), f"{family_id}.detector_commands")
+        prevention = _string_list(family.get("prevention_surfaces"), f"{family_id}.prevention_surfaces", min_items=2)
+        if family.get("prompt_strengthening") == "GLOBAL_SHARED_POLICY" and contract["authority"]["prompt_strengthening_owner"] not in prevention:
+            raise RegressionSafetyError(f"{family_id} must include the global prompt-strengthening owner")
+
         occurrences = family.get("occurrences")
         if not isinstance(occurrences, list) or len(occurrences) < threshold:
             raise RegressionSafetyError(
@@ -194,24 +250,37 @@ def validate_register(register: dict[str, Any], contract: dict[str, Any]) -> dic
         occurrence_count += len(occurrences)
         unique_occurrences: set[tuple[str, str]] = set()
         repositories: set[str] = set()
-        for occurrence in occurrences:
+        for occurrence_index, occurrence in enumerate(occurrences):
             if not isinstance(occurrence, dict) or set(occurrence) != {"repository", "commit", "summary"}:
                 raise RegressionSafetyError(f"{family_id} occurrence is malformed")
-            repository = _text(occurrence.get("repository"), f"{family_id}.occurrence.repository")
-            commit = _text(occurrence.get("commit"), f"{family_id}.occurrence.commit")
-            _text(occurrence.get("summary"), f"{family_id}.occurrence.summary")
+            repository = _text(
+                occurrence.get("repository"),
+                f"{family_id}.occurrences[{occurrence_index}].repository",
+            )
+            commit = _text(
+                occurrence.get("commit"),
+                f"{family_id}.occurrences[{occurrence_index}].commit",
+            )
+            if not COMMIT_RE.fullmatch(commit):
+                raise RegressionSafetyError(f"{family_id} occurrence commit must be lowercase 40-hex")
+            _text(
+                occurrence.get("summary"),
+                f"{family_id}.occurrences[{occurrence_index}].summary",
+            )
             key = (repository, commit)
             if key in unique_occurrences:
                 raise RegressionSafetyError(f"duplicate occurrence in {family_id}: {repository}@{commit}")
             unique_occurrences.add(key)
             repositories.add(repository)
-        if family.get("recurring_across_repositories") is True and len(repositories) < 2:
+        if family.get("recurring_across_repositories") and len(repositories) < 2:
             raise RegressionSafetyError(f"{family_id} claims cross-repo recurrence without two repositories")
 
         if family_id == "TRAILING_WHITESPACE":
             required_detectors = set(contract["repository_hygiene"]["patch_hygiene_commands"])
             if set(detectors) != required_detectors:
                 raise RegressionSafetyError("TRAILING_WHITESPACE must use all canonical patch-hygiene detectors")
+            if family.get("classification") != "PATCH_HYGIENE":
+                raise RegressionSafetyError("TRAILING_WHITESPACE must remain PATCH_HYGIENE")
             if family.get("matrix_capture_required") is not False:
                 raise RegressionSafetyError("whitespace recurrence must not depend on retrospective matrix capture")
             if family.get("recurring_across_repositories") is not True:
@@ -224,9 +293,17 @@ def validate_register(register: dict[str, Any], contract: dict[str, Any]) -> dic
     }
 
 
-def validate_repository_wiring(contract: dict[str, Any]) -> None:
+def validate_repository_wiring(
+    contract: dict[str, Any],
+    *,
+    policy: dict[str, Any] | None = None,
+    floor: dict[str, Any] | None = None,
+    required_checks: dict[str, Any] | None = None,
+    validators: dict[str, Any] | None = None,
+    pre_commit_text: str | None = None,
+) -> None:
     marker = contract["prompt_marker"]
-    policy = load_json(POLICY_PATH)
+    policy = load_json(POLICY_PATH) if policy is None else policy
     appendix = _text(policy.get("copy_content_appendix"), "actionability.copy_content_appendix")
     if marker not in appendix:
         raise RegressionSafetyError("shared actionability policy does not compile the regression-safety marker")
@@ -242,25 +319,62 @@ def validate_repository_wiring(contract: dict[str, Any]) -> None:
         if phrase not in appendix_lower:
             raise RegressionSafetyError(f"shared regression-safety prompt contract missing phrase: {phrase}")
 
-    floor = load_json(TEST_FLOOR_PATH)
+    floor = load_json(TEST_FLOOR_PATH) if floor is None else floor
     if FOCUSED_TEST not in floor.get("self_tests", []):
         raise RegressionSafetyError("focused regression-safety test is not registered in deterministic floor")
-    globs = floor.get("prompt_semantic_test_globs", [])
-    if not any("prompt" in str(item) for item in globs):
+    globs = _string_list(floor.get("prompt_semantic_test_globs"), "test_floor.prompt_semantic_test_globs")
+    if not any("prompt" in item for item in globs):
         raise RegressionSafetyError("deterministic floor has no prompt semantic convention")
 
-    pre_commit = PRE_COMMIT_PATH.read_text(encoding="utf-8")
-    if "git diff --cached --check" not in pre_commit:
+    pre_commit_text = PRE_COMMIT_PATH.read_text(encoding="utf-8") if pre_commit_text is None else pre_commit_text
+    if "git diff --cached --check" not in pre_commit_text:
         raise RegressionSafetyError("pre-commit hook must retain staged patch-hygiene proof")
 
-    required_checks = json.dumps(load_json(REQUIRED_CHECKS_PATH), sort_keys=True)
-    if "git diff --check {base_sha}...{head_sha}" not in required_checks:
-        raise RegressionSafetyError("local required-check contract lacks exact-candidate patch hygiene")
+    required_checks = load_json(REQUIRED_CHECKS_PATH) if required_checks is None else required_checks
+    destinations = required_checks.get("destinations")
+    if not isinstance(destinations, dict) or not isinstance(destinations.get("main"), dict):
+        raise RegressionSafetyError("promotion policy must define destinations.main")
+    main_policy = destinations["main"]
+    exact_commands = _string_list(
+        main_policy.get("exact_candidate_commands"),
+        "promotion.destinations.main.exact_candidate_commands",
+    )
+    exact_patch_command = "git diff --check {base_sha}...{head_sha}"
+    if exact_patch_command not in exact_commands:
+        raise RegressionSafetyError("local required-check executable list lacks exact-candidate patch hygiene")
 
-    validators = json.dumps(load_json(VALIDATORS_PATH), sort_keys=True)
-    for command in ("git diff --check", "git diff --cached --check"):
-        if command not in validators:
-            raise RegressionSafetyError(f"validator registry is missing patch hygiene command: {command}")
+    validators = load_json(VALIDATORS_PATH) if validators is None else validators
+    rows = validators.get("validators")
+    if not isinstance(rows, list):
+        raise RegressionSafetyError("validator registry must define validators")
+    by_id: dict[str, dict[str, Any]] = {}
+    for index, row in enumerate(rows):
+        if not isinstance(row, dict):
+            raise RegressionSafetyError(f"validator[{index}] must be an object")
+        validator_id = _text(row.get("id"), f"validator[{index}].id")
+        if validator_id in by_id:
+            raise RegressionSafetyError(f"duplicate validator id: {validator_id}")
+        by_id[validator_id] = row
+    expected_validator_commands = {
+        "patch-hygiene": "git diff --check",
+        "patch-hygiene-staged": "git diff --cached --check",
+    }
+    for validator_id, command in expected_validator_commands.items():
+        row = by_id.get(validator_id)
+        if row is None or row.get("command") != command or row.get("blocking") is not True:
+            raise RegressionSafetyError(
+                f"validator {validator_id} must remain blocking with command: {command}"
+            )
+
+    profiles = validators.get("profiles")
+    if not isinstance(profiles, dict):
+        raise RegressionSafetyError("validator registry must define profiles")
+    pre_commit_profile = _string_list(profiles.get("pre_commit"), "validators.profiles.pre_commit")
+    pre_push_profile = _string_list(profiles.get("pre_push"), "validators.profiles.pre_push")
+    if "patch-hygiene-staged" not in pre_commit_profile:
+        raise RegressionSafetyError("pre_commit profile must retain patch-hygiene-staged")
+    if "patch-hygiene" not in pre_push_profile:
+        raise RegressionSafetyError("pre_push profile must retain patch-hygiene")
 
 
 def validate_all(
@@ -276,7 +390,7 @@ def validate_all(
         "families": summary["families"],
         "occurrences": summary["occurrences"],
         "systemic_threshold": summary["systemic_threshold"],
-        "matrix_is_exhaustive": false if False else False,
+        "matrix_is_exhaustive": False,
         "hosted_provider_is_semantic_owner": contract["authority"]["hosted_provider_is_semantic_owner"],
     }
 
