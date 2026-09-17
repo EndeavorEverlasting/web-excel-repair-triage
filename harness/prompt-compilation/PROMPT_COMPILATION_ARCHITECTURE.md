@@ -210,8 +210,8 @@ Harness documents are not a substitute for runtime ownership. Runtime modules mu
 | Language Engine | `scripts/prompt_language_compiler.py` | `render`, `validate_*`, `compile_improvement_candidate`, fixture CLI | none durable; policy file is config | none (pure compile) | `PromptCompilationError` |
 | Context Engine | `scripts/prompt_context_engine.py` | `project_prompt_context`, `resolve_execution_profile`, adapters | none; temporary Context IR only | none | `ContextEngineError` |
 | Hypothesis Catalog | `harness/prompt-compilation/improvement-hypothesis-catalog.v1.json` | lookup by failure identity | durable catalog only | none | missing entry → fail closed / generic |
-| ImprovementCandidateCompiler | `scripts/prompt_improvement_compiler.py` | `run_improvement_journey`, `recurrence_gate`, eval, PR draft | none durable product state | writes only when CLI `--output` requested | `ImprovementCompilerError` |
-| Gold fixtures | `harness/prompt-compilation/fixtures/TC06-*` | consumed by Language Engine + Improvement eval | fixture inputs | none | missing fixture → fail closed |
+| ImprovementCandidateCompiler | `scripts/prompt_improvement_compiler.py` | `run_improvement_journey`, `recurrence_gate`, eval, PR draft, optional Outputs retention, P115-compatible handoff | none durable product state; optional ephemeral drafts under `Outputs/prompt-improvement-drafts/` | writes only when CLI `--output` / `--retain-draft` requested | `ImprovementCompilerError` |
+| Gold fixtures | `harness/prompt-compilation/fixtures/TC06-*`, `TC07-*` | consumed by Language Engine + Improvement eval | fixture inputs | none | missing fixture → fail closed |
 
 ### 11.5 Dependency direction
 
@@ -246,12 +246,14 @@ CLI/API finding JSON
   -> recurrence_gate (confirmed_recurrence | monitoring_reopened)
   -> resolve_hypothesis (catalog)
   -> LanguageEngine.compile_improvement_candidate
-  -> evaluate_candidate_regressions (TC06 etc. via LanguageEngine.run_fixture)
+  -> evaluate_candidate_regressions (TC06/TC07 etc. via LanguageEngine.run_fixture)
   -> build_pr_draft_package (auto_merge=false, auto_mutate_source=false)
+  -> build_p115_work_request_handoff (P115-compatible; absorbs_p115_ownership=false)
+  -> optional retain_draft_package under Outputs/prompt-improvement-drafts/
   -> operator-facing draft JSON
 ```
 
-Proven by `tests/test_prompt_improvement_compiler.py` IJ01 and `python scripts/prompt_improvement_compiler.py run-journey ...`.
+Proven by `tests/test_prompt_improvement_compiler.py` IJ01/IJ03 and `python scripts/prompt_improvement_compiler.py run-journey ...`.
 
 ### 11.7 FAILURE CALL STACKS
 

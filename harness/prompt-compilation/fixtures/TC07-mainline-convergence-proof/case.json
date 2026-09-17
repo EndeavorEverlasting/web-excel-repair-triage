@@ -1,0 +1,21 @@
+{
+  "case_id": "TC07-mainline-convergence-proof",
+  "schema_version": "prompt-compilation-fixture/v1",
+  "description": "MUST mainline convergence under exhaustive mode with parallel_width>=2 must retain proof and failure disposition phrases and reject weakening language.",
+  "expect": {
+    "activated_obligations": ["mainline_convergence"],
+    "must_reject_weakening": true,
+    "required_phrases": [
+      "execute `integrate_validated_head`",
+      "proof `default_branch_containment_proof`",
+      "failure disposition `INTEGRATION_BLOCKED`"
+    ],
+    "forbidden_phrases": [
+      "consider integrating",
+      "where useful",
+      "if appropriate",
+      "could merge",
+      "may integrate"
+    ]
+  }
+}
