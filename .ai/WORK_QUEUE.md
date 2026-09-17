@@ -205,16 +205,16 @@ Canonical terminal action: none; no safe actionable work remains
 
 ## TRQ-013 — Prompt Compilation Sprint 4 wiring + Compute Mode
 
-- **Status:** VERIFY
+- **Status:** DONE
 - **Priority:** P1
 - **Owner:** feat/prompt-compilation-sprint4-wiring-20260916
-- **Branch / PR:** feat/prompt-compilation-sprint4-wiring-20260916 (unmerged)
+- **Branch / PR:** main / #519 merged
 - **Scope:** wire Language Engine compiled effective prompts into Prompt Kit builder for semantics-backed prompts (P07); add Compute Mode runtime (Exhaustive/Efficient) with run>prompt>user>product precedence and personal-state storage keys; route polish copy through Compute Mode; regenerate site via builder; focused tests; update sprint map
 - **Forbidden:** weakening safety gates; bypassing builder-owned generation; auto-promotion of improvement candidates; PR #450/#431 donor work; mutating TRQ-007 frozen prompt identities; hand-editing generated HTML outside the builder; new Evidence Spine event types; universal event bus
 - **Dependencies:** TRQ-012 DONE; Sprint 3 on main; planning floor `93a8886d77e043023eeecca05f5e2e8e13b89f06`
 - **References:** `harness/prompt-compilation/PROMPT_COMPILATION_SPRINT_MAP.md`, `docs/prompt-kit-compute-mode.js`, `scripts/build_prompt_kit_registry.py`, `harness/prompt-compilation/semantics/P07.json`, `tests/test_prompt_kit_compute_mode.py`
 - **Acceptance gate:** P07 carries compiledEffectivePrompts for exhaustive and efficient; builder embeds Compute Mode runtime; copy routing uses resolved compiled text when present; focused + Sprint 1–3 compilation tests green; builder --check parity; exact validated head integrates to current default branch
 - **Gate:** none
-- **Last proof:** local:python -m unittest tests.test_prompt_kit_compute_mode (6 OK) plus compilation suite (35 OK); local:python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html --check PASS; artifact:docs/prompt-kit-compute-mode.js; artifact:web/prompt-kit/index.html regenerated via builder
-- **Next action:** commit the Sprint 4 wiring lane, push the branch, and open a PR targeting main for integration
-- **Updated:** 2026-09-16T22:20:00-04:00
+- **Last proof:** commit:10167b309612e6e42aeceda4a1ca379db82939f3; merge:c4d065facd8fb647b7416d7741532d33466379d8 integrated PR #519; local:python -m unittest tests.test_prompt_kit_compute_mode (6 OK) + compilation suite; local:builder --check PASS; workflow required checks green on PR head; artifact:docs/prompt-kit-compute-mode.js and compiled P07 present on refreshed default branch
+- **Next action:** none; no safe actionable work remains
+- **Updated:** 2026-09-16T22:35:00-04:00
