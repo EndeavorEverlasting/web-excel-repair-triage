@@ -35,6 +35,15 @@
       "resource_root": "skills",
       "resource_count": 37,
       "enumeration": "git_skill_tree"
+    },
+    {
+      "id": "michaelshimeles-skills",
+      "repository": "michaelshimeles/skills",
+      "default_branch": "main",
+      "resolved_sha": "513f8a24aae6383b00356fa285144b1bc3730dc1",
+      "resource_root": ".",
+      "resource_count": 7,
+      "enumeration": "git_skill_tree"
     }
   ],
   "policy": {
@@ -51,12 +60,12 @@
     }
   },
   "summary": {
-    "source_count": 3,
-    "resource_count": 49,
-    "point_to_existing_prompt": 8,
+    "source_count": 4,
+    "resource_count": 56,
+    "point_to_existing_prompt": 10,
     "point_to_existing_skill": 0,
-    "point_to_external": 41,
-    "review_add_prompt": 41,
+    "point_to_external": 46,
+    "review_add_prompt": 46,
     "catalog_sources": 1,
     "catalog_entries_indexed": 0
   },
@@ -470,6 +479,56 @@
       "prompt_action": "REVIEW_ADD_PROMPT",
       "promotion_owner_prompt": "P79",
       "best_internal_score": 0.333
+    },
+    {
+      "resource_id": "michaelshimeles-skills:code-structure",
+      "source_id": "michaelshimeles-skills",
+      "title": "Code Structure",
+      "url": "https://github.com/michaelshimeles/skills/blob/513f8a24aae6383b00356fa285144b1bc3730dc1/code-structure/SKILL.md",
+      "user_disposition": "POINT_TO_EXTERNAL",
+      "prompt_action": "REVIEW_ADD_PROMPT",
+      "promotion_owner_prompt": "P79",
+      "best_internal_score": 0.5
+    },
+    {
+      "resource_id": "michaelshimeles-skills:greploop",
+      "source_id": "michaelshimeles-skills",
+      "title": "Greploop",
+      "url": "https://github.com/michaelshimeles/skills/blob/513f8a24aae6383b00356fa285144b1bc3730dc1/greploop/SKILL.md",
+      "user_disposition": "POINT_TO_EXTERNAL",
+      "prompt_action": "REVIEW_ADD_PROMPT",
+      "promotion_owner_prompt": "P79",
+      "best_internal_score": 0.0
+    },
+    {
+      "resource_id": "michaelshimeles-skills:greploop-apps",
+      "source_id": "michaelshimeles-skills",
+      "title": "Greploop Apps",
+      "url": "https://github.com/michaelshimeles/skills/blob/513f8a24aae6383b00356fa285144b1bc3730dc1/greploop-apps/SKILL.md",
+      "user_disposition": "POINT_TO_EXTERNAL",
+      "prompt_action": "REVIEW_ADD_PROMPT",
+      "promotion_owner_prompt": "P79",
+      "best_internal_score": 0.0
+    },
+    {
+      "resource_id": "michaelshimeles-skills:new-feature",
+      "source_id": "michaelshimeles-skills",
+      "title": "New Feature",
+      "url": "https://github.com/michaelshimeles/skills/blob/513f8a24aae6383b00356fa285144b1bc3730dc1/new-feature/SKILL.md",
+      "user_disposition": "POINT_TO_EXTERNAL",
+      "prompt_action": "REVIEW_ADD_PROMPT",
+      "promotion_owner_prompt": "P79",
+      "best_internal_score": 0.5
+    },
+    {
+      "resource_id": "michaelshimeles-skills:unslop",
+      "source_id": "michaelshimeles-skills",
+      "title": "Unslop",
+      "url": "https://github.com/michaelshimeles/skills/blob/513f8a24aae6383b00356fa285144b1bc3730dc1/unslop/SKILL.md",
+      "user_disposition": "POINT_TO_EXTERNAL",
+      "prompt_action": "REVIEW_ADD_PROMPT",
+      "promotion_owner_prompt": "P79",
+      "best_internal_score": 0.0
     }
   ]
 }
