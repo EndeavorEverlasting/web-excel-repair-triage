@@ -67,20 +67,31 @@ jobs:
           path = Path("registry/prompts/prompt-overrides.v1.json")
           payload = json.loads(path.read_text(encoding="utf-8"))
           p13 = next(item for item in payload["overrides"] if item["id"] == "P13")
-          old = """0B. OWNER DISPLACEMENT / STALE-LANE CONVERGENCE
-          - After each material refresh and before an overlapping write, resolve the canonical owner; newer overlapping work/ownership is a state transition.
-          - If it supersedes this lane, mark `SUPERSEDED WRITER` and stop competing writes. Do not rebase, spawn sidecars, or keep mutating because authority remains.
-          - Hand off branch/PR/SHA, reusable findings/tests, passed/failed proof, and unsafe work in the existing PR/ledger/handoff; retire the stale integration vehicle when authorized.
-          - Rejoin the surviving owner at its first unproven gate. Exhaustive compute/full authority apply there, never as permission for a superseded writer to continue."""
-          new = """0B. OWNER DISPLACEMENT / STALE-LANE CONVERGENCE
+          lines = p13["copyContent"].splitlines()
+          header = "0B. OWNER DISPLACEMENT / STALE-LANE CONVERGENCE"
+          positions = [i for i, line in enumerate(lines) if line == header]
+          if len(positions) != 1:
+              raise SystemExit(f"expected one P13 owner-displacement header, found {len(positions)}")
+          start = positions[0]
+          end = start + 1
+          while end < len(lines) and lines[end].strip():
+              end += 1
+          existing = "\n".join(lines[start:end])
+          for phrase in (
+              "newer overlapping work/ownership is a state transition",
+              "SUPERSEDED WRITER",
+              "branch/PR/SHA",
+              "Rejoin the surviving owner",
+          ):
+              if phrase not in existing:
+                  raise SystemExit(f"owner-displacement section missing expected phrase: {phrase}")
+          replacement = """0B. OWNER DISPLACEMENT / STALE-LANE CONVERGENCE
           - After each material refresh and before overlapping writes, resolve the canonical owner; newer overlapping work/ownership is a state transition. Displace only if replacement slices are contained in refreshed default and materially present under owning validators; otherwise retain/reconcile this writer.
           - If it supersedes this lane, mark `SUPERSEDED WRITER`; stop competing writes. Do not rebase, spawn sidecars, or mutate because authority remains.
           - Preserve branch/PR/SHA, reusable findings/tests, passed/failed proof, unsafe work in existing PR/ledger/handoff; retire the stale integration vehicle.
-          - Rejoin the surviving owner. Exhaustive compute/full authority apply there, never as permission for a superseded writer to continue."""
-          copy = p13["copyContent"]
-          if copy.count(old) != 1:
-              raise SystemExit(f"expected one P13 owner-displacement block, found {copy.count(old)}")
-          p13["copyContent"] = copy.replace(old, new, 1)
+          - Rejoin the surviving owner. Exhaustive compute/full authority apply there, never as permission for a superseded writer to continue.""".splitlines()
+          lines[start:end] = replacement
+          p13["copyContent"] = "\n".join(lines)
           if len(p13["copyContent"]) >= 18000:
               raise SystemExit(f"P13 exceeds 18k guardrail: {len(p13['copyContent'])}")
           path.write_text(json.dumps(payload, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
