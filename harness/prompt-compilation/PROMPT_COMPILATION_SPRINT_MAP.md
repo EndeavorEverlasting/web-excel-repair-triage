@@ -1,11 +1,11 @@
 # Prompt Compilation & Adaptive Language — Canonical Sprint Map
 
-**Status:** TRACKED / SPRINTS 1–5 INTEGRATED ON MAIN VIA #483/#485/#515/#519/#522
+**Status:** TRACKED / SPRINTS 1–5 INTEGRATED ON MAIN VIA #483/#485/#515/#519/#522; SPRINT 6 IMPLEMENTING
 **Repository:** `EndeavorEverlasting/web-excel-repair-triage`
-**Planning floor:** refreshed `main@5f55e2a922534e7cae5087309fc2da296892af3d` (provider refresh 2026-09-17)
+**Planning floor:** refreshed `main@6330440281d7d970db726140b44f033be819c9d0` (provider refresh 2026-09-17)
 **Architecture authority:** `harness/prompt-compilation/PROMPT_COMPILATION_ARCHITECTURE.md`
 **P95 constraint floor:** `harness/prompt-topology/EVIDENCE_SPINE_ARCHITECTURE.md` (adapter-only; no universal envelope/bus)
-**Ledger index:** TRQ-009 (Sprint 1), TRQ-010 (Sprint 2), TRQ-012 (Sprint 3), TRQ-013 (Sprint 4 wiring), TRQ-014 (Sprint 5 eval hardening)
+**Ledger index:** TRQ-009 (Sprint 1), TRQ-010 (Sprint 2), TRQ-012 (Sprint 3), TRQ-013 (Sprint 4 wiring), TRQ-014 (Sprint 5 eval hardening), TRQ-015 (Sprint 6 browser proof)
 
 This file is the durable phase map for Prompt Compilation. Chat is not the canonical plan surface.
 
@@ -173,6 +173,49 @@ Move Prompt Kit from a library of hand-maintained English prompts toward a **sel
 4. `git diff --check`
 
 **Proof ceiling:** repository/static VALIDATED + INTEGRATED when merged. Live P115 recovery queue consumption and operator draft retention in production remain UNPROVEN_RUNTIME.
+
+### Sprint 6 — Compute Mode observed browser proof
+
+**Status:** IMPLEMENTING on `test/prompt-compilation-compute-mode-browser-proof-20260916`
+
+**Dependency:** Sprint 4 Compute Mode product surface INTEGRATED; Sprint 5 hardening INTEGRATED; existing observed-behavior proof harness present on current main.
+
+**Owned:**
+
+- exact-head Playwright proof of Compute Mode product default, persisted user default, per-prompt override, explicit run override, and effective P07 clipboard content
+- `browser_runtime_observed` receipt + screenshot under CI `Outputs/observed-proof/`
+- observed-proof manifest registration, exact-head preflight regression, and owning workflow execution
+- Sprint-6 plan/ledger continuity only; no product behavior mutation unless the observed proof exposes an in-scope defect
+
+**Forbidden:**
+
+- changing Compute Mode semantics or profile precedence merely to make the proof pass
+- new Evidence Spine events or lifecycle ownership
+- #450/#431 donor work
+- mutating TRQ-007 frozen control/treatment identities
+- raw conversation/transcript/clipboard persistence outside the ephemeral browser assertion
+- auto-promotion/auto-merge of improvement candidates
+- hand-editing generated `web/prompt-kit/index.html`
+
+**Expected artifacts:**
+
+- `tests/prompt_kit_compute_mode_browser_proof.py`
+- `Outputs/observed-proof/compute-mode-receipt.json` and screenshot as untracked CI artifacts
+- updated `harness/observed-proof/manifest.v1.json`
+- updated `.github/workflows/prompt-kit-observed-browser-proof.yml`
+- focused exact-head harness regression
+- ledger index TRQ-015
+
+**Validation:**
+
+1. `python -m unittest tests.test_observed_behavior_proof_harness tests.test_prompt_kit_compute_mode -v`
+2. `python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html --check`
+3. `python tests/prompt_kit_compute_mode_browser_proof.py --receipt Outputs/observed-proof/compute-mode-receipt.json --screenshot Outputs/observed-proof/compute-mode.png`
+4. `python scripts/validate_observed_behavior_receipt.py Outputs/observed-proof/compute-mode-receipt.json --expected-sha "$(git rev-parse HEAD)" --summary`
+5. `python scripts/validate_repository_work_ledger.py`
+6. `git diff --check`
+
+**Proof ceiling:** exact-head headless Chromium may promote the Compute Mode browser journey to `browser_runtime_observed`. It does not prove public-Pages deployment, physical-device/operator acceptance, external-agent behavior, or live P115 consumption.
 
 ## Acceptance for Sprint 3
 
