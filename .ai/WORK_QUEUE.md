@@ -237,16 +237,16 @@ Canonical terminal action: none; no safe actionable work remains
 
 ## TRQ-015 — Define and prove P123 source-coverage scoring harness
 
-- **Status:** VERIFY
+- **Status:** DONE
 - **Priority:** P1
 - **Owner:** feat/p123-source-coverage-proof-20260917
-- **Branch / PR:** feat/p123-source-coverage-proof-20260917 / #527
+- **Branch / PR:** main / #527 merged
 - **Scope:** durable P123 full-source/tail coverage proof plan; versioned coverage contract; deterministic coverage-receipt scorer; gold partial fixture derived from `7UyhyhxdFsQ` quality evidence; synthetic COMPLETE candidate; focused tests; deterministic test-floor registration; keep document-identity receipt unpromoted for coverage
 - **Forbidden:** claiming provider OBSERVED complete coverage from synthetic PASS; mutating Gemini/Drive live artifacts in this lane; absorbing PR #450/#524/#526 surfaces; rewriting P123 prompt copy unless scorer evidence requires it; inventing unrepresented-tail facts
 - **Dependencies:** main@c0090aa285fe0580ff19c26c1e1de0d7e95506bc; P123 identity receipt field/20260916/p123-gemini-drive-title; quality fixture drive_7UyhyhxdFsQ_20260910
 - **References:** `harness/evals/P123_SOURCE_COVERAGE_PROOF_PLAN.md`, `harness/contracts/p123-source-coverage-proof.v1.json`, `scripts/evaluate_p123_source_coverage.py`, `tests/fixtures/p123_source_coverage/drive_7UyhyhxdFsQ_20260910.v1.json`, `tests/test_p123_source_coverage_eval_prompt.py`, https://github.com/EndeavorEverlasting/web-excel-repair-triage/pull/527
 - **Acceptance gate:** baseline partial FAIL with declared classes; synthetic COMPLETE PASS only when accounting agrees; overclaim/fabrication/extent mismatch fail closed; focused unittest green; plan remains canonical for Phase B/C successors
 - **Gate:** none
-- **Last proof:** commit:740af59d6dbf82439931a6011da059e69f171a37; local:python -m unittest tests.test_p123_source_coverage_eval_prompt (11 OK); local:python scripts/evaluate_p123_source_coverage.py --summary PASS; local:python scripts/validate_repository_work_ledger.py PASS; pr:527
-- **Next action:** verify required CI checks on exact head 740af59d6dbf82439931a6011da059e69f171a37 and merge PR #527 when green
-- **Updated:** 2026-09-17T14:00:00Z
+- **Last proof:** commit:80ea088185a36583fa5fe4c2cf62d3c73f85d6c0; merge:2fb9d5a004d6f7dcdfd186591e9a353ed6994634; workflow:35230472016 deterministic-test-floor SUCCESS; workflow:35230472014 Repository AI Eval Gate SUCCESS; local:python -m unittest tests.test_p123_source_coverage_eval_prompt (11 OK) on refreshed main; artifact:harness/evals/P123_SOURCE_COVERAGE_PROOF_PLAN.md
+- **Next action:** none; no safe actionable work remains
+- **Updated:** 2026-09-17T14:05:00Z
