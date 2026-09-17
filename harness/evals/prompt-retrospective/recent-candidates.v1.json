@@ -108,9 +108,9 @@
         "prompt_kit_gap": {
           "score": 1,
           "confidence": "HIGH",
-          "rationale": "P03 Repository Evidence + First Sprint Executor already owned this capability in the contemporaneous Prompt Kit.",
+          "rationale": "P03 Repository Evidence + First Sprint Executor remains a current canonical owner of this capability.",
           "evidence_refs": [
-            "ev-p03-historical"
+            "ev-p03-current"
           ]
         },
         "authorship_origin": {
@@ -127,7 +127,7 @@
         "origin_label": "UNRESOLVED",
         "comparison_basis": "CONTEMPORANEOUS",
         "contemporaneous_prompt_kit_ref": "docs/prompts.json@1130b6232f80def9849c87aa71f7b967e43157e1#P03",
-        "current_prompt_kit_ref": "main@300d949fdcf79bbac018440a85052302d575bd2c",
+        "current_prompt_kit_ref": "docs/prompts.json@300d949fdcf79bbac018440a85052302d575bd2c#P03",
         "matched_prompt_ids": [
           "P03"
         ],
@@ -136,7 +136,7 @@
         "historical_origin_status": "NEEDS_FULL_PROMPT_FINGERPRINT"
       },
       "kit_assessment": {
-        "evaluation_basis": "CONTEMPORANEOUS",
+        "evaluation_basis": "CURRENT",
         "prior_art_complete": false,
         "topology_ref": null,
         "matched_prompt_ids": [
@@ -161,10 +161,18 @@
           "kind": "historical_registry",
           "ref": "docs/prompts.json@1130b6232f80def9849c87aa71f7b967e43157e1#P03",
           "supports": [
-            "prompt_kit_gap",
             "authorship_origin"
           ],
           "summary": "Prompt Kit snapshot two minutes before the event contains P03 with the exact recovered first-line anchor."
+        },
+        {
+          "id": "ev-p03-current",
+          "kind": "current_registry",
+          "ref": "docs/prompts.json@300d949fdcf79bbac018440a85052302d575bd2c#P03",
+          "supports": [
+            "prompt_kit_gap"
+          ],
+          "summary": "Current canonical registry still contains P03 as the repository-evidence and first-safe-sprint owner."
         },
         {
           "id": "ev-pr480",
@@ -208,9 +216,9 @@
         "prompt_kit_gap": {
           "score": 1,
           "confidence": "HIGH",
-          "rationale": "P16 Cross-Repo Contribution Router already owned this capability before the Sep-16 use.",
+          "rationale": "P16 Cross-Repo Contribution Router remains the current canonical owner of this capability.",
           "evidence_refs": [
-            "ev-p16-historical"
+            "ev-p16-current"
           ]
         },
         "authorship_origin": {
@@ -227,7 +235,7 @@
         "origin_label": "UNRESOLVED",
         "comparison_basis": "CONTEMPORANEOUS",
         "contemporaneous_prompt_kit_ref": "docs/prompts.json@1130b6232f80def9849c87aa71f7b967e43157e1#P16",
-        "current_prompt_kit_ref": "main@300d949fdcf79bbac018440a85052302d575bd2c",
+        "current_prompt_kit_ref": "docs/prompts.json@300d949fdcf79bbac018440a85052302d575bd2c#P16",
         "matched_prompt_ids": [
           "P16"
         ],
@@ -236,7 +244,7 @@
         "historical_origin_status": "NEEDS_FULL_PROMPT_FINGERPRINT"
       },
       "kit_assessment": {
-        "evaluation_basis": "CONTEMPORANEOUS",
+        "evaluation_basis": "CURRENT",
         "prior_art_complete": false,
         "topology_ref": null,
         "matched_prompt_ids": [
@@ -261,10 +269,18 @@
           "kind": "historical_registry",
           "ref": "docs/prompts.json@1130b6232f80def9849c87aa71f7b967e43157e1#P16",
           "supports": [
-            "prompt_kit_gap",
             "authorship_origin"
           ],
           "summary": "A Prompt Kit snapshot from Sep-14, before the Sep-16 event, already contains P16 with the exact recovered first-line anchor."
+        },
+        {
+          "id": "ev-p16-current",
+          "kind": "current_registry",
+          "ref": "docs/prompts.json@300d949fdcf79bbac018440a85052302d575bd2c#P16",
+          "supports": [
+            "prompt_kit_gap"
+          ],
+          "summary": "Current canonical registry still contains P16 as the cross-repository contribution owner."
         },
         {
           "id": "ev-hh-pr6",
