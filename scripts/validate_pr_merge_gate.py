@@ -60,6 +60,20 @@ def validate_contract(contract: dict[str, Any]) -> None:
     if contract.get("passing_required_check_conclusions") != ["success"]:
         raise PrMergeGateError("required check success policy drifted")
 
+    degraded = contract.get("degraded_check_conclusions")
+    if not isinstance(degraded, list) or set(degraded) != {"skipped", "cancelled", "neutral"}:
+        raise PrMergeGateError("degraded check conclusions must be skipped/cancelled/neutral")
+
+    degraded_rules = contract.get("degraded_check_rules")
+    if not isinstance(degraded_rules, dict):
+        raise PrMergeGateError("degraded_check_rules is missing")
+    allowed_reasons = degraded_rules.get("allowed_reasons")
+    if not isinstance(allowed_reasons, list) or len(allowed_reasons) < 3:
+        raise PrMergeGateError("degraded_check_rules allowed_reasons is incomplete")
+    local_proof = degraded_rules.get("local_proof_validators")
+    if not isinstance(local_proof, list) or not any("pre-push" in str(v) for v in local_proof):
+        raise PrMergeGateError("degraded_check_rules must name .githooks/pre-push as local proof")
+
     forbidden = contract.get("forbidden_outcomes")
     if not isinstance(forbidden, list) or len(forbidden) < 5:
         raise PrMergeGateError("forbidden_outcomes is incomplete")
@@ -70,6 +84,8 @@ def validate_contract(contract: dict[str, Any]) -> None:
         "default branch advanced",
         "required checks",
         "expected-head",
+        "actions minutes are exhausted",
+        "usage/billing limit",
     ):
         if phrase not in joined:
             raise PrMergeGateError(
@@ -173,6 +189,9 @@ def classify_pr_state(
         )
 
     passing = set(contract["passing_required_check_conclusions"])
+    degraded = set(contract["degraded_check_conclusions"])
+    allowed_reasons = set(contract["degraded_check_rules"]["allowed_reasons"])
+
     for check in state["required_checks"]:
         if not isinstance(check, dict):
             raise PrMergeGateError("required check entries must be objects")
@@ -180,12 +199,46 @@ def classify_pr_state(
         conclusion = str(check.get("conclusion", "")).strip().lower()
         if not name or not conclusion:
             raise PrMergeGateError("required check entries need name and conclusion")
-        if conclusion not in passing:
+
+        if conclusion in passing:
+            continue
+
+        if conclusion in {"failure", "error"}:
             return _result(
                 "blocked",
                 True,
                 "required_check_not_green",
-                f"Repair or resolve required check {name!r} before merging.",
+                f"Repair or resolve required check {name!r} (conclusion: {conclusion}) before merging.",
+            )
+
+        if conclusion in degraded:
+            degradation_reason = check.get("degradation_reason", "").strip()
+            local_proof_exists = check.get("local_proof_exists", False)
+
+            if degradation_reason in allowed_reasons and local_proof_exists:
+                continue
+
+            reason_msg = f" (reason: {degradation_reason})" if degradation_reason else ""
+            if not local_proof_exists:
+                return _result(
+                    "blocked",
+                    True,
+                    "degraded_check_without_local_proof",
+                    f"Required check {name!r} is degraded{reason_msg}. Run local proof validators (.githooks/pre-push or focused validators) for this exact head before merging.",
+                )
+            if degradation_reason not in allowed_reasons:
+                return _result(
+                    "blocked",
+                    True,
+                    "degraded_check_without_allowed_reason",
+                    f"Required check {name!r} is degraded but degradation_reason {degradation_reason!r} is not an allowed provider usage/billing limit.",
+                )
+        else:
+            return _result(
+                "blocked",
+                True,
+                "required_check_not_green",
+                f"Required check {name!r} has unexpected conclusion {conclusion!r}.",
             )
 
     if state["unresolved_review_findings"]:
@@ -262,7 +315,7 @@ def validate_fixtures(
         raise PrMergeGateError("unsupported PR merge-gate fixture schema")
     state_cases = fixtures.get("state_cases")
     handoff_cases = fixtures.get("handoff_cases")
-    if not isinstance(state_cases, list) or len(state_cases) < 8:
+    if not isinstance(state_cases, list) or len(state_cases) < 14:
         raise PrMergeGateError("PR merge-gate state fixtures are incomplete")
     if not isinstance(handoff_cases, list) or len(handoff_cases) < 3:
         raise PrMergeGateError("PR merge-gate handoff fixtures are incomplete")

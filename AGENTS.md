@@ -26,6 +26,9 @@ Forbidden: acknowledgment without mutation; plans without execution; summaries w
 Material behavior changes require proof and `git diff --check`.
 Client-facing delivery uses the **minimum sufficient explanation**: purpose, period, totals, attachment, consequence. Omit internal evidence mechanics, private allocation logic, singled-out edge cases, defensive caveats, and invitation-to-question closings unless needed for recipient action.
 
+### Provider degradation and merge continuity
+GitHub Actions minute exhaustion, Actions never-started for billing/usage limits, and review-bot/CI-provider usage limits are expected provider degradation and NOT product gates or merge blockers by themselves. When remote required checks are skipped/cancelled/neutral/unavailable solely due to provider usage/billing limits, agents must continue: refresh the default base, exact-head validation, local/repository-native equivalent checks (`.githooks/pre-push`, focused validators, `scripts/run_repo_native_update.py` patterns), merge when intent and authority exist, and post-merge containment. Agents must NOT stop after narrating the usage limit; must NOT ask the operator to proceed solely for that reason; must NOT invent green remote checks; must report remote status honestly as skipped/degraded. Repository branch protection rules requiring named Actions checks remain a named BLOCKER with exact next operator/admin action only when local proof-substitute validation also fails or is unavailable.
+
 ## 6. Repository identity and product boundary
 The core product domain is **spreadsheet intelligence**. Web Excel compatibility, billing, roster/time evidence, and triage are first-class.
 **AFK Agent Flow** is the operator-approved product identity, formerly Operant / Prompt Kit. Target: `UnderDeskDev/AFK-Agent-Flow`; unproven.

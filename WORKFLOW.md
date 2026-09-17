@@ -139,6 +139,8 @@ Keep `Candidates/` and `Active/` read-only. Use sanitized fixtures. Write runtim
 
 Inspect base/head SHAs, unique commits, file deltas, required checks, review findings, and dependencies. Preserve unique work before closure. Integrate in dependency order. Never force-push, delete unique work, destructively clean, or merge with unresolved required gates.
 
+**Provider degradation continuity:** GitHub Actions minute exhaustion, never-started checks for billing/usage limits, and review-bot/CI-provider usage limits are expected provider degradation, NOT merge blockers. When remote required checks are skipped/cancelled/neutral/unavailable solely due to provider usage/billing limits AND equivalent local validator proof exists for that exact head (`.githooks/pre-push`, focused validators, `scripts/run_repo_native_update.py validate`), proceed: refresh default base, exact-head validation, local proof, merge when authorized and all non-degraded gates pass, post-merge containment. Report remote status honestly as skipped/degraded. Do not stop after narrating the limit; do not ask operator to proceed solely for that reason; do not invent green remote checks. Repository branch protection rules requiring named Actions checks that cannot run remain a named BLOCKER only when local proof-substitute also fails or is unavailable, with exact next operator/admin action to resolve the branch protection or quota.
+
 ### F. Prompt-language audit or repair
 
 **Workflow ID:** `prompt-language-audit`
