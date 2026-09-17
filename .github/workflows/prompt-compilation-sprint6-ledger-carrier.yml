@@ -30,7 +30,7 @@ jobs:
           marker = '## TRQ-015 — Prompt Compilation Sprint 6 Compute Mode observed browser proof'
           block = '''## TRQ-015 — Prompt Compilation Sprint 6 Compute Mode observed browser proof
 
-          - **Status:** IN_PROGRESS
+          - **Status:** CLAIMED
           - **Priority:** P1
           - **Owner:** test/prompt-compilation-compute-mode-browser-proof-20260916
           - **Branch / PR:** test/prompt-compilation-compute-mode-browser-proof-20260916 / #524
@@ -42,7 +42,7 @@ jobs:
           - **Gate:** exact-head PR CI + observed-browser receipt + integration pending
           - **Last proof:** tracked:PR #524 opened from current-main-reconciled branch; artifact:tests/prompt_kit_compute_mode_browser_proof.py; artifact:harness/prompt-compilation/PROMPT_COMPILATION_SPRINT_MAP.md Sprint 6
           - **Next action:** execute PR #524 exact-head observed-browser proof; repair any in-scope runtime failure without weakening Compute Mode semantics; integrate only after receipt validation and required checks are green
-          - **Updated:** 2026-09-16T23:55:00-04:00'''
+          - **Updated:** 2026-09-17T00:05:00-04:00'''
           if marker not in text:
               path.write_text(text + '\n\n' + block + '\n', encoding='utf-8')
           PY
