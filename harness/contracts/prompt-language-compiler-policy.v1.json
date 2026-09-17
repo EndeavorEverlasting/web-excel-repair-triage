@@ -1,6 +1,6 @@
 {
   "schema_version": "prompt-language-compiler-policy/v1",
-  "language_engine_revision": "prompt-language-compiler/v1.1.0",
+  "language_engine_revision": "prompt-language-compiler/v1.2.0",
   "title": "Prompt Language Compiler Policy",
   "description": "Deterministic Language Engine rules for compiling semantic IR + execution profile + context into effective prompt text with non-weakening validation.",
   "forbidden_event_ownership": true,
@@ -33,8 +33,18 @@
     "establish_or_use_repository_local_proof_path": {
       "imperative_required_phrases": [
         "MUST establish or reuse a repository-native local validation and integration proof path before hosted CI becomes a dependency",
+        "MUST bind local proof to its canonical owner, exact action or command, base and head identity, required inputs, receipt or result, and nonzero-exit propagation",
         "When hosted CI is quota-exhausted, rate-limited, unavailable, or permission-blocked, MUST continue through local proof for every gate that local proof can honestly prove",
         "MUST suppress blind retries of known non-transient hosted CI failures and preserve hosted-only gates as BLOCKED"
+      ],
+      "failure_state_required": true,
+      "proof_required": true
+    },
+    "converge_validated_owned_work_to_default_branch": {
+      "imperative_required_phrases": [
+        "MUST treat a validated owned branch or pull request as intermediate evidence, not completion",
+        "When required gates are green, dependencies are satisfied, merge authority exists, and no blocking review, conflict, protection, or approval remains, MUST integrate the exact validated owned head into the current default branch",
+        "After integration, MUST refresh default-branch truth and verify the intended change remains contained before completion"
       ],
       "failure_state_required": true,
       "proof_required": true

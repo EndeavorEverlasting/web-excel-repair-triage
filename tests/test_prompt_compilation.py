@@ -80,24 +80,30 @@ class PromptLanguageCompilerTests(unittest.TestCase):
         self.assertEqual(receipt["schema_version"], "prompt-build-receipt/v1")
         self.assertRegex(receipt["effective_prompt_sha256"], r"^[a-f0-9]{64}$")
 
-    def test_p07_always_compiles_local_proof_continuity(self) -> None:
+    def test_p07_always_compiles_local_proof_and_mainline_convergence(self) -> None:
         semantics = compiler.load_json(P07_SEMANTICS)
         result = compiler.render(semantics, self.profile, self.context, policy=self.policy)
         prompt = result["effective_prompt"]
         self.assertEqual(
             result["receipt"]["activated_obligations"],
-            ["local_proof_continuity", "parallel_dispatch"],
+            ["local_proof_continuity", "mainline_convergence", "parallel_dispatch"],
         )
         for phrase in (
             "MUST establish or reuse a repository-native local validation and integration proof path before hosted CI becomes a dependency",
+            "MUST bind local proof to its canonical owner, exact action or command, base and head identity, required inputs, receipt or result, and nonzero-exit propagation",
             "When hosted CI is quota-exhausted, rate-limited, unavailable, or permission-blocked, MUST continue through local proof for every gate that local proof can honestly prove",
             "MUST suppress blind retries of known non-transient hosted CI failures and preserve hosted-only gates as BLOCKED",
             "typed failure disposition LOCAL_PROOF_GAP",
-            "exact_head_local_validation_receipt_or_named_hosted_only_gate",
+            "local_proof_packet_with_owner_command_base_inputs_exit_behavior_or_named_hosted_only_gate",
+            "MUST treat a validated owned branch or pull request as intermediate evidence, not completion",
+            "MUST integrate the exact validated owned head into the current default branch",
+            "After integration, MUST refresh default-branch truth and verify the intended change remains contained before completion",
+            "typed failure disposition INTEGRATION_GAP",
+            "verified_default_branch_contains_validated_owned_change_or_exact_named_merge_gate",
         ):
             self.assertIn(phrase, prompt)
 
-    def test_p07_local_proof_continuity_survives_efficient_profile(self) -> None:
+    def test_p07_must_obligations_survive_efficient_profile(self) -> None:
         semantics = compiler.load_json(P07_SEMANTICS)
         efficient = {
             "schema_version": "prompt-execution-profile/v1",
@@ -114,8 +120,12 @@ class PromptLanguageCompilerTests(unittest.TestCase):
         context["execution"]["parallel_width"] = 1
         context["execution"]["safe_capacity"] = 1
         result = compiler.render(semantics, efficient, context, policy=self.policy)
-        self.assertEqual(result["receipt"]["activated_obligations"], ["local_proof_continuity"])
+        self.assertEqual(
+            result["receipt"]["activated_obligations"],
+            ["local_proof_continuity", "mainline_convergence"],
+        )
         self.assertIn("LOCAL_PROOF_GAP", result["effective_prompt"])
+        self.assertIn("INTEGRATION_GAP", result["effective_prompt"])
 
     def test_rejects_weakening_constructs_for_must_obligation(self) -> None:
         weak = (

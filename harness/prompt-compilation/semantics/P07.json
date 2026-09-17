@@ -8,8 +8,16 @@
       "when": "always",
       "modality": "MUST",
       "action": "establish_or_use_repository_local_proof_path",
-      "proof": "exact_head_local_validation_receipt_or_named_hosted_only_gate",
+      "proof": "local_proof_packet_with_owner_command_base_inputs_exit_behavior_or_named_hosted_only_gate",
       "failure_state": "LOCAL_PROOF_GAP"
+    },
+    {
+      "id": "mainline_convergence",
+      "when": "always",
+      "modality": "MUST",
+      "action": "converge_validated_owned_work_to_default_branch",
+      "proof": "verified_default_branch_contains_validated_owned_change_or_exact_named_merge_gate",
+      "failure_state": "INTEGRATION_GAP"
     },
     {
       "id": "parallel_dispatch",

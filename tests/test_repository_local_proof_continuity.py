@@ -43,14 +43,27 @@ class RepositoryLocalProofContinuityTests(unittest.TestCase):
         self.assertIn("do not relabel local PASS as hosted PASS", joined)
         self.assertIn("Stopping the whole sprint solely because hosted Actions", joined)
 
-    def test_p07_always_activates_local_proof_continuity(self) -> None:
+    def test_p07_always_activates_local_proof_and_mainline_convergence(self) -> None:
         obligations = {item["id"]: item for item in self.p07["obligations"]}
         self.assertIn("local_proof_continuity", obligations)
         local = obligations["local_proof_continuity"]
         self.assertEqual(local["when"], "always")
         self.assertEqual(local["modality"], "MUST")
         self.assertEqual(local["action"], "establish_or_use_repository_local_proof_path")
+        self.assertEqual(
+            local["proof"],
+            "local_proof_packet_with_owner_command_base_inputs_exit_behavior_or_named_hosted_only_gate",
+        )
         self.assertEqual(local["failure_state"], "LOCAL_PROOF_GAP")
+        self.assertIn("mainline_convergence", obligations)
+        convergence = obligations["mainline_convergence"]
+        self.assertEqual(convergence["when"], "always")
+        self.assertEqual(convergence["modality"], "MUST")
+        self.assertEqual(
+            convergence["action"],
+            "converge_validated_owned_work_to_default_branch",
+        )
+        self.assertEqual(convergence["failure_state"], "INTEGRATION_GAP")
         self.assertIn(
             "local_proof_does_not_promote_hosted_or_live_proof",
             self.p07["invariants"],
@@ -69,10 +82,24 @@ class RepositoryLocalProofContinuityTests(unittest.TestCase):
         )
         text = "\n".join(phrases)
         self.assertIn("MUST establish or reuse", text)
+        self.assertIn("canonical owner, exact action or command", text)
+        self.assertIn("base and head identity", text)
+        self.assertIn("nonzero-exit propagation", text)
         self.assertIn("quota-exhausted", text)
         self.assertIn("MUST suppress blind retries", text)
         for weak in ("consider", "where useful", "if appropriate", " could ", " may "):
             self.assertNotIn(weak, text.lower())
+
+    def test_language_policy_renders_mainline_convergence_as_must(self) -> None:
+        renderer = self.policy["action_renderers"][
+            "converge_validated_owned_work_to_default_branch"
+        ]
+        self.assertTrue(renderer["failure_state_required"])
+        self.assertTrue(renderer["proof_required"])
+        text = "\n".join(renderer["imperative_required_phrases"])
+        self.assertIn("MUST treat a validated owned branch or pull request as intermediate evidence", text)
+        self.assertIn("MUST integrate the exact validated owned head into the current default branch", text)
+        self.assertIn("MUST refresh default-branch truth", text)
 
     def test_prompt_operations_binds_planning_and_building(self) -> None:
         for phrase in (
