@@ -1,10 +1,9 @@
 #!/usr/bin/env python3
 """Prototype a provenance-rich semantic extraction seam for pinned upstream skills.
 
-This module is intentionally separate from the production external-resource sync.
-It accepts one pinned skill body, extracts deterministic directive candidates, and
-emits a receipt that later semantic/comparison stages can consume without copying
-upstream bodies into Prompt Kit's canonical metadata projection.
+The prototype stays separate from the production metadata sync. A trusted body
+adapter creates a ``PinnedBody`` bound to one exact upstream identity; the pure
+extraction core consumes that value and emits deterministic directive candidates.
 """
 from __future__ import annotations
 
@@ -16,18 +15,23 @@ import sys
 import urllib.error
 import urllib.parse
 import urllib.request
-from pathlib import Path
+from dataclasses import dataclass
+from pathlib import Path, PurePosixPath
 from typing import Any
 
 SCHEMA_VERSION = "operant-external-skill-semantic-prototype/v1"
 RAW_GITHUB_HOST = "raw.githubusercontent.com"
+SHA40_RE = re.compile(r"^[0-9a-f]{40}$")
+SHA256_RE = re.compile(r"^[0-9a-f]{64}$")
 HEADING_RE = re.compile(r"^(#{1,6})\s+(.+?)\s*$")
 LIST_RE = re.compile(r"^\s*(?:[-*+]\s+|\d+[.)]\s+)(.+?)\s*$")
 TABLE_ROW_RE = re.compile(r"^\s*\|.*\|\s*$")
+FENCE_RE = re.compile(r"^\s*(`{3,}|~{3,})")
 DIRECTIVE_RE = re.compile(
     r"\b(must|never|always|do not|don't|keep|use|stop|confirm|prefer|require|should|"
     r"follow|resolve|install|fetch|verify|record|capture|poll|retry|cleanup|remove|"
-    r"regenerate|check|run|create|start|wait|report|preserve|avoid|ensure)\b",
+    r"regenerate|check|run|create|start|wait|report|preserve|avoid|ensure|pick|"
+    r"switch|post|attach|mark|list|read|determine|fix)\b",
     re.IGNORECASE,
 )
 SIGNAL_TERMS: dict[str, tuple[str, ...]] = {
@@ -44,8 +48,61 @@ SIGNAL_TERMS: dict[str, tuple[str, ...]] = {
 }
 
 
+@dataclass(frozen=True)
+class ResourceIdentity:
+    source_id: str
+    resource_id: str
+    repository: str
+    source_sha: str
+    path: str
+
+    def __post_init__(self) -> None:
+        if not self.source_id or not self.resource_id:
+            raise ValueError("source_id and resource_id are required")
+        if self.repository.count("/") != 1 or any(not part for part in self.repository.split("/")):
+            raise ValueError("repository must be owner/name")
+        if not SHA40_RE.fullmatch(self.source_sha):
+            raise ValueError("source_sha must be a lowercase 40-character Git SHA")
+        parts = PurePosixPath(self.path).parts
+        if not self.path or self.path.startswith("/") or ".." in parts:
+            raise ValueError("path must be a relative repository path")
+
+
+@dataclass(frozen=True)
+class PinnedBody:
+    identity: ResourceIdentity
+    body: str
+    body_sha256: str
+    acquisition: str
+
+    def __post_init__(self) -> None:
+        if not SHA256_RE.fullmatch(self.body_sha256):
+            raise ValueError("body_sha256 must be a lowercase SHA-256 digest")
+        if body_sha256(self.body) != self.body_sha256:
+            raise ValueError("PinnedBody digest does not match body")
+        if not self.acquisition:
+            raise ValueError("PinnedBody acquisition proof is required")
+
+
 def body_sha256(body: str) -> str:
     return hashlib.sha256(body.encode("utf-8")).hexdigest()
+
+
+def verify_body(
+    *,
+    identity: ResourceIdentity,
+    body: str,
+    expected_body_sha256: str,
+    acquisition: str,
+) -> PinnedBody:
+    if not SHA256_RE.fullmatch(expected_body_sha256):
+        raise ValueError("expected body sha256 must be a lowercase 64-character digest")
+    observed = body_sha256(body)
+    if observed != expected_body_sha256:
+        raise ValueError(
+            f"body sha256 mismatch for {identity.resource_id}: expected {expected_body_sha256}, observed {observed}"
+        )
+    return PinnedBody(identity=identity, body=body, body_sha256=observed, acquisition=acquisition)
 
 
 def parse_front_matter(lines: list[str]) -> tuple[dict[str, str], int]:
@@ -58,8 +115,7 @@ def parse_front_matter(lines: list[str]) -> tuple[dict[str, str], int]:
     meta: dict[str, str] = {}
     idx = 1
     while idx < end:
-        line = lines[idx]
-        match = re.match(r"^([A-Za-z0-9_-]+):\s*(.*)$", line)
+        match = re.match(r"^([A-Za-z0-9_-]+):\s*(.*)$", lines[idx])
         if not match:
             idx += 1
             continue
@@ -91,10 +147,9 @@ def _append_candidate(
     start_line: int,
     end_line: int,
     pieces: list[str],
-    require_directive_language: bool,
 ) -> None:
     text = " ".join(piece.strip() for piece in pieces if piece.strip()).strip()
-    if not text or (require_directive_language and not DIRECTIVE_RE.search(text)):
+    if not text or not DIRECTIVE_RE.search(text):
         return
     candidates.append(
         {
@@ -113,7 +168,7 @@ def extract_directive_candidates(body: str) -> tuple[dict[str, str], list[dict[s
     metadata, body_start = parse_front_matter(lines)
     candidates: list[dict[str, Any]] = []
     section: str | None = None
-    fenced = False
+    fence_marker: str | None = None
     paragraph: list[str] = []
     paragraph_start: int | None = None
     list_item: list[str] = []
@@ -129,7 +184,6 @@ def extract_directive_candidates(body: str) -> tuple[dict[str, str], list[dict[s
                 start_line=paragraph_start,
                 end_line=max(before_line, paragraph_start),
                 pieces=paragraph,
-                require_directive_language=True,
             )
         paragraph = []
         paragraph_start = None
@@ -144,7 +198,6 @@ def extract_directive_candidates(body: str) -> tuple[dict[str, str], list[dict[s
                 start_line=list_start,
                 end_line=max(before_line, list_start),
                 pieces=list_item,
-                require_directive_language=False,
             )
         list_item = []
         list_start = None
@@ -153,12 +206,18 @@ def extract_directive_candidates(body: str) -> tuple[dict[str, str], list[dict[s
         line_no = zero_idx + 1
         raw = lines[zero_idx]
         stripped = raw.strip()
-        if stripped.startswith("```"):
-            flush_list(line_no - 1)
-            flush_paragraph(line_no - 1)
-            fenced = not fenced
+        fence = FENCE_RE.match(raw)
+        if fence:
+            marker = fence.group(1)[0]
+            if fence_marker is None:
+                flush_list(line_no - 1)
+                flush_paragraph(line_no - 1)
+                fence_marker = marker
+                continue
+            if marker == fence_marker:
+                fence_marker = None
             continue
-        if fenced:
+        if fence_marker is not None:
             continue
         heading = HEADING_RE.match(stripped)
         if heading:
@@ -198,50 +257,50 @@ def extract_directive_candidates(body: str) -> tuple[dict[str, str], list[dict[s
     return metadata, candidates
 
 
-def validate_pinned_raw_url(url: str, *, repository: str, source_sha: str, path: str) -> None:
+def validate_pinned_raw_url(url: str, identity: ResourceIdentity) -> None:
     parsed = urllib.parse.urlparse(url)
-    expected_path = f"/{repository}/{source_sha}/{path}"
+    expected_path = f"/{identity.repository}/{identity.source_sha}/{identity.path}"
     if parsed.scheme != "https" or parsed.netloc != RAW_GITHUB_HOST or parsed.path != expected_path:
         raise ValueError("source URL must be an exact raw.githubusercontent.com URL pinned to repository/source_sha/path")
 
 
-def fetch_pinned_body(url: str, *, repository: str, source_sha: str, path: str) -> str:
-    validate_pinned_raw_url(url, repository=repository, source_sha=source_sha, path=path)
+def fetch_pinned_body(url: str, identity: ResourceIdentity) -> PinnedBody:
+    validate_pinned_raw_url(url, identity)
     request = urllib.request.Request(url, headers={"User-Agent": "OperantSemanticPrototype/1.0"})
     try:
         with urllib.request.urlopen(request, timeout=30) as response:
-            return response.read().decode("utf-8")
+            body = response.read().decode("utf-8")
     except (urllib.error.URLError, UnicodeDecodeError) as exc:
         raise RuntimeError(f"pinned skill fetch failed: {exc}") from exc
-
-
-def build_receipt(
-    *,
-    source_id: str,
-    resource_id: str,
-    repository: str,
-    source_sha: str,
-    path: str,
-    body: str,
-    expected_body_sha256: str | None = None,
-) -> dict[str, Any]:
     observed = body_sha256(body)
-    if expected_body_sha256 and observed != expected_body_sha256:
-        raise ValueError(
-            f"body sha256 mismatch for {resource_id}: expected {expected_body_sha256}, observed {observed}"
-        )
-    metadata, directives = extract_directive_candidates(body)
+    return PinnedBody(identity=identity, body=body, body_sha256=observed, acquisition="pinned_raw_url")
+
+
+def load_verified_body(path: Path, identity: ResourceIdentity, expected_body_sha256: str) -> PinnedBody:
+    body = path.read_text(encoding="utf-8")
+    return verify_body(
+        identity=identity,
+        body=body,
+        expected_body_sha256=expected_body_sha256,
+        acquisition="verified_body_file",
+    )
+
+
+def build_receipt(pinned: PinnedBody) -> dict[str, Any]:
+    identity = pinned.identity
+    metadata, directives = extract_directive_candidates(pinned.body)
     if not directives:
-        raise ValueError(f"no directive candidates extracted from {resource_id}")
+        raise ValueError(f"no directive candidates extracted from {identity.resource_id}")
     return {
         "schema_version": SCHEMA_VERSION,
         "source": {
-            "source_id": source_id,
-            "resource_id": resource_id,
-            "repository": repository,
-            "source_sha": source_sha,
-            "path": path,
-            "body_sha256": observed,
+            "source_id": identity.source_id,
+            "resource_id": identity.resource_id,
+            "repository": identity.repository,
+            "source_sha": identity.source_sha,
+            "path": identity.path,
+            "body_sha256": pinned.body_sha256,
+            "acquisition": pinned.acquisition,
         },
         "document": {
             "name": metadata.get("name"),
@@ -276,24 +335,27 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--output", type=Path)
     args = parser.parse_args(argv)
     try:
-        if args.body_file:
-            body = args.body_file.read_text(encoding="utf-8")
-        else:
-            body = fetch_pinned_body(
-                args.url,
-                repository=args.repository,
-                source_sha=args.source_sha,
-                path=args.path,
-            )
-        receipt = build_receipt(
+        identity = ResourceIdentity(
             source_id=args.source_id,
             resource_id=args.resource_id,
             repository=args.repository,
             source_sha=args.source_sha,
             path=args.path,
-            body=body,
-            expected_body_sha256=args.expected_body_sha256,
         )
+        if args.body_file:
+            if not args.expected_body_sha256:
+                raise ValueError("--body-file requires --expected-body-sha256")
+            pinned = load_verified_body(args.body_file, identity, args.expected_body_sha256)
+        else:
+            pinned = fetch_pinned_body(args.url, identity)
+            if args.expected_body_sha256:
+                pinned = verify_body(
+                    identity=identity,
+                    body=pinned.body,
+                    expected_body_sha256=args.expected_body_sha256,
+                    acquisition=pinned.acquisition,
+                )
+        receipt = build_receipt(pinned)
         payload = json.dumps(receipt, indent=2, ensure_ascii=False) + "\n"
         if args.output:
             args.output.parent.mkdir(parents=True, exist_ok=True)
