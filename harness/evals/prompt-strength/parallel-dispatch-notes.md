@@ -1,10 +1,12 @@
 # Prompt-strength dispatch binding note
 
-`Outputs/prompt-parallel-dispatch/manifest.json` intentionally records `parallel_disposition=DEGRADED` for the current ChatGPT runtime. The dependency graph has width three, but this runtime does not expose a proven native/local agent runner and direct local Git/network access is unavailable.
+The durable seed is `harness/evals/prompt-strength/parallel-dispatch-manifest.seed.v1.json`. Immediately before execution, materialize that seed to the canonical runtime path `Outputs/prompt-parallel-dispatch/manifest.json`; `Outputs/` remains runtime-generated and ignored by Git.
+
+The seed intentionally records `parallel_disposition=DEGRADED` for the current ChatGPT runtime. The dependency graph has width three, but this runtime does not expose a proven native/local agent runner and direct local Git/network access is unavailable.
 
 Do not reinterpret this as `NOT_APPLICABLE`, and do not claim dispatch proof from copy panels or serial tool calls.
 
-A local runtime may promote the manifest to `REQUIRED` only after it binds the lanes to an actually available adapter evidenced in that environment, performs the real launches, writes a compatible receipt, and passes:
+A local runtime may promote the materialized manifest to `REQUIRED` only after it binds the lanes to an actually available adapter evidenced in that environment, performs the real launches, writes a compatible receipt, and passes:
 
 ```bash
 python scripts/prompt_parallel_dispatch.py validate --manifest Outputs/prompt-parallel-dispatch/manifest.json
