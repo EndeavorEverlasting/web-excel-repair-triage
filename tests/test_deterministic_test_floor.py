@@ -14,6 +14,7 @@ from scripts import run_private_input_test_floor as private_floor
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 MANIFEST = REPO_ROOT / "harness" / "test-floor.v1.json"
+CANARY_CONTRACT = REPO_ROOT / "harness/contracts/deterministic-test-floor-canary.v1.json"
 VALIDATORS = REPO_ROOT / "harness" / "validators.v1.json"
 ARTIFACT_WORKFLOW = REPO_ROOT / ".github" / "workflows" / "artifact-engines.yml"
 FLOOR_WORKFLOW = REPO_ROOT / ".github" / "workflows" / "deterministic-test-floor.yml"
@@ -31,12 +32,18 @@ class DeterministicTestFloorTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls) -> None:
         cls.manifest = json.loads(MANIFEST.read_text(encoding="utf-8"))
+        cls.canary = json.loads(CANARY_CONTRACT.read_text(encoding="utf-8"))
         cls.validators = json.loads(VALIDATORS.read_text(encoding="utf-8"))
 
     def test_manifest_is_nonempty_and_all_owned_paths_exist(self) -> None:
         self.assertEqual(self.manifest["schema_version"], "deterministic-test-floor/v1")
         self.assertEqual(self.manifest["python_version"], "3.11")
         self.assertEqual(self.manifest["dependency_file"], "requirements-test-floor.txt")
+        self.assertEqual(
+            self.manifest["canary_contract"],
+            "harness/contracts/deterministic-test-floor-canary.v1.json",
+        )
+        self.assertTrue(CANARY_CONTRACT.is_file())
         self.assertGreater(len(self.manifest["self_tests"]), 0)
         self.assertGreater(len(self.manifest["prompt_semantic_test_globs"]), 0)
         self.assertGreater(len(self.manifest["artifact_imports"]), 0)
@@ -62,7 +69,12 @@ class DeterministicTestFloorTests(unittest.TestCase):
         discovered.difference_update(excludes)
 
         registered = set(self.manifest["self_tests"])
-        registered.remove("tests/test_deterministic_test_floor.py")
+        registered.difference_update(
+            {
+                "tests/test_deterministic_test_floor.py",
+                "tests/test_deterministic_test_floor_canary.py",
+            }
+        )
         self.assertEqual(discovered, registered)
         self.assertIn("tests/test_afk_deterministic_testing_prompt.py", registered)
         self.assertIn("tests/test_test_floor_evolution_prompt.py", registered)
@@ -220,27 +232,32 @@ SKIPPED [1] tests/test_three.py:30: Real roster log not present
         self.assertIn("+refs/heads/main:refs/remotes/origin/main", workflow)
         self.assertIn("python -m pip install -r requirements-test-floor.txt", workflow)
         self.assertNotIn("python -m pip install -r requirements.txt", workflow)
-        self.assertEqual(workflow.count("scripts/run_deterministic_test_floor.py"), 2)
+        self.assertEqual(workflow.count("scripts/run_deterministic_test_floor.py"), 1)
+        self.assertEqual(workflow.count("scripts/run_deterministic_test_floor_canary.py"), 1)
         self.assertEqual(workflow.count("scripts/run_private_input_test_floor.py"), 1)
         self.assertNotIn("tests/test_nw_prj_neuron_track_hours.py", workflow)
         self.assertNotIn("tests.test_harness_contract", workflow)
 
-    def test_workflow_negative_canary_uses_current_manifest_owned_failure_gate(self) -> None:
+    def test_workflow_negative_canary_delegates_to_contract_owned_proof_runner(self) -> None:
         workflow = FLOOR_WORKFLOW.read_text(encoding="utf-8")
-        expected = self.manifest["required_canary_failure"]
+        expected = self.canary["full_floor"]["expected_failed_step"]
         self.assertEqual(expected, "test-floor-self-tests")
+        self.assertEqual(
+            self.manifest["canary_contract"],
+            "harness/contracts/deterministic-test-floor-canary.v1.json",
+        )
+        self.assertNotIn("required_canary_failure", self.manifest)
         manifest, validators = floor.load_contract(MANIFEST)
         labels = [label for label, _ in floor.build_steps(manifest, validators)]
         self.assertIn(expected, labels)
         self.assertLess(labels.index(expected), labels.index("validator:skill-prompt-registry-tests"))
         self.assertLess(labels.index(expected), labels.index("validator:prompt-kit-parity"))
-        self.assertIn("web/prompt-kit/index.html", workflow)
+        self.assertIn("scripts/run_deterministic_test_floor_canary.py", workflow)
+        self.assertIn("harness/contracts/deterministic-test-floor-canary.v1.json", workflow)
         self.assertIn("negative-canary-report.json", workflow)
-        self.assertIn("harness/test-floor.v1.json", workflow)
-        self.assertIn("manifest['required_canary_failure']", workflow)
-        self.assertIn("earliest registered failure gate", workflow)
-        self.assertIn("if [ \"$status\" -eq 0 ]; then", workflow)
-        self.assertNotIn("expected = 'validator:skill-prompt-registry-tests'", workflow)
+        self.assertIn("negative-canary-floor-report.json", workflow)
+        self.assertNotIn("deterministic-test-floor-negative-canary -->", workflow)
+        self.assertNotIn("manifest['required_canary_failure']", workflow)
 
     def test_private_input_requirements_exactly_own_registered_skips(self) -> None:
         manifest, records = private_floor.load_requirements(MANIFEST)
@@ -420,7 +437,6 @@ SKIPPED [1] tests/test_three.py:30: Real roster log not present
                 mock.patch.object(private_floor, "_git_value", side_effect=["deadbeef", "synthetic"]),
                 mock.patch.object(private_floor, "tracked_dirty_paths", return_value=[]),
                 mock.patch.object(private_floor, "input_artifacts", side_effect=[before, after]),
-                mock.patch.object(private_floor.subprocess, "run", return_value=completed),
             ):
                 status = private_floor.run(MANIFEST, report_path)
             report = json.loads(report_path.read_text(encoding="utf-8"))
