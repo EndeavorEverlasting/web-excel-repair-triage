@@ -234,3 +234,19 @@ Canonical terminal action: none; no safe actionable work remains
 - **Last proof:** commit:97dc0b62cc915ffcbbe40c166912e2f00a0578d0; merge:5f55e2a922534e7cae5087309fc2da296892af3d integrated PR #522; local:python -m unittest tests.test_prompt_improvement_compiler (12 OK) on refreshed default; local:validate-fixtures cases=2; workflow required checks green on PR head `2e844f44`; artifact:TC07 + P115 handoff present on refreshed default branch
 - **Next action:** none; no safe actionable work remains
 - **Updated:** 2026-09-16T23:20:00-04:00
+
+## TRQ-015 — Prompt Compilation Sprint 6 Compute Mode observed browser proof
+
+- **Status:** CLAIMED
+- **Priority:** P1
+- **Owner:** test/prompt-compilation-compute-mode-browser-proof-20260916
+- **Branch / PR:** test/prompt-compilation-compute-mode-browser-proof-20260916 / #524
+- **Scope:** close the explicit Sprint 4 Compute Mode runtime proof gap with an exact-head Playwright journey covering product default, persisted user default, per-prompt override, explicit run override, and effective P07 clipboard content; register the proof in the existing observed-behavior harness and preserve Sprint 6 plan continuity
+- **Forbidden:** changing Compute Mode semantics or precedence merely to make proof pass; new Evidence Spine events or lifecycle ownership; PR #450/#431 donor work; mutating TRQ-007 frozen identities; raw conversation/transcript persistence; automatic improvement promotion/merge; hand-editing generated Prompt Kit HTML
+- **Dependencies:** TRQ-013 DONE; TRQ-014 DONE; observed-behavior proof harness present on current main; refreshed floor includes #521 outcome receipts without overlapping Prompt Compilation/browser-proof mutations
+- **References:** `harness/prompt-compilation/PROMPT_COMPILATION_SPRINT_MAP.md`, `tests/prompt_kit_compute_mode_browser_proof.py`, `harness/observed-proof/manifest.v1.json`, `.github/workflows/prompt-kit-observed-browser-proof.yml`, `tests/test_observed_behavior_proof_harness.py`
+- **Acceptance gate:** exact PR head passes deterministic observed-proof/Compute Mode tests and generated-site parity; Chromium journey emits a valid `browser_runtime_observed` receipt proving run > prompt > user > product precedence and compiled P07 clipboard output; required PR checks/reviews are green; exact validated head integrates to current default branch with containment proof
+- **Gate:** exact-head PR CI + observed-browser receipt + integration pending
+- **Last proof:** tracked:PR #524 opened from current-main-reconciled branch; artifact:tests/prompt_kit_compute_mode_browser_proof.py; artifact:harness/prompt-compilation/PROMPT_COMPILATION_SPRINT_MAP.md Sprint 6
+- **Next action:** execute PR #524 exact-head observed-browser proof; repair any in-scope runtime failure without weakening Compute Mode semantics; integrate only after receipt validation and required checks are green
+- **Updated:** 2026-09-17T00:05:00-04:00
