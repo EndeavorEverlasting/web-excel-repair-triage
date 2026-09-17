@@ -10,6 +10,7 @@ from scripts import prompt_context_engine as context_engine
 ROOT = Path(__file__).resolve().parents[1]
 RUNTIME = ROOT / "docs" / "prompt-kit-compute-mode.js"
 BASE_RUNTIME = ROOT / "docs" / "prompt-kit.js"
+POLISH_RUNTIME = ROOT / "docs" / "prompt-kit-polish.js"
 
 
 class PromptComputeModeTests(unittest.TestCase):
@@ -86,6 +87,14 @@ class PromptComputeModeTests(unittest.TestCase):
         self.assertIn("user_default", runtime)
         self.assertIn("product_default", runtime)
         self.assertIn("promptKit.computeModeOverrides.v1", runtime)
+
+    def test_copy_confirmation_preserves_exact_effective_content(self) -> None:
+        source = POLISH_RUNTIME.read_text(encoding="utf-8")
+        self.assertIn("var pendingCopyConfirmation=null;", source)
+        self.assertIn("pendingCopyConfirmation={promptId:String(id),copyContent:effectiveCopyContent};", source)
+        self.assertIn("showCopyConfirmation(id);", source)
+        self.assertIn("pendingCopyConfirmation&&pendingCopyConfirmation.promptId===promptId", source)
+        self.assertIn("var copyContent=pending?pending.copyContent", source)
 
 
 if __name__ == "__main__":
