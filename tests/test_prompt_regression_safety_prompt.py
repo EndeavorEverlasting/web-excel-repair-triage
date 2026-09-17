@@ -31,6 +31,20 @@ class PromptRegressionSafetyTests(unittest.TestCase):
     def setUpClass(cls) -> None:
         cls.contract = json.loads(CONTRACT.read_text(encoding="utf-8"))
         cls.register = json.loads(REGISTER.read_text(encoding="utf-8"))
+        cls.policy = regression.load_json(regression.POLICY_PATH)
+        cls.floor = regression.load_json(regression.TEST_FLOOR_PATH)
+        cls.required_checks = regression.load_json(regression.REQUIRED_CHECKS_PATH)
+        cls.validators = regression.load_json(regression.VALIDATORS_PATH)
+        cls.pre_commit_text = regression.PRE_COMMIT_PATH.read_text(encoding="utf-8")
+
+    def wiring_kwargs(self) -> dict[str, object]:
+        return {
+            "policy": copy.deepcopy(self.policy),
+            "floor": copy.deepcopy(self.floor),
+            "required_checks": copy.deepcopy(self.required_checks),
+            "validators": copy.deepcopy(self.validators),
+            "pre_commit_text": self.pre_commit_text,
+        }
 
     def test_current_contract_and_register_pass(self) -> None:
         result = regression.validate_all(copy.deepcopy(self.contract), copy.deepcopy(self.register))
@@ -44,6 +58,7 @@ class PromptRegressionSafetyTests(unittest.TestCase):
         family = self.register["families"][0]
         self.assertEqual(family["id"], "TRAILING_WHITESPACE")
         self.assertEqual(family["status"], "SYSTEMIC")
+        self.assertEqual(family["classification"], "PATCH_HYGIENE")
         self.assertTrue(family["recurring_across_repositories"])
         self.assertFalse(family["matrix_capture_required"])
         repositories = {item["repository"] for item in family["occurrences"]}
@@ -98,7 +113,7 @@ class PromptRegressionSafetyTests(unittest.TestCase):
 
     def test_systemic_family_cannot_degrade_to_prompt_by_prompt_cleanup(self) -> None:
         register = copy.deepcopy(self.register)
-        register["families"][0]["prompt_strengthening"] = "ONE_PROMPT_ONLY"
+        register["families"][0]["prompt_strengthening"] = "SCOPED_SHARED_POLICY"
         with self.assertRaisesRegex(regression.RegressionSafetyError, "shared prompt policy"):
             regression.validate_register(register, self.contract)
 
@@ -108,31 +123,80 @@ class PromptRegressionSafetyTests(unittest.TestCase):
         with self.assertRaisesRegex(regression.RegressionSafetyError, "evidenced occurrences"):
             regression.validate_register(register, self.contract)
 
+    def test_contract_requires_local_required_check_as_incident_source(self) -> None:
+        contract = copy.deepcopy(self.contract)
+        contract["recurrence"]["incident_sources"].remove("local_required_check")
+        with self.assertRaisesRegex(regression.RegressionSafetyError, "local_required_check"):
+            regression.validate_contract(contract)
+
+    def test_family_rejects_invalid_classification_and_detector_types(self) -> None:
+        register = copy.deepcopy(self.register)
+        register["families"][0]["classification"] = "ANYTHING"
+        with self.assertRaisesRegex(regression.RegressionSafetyError, "classification"):
+            regression.validate_register(register, self.contract)
+
+        register = copy.deepcopy(self.register)
+        register["families"][0]["detector_commands"][0] = 7
+        with self.assertRaisesRegex(regression.RegressionSafetyError, "detector_commands"):
+            regression.validate_register(register, self.contract)
+
+    def test_family_rejects_missing_owner_bad_prevention_and_malformed_occurrence(self) -> None:
+        register = copy.deepcopy(self.register)
+        register["families"][0]["canonical_owner"] = ""
+        with self.assertRaisesRegex(regression.RegressionSafetyError, "canonical_owner"):
+            regression.validate_register(register, self.contract)
+
+        register = copy.deepcopy(self.register)
+        register["families"][0]["prevention_surfaces"][0] = 3
+        with self.assertRaisesRegex(regression.RegressionSafetyError, "prevention_surfaces"):
+            regression.validate_register(register, self.contract)
+
+        register = copy.deepcopy(self.register)
+        del register["families"][0]["occurrences"][0]["summary"]
+        with self.assertRaisesRegex(regression.RegressionSafetyError, "occurrence is malformed"):
+            regression.validate_register(register, self.contract)
+
+    def test_occurrence_commit_must_be_exact_lowercase_sha(self) -> None:
+        register = copy.deepcopy(self.register)
+        register["families"][0]["occurrences"][0]["commit"] = "ABC123"
+        with self.assertRaisesRegex(regression.RegressionSafetyError, "lowercase 40-hex"):
+            regression.validate_register(register, self.contract)
+
     def test_matrix_is_not_the_only_intake_surface(self) -> None:
         sources = set(self.contract["recurrence"]["incident_sources"])
-        self.assertIn("retrospective_matrix", sources)
-        self.assertIn("local_validator", sources)
-        self.assertIn("hosted_ci", sources)
-        self.assertIn("code_review", sources)
-        self.assertIn("runtime_observation", sources)
-        self.assertIn("operator_feedback", sources)
-        self.assertIn("commit_history", sources)
+        for source in (
+            "local_validator",
+            "local_required_check",
+            "hosted_ci",
+            "code_review",
+            "runtime_observation",
+            "operator_feedback",
+            "retrospective_matrix",
+            "commit_history",
+        ):
+            self.assertIn(source, sources)
         self.assertIn("one intake source", self.contract["matrix_boundary"].lower())
 
-    def test_every_compiled_prompt_inherits_regression_safety_exactly_once(self) -> None:
-        prompts = builder.load_prompt_kit_registry()
-        self.assertGreater(len(prompts), 100)
+    def test_governed_operational_prompts_inherit_contract_content_only_prompts_do_not(self) -> None:
+        operational = builder.load_prompt_registry()
+        content_only = builder.load_content_prompt_registry()
+        self.assertGreater(len(operational), 100)
         missing = []
         duplicated = []
-        for prompt in prompts:
-            content = str(prompt.get("copyContent", ""))
-            count = content.count(MARKER)
+        for prompt in operational:
+            count = str(prompt.get("copyContent", "")).count(MARKER)
             if count == 0:
                 missing.append(prompt["id"])
             elif count != 1:
                 duplicated.append((prompt["id"], count))
         self.assertEqual(missing, [])
         self.assertEqual(duplicated, [])
+        leaked = [
+            prompt["id"]
+            for prompt in content_only
+            if MARKER in str(prompt.get("copyContent", ""))
+        ]
+        self.assertEqual(leaked, [])
 
     def test_local_first_contract_does_not_invent_merge_authority(self) -> None:
         local_first = " ".join(self.contract["local_first_proof"]["rules"]).lower()
@@ -141,6 +205,46 @@ class PromptRegressionSafetyTests(unittest.TestCase):
         self.assertIn("provider", local_first)
         self.assertIn("merge authority", local_first)
         self.assertIn("still requires provider mutation", local_first)
+
+    def test_wiring_rejects_missing_exact_candidate_patch_command(self) -> None:
+        kwargs = self.wiring_kwargs()
+        required_checks = kwargs["required_checks"]
+        assert isinstance(required_checks, dict)
+        required_checks["destinations"]["main"]["exact_candidate_commands"].remove(
+            "git diff --check {base_sha}...{head_sha}"
+        )
+        with self.assertRaisesRegex(regression.RegressionSafetyError, "executable list"):
+            regression.validate_repository_wiring(self.contract, **kwargs)
+
+    def test_wiring_rejects_metadata_only_or_nonblocking_patch_validator(self) -> None:
+        kwargs = self.wiring_kwargs()
+        validators = kwargs["validators"]
+        assert isinstance(validators, dict)
+        patch = next(row for row in validators["validators"] if row["id"] == "patch-hygiene")
+        patch["command"] = "echo git diff --check"
+        with self.assertRaisesRegex(regression.RegressionSafetyError, "patch-hygiene"):
+            regression.validate_repository_wiring(self.contract, **kwargs)
+
+        kwargs = self.wiring_kwargs()
+        validators = kwargs["validators"]
+        assert isinstance(validators, dict)
+        staged = next(row for row in validators["validators"] if row["id"] == "patch-hygiene-staged")
+        staged["blocking"] = False
+        with self.assertRaisesRegex(regression.RegressionSafetyError, "patch-hygiene-staged"):
+            regression.validate_repository_wiring(self.contract, **kwargs)
+
+    def test_wiring_rejects_profile_or_hook_regression(self) -> None:
+        kwargs = self.wiring_kwargs()
+        validators = kwargs["validators"]
+        assert isinstance(validators, dict)
+        validators["profiles"]["pre_commit"].remove("patch-hygiene-staged")
+        with self.assertRaisesRegex(regression.RegressionSafetyError, "pre_commit profile"):
+            regression.validate_repository_wiring(self.contract, **kwargs)
+
+        kwargs = self.wiring_kwargs()
+        kwargs["pre_commit_text"] = "#!/bin/sh\nexit 0\n"
+        with self.assertRaisesRegex(regression.RegressionSafetyError, "pre-commit hook"):
+            regression.validate_repository_wiring(self.contract, **kwargs)
 
     def test_required_loop_retains_negative_and_positive_controls(self) -> None:
         loop = self.contract["required_loop"]
