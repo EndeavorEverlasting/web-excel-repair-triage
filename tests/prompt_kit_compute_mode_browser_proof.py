@@ -35,6 +35,125 @@ def execution_environment_kind(env=None) -> str:
     )
 
 
+def _environment() -> dict[str, str]:
+    return {
+        "kind": execution_environment_kind(),
+        "engine": "chromium",
+        "scenario": "compute-mode-user-prompt-run-precedence-and-effective-copy",
+    }
+
+
+def build_receipt(subject: dict[str, object], observations: list[dict[str, object]]) -> dict[str, object]:
+    by_id = {item["id"]: item for item in observations}
+    user_default = all(
+        by_id[item]["passed"]
+        for item in (
+            "compute_mode_product_default",
+            "compute_mode_user_switch",
+            "compute_mode_user_default_reload",
+        )
+    )
+    effective_copy = all(
+        by_id[item]["passed"]
+        for item in (
+            "compute_mode_efficient_copy",
+            "compute_mode_prompt_override_copy",
+            "compute_mode_run_override_copy",
+        )
+    )
+    precedence = all(
+        by_id[item]["passed"]
+        for item in (
+            "compute_mode_detail_inherits_user_default",
+            "compute_mode_prompt_override",
+            "compute_mode_prompt_override_clear",
+            "compute_mode_run_override_precedence",
+            "compute_mode_run_override_clear",
+        )
+    )
+    verdict = "PASS" if all(item["passed"] for item in observations) else "FAIL"
+    return {
+        "schema_version": "observed-behavior-proof/v1",
+        "verdict": verdict,
+        "evidence_class": "browser_runtime_observed",
+        "subject": subject,
+        "environment": _environment(),
+        "claims": [
+            {
+                "id": "compute_mode_user_default",
+                "statement": "Compute Mode starts Exhaustive, accepts an Efficient user default, and persists that default across reload",
+                "status": "PASS" if user_default else "FAIL",
+                "required_evidence_class": "browser_runtime_observed",
+                "observation_ids": [
+                    "compute_mode_product_default",
+                    "compute_mode_user_switch",
+                    "compute_mode_user_default_reload",
+                ],
+            },
+            {
+                "id": "compute_mode_effective_copy",
+                "statement": "P07 Copy returns the compiled effective prompt selected by Efficient user default, Exhaustive prompt override, and Exhaustive run override",
+                "status": "PASS" if effective_copy else "FAIL",
+                "required_evidence_class": "browser_runtime_observed",
+                "observation_ids": [
+                    "compute_mode_efficient_copy",
+                    "compute_mode_prompt_override_copy",
+                    "compute_mode_run_override_copy",
+                ],
+            },
+            {
+                "id": "compute_mode_precedence",
+                "statement": "Browser runtime enforces run > prompt > user > product precedence and clearing overrides restores the next lower authority",
+                "status": "PASS" if precedence else "FAIL",
+                "required_evidence_class": "browser_runtime_observed",
+                "observation_ids": [
+                    "compute_mode_detail_inherits_user_default",
+                    "compute_mode_prompt_override",
+                    "compute_mode_prompt_override_clear",
+                    "compute_mode_run_override_precedence",
+                    "compute_mode_run_override_clear",
+                ],
+            },
+        ],
+        "observations": observations,
+    }
+
+
+def build_failure_receipt(subject: dict[str, object], exc: Exception) -> dict[str, object]:
+    observation_id = "compute_mode_browser_exception"
+    return {
+        "schema_version": "observed-behavior-proof/v1",
+        "verdict": "FAIL",
+        "evidence_class": "browser_runtime_observed",
+        "subject": subject,
+        "environment": _environment(),
+        "claims": [
+            {
+                "id": "compute_mode_browser_execution",
+                "statement": "Compute Mode browser proof completed without an unhandled runtime exception",
+                "status": "FAIL",
+                "required_evidence_class": "browser_runtime_observed",
+                "observation_ids": [observation_id],
+            }
+        ],
+        "observations": [
+            {
+                "id": observation_id,
+                "event": "Compute Mode browser proof raised a runtime exception",
+                "occurred": True,
+                "passed": False,
+                "error_type": type(exc).__name__,
+                "error": str(exc),
+            }
+        ],
+    }
+
+
+def write_receipt(path: Path, receipt: dict[str, object]) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(json.dumps(receipt, indent=2) + "\n", encoding="utf-8")
+
+
 def observe(port: int, screenshot: Path):
     os.chdir(ROOT)
     server = ThreadingHTTPServer(("127.0.0.1", port), Quiet)
@@ -327,97 +446,38 @@ def main(argv=None) -> int:
         )
         return 2
 
-    observations = observe(args.port, screenshot)
-    by_id = {item["id"]: item for item in observations}
-    user_default = all(
-        by_id[item]["passed"]
-        for item in (
-            "compute_mode_product_default",
-            "compute_mode_user_switch",
-            "compute_mode_user_default_reload",
+    try:
+        observations = observe(args.port, screenshot)
+    except Exception as exc:
+        receipt = build_failure_receipt(subject, exc)
+        write_receipt(receipt_path, receipt)
+        print(
+            json.dumps(
+                {
+                    "verdict": "FAIL",
+                    "receipt": str(receipt_path),
+                    "screenshot": str(screenshot),
+                    "error_type": type(exc).__name__,
+                    "error": str(exc),
+                }
+            ),
+            file=sys.stderr,
         )
-    )
-    effective_copy = all(
-        by_id[item]["passed"]
-        for item in (
-            "compute_mode_efficient_copy",
-            "compute_mode_prompt_override_copy",
-            "compute_mode_run_override_copy",
-        )
-    )
-    precedence = all(
-        by_id[item]["passed"]
-        for item in (
-            "compute_mode_detail_inherits_user_default",
-            "compute_mode_prompt_override",
-            "compute_mode_prompt_override_clear",
-            "compute_mode_run_override_precedence",
-            "compute_mode_run_override_clear",
-        )
-    )
-    verdict = "PASS" if all(item["passed"] for item in observations) else "FAIL"
-    receipt = {
-        "schema_version": "observed-behavior-proof/v1",
-        "verdict": verdict,
-        "evidence_class": "browser_runtime_observed",
-        "subject": subject,
-        "environment": {
-            "kind": execution_environment_kind(),
-            "engine": "chromium",
-            "scenario": "compute-mode-user-prompt-run-precedence-and-effective-copy",
-        },
-        "claims": [
-            {
-                "id": "compute_mode_user_default",
-                "statement": "Compute Mode starts Exhaustive, accepts an Efficient user default, and persists that default across reload",
-                "status": "PASS" if user_default else "FAIL",
-                "required_evidence_class": "browser_runtime_observed",
-                "observation_ids": [
-                    "compute_mode_product_default",
-                    "compute_mode_user_switch",
-                    "compute_mode_user_default_reload",
-                ],
-            },
-            {
-                "id": "compute_mode_effective_copy",
-                "statement": "P07 Copy returns the compiled effective prompt selected by Efficient user default, Exhaustive prompt override, and Exhaustive run override",
-                "status": "PASS" if effective_copy else "FAIL",
-                "required_evidence_class": "browser_runtime_observed",
-                "observation_ids": [
-                    "compute_mode_efficient_copy",
-                    "compute_mode_prompt_override_copy",
-                    "compute_mode_run_override_copy",
-                ],
-            },
-            {
-                "id": "compute_mode_precedence",
-                "statement": "Browser runtime enforces run > prompt > user > product precedence and clearing overrides restores the next lower authority",
-                "status": "PASS" if precedence else "FAIL",
-                "required_evidence_class": "browser_runtime_observed",
-                "observation_ids": [
-                    "compute_mode_detail_inherits_user_default",
-                    "compute_mode_prompt_override",
-                    "compute_mode_prompt_override_clear",
-                    "compute_mode_run_override_precedence",
-                    "compute_mode_run_override_clear",
-                ],
-            },
-        ],
-        "observations": observations,
-    }
-    receipt_path.parent.mkdir(parents=True, exist_ok=True)
-    receipt_path.write_text(json.dumps(receipt, indent=2) + "\n", encoding="utf-8")
+        return 1
+
+    receipt = build_receipt(subject, observations)
+    write_receipt(receipt_path, receipt)
     print(
         json.dumps(
             {
-                "verdict": verdict,
+                "verdict": receipt["verdict"],
                 "receipt": str(receipt_path),
                 "screenshot": str(screenshot),
                 "observations": observations,
             }
         )
     )
-    return 0 if verdict == "PASS" else 1
+    return 0 if receipt["verdict"] == "PASS" else 1
 
 
 if __name__ == "__main__":
