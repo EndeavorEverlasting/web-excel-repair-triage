@@ -7,6 +7,7 @@ ROOT = Path(__file__).resolve().parents[1]
 CONTRACT = ROOT / "harness" / "contracts" / "repository-local-proof-continuity.v1.json"
 REGISTRY = ROOT / "harness" / "repository-actions.v1.json"
 POLICY = ROOT / "registry" / "prompts" / "actionable-next-step-policy.v1.json"
+OPERATIONS = ROOT / "harness" / "specs" / "prompt-operations.md"
 DEFECTS = ROOT / "harness" / "evals" / "prompt-regression" / "defect-families.v1.json"
 
 
@@ -49,6 +50,15 @@ class RepositoryLocalProofContinuityPromptTests(unittest.TestCase):
         self.assertIn("REGRESSION SAFETY / RECURRING DEFECT CONTRACT", appendix)
         self.assertIn("Prefer repository-owned local required-check profiles", appendix)
         self.assertIn("Provider unavailability does not erase valid repository-defined local proof", appendix)
+
+    def test_prompt_operations_bind_planning_and_build_to_local_action_owner(self) -> None:
+        operations = OPERATIONS.read_text(encoding="utf-8")
+        self.assertIn("Hosted-provider / local-proof continuity", operations)
+        self.assertIn("Planning prompts that schedule repository implementation or validation", operations)
+        self.assertIn("Build/repair prompts must establish or reuse that path", operations)
+        self.assertIn("harness/repository-actions.v1.json", operations)
+        self.assertIn("scripts/run_repository_action.py", operations)
+        self.assertIn("provider state remains `UNKNOWN` after a bounded refresh", operations)
 
     def test_provider_quota_termination_is_registered_as_systemic(self) -> None:
         defects = json.loads(DEFECTS.read_text(encoding="utf-8"))
