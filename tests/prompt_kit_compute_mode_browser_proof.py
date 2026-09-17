@@ -258,7 +258,8 @@ def observe(port: int, screenshot: Path):
                 }
             )
 
-            run_clipboard_before = canonical(page.evaluate("navigator.clipboard.readText()"))
+            run_sentinel = "sentinel-compute-mode-run"
+            page.evaluate("value => navigator.clipboard.writeText(value)", run_sentinel)
             page.locator("#promptDetail .pd-section h4").nth(1).click()
             page.wait_for_timeout(260)
             run_clipboard = canonical(page.evaluate("navigator.clipboard.readText()"))
@@ -266,7 +267,7 @@ def observe(port: int, screenshot: Path):
                 {
                     "id": "compute_mode_run_override_copy",
                     "event": "P07 Copy honors the explicit Exhaustive run override",
-                    "occurred": run_clipboard != run_clipboard_before,
+                    "occurred": run_clipboard != run_sentinel,
                     "passed": run_clipboard == canonical(expected_exhaustive),
                     "actual_length": len(run_clipboard),
                     "expected_length": len(canonical(expected_exhaustive)),
