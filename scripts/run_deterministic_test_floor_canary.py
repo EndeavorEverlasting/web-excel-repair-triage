@@ -8,6 +8,7 @@ import json
 import os
 import subprocess
 import sys
+import tempfile
 import time
 from pathlib import Path
 from typing import Any
@@ -96,6 +97,36 @@ def load_contract(path: Path) -> dict[str, Any]:
 
 def _digest(data: bytes) -> str:
     return hashlib.sha256(data).hexdigest()
+
+
+def _atomic_write_bytes(path: Path, data: bytes) -> None:
+    """Replace one file atomically from a same-directory fully flushed temp file."""
+    path.parent.mkdir(parents=True, exist_ok=True)
+    mode = path.stat().st_mode if path.exists() else None
+    fd, temp_name = tempfile.mkstemp(prefix=f".{path.name}.canary-", dir=path.parent)
+    temp_path = Path(temp_name)
+    try:
+        with os.fdopen(fd, "wb") as handle:
+            handle.write(data)
+            handle.flush()
+            os.fsync(handle.fileno())
+        if mode is not None:
+            os.chmod(temp_path, mode)
+        os.replace(temp_path, path)
+    finally:
+        try:
+            temp_path.unlink()
+        except FileNotFoundError:
+            pass
+
+
+def _prepare_fresh_report(path: Path) -> None:
+    """Ensure a nested proof receipt cannot be inherited from an earlier run."""
+    path.parent.mkdir(parents=True, exist_ok=True)
+    if path.exists():
+        if not path.is_file():
+            raise ContractError(f"floor report path is not a regular file: {path}")
+        path.unlink()
 
 
 def run_command(argv: list[str]) -> dict[str, Any]:
@@ -198,7 +229,7 @@ def run(contract_path: Path, report_path: Path, floor_report_path: Path) -> int:
             return 1
         report["state"] = "CLEAN_WITNESS_PROVEN"
 
-        target.write_bytes(original + mutation_bytes)
+        _atomic_write_bytes(target, original + mutation_bytes)
         report["state"] = "MUTATED"
         report["mutated_digest"] = _digest(target.read_bytes())
 
@@ -207,7 +238,7 @@ def run(contract_path: Path, report_path: Path, floor_report_path: Path) -> int:
         report["state"] = "MUTATED_WITNESS_PROVEN"
 
         runner = _repo_path(contract["full_floor"]["runner"])
-        floor_report_path.parent.mkdir(parents=True, exist_ok=True)
+        _prepare_fresh_report(floor_report_path)
         floor_process = run_command(
             [sys.executable, str(runner.relative_to(REPO_ROOT)), "--report", str(floor_report_path)]
         )
@@ -219,7 +250,7 @@ def run(contract_path: Path, report_path: Path, floor_report_path: Path) -> int:
                 "status": floor_receipt.get("status"),
                 "failed_step": floor_receipt.get("failed_step"),
             }
-        report["state"] = "FLOOR_FAILURE_PROVEN"
+        report["state"] = "FLOOR_PROCESS_OBSERVED"
     except ContractError as exc:
         report["state"] = "CONTRACT_INVALID"
         report["proof_errors"] = [f"CONTRACT_INVALID:{exc}"]
@@ -233,7 +264,7 @@ def run(contract_path: Path, report_path: Path, floor_report_path: Path) -> int:
     finally:
         if target is not None and original is not None:
             try:
-                target.write_bytes(original)
+                _atomic_write_bytes(target, original)
                 after_digest = _digest(target.read_bytes())
                 report["before_digest"] = before_digest
                 report["after_digest"] = after_digest
@@ -246,7 +277,7 @@ def run(contract_path: Path, report_path: Path, floor_report_path: Path) -> int:
         report_path.parent.mkdir(parents=True, exist_ok=True)
 
         if (
-            report.get("state") == "FLOOR_FAILURE_PROVEN"
+            report.get("state") == "FLOOR_PROCESS_OBSERVED"
             and before_digest is not None
             and report.get("after_digest") is not None
         ):
@@ -271,7 +302,7 @@ def run(contract_path: Path, report_path: Path, floor_report_path: Path) -> int:
             report["status"] = "FAIL"
             report["state"] = "RESTORE_MISMATCH"
             return_code = 4
-        report_path.write_text(json.dumps(report, indent=2) + "\n", encoding="utf-8")
+        _atomic_write_bytes(report_path, (json.dumps(report, indent=2) + "\n").encode("utf-8"))
 
     print(
         f"DETERMINISTIC TEST-FLOOR CANARY: {report['status']} "
