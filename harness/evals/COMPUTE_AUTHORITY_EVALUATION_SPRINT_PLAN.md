@@ -1,13 +1,14 @@
 # Prompt Kit Compute-Authority External-Agent Evaluation Sprint Map
 
-**Status:** Sprint 1 IMPLEMENTATION COMPLETE on harness floor — empirical effectiveness remains unproven; Sprint 2+ not started
+**Status:** Sprint 1 + Sprint 2 runtime harness INTEGRATED on main — observed external-agent pilot/main-study effectiveness remains `UNPROVEN_RUNTIME`; Sprint 3 not started
 **Canonical owner:** P67 Repository Eval Framework Builder + existing `skill-evaluation` capability
 **Repository:** `EndeavorEverlasting/web-excel-repair-triage`
 **Evidence floor at plan creation:** `main@fd3b3910e0ce80f3880ebd15426278354b065f48`
 **Floor proof:** PR #452 merged at `fd3b3910...`; exact-main push workflows observed 12/12 completed successfully
+**Latest integrated program floor:** Sprint 1 via PR #464 / merge `43b1953092b518fe3a76b5fe0bfab179f730e849`; Sprint 2 via PR #530 / merge `300d949fdcf79bbac018440a85052302d575bd2c`
 **Primary target:** measure whether external agents spend more *useful* compute under the strengthened shared Prompt Kit compute-authority contract
 **Plan owner path:** `harness/evals/COMPUTE_AUTHORITY_EVALUATION_SPRINT_PLAN.md`
-**Sprint 1 implementation path:** `harness/evals/compute-authority/`
+**Sprint 1+2 implementation path:** `harness/evals/compute-authority/`
 
 ## 1. Mission
 
@@ -28,7 +29,9 @@ Current main already contains:
 - the P67 repository AI eval pyramid under `harness/evals/`, with deterministic, synthetic, model-runtime, and human-review layers;
 - the reusable `skill-evaluation` skill/capability/trigger/workflow surface;
 - PR #452's merged `prompt-outcome-receipt/v1` and evidence-state vocabulary, including `premature-terminal` and `evidence-promotion` failure classes;
-- PR #461's strategic recommendation to resolve evidence-spine/state ownership before Phase D Passive Learning.
+- PR #461's strategic recommendation to resolve evidence-spine/state ownership before Phase D Passive Learning;
+- PR #464's Sprint 1 gold-fixture/frozen-identity harness;
+- PR #530's Sprint 2 runtime harness: frozen Control/Treatment conditions, path-safe run IDs, disposable workspaces, provider-neutral sanitized capture, structural workspace-delta evidence, deterministic paired ordering, pair-identity enforcement, invalid-run classification, and explicit `UNPROVEN_RUNTIME` behavior.
 
 Reuse these owners. Do not create a second generic eval framework, second skill-evaluation identity, second evidence-state vocabulary, or second prompt-outcome model.
 
@@ -40,7 +43,7 @@ Reuse these owners. Do not create a second generic eval framework, second skill-
 | `tests/test_repository_ai_eval_framework.py` | P67; also modified by open PR #450 | **Final convergence owner only.** Reconcile #450 first. |
 | route receipts / routing control plane | open PR #450 | Read-only evidence/dependency; do not absorb. |
 | Prompt Finder usage candidates | open PR #431 | Read-only candidate evidence; do not treat selection intent as terminal success. |
-| serverless/local lifecycle phase map | open PR #462 | Independent product/runtime owner; do not edit its five owned files. |
+| serverless/local lifecycle phase map | merged PR #462 / main | Independent product/runtime owner; no mutation required by this program absent an explicit dependency. |
 | favorite gameplay `promptKit.usage.v1` | open PR #242 | Separate runtime surface; no mutation here. |
 | outcome receipts | merged PR #452 / main | Reuse for observed outcome/evidence receipts where appropriate. |
 
@@ -58,7 +61,7 @@ Reuse these owners. Do not create a second generic eval framework, second skill-
 
 - changing Prompt Kit behavior merely to improve study results;
 - rewriting the strengthened treatment contract during the frozen study;
-- modifying PR #450/#431/#462/#242 owned surfaces unless a later explicit reconciliation sprint authorizes it;
+- modifying PR #450/#431/#242 owned surfaces unless a later explicit reconciliation sprint authorizes it;
 - secrets, provider credentials, private conversation content, arbitrary prompt bodies, clipboard contents, or personal data in tracked fixtures/results;
 - hand-editing generated Prompt Kit HTML;
 - representing deterministic/synthetic evidence as observed external-model behavior;
@@ -230,6 +233,7 @@ Every run must bind: condition, case ID, agent/model identifier as actually expo
 **Expected artifacts:** eval contract, schemas, all 8 hidden gold fixture manifests, deterministic fixture validator/grader primitives, tests, proof report
 **Gate:** every fixture is deterministic/reachable, hidden gold does not leak, metrics are mechanically derivable, fixed-point oracle is explicit, focused tests/validator + root harness + diff hygiene pass
 **Proof ceiling:** repository/static/synthetic eval-design proof; no external-model behavior claim
+**Current state:** INTEGRATED on main via PR #464 / merge `43b1953092b518fe3a76b5fe0bfab179f730e849`.
 
 ### Sprint 2 — External-Agent Paired Runtime Harness + 16-Run Pilot
 
@@ -241,6 +245,7 @@ Every run must bind: condition, case ID, agent/model identifier as actually expo
 **Expected artifacts:** immutable condition manifest, run/capture pipeline, 16-run pilot receipts when a runtime is accessible, pilot aggregate and fixture-validity disposition
 **Gate:** same-case A/B reproducibility, no gold leakage, zero forbidden-mutation escape, invalid/incomplete runs classified rather than silently scored, model-runtime absence remains `UNPROVEN_RUNTIME` rather than fake PASS
 **Proof ceiling:** harness integration plus whatever exact external-runtime observations actually execute
+**Current state:** runtime harness INTEGRATED on main via PR #530 / merge `300d949fdcf79bbac018440a85052302d575bd2c`; exact-head CI validated frozen fixtures/conditions, focused Sprint 1+2 tests, structural mutation evidence, pair-identity enforcement, invalid-run handling, and a 16-run plan-only receipt that remained `UNPROVEN_RUNTIME`. No real external-agent pilot has executed, so the empirical pilot gate is still open.
 
 ### Sprint 3 — P67 Convergence + 48-Run Main Study + Effectiveness Decision
 
@@ -252,6 +257,7 @@ Every run must bind: condition, case ID, agent/model identifier as actually expo
 **Expected artifacts:** integrated P67 suite, exact 48-run paired dataset or explicit runtime blocker, blinded score set, aggregate report, failure taxonomy, final verdict, typed proof-state update
 **Gate:** deterministic + synthetic floor green, exact shared-registry reconciliation green, valid run count/condition balance proven, blinded scoring complete, thresholds mechanically evaluated, exact-main containment and affected CI green
 **Proof ceiling:** `OBSERVED` only for exact tested external-agent/runtime population and study conditions; no universal model/provider generalization
+**Current state:** NOT STARTED; dependency-gated on a valid observed Sprint 2 pilot and later #450 reconciliation.
 
 ## 11. Parallelism and collision policy
 
@@ -292,14 +298,14 @@ Provider-backed model-runtime execution remains separately typed from CI/static 
 
 ## 14. Current state and exact next action
 
-**Completed/proven:** strengthened contract is repository-integrated; PR #452 outcome-receipt vocabulary is mainline-integrated; current main floor is green at provider level; P67 and `skill-evaluation` owners already exist.
+**Completed/proven:** Sprint 1 is integrated via PR #464 / `43b1953092b518fe3a76b5fe0bfab179f730e849`. Sprint 2 repository/runtime-harness behavior is integrated via PR #530 / `300d949fdcf79bbac018440a85052302d575bd2c`. The mainline manifest is in phase `B_runtime_harness`; the provider-neutral adapter, frozen conditions, isolated run bundles, structural workspace-delta evidence, deterministic pairing, pair identity checks, invalid-run receipts, and no-runtime promotion guard are present and validated. Repository/CI proof explicitly leaves external-agent effectiveness `UNPROVEN_RUNTIME`.
 
-**Remaining:** all external-agent compute-authority empirical evaluation work described above.
+**Remaining:** execute the real 16-run external-agent pilot through a concrete provider adapter; validate pilot capture/scoring/cost assumptions and fixture validity; only after that gate is valid may Sprint 3 reconcile #450-owned shared P67 surfaces and run the 48-valid-run main study/blinded effectiveness decision.
 
 **Risks:** evaluator overfitting; provider nondeterminism; hidden-gold leakage; transcript privacy; raw token/tool volume being mistaken for usefulness; #450 collision on shared P67 registry; cost/credential limits in live model runs.
 
-**Blockers:** none for Sprint 1. Live-runtime credentials/provider availability may block only the runtime execution portion of Sprints 2–3 and must be reported as such.
+**Blockers:** the Sprint 2 harness itself is not blocked. The empirical pilot is `BLOCKED` in environments without an accessible external-agent runtime/adapter plus any required provider credentials/quota. `.ai/WORK_QUEUE.md` synchronization is temporarily collision-blocked because open PR #524 currently owns that shared ledger file; do not create a competing ledger writer.
 
-**Proof ceiling now:** TRACKED/DESIGNED plan on a green repository floor; external-agent behavioral effectiveness remains UNPROVEN.
+**Proof ceiling now:** IMPLEMENTED / VALIDATED / INTEGRATED for Sprint 1 and Sprint 2 repository/runtime-harness behavior; `UNPROVEN_RUNTIME` for real external-agent pilot effectiveness; Sprint 3 is dependency-gated and NOT STARTED.
 
-**NEXT ACTION:** Sprint 1 owner P67/`skill-evaluation` — create the versioned compute-authority eval contract, schemas, eight hidden gold fixtures, deterministic fixture/metric validator and focused tests under `harness/evals/compute-authority/`, without touching the #450-shared repository-AI registry files; integrate that floor before starting runtime pilot work.
+**NEXT ACTION:** P67 model-runtime / `skill-evaluation` owner — from refreshed main containing `300d949fdcf79bbac018440a85052302d575bd2c`, provide or select an accessible external-agent adapter config that satisfies `harness/evals/compute-authority/runtime/adapter-contract.v1.json`, then run `python harness/evals/compute-authority/scripts/pilot.py --adapter-config <adapter.json> --pilot-id <provider-model-pilot> --summary`; completion gate is 16 classified paired runs with valid same-provider/agent/model identities, zero forbidden-mutation escape, no gold leakage, and a pilot aggregate/fixture-validity disposition. If no external runtime is available, preserve `UNPROVEN_RUNTIME` and do not start Sprint 3.
