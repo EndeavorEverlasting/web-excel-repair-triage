@@ -18,13 +18,24 @@ class RepositoryLocalProofContinuityPromptTests(unittest.TestCase):
         self.assertEqual(contract["canonical_local_action_runner"], "scripts/run_repository_action.py")
         self.assertEqual(registry["provider_adapter"], ".github/workflows/repository-local-action.yml")
         self.assertIn("thin optional delegate", contract["provider_adapter_rule"])
+        self.assertIn("UNKNOWN", contract["provider_states"])
 
     def test_provider_loss_is_not_a_terminal_sprint_rule(self) -> None:
         contract = json.loads(CONTRACT.read_text(encoding="utf-8"))
         joined = "\n".join(contract["execution_requirements"] + contract["anti_patterns"])
         self.assertIn("continue through the canonical local proof path", joined)
         self.assertIn("Suppress blind hosted retries", joined)
+        self.assertIn("provider state remains UNKNOWN after a bounded refresh", joined)
+        self.assertIn("keep genuinely hosted-only gates BLOCKED until observed", joined)
         self.assertIn("Stopping the whole sprint solely because hosted Actions", joined)
+
+    def test_receipt_contract_requires_complete_versioned_input_set(self) -> None:
+        contract = json.loads(CONTRACT.read_text(encoding="utf-8"))
+        receipt = "\n".join(contract["minimum_local_proof_receipt"])
+        self.assertIn("complete canonical path-and-revision proof-relevance input set", receipt)
+        registry = json.loads(REGISTRY.read_text(encoding="utf-8"))
+        for action in registry["actions"]:
+            self.assertTrue(action["proof_inputs"], action["id"])
 
     def test_local_proof_ceiling_stays_typed(self) -> None:
         contract = json.loads(CONTRACT.read_text(encoding="utf-8"))
