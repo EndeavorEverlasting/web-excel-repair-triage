@@ -74,6 +74,13 @@ class ExternalSkillSemanticPrototypeTests(unittest.TestCase):
         self.assertEqual(lockfile[0]["structure"], "list_item")
         self.assertGreater(lockfile[0]["line_end"], lockfile[0]["line_start"])
 
+    def test_markdown_reference_table_is_not_flattened_into_directive(self) -> None:
+        body = """# Platform\n\n| OS | Requirement |\n|---|---|\n| Linux | Must use DISPLAY |\n| Windows | Verify capture source |\n\nAlways verify the selected runtime.\n"""
+        _, directives = prototype.extract_directive_candidates(body)
+        self.assertEqual(len(directives), 1)
+        self.assertEqual(directives[0]["text"], "Always verify the selected runtime.")
+        self.assertNotIn("Linux", directives[0]["text"])
+
     def test_failure_stack_rejects_stale_body_identity(self) -> None:
         with self.assertRaisesRegex(ValueError, "body sha256 mismatch"):
             prototype.build_receipt(
