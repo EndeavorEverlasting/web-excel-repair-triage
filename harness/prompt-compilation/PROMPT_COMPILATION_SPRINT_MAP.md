@@ -1,11 +1,11 @@
 # Prompt Compilation & Adaptive Language — Canonical Sprint Map
 
-**Status:** TRACKED / SPRINTS 1–4 INTEGRATED ON MAIN VIA #483/#485/#515/#519
+**Status:** TRACKED / SPRINTS 1–5 INTEGRATED ON MAIN VIA #483/#485/#515/#519/#522
 **Repository:** `EndeavorEverlasting/web-excel-repair-triage`
-**Planning floor:** refreshed `main@c4d065facd8fb647b7416d7741532d33466379d8` (provider refresh 2026-09-16)
+**Planning floor:** refreshed `main@5f55e2a922534e7cae5087309fc2da296892af3d` (provider refresh 2026-09-17)
 **Architecture authority:** `harness/prompt-compilation/PROMPT_COMPILATION_ARCHITECTURE.md`
 **P95 constraint floor:** `harness/prompt-topology/EVIDENCE_SPINE_ARCHITECTURE.md` (adapter-only; no universal envelope/bus)
-**Ledger index:** TRQ-009 (Sprint 1), TRQ-010 (Sprint 2), TRQ-012 (Sprint 3), TRQ-013 (Sprint 4 wiring)
+**Ledger index:** TRQ-009 (Sprint 1), TRQ-010 (Sprint 2), TRQ-012 (Sprint 3), TRQ-013 (Sprint 4 wiring), TRQ-014 (Sprint 5 eval hardening)
 
 This file is the durable phase map for Prompt Compilation. Chat is not the canonical plan surface.
 
@@ -151,11 +151,28 @@ Move Prompt Kit from a library of hand-maintained English prompts toward a **sel
 
 ### Sprint 5 — Improvement-candidate production eval loop hardening
 
-**Status:** PLANNED (dependency: Sprint 3 prototypes + recurrence evidence owners)
+**Status:** INTEGRATED on `main` via #522 (`5f55e2a9`)
 
-**Owned:** broaden fingerprint catalog; optional `Outputs/` draft retention; tighter P115 work-request handoff without absorbing P115 ownership; still `reviewed_pr_only`.
+**Dependency:** Sprint 3 INTEGRATED; Sprint 4 INTEGRATED on main (`c4d065fa` / TRQ-013).
 
-**Forbidden:** auto-merge; model-only policy promotion; Evidence Spine event invention.
+**Owned:**
+
+- broaden fingerprint / hypothesis catalog across language-engine, execution-profile, prompt-context, prompt-semantics, and fixtures authorities
+- gold fixture `TC07-mainline-convergence-proof` plus journey `IJ03-mainline-proof-recurrence`
+- optional `Outputs/prompt-improvement-drafts/` draft retention (`--retain-draft`; paths must stay under `Outputs/`)
+- tighter P115-compatible work-request handoff (`evidence-spine-p115-work-request/v1` shape) without absorbing P115 ownership
+- still `reviewed_pr_only`; focused tests; ledger index TRQ-014
+
+**Forbidden:** auto-merge; model-only policy promotion; Evidence Spine event invention; absorbing P115 ownership; #450/#431 donor work; mutating TRQ-007 frozen prompt identities.
+
+**Validation:**
+
+1. `python -m unittest tests.test_prompt_improvement_compiler tests.test_prompt_compilation tests.test_prompt_context_engine -v`
+2. `python scripts/prompt_improvement_compiler.py run-journey --finding harness/prompt-compilation/improvement-journeys/IJ03-mainline-proof-recurrence/finding.json --summary`
+3. `python scripts/validate_repository_work_ledger.py`
+4. `git diff --check`
+
+**Proof ceiling:** repository/static VALIDATED + INTEGRATED when merged. Live P115 recovery queue consumption and operator draft retention in production remain UNPROVEN_RUNTIME.
 
 ## Acceptance for Sprint 3
 

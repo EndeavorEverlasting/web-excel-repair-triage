@@ -218,3 +218,19 @@ Canonical terminal action: none; no safe actionable work remains
 - **Last proof:** commit:10167b309612e6e42aeceda4a1ca379db82939f3; merge:c4d065facd8fb647b7416d7741532d33466379d8 integrated PR #519; local:python -m unittest tests.test_prompt_kit_compute_mode (6 OK) + compilation suite; local:builder --check PASS; workflow required checks green on PR head; artifact:docs/prompt-kit-compute-mode.js and compiled P07 present on refreshed default branch
 - **Next action:** none; no safe actionable work remains
 - **Updated:** 2026-09-16T22:35:00-04:00
+
+## TRQ-014 — Prompt Compilation Sprint 5 eval-loop hardening
+
+- **Status:** DONE
+- **Priority:** P1
+- **Owner:** feat/prompt-compilation-sprint5-eval-hardening-20260916
+- **Branch / PR:** main / #522 merged
+- **Scope:** broaden improvement hypothesis/fingerprint catalog; add TC07 mainline-convergence gold fixture and IJ03 journey; optional Outputs/prompt-improvement-drafts retention; emit P115-compatible work-request handoff without absorbing P115; keep reviewed_pr_only; focused tests; update sprint map
+- **Forbidden:** auto-merge; model-only policy promotion; Evidence Spine event invention; absorbing P115 ownership; PR #450/#431 donor work; mutating TRQ-007 frozen prompt identities; hand-editing generated Prompt Kit HTML
+- **Dependencies:** TRQ-013 DONE; Sprint 4 on main; planning floor `d0442d3d193a8b78cb4d4c8b12e8add3b4414c10`
+- **References:** `harness/prompt-compilation/PROMPT_COMPILATION_SPRINT_MAP.md`, `scripts/prompt_improvement_compiler.py`, `harness/prompt-compilation/improvement-hypothesis-catalog.v1.json`, `harness/prompt-compilation/fixtures/TC07-mainline-convergence-proof/`, `tests/test_prompt_improvement_compiler.py`
+- **Acceptance gate:** catalog covers >=8 identities including TC07; journey emits P115 handoff with absorbs_p115_ownership=false; optional Outputs retention stays under Outputs/; focused compilation + improvement tests green; exact validated head integrates to current default branch
+- **Gate:** none
+- **Last proof:** commit:97dc0b62cc915ffcbbe40c166912e2f00a0578d0; merge:5f55e2a922534e7cae5087309fc2da296892af3d integrated PR #522; local:python -m unittest tests.test_prompt_improvement_compiler (12 OK) on refreshed default; local:validate-fixtures cases=2; workflow required checks green on PR head `2e844f44`; artifact:TC07 + P115 handoff present on refreshed default branch
+- **Next action:** none; no safe actionable work remains
+- **Updated:** 2026-09-16T23:20:00-04:00

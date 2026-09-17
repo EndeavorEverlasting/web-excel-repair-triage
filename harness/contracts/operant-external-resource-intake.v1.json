@@ -39,6 +39,17 @@
       "max_depth": 2,
       "exclude_root_segments": ["deprecated"],
       "url_mode": "github_blob"
+    },
+    {
+      "id": "michaelshimeles-skills",
+      "repository": "michaelshimeles/skills",
+      "expected_default_branch": "main",
+      "enumeration": "git_skill_tree",
+      "resource_root": ".",
+      "resource_filename": "SKILL.md",
+      "resource_kind": "agent-skill",
+      "max_depth": 1,
+      "url_mode": "github_blob"
     }
   ],
   "refresh": {
