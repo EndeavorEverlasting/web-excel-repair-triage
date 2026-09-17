@@ -33,6 +33,7 @@
     "tests/test_prompt_outcome_receipt_prompt.py",
     "tests/test_prompt_retrospective_evaluation_prompt.py",
     "tests/test_prompt_regression_safety_prompt.py",
+    "tests/test_prompt_strength_contract.py",
     "tests/test_prompt_registry_expansion_regression_design_teach.py",
     "tests/test_prompt_registry_product_boundaries.py",
     "tests/test_repository_versioning_system_prompt.py",
