@@ -109,9 +109,9 @@ class DeterministicTestFloorCanaryTests(unittest.TestCase):
                 json.dumps({"status": "FAIL", "failed_step": "test-floor-self-tests"}),
                 encoding="utf-8",
             )
+            self.assertTrue(report.exists())
             canary._prepare_fresh_report(report)
             self.assertFalse(report.exists())
-            self.assertIsNone(None if report.exists() else None)
 
     def test_missing_floor_receipt_cannot_prove_expected_gate(self) -> None:
         marker = self.contract["witness"]["required_failure_signatures"][0]
