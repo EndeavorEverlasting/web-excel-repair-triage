@@ -2,7 +2,7 @@
   "schema_version": "prompt-retrospective-register/v1",
   "contract": "harness/contracts/prompt-retrospective-evaluation.v1.json",
   "evaluation_id": "recent-prompt-review-20260917",
-  "evaluation_time": "2026-09-17T15:08:00Z",
+  "evaluation_time": "2026-09-17T15:42:00Z",
   "authority": "REVIEW_ONLY",
   "priority_policy": "UNCOMPUTED_UNTIL_WEIGHTING_APPROVED",
   "records": [
@@ -38,7 +38,7 @@
         "authorship_origin": {
           "score": null,
           "confidence": "NONE",
-          "rationale": "Current P00 coverage cannot prove whether the earlier prompt was reused, hybridized, or manually authored before promotion.",
+          "rationale": "Current P00 anchor coverage proves current ownership, but an anchor-only match cannot prove full-prompt historical reuse.",
           "evidence_refs": [
             "ev-p00-current"
           ]
@@ -52,7 +52,7 @@
         "matched_prompt_ids": [
           "P00"
         ],
-        "match_kind": "EXACT",
+        "match_kind": "ANCHOR_ONLY",
         "manual_novelty_signals": [],
         "historical_origin_status": "NEEDS_CONTEMPORANEOUS_KIT_REF"
       },
@@ -79,60 +79,204 @@
       ]
     },
     {
-      "candidate_id": "retrospective/cross-repository-authority-factoring",
+      "candidate_id": "retrospective/repository-evidence-first-sprint",
       "status": "PROVISIONAL",
       "project": "web-excel-repair-triage",
-      "prompt_anchor": "FACTOR THE REUSABLE INSIGHT INTO THE CORRECT REPOSITORIES",
-      "prompt_event_date": null,
-      "prompt_event_window": "2026-09-14/2026-09-17",
-      "work_outcome": "Candidate insight: move portable mechanisms without duplicating canonical authority; exact prompt-event and current-owner evidence still need binding.",
+      "prompt_anchor": "ANALYZE THE REPOSITORY, BUILD THE EVIDENCE PACK, THEN EXECUTE THE FIRST SAFE SPRINT. DO NOT STOP AT A PLAN.",
+      "prompt_event_date": "2026-09-14T16:48:42Z",
+      "prompt_event_window": "2026-09-14T16:48:42Z",
+      "work_outcome": "The use led directly into TRQ-007 current-floor continuity repair; PR #480 merged at 5b1e852f07f7bbc4a89d38f4764d53811e6184b3 with focused validation.",
       "ratings": {
         "use_case_relevance": {
-          "score": null,
-          "confidence": "NONE",
-          "rationale": "Awaiting exact prompt-event evidence.",
-          "evidence_refs": []
+          "score": 5,
+          "confidence": "HIGH",
+          "rationale": "The prompt asked for repository evidence followed by the first safe sprint, and the resulting PR repaired the current repository work floor without broadening into Sprint 2.",
+          "evidence_refs": [
+            "ev-p03-event",
+            "ev-pr480"
+          ]
         },
         "productivity": {
-          "score": null,
-          "confidence": "NONE",
-          "rationale": "Awaiting causal binding to implementation evidence.",
-          "evidence_refs": []
+          "score": 4,
+          "confidence": "HIGH",
+          "rationale": "The prompt produced an integrated two-file continuity repair with focused regression and validation evidence.",
+          "evidence_refs": [
+            "ev-p03-event",
+            "ev-pr480"
+          ]
         },
         "prompt_kit_gap": {
-          "score": null,
-          "confidence": "NONE",
-          "rationale": "A full P79/topology comparison has not yet established whether this is a distinct gap or strengthening candidate.",
-          "evidence_refs": []
+          "score": 1,
+          "confidence": "HIGH",
+          "rationale": "P03 Repository Evidence + First Sprint Executor already owned this capability in the contemporaneous Prompt Kit.",
+          "evidence_refs": [
+            "ev-p03-historical"
+          ]
         },
         "authorship_origin": {
           "score": null,
           "confidence": "NONE",
-          "rationale": "No contemporaneous Prompt Kit comparison has been attached.",
-          "evidence_refs": []
+          "rationale": "The recovered first-line anchor exactly matches contemporaneous P03, but the full historical user prompt has not yet been fingerprinted against P03.",
+          "evidence_refs": [
+            "ev-p03-event",
+            "ev-p03-historical"
+          ]
         }
       },
       "authorship_profile": {
         "origin_label": "UNRESOLVED",
-        "comparison_basis": "UNKNOWN",
-        "contemporaneous_prompt_kit_ref": null,
+        "comparison_basis": "CONTEMPORANEOUS",
+        "contemporaneous_prompt_kit_ref": "docs/prompts.json@1130b6232f80def9849c87aa71f7b967e43157e1#P03",
         "current_prompt_kit_ref": "main@300d949fdcf79bbac018440a85052302d575bd2c",
-        "matched_prompt_ids": [],
-        "match_kind": "UNKNOWN",
-        "manual_novelty_signals": [
-          "cross-repository authority factoring",
-          "portable-mechanism versus domain-doctrine separation"
+        "matched_prompt_ids": [
+          "P03"
         ],
-        "historical_origin_status": "NEEDS_PROMPT_EVENT_AND_KIT_COMPARISON"
+        "match_kind": "ANCHOR_ONLY",
+        "manual_novelty_signals": [],
+        "historical_origin_status": "NEEDS_FULL_PROMPT_FINGERPRINT"
       },
       "kit_assessment": {
-        "evaluation_basis": "CURRENT",
+        "evaluation_basis": "CONTEMPORANEOUS",
         "prior_art_complete": false,
         "topology_ref": null,
-        "matched_prompt_ids": [],
-        "disposition": "NEEDS_EVIDENCE"
+        "matched_prompt_ids": [
+          "P03"
+        ],
+        "disposition": "NO_KIT_CHANGE"
       },
-      "evidence": []
+      "evidence": [
+        {
+          "id": "ev-p03-event",
+          "kind": "conversation_anchor",
+          "ref": "conversation:2026-09-14T16:48:42Z",
+          "supports": [
+            "use_case_relevance",
+            "productivity",
+            "authorship_origin"
+          ],
+          "summary": "Recovered prompt event uses the P03 first-line anchor immediately before the TRQ-007 repair sprint."
+        },
+        {
+          "id": "ev-p03-historical",
+          "kind": "historical_registry",
+          "ref": "docs/prompts.json@1130b6232f80def9849c87aa71f7b967e43157e1#P03",
+          "supports": [
+            "prompt_kit_gap",
+            "authorship_origin"
+          ],
+          "summary": "Prompt Kit snapshot two minutes before the event contains P03 with the exact recovered first-line anchor."
+        },
+        {
+          "id": "ev-pr480",
+          "kind": "pull_request",
+          "ref": "EndeavorEverlasting/web-excel-repair-triage#480@5b1e852f07f7bbc4a89d38f4764d53811e6184b3",
+          "supports": [
+            "use_case_relevance",
+            "productivity"
+          ],
+          "summary": "Merged TRQ-007 continuity repair records focused validation, two changed files, and the exact merge SHA."
+        }
+      ]
+    },
+    {
+      "candidate_id": "retrospective/cross-repository-authority-factoring",
+      "status": "PROVISIONAL",
+      "project": "nyc-hh-fieldops-lab",
+      "prompt_anchor": "FACTOR THE REUSABLE INSIGHT INTO THE CORRECT REPOSITORIES. DO NOT DUPLICATE AUTHORITY.",
+      "prompt_event_date": "2026-09-16T16:21:11Z",
+      "prompt_event_window": "2026-09-16T16:21:11Z",
+      "work_outcome": "The prompt led to H&H PR #6: donor-bound Google Docs formatting adoption with consumer-owned adapter/tests, merged at aa5b76a35f586707acf37c232f17123e9c7545fd after 6/6 focused tests and live readback.",
+      "ratings": {
+        "use_case_relevance": {
+          "score": 5,
+          "confidence": "HIGH",
+          "rationale": "The prompt's donor/consumer authority boundary maps directly to PR #6's mission, donor provenance, consumer-owned implementation, and collision boundary.",
+          "evidence_refs": [
+            "ev-p16-event",
+            "ev-hh-pr6"
+          ]
+        },
+        "productivity": {
+          "score": 5,
+          "confidence": "HIGH",
+          "rationale": "The prompt produced a merged five-file consumer implementation, 6/6 focused tests, contract validation, and live Google Docs readback.",
+          "evidence_refs": [
+            "ev-p16-event",
+            "ev-hh-pr6"
+          ]
+        },
+        "prompt_kit_gap": {
+          "score": 1,
+          "confidence": "HIGH",
+          "rationale": "P16 Cross-Repo Contribution Router already owned this capability before the Sep-16 use.",
+          "evidence_refs": [
+            "ev-p16-historical"
+          ]
+        },
+        "authorship_origin": {
+          "score": null,
+          "confidence": "NONE",
+          "rationale": "The first-line anchor exactly matches historical P16, but full user-prompt equality has not yet been proven.",
+          "evidence_refs": [
+            "ev-p16-event",
+            "ev-p16-historical"
+          ]
+        }
+      },
+      "authorship_profile": {
+        "origin_label": "UNRESOLVED",
+        "comparison_basis": "CONTEMPORANEOUS",
+        "contemporaneous_prompt_kit_ref": "docs/prompts.json@1130b6232f80def9849c87aa71f7b967e43157e1#P16",
+        "current_prompt_kit_ref": "main@300d949fdcf79bbac018440a85052302d575bd2c",
+        "matched_prompt_ids": [
+          "P16"
+        ],
+        "match_kind": "ANCHOR_ONLY",
+        "manual_novelty_signals": [],
+        "historical_origin_status": "NEEDS_FULL_PROMPT_FINGERPRINT"
+      },
+      "kit_assessment": {
+        "evaluation_basis": "CONTEMPORANEOUS",
+        "prior_art_complete": false,
+        "topology_ref": null,
+        "matched_prompt_ids": [
+          "P16"
+        ],
+        "disposition": "NO_KIT_CHANGE"
+      },
+      "evidence": [
+        {
+          "id": "ev-p16-event",
+          "kind": "conversation_anchor",
+          "ref": "conversation:2026-09-16T16:21:11Z",
+          "supports": [
+            "use_case_relevance",
+            "productivity",
+            "authorship_origin"
+          ],
+          "summary": "Recovered prompt event uses the cross-repository authority-factoring anchor immediately before the H&H formatting adoption sprint."
+        },
+        {
+          "id": "ev-p16-historical",
+          "kind": "historical_registry",
+          "ref": "docs/prompts.json@1130b6232f80def9849c87aa71f7b967e43157e1#P16",
+          "supports": [
+            "prompt_kit_gap",
+            "authorship_origin"
+          ],
+          "summary": "A Prompt Kit snapshot from Sep-14, before the Sep-16 event, already contains P16 with the exact recovered first-line anchor."
+        },
+        {
+          "id": "ev-hh-pr6",
+          "kind": "pull_request",
+          "ref": "EndeavorEverlasting/nyc-hh-fieldops-lab#6@aa5b76a35f586707acf37c232f17123e9c7545fd",
+          "supports": [
+            "use_case_relevance",
+            "productivity"
+          ],
+          "summary": "Merged H&H formatting adoption records five consumer-owned files, 6/6 focused tests, contract validation, and live Drive readback."
+        }
+      ]
     }
   ]
 }
