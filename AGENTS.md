@@ -22,12 +22,12 @@ NEXT COMMAND advances next unproven state. Remote/unmerged: fetch without force;
 Use `none; no safe actionable work remains` only after authorized implementation, validation, integration, preservation/cleanup, artifact consumption.
 
 ## 5. Safety and mutation boundaries
-Forbidden: acknowledgment without mutation; plans without execution; summaries without proof; completion claims without running checks; secret or credential exposure; private workbook/protected/machine-local evidence exposure; force-push/default rewrites/destructive cleanup; prose-only deterministic behavior; weakened tests/validators.
+Forbidden: acknowledgment without mutation; plans without execution; summaries without proof; completion claims without running checks; secret or credential exposure; private workbook/protected/machine-local evidence exposure; force-push/default rewrites/destructive cleanup; prose-only deterministic behavior; weakened tests/validators/fixtures.
 Material behavior changes require proof and `git diff --check`.
 Client-facing delivery uses **minimum sufficient explanation**: purpose, period, totals, attachment, consequence. Omit internal evidence mechanics, private allocation logic, singled-out edge cases, defensive caveats, invitation-to-question closings unless needed for recipient action.
 
 ### Provider degradation and merge continuity
-Actions minute/billing exhaustion, never-started checks for usage limits, review-bot/CI limits are expected degradation, NOT merge blockers. Continue via refresh base, exact-head validation, local proof (`.githooks/pre-push`, `scripts/validate_pr_merge_gate.py`), merge when authorized. Don't stop or ask to proceed. Real blockers: conflicts, draft, head-moved, failed validators, review, missing authority. See `harness/contracts/pr-merge-gate.v1.json`.
+Actions minute/billing exhaustion, never-started checks for usage limits, review-bot/CI limits are expected degradation, NOT merge blockers. Continue via refresh base, exact-head validation, local proof (`.githooks/pre-push`, `scripts/validate_pr_merge_gate.py`), merge when authorized. Don't stop or ask to proceed. Real blockers: conflicts, draft, head-moved, failed validators, review, authority. See `harness/contracts/pr-merge-gate.v1.json`.
 
 ## 6. Repository identity and product boundary
 The core product domain is **spreadsheet intelligence**. Web Excel compatibility, billing, roster/time evidence, triage are first-class.
