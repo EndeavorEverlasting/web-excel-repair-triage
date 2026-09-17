@@ -1,0 +1,93 @@
+name: Prompt Kit 514 path semantics repair
+
+on:
+  push:
+    branches:
+      - feat/michaelshimeles-skill-intake-20260916
+
+permissions:
+  contents: write
+
+jobs:
+  repair:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Apply guarded source repair
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          sync_path = Path('scripts/sync_operant_external_resources.py')
+          validator_path = Path('scripts/validate_operant_external_resources.py')
+          sync = sync_path.read_text(encoding='utf-8')
+          validator = validator_path.read_text(encoding='utf-8')
+
+          if 'from scripts.operant_external_resource_paths import normalize_resource_root, resource_path_parts' not in sync:
+              old = 'from scripts import build_prompt_kit_registry  # noqa: E402\n'
+              new = (
+                  old
+                  + 'from scripts.operant_external_resource_paths import normalize_resource_root, resource_path_parts  # noqa: E402\n'
+              )
+              assert sync.count(old) == 1
+              sync = sync.replace(old, new, 1)
+
+              old = '''\ndef normalize_resource_root(value: object) -> str:\n    root = str(value).strip().strip("/")\n    return "" if root in {"", "."} else root\n\n'''
+              assert sync.count(old) == 1
+              sync = sync.replace(old, '\n', 1)
+
+              old = '''    root = normalize_resource_root(source["resource_root"])\n    filename = str(source["resource_filename"])\n    prefix = f"{root}/" if root else ""\n    suffix = "/" + filename\n    max_depth = int(source.get("max_depth", 1))\n    exclude = {str(item) for item in source.get("exclude_root_segments", [])}\n    resources: list[dict[str, Any]] = []\n    for item in tree.get("tree", []):\n        path = str(item.get("path", ""))\n        if item.get("type") != "blob" or not path.endswith(suffix):\n            continue\n        if prefix and not path.startswith(prefix):\n            continue\n        relative = path[len(prefix) : -len(suffix)]\n        parts = [part for part in relative.split("/") if part]\n        if not parts or len(parts) > max_depth:\n            continue\n'''
+              new = '''    root = normalize_resource_root(source["resource_root"])\n    filename = str(source["resource_filename"])\n    max_depth = int(source.get("max_depth", 1))\n    exclude = {str(item) for item in source.get("exclude_root_segments", [])}\n    resources: list[dict[str, Any]] = []\n    for item in tree.get("tree", []):\n        path = str(item.get("path", ""))\n        if item.get("type") != "blob":\n            continue\n        parts = resource_path_parts(\n            path=path,\n            resource_root=root,\n            resource_filename=filename,\n        )\n        if parts is None or len(parts) > max_depth:\n            continue\n'''
+              assert sync.count(old) == 1
+              sync = sync.replace(old, new, 1)
+
+              old = '    root = str(source.get("resource_root", ".")).rstrip("/")\n'
+              assert sync.count(old) == 1
+              sync = sync.replace(old, '    root = normalize_resource_root(source.get("resource_root", "."))\n', 1)
+
+          if 'from scripts.operant_external_resource_paths import normalize_resource_root, resource_path_parts' not in validator:
+              old = 'ROOT = Path(__file__).resolve().parents[1]\n'
+              new = (
+                  old
+                  + 'if str(ROOT) not in sys.path:\n'
+                  + '    sys.path.insert(0, str(ROOT))\n\n'
+                  + 'from scripts.operant_external_resource_paths import normalize_resource_root, resource_path_parts  # noqa: E402\n\n'
+              )
+              assert validator.count(old) == 1
+              validator = validator.replace(old, new, 1)
+
+              old = '            root = str(source.get("resource_root", ".")).rstrip("/")\n'
+              assert validator.count(old) == 1
+              validator = validator.replace(old, '            root = normalize_resource_root(source.get("resource_root", "."))\n', 1)
+
+              old = '''        path = str(item.get("path", ""))\n        expected_prefix = str(source["resource_root"]).rstrip("/") + "/"\n        expected_suffix = "/" + str(source["resource_filename"])\n        if not path.startswith(expected_prefix) or not path.endswith(expected_suffix):\n            raise ValidationError(f"resource path escapes configured donor root: {item.get('id')}")\n        max_depth = int(source.get("max_depth", 1)) if str(source.get("enumeration", "git_skill_tree")) == "git_skill_tree" else None\n        if max_depth is not None:\n            relative = path[len(expected_prefix) : -len(expected_suffix)]\n            parts = [part for part in relative.split("/") if part]\n            if not parts or len(parts) > max_depth:\n                raise ValidationError(f"resource path depth exceeds configured max_depth: {item.get('id')}")\n'''
+              new = '''        path = str(item.get("path", ""))\n        parts = resource_path_parts(\n            path=path,\n            resource_root=source["resource_root"],\n            resource_filename=source["resource_filename"],\n        )\n        if parts is None:\n            raise ValidationError(f"resource path escapes configured donor root: {item.get('id')}")\n        max_depth = int(source.get("max_depth", 1)) if str(source.get("enumeration", "git_skill_tree")) == "git_skill_tree" else None\n        if max_depth is not None:\n            if len(parts) > max_depth:\n                raise ValidationError(f"resource path depth exceeds configured max_depth: {item.get('id')}")\n'''
+              assert validator.count(old) == 1
+              validator = validator.replace(old, new, 1)
+
+          sync_path.write_text(sync, encoding='utf-8')
+          validator_path.write_text(validator, encoding='utf-8')
+          PY
+      - name: Focused proof before commit
+        run: |
+          python -m py_compile scripts/operant_external_resource_paths.py scripts/sync_operant_external_resources.py scripts/validate_operant_external_resources.py
+          python scripts/validate_operant_external_resources.py --summary
+          python -m unittest tests.test_operant_external_resources tests.test_external_prior_art_gate -v
+          git diff --check
+      - name: Commit repair when changed
+        run: |
+          if git diff --quiet -- scripts/sync_operant_external_resources.py scripts/validate_operant_external_resources.py; then
+            echo 'PATH_SEMANTICS_REPAIR_ALREADY_PRESENT=1'
+            exit 0
+          fi
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add scripts/sync_operant_external_resources.py scripts/validate_operant_external_resources.py
+          git commit -m 'fix(prompt-kit): unify external resource path semantics'
+          git push origin HEAD:feat/michaelshimeles-skill-intake-20260916
