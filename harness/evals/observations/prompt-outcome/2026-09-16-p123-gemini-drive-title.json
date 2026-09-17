@@ -23,7 +23,6 @@
     "summary": "The Drive-side title invariant passed on a synthetic Doc: the Drive file title exactly matched the first visible HEADING_1, but Gemini's export action was unavailable.",
     "expected_state": "Gemini export creates a Drive Doc whose file title equals DOCUMENT_TITLE and its first visible H1.",
     "observed_state": "Drive title equaled the first visible H1; the Gemini export stage itself was not executed.",
-    "claimed_state": "INTEGRATED",
     "signal_ids": []
   },
   "result": "BLOCKED",
