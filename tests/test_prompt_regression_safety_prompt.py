@@ -49,8 +49,15 @@ class PromptRegressionSafetyTests(unittest.TestCase):
     def test_current_contract_and_register_pass(self) -> None:
         result = regression.validate_all(copy.deepcopy(self.contract), copy.deepcopy(self.register))
         self.assertEqual(result["status"], "PASS")
-        self.assertEqual(result["families"], 1)
-        self.assertGreaterEqual(result["occurrences"], 6)
+        self.assertEqual(result["families"], len(self.register["families"]))
+        self.assertEqual(
+            {family["id"] for family in self.register["families"]},
+            {"TRAILING_WHITESPACE", "PROVIDER_QUOTA_TERMINATION"},
+        )
+        self.assertGreaterEqual(
+            result["occurrences"],
+            sum(len(family["occurrences"]) for family in self.register["families"]),
+        )
         self.assertFalse(result["matrix_is_exhaustive"])
         self.assertFalse(result["hosted_provider_is_semantic_owner"])
 
