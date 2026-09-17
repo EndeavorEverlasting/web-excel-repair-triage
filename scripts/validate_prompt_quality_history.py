@@ -5,12 +5,16 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
+import sys
 from pathlib import Path
 from typing import Any
 
-from scripts import build_prompt_kit_registry as builder
-
 ROOT = Path(__file__).resolve().parents[1]
+if str(ROOT) not in sys.path:
+    sys.path.insert(0, str(ROOT))
+
+from scripts import build_prompt_kit_registry as builder  # noqa: E402
+
 CONTRACT_PATH = ROOT / "harness" / "contracts" / "prompt-quality-history.v1.json"
 
 
