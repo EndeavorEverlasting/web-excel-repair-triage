@@ -161,6 +161,7 @@ class ObservedBehaviorProofHarnessTests(unittest.TestCase):
             "tests/prompt_kit_favorite_browser_proof.py",
             "tests/prompt_kit_external_resources_browser_proof.py",
             "tests/prompt_kit_hotkey_identity_browser_proof.py",
+            "tests/prompt_kit_compute_mode_browser_proof.py",
         ):
             source = (ROOT / rel).read_text(encoding="utf-8")
             self.assertIn("subject = prepare_exact_head_subject()", source)
