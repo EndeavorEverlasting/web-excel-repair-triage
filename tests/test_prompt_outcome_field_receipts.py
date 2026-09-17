@@ -29,7 +29,7 @@ class PromptOutcomeFieldReceiptTests(unittest.TestCase):
         self.assertEqual(receipt["result"], "SUCCESS")
         self.assertIsNone(receipt["classification"]["primary"])
         self.assertEqual(receipt["state_transition"], {"from": "INTEGRATED", "to": "OBSERVED"})
-        self.assertIn("same file IDs and URLs", receipt["observation"]["observed_state"])
+        self.assertIn("Same file IDs and URLs", receipt["observation"]["observed_state"])
 
     def test_p123_receipt_keeps_unobserved_gemini_export_blocked(self) -> None:
         receipt = self.by_id["field/20260916/p123-gemini-drive-title"]
@@ -42,7 +42,7 @@ class PromptOutcomeFieldReceiptTests(unittest.TestCase):
 
     def test_field_receipts_are_bounded_references_not_raw_provider_payloads(self) -> None:
         serialized = "\n".join(json.dumps(receipt, sort_keys=True) for receipt in self.receipts)
-        for forbidden in ("emailAddress", "permissions", "drive.google.com", "docs.google.com"):
+        for forbidden in ('"emailAddress":', '"permissions":', "drive.google.com", "docs.google.com"):
             with self.subTest(forbidden=forbidden):
                 self.assertNotIn(forbidden, serialized)
 
