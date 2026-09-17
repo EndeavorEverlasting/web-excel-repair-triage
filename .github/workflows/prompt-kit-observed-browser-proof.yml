@@ -106,8 +106,20 @@ jobs:
       - name: Observe Compute Mode resolution and effective copy
         run: |
           mkdir -p Outputs/observed-proof
+          set +e
           python tests/prompt_kit_compute_mode_browser_proof.py --receipt Outputs/observed-proof/compute-mode-receipt.json --screenshot Outputs/observed-proof/compute-mode.png
-          python scripts/validate_observed_behavior_receipt.py Outputs/observed-proof/compute-mode-receipt.json --expected-sha "$(git rev-parse HEAD)" --summary
+          proof_rc=$?
+          if [ -f Outputs/observed-proof/compute-mode-receipt.json ]; then
+            python scripts/validate_observed_behavior_receipt.py Outputs/observed-proof/compute-mode-receipt.json --expected-sha "$(git rev-parse HEAD)" --summary
+            validate_rc=$?
+          else
+            echo "Compute Mode proof did not emit its required receipt" >&2
+            validate_rc=1
+          fi
+          set -e
+          if [ "$proof_rc" -ne 0 ] || [ "$validate_rc" -ne 0 ]; then
+            exit 1
+          fi
       - name: Observe Favorite copy scroll and Enter behavior
         run: |
           mkdir -p Outputs/observed-proof
@@ -123,6 +135,7 @@ jobs:
           python tests/prompt_kit_external_resources_browser_proof.py --receipt Outputs/observed-proof/external-resources-receipt.json --screenshot Outputs/observed-proof/external-resources.png
           python scripts/validate_observed_behavior_receipt.py Outputs/observed-proof/external-resources-receipt.json --expected-sha "$(git rev-parse HEAD)" --summary
       - name: Upload observed proof receipt
+        if: ${{ always() }}
         uses: actions/upload-artifact@v4
         with:
           name: prompt-kit-observed-browser-proof
