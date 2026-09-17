@@ -35,6 +35,21 @@ The authorship scale is:
 
 `MANUAL_ORIGINAL` is intentionally expensive to prove: it requires a contemporaneous Prompt Kit reference and evidence that no material match existed. A current-only search cannot earn that claim.
 
+### Anchor equality is not authorship proof
+
+Retrospective recovery often finds only a title, first sentence, or distinctive anchor. That is useful evidence of **coverage**, but it is weaker than full prompt provenance.
+
+The authorship comparison therefore distinguishes:
+
+- `EXACT` — full-prompt equality after allowed placeholder/runtime normalization;
+- `MATERIAL` — enough of the substantive structure is shared to support reuse-dominant classification;
+- `DOCTRINE_ONLY` — shared principles but not a substantially shared prompt;
+- `ANCHOR_ONLY` — title/first-line/distinctive phrase matches, but the full prompt has not been proven equal;
+- `NONE` — no material contemporaneous owner/template found;
+- `UNKNOWN` — evidence is insufficient to compare.
+
+`ANCHOR_ONLY` can prove that a Prompt Kit owner already covered the use case, but it **cannot** by itself prove `CANONICAL_REUSE` or `REUSE_DOMINANT` authorship.
+
 ## Confidence sits beside every score
 
 `HIGH`, `MEDIUM`, `LOW`, and `NONE` describe evidence quality for the individual rating, not how good the prompt was.
@@ -95,14 +110,20 @@ When an evaluated use is already a registered Prompt Kit invocation, `prompt-out
 
 ## Recovered examples: 2026-09-17
 
-The first register intentionally preserves uncertainty instead of copying the earlier conversational guesses into repository truth.
+The current register deliberately preserves uncertainty instead of copying conversational guesses into repository truth.
 
-| Candidate | Current coverage | Gap | Historical authorship | Next evidence needed |
-|---|---|---|---|---|
-| `INSTALL GOVERNANCE DOCTRINE NOW` | Current registry maps the anchor to **P00 Governance Doctrine Installer**. | `1 / HIGH` | `UNRESOLVED / NONE` | Prompt-event date/text fingerprint plus the Prompt Kit revision that existed at that event. |
-| Cross-repository authority factoring | Candidate mechanism retained for review. | Unscored | `UNRESOLVED / NONE` | Exact prompt-event evidence, attributable outcome evidence, and full current P79/topology comparison. |
+| Candidate use | Relevance | Productivity | Current Prompt Kit gap | Historical authorship | What the evidence says |
+|---|---:|---:|---:|---|---|
+| `INSTALL GOVERNANCE DOCTRINE NOW` | Unscored | Unscored | `1 / HIGH` | `UNRESOLVED / NONE` | P00 owns this capability now, but the recovered evidence does not yet bind the exact historical prompt event or full prompt text. |
+| `ANALYZE THE REPOSITORY, BUILD THE EVIDENCE PACK, THEN EXECUTE THE FIRST SAFE SPRINT...` | `5 / HIGH` | `4 / HIGH` | `1 / HIGH` | `UNRESOLVED / NONE` | The Sep-14 Prompt Kit already contained P03 with the same first-line anchor, and the use led into merged TRQ-007 PR #480. Full-prompt equality is still unproven. |
+| `FACTOR THE REUSABLE INSIGHT INTO THE CORRECT REPOSITORIES. DO NOT DUPLICATE AUTHORITY.` | `5 / HIGH` | `5 / HIGH` | `1 / HIGH` | `UNRESOLVED / NONE` | P16 existed before the Sep-16 use, and the prompt led into merged H&H PR #6 with focused tests and live document readback. Full-prompt equality is still unproven. |
 
-This distinction is intentional: **covered now** is not the same claim as **reused then**.
+These examples are intentionally useful even though none currently proves manual originality:
+
+- P03 and P16 demonstrate that **Prompt Kit reuse can be extremely productive**.
+- Their low gap scores mean they are not strong candidates for a new Prompt Kit identity merely because they worked well.
+- Their unresolved authorship proves why a matching anchor must not be promoted into a claim about how the whole prompt was authored.
+- The high-value search zone for Prompt Kit expansion is therefore not simply “the most productive prompt.” It is **high relevance + high productivity + demonstrated current gap**, with authorship retained as a separate provenance dimension rather than a value multiplier.
 
 ## Admission and mutation boundaries
 
@@ -112,6 +133,7 @@ This subsystem is review-only. It must not:
 - edit canonical prompt bodies;
 - promote a candidate because its manual-authorship score is high;
 - infer historical authorship from current library state;
+- infer full-prompt reuse from an anchor-only match;
 - calculate a composite priority score before a weighting policy is approved;
 - persist raw private chat transcripts merely to support the matrix.
 
@@ -131,10 +153,11 @@ The focused tests prove, among other things:
 - hybrid authorship is a first-class valid state;
 - current P00 coverage does not retroactively prove historical reuse;
 - `MANUAL_ORIGINAL` cannot be claimed without contemporaneous no-match evidence;
+- an anchor-only match cannot prove canonical reuse;
 - a scored rating requires evidence;
 - Prompt Kit gap 5 cannot bypass prior-art/topology review;
 - no composite priority policy exists yet.
 
 ## Proof ceiling
 
-Repository validation can prove the rubric, consistency rules, and review-only candidate state. It cannot prove historical authorship or prompt effectiveness until the corresponding event, contemporaneous-library, and outcome evidence is attached.
+Repository validation can prove the rubric, consistency rules, and review-only candidate state. It cannot prove historical authorship or prompt effectiveness beyond the attached event, contemporaneous-library, and outcome evidence. It also does not authorize Prompt Kit mutation or new prompt identity creation.
