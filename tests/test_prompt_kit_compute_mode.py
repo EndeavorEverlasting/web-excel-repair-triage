@@ -11,6 +11,9 @@ from scripts import prompt_language_compiler as compiler
 ROOT = Path(__file__).resolve().parents[1]
 BUILDER_SOURCE = ROOT / "scripts" / "build_prompt_kit_registry.py"
 COMPUTE_MODE_JS = ROOT / "docs" / "prompt-kit-compute-mode.js"
+OBSERVED_BROWSER_WORKFLOW = (
+    ROOT / ".github" / "workflows" / "prompt-kit-observed-browser-proof.yml"
+)
 SEMANTICS_P07 = ROOT / "harness" / "prompt-compilation" / "semantics" / "P07.json"
 BUILD_CONTEXT = (
     ROOT / "harness" / "prompt-compilation" / "build-context" / "default.v1.json"
@@ -109,6 +112,23 @@ class PromptKitComputeModeTests(unittest.TestCase):
         product_default = engine.resolve_execution_profile()
         self.assertEqual(product_default["resolution"]["resolved_from"], "product_default")
         self.assertEqual(product_default["profile"]["profile"], "exhaustive")
+
+    def test_observed_browser_workflow_tracks_compiler_inputs(self) -> None:
+        workflow = OBSERVED_BROWSER_WORKFLOW.read_text(encoding="utf-8")
+        for dependency in (
+            "scripts/build_prompt_kit_registry.py",
+            "scripts/prompt_language_compiler.py",
+            "scripts/prompt_context_engine.py",
+            "harness/contracts/prompt-language-compiler-policy.v1.json",
+            "harness/prompt-compilation/semantics/**",
+            "harness/prompt-compilation/build-context/**",
+            "docs/prompt-kit-compute-mode.js",
+        ):
+            self.assertGreaterEqual(
+                workflow.count(dependency),
+                2,
+                f"observed browser proof must trigger on pull_request and main push for {dependency}",
+            )
 
 
 if __name__ == "__main__":
