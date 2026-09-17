@@ -80,6 +80,16 @@ class P13OwnerDisplacementTests(unittest.TestCase):
         ):
             self.assertIn(phrase, copy)
 
+    def test_effective_p13_cannot_stop_at_status_when_safe_progress_remains(self) -> None:
+        copy = self.effective_p13["copyContent"]
+        for phrase in (
+            "A branch listing, PR status, repeated validation, plan, handoff, or explanation is supporting evidence, not sufficient movement",
+            "An open PR, green CI, or one merged slice is not a stopping point while safe owned work remains.",
+            "merge the exact validated owned head into the current default branch in the same run",
+        ):
+            with self.subTest(phrase=phrase):
+                self.assertIn(phrase, copy)
+
     def test_p13_keeps_prompt_bounded(self) -> None:
         self.assertLess(len(self.p13["copyContent"]), 18000)
 
