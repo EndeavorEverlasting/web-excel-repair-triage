@@ -1,7 +1,7 @@
 {
   "schema_version": "prompt-regression-defect-register/v1",
   "contract": "harness/contracts/prompt-regression-safety.v1.json",
-  "evaluation_time": "2026-09-17T19:12:00Z",
+  "evaluation_time": "2026-09-17T22:45:00Z",
   "families": [
     {
       "id": "TRAILING_WHITESPACE",
@@ -54,6 +54,40 @@
           "repository": "EndeavorEverlasting/AgentSwitchboard",
           "commit": "ba19f7c8b6aaa0994ac8e58e148c77719684395b",
           "summary": "ASQ-016 preservation merge explicitly records trailing-whitespace hygiene repair alongside local-floor proof."
+        }
+      ]
+    },
+    {
+      "id": "PROVIDER_QUOTA_TERMINATION",
+      "status": "SYSTEMIC",
+      "classification": "WORKFLOW_CONTROL",
+      "recurring_across_repositories": true,
+      "matrix_capture_required": false,
+      "canonical_owner": "repository-local proof continuity contract + reviewed local action registry/runner",
+      "prompt_strengthening": "GLOBAL_SHARED_POLICY",
+      "detector_commands": [
+        "python scripts/run_local_required_checks.py --summary",
+        "python scripts/run_repository_action.py --list"
+      ],
+      "prevention_surfaces": [
+        "registry/prompts/actionable-next-step-policy.v1.json",
+        "harness/contracts/repository-local-proof-continuity.v1.json",
+        "harness/repository-actions.v1.json",
+        "scripts/run_repository_action.py",
+        ".github/workflows/repository-local-action.yml"
+      ],
+      "regression_gate": "tests/test_repository_local_proof_continuity_prompt.py",
+      "local_first_requirement": "When hosted provider proof is quota-limited or otherwise non-transiently unavailable, continue through reviewed repository-local actions for every gate they can honestly prove and keep hosted-only proof separately blocked.",
+      "occurrences": [
+        {
+          "repository": "EndeavorEverlasting/nyc-hh-fieldops-lab",
+          "commit": "835e0b5604acbe495f37f41b7ff61bc11933ba71",
+          "summary": "Exact-head repository validation had to use a local evidence-integrity fallback while GitHub Actions was recorded QUOTA_EXHAUSTED; repeated agents treated hosted runner absence as a stopping condition."
+        },
+        {
+          "repository": "EndeavorEverlasting/web-excel-repair-triage",
+          "commit": "82d6d3ea55cfb408a93c60a2a229a2ab9c0f2b53",
+          "summary": "The quota-resilience repair branch itself observed all pull-request workflow runs returning action_required rather than executable proof, demonstrating that provider state cannot remain the sole proof path."
         }
       ]
     }
