@@ -30,9 +30,9 @@
     "p07_identity_dependency": {
       "pr": 533,
       "head_sha_at_reconciliation": "807af11f89f3253c676b79d7556f506a5fd890b5",
-      "state": "OPEN_EXTERNAL_OWNER",
+      "state": "INTEGRATED",
       "content_anchor": "tests/test_p07_effective_prompt_identity.py",
-      "integration_sha": null
+      "integration_sha": "fc5fca0d4f1318a8671b7c8cd1be7abdf7b54050"
     }
   },
   "authority_rules": [
@@ -67,51 +67,17 @@
     {"id":"before_state_evidence","class":"validation","summary":"Safely reproducible bugs capture a before-state and bind runtime evidence to exact revision/environment before the repair.","required_in":["exhaustive","efficient"],"weakening_forbidden":true,"evidence_terms":["before-state","before state","capture","artifact","bug"]}
   ],
   "profiles": {
-    "exhaustive": {
-      "mode": "non_weakening_overlay",
-      "required_dimensions": ["canonical_identity","fresh_evidence_floor","scope_ownership","fixed_point_continuation","exhaustive_compute_depth","parallel_dispatch","capability_ladder","lane_isolation","local_proof_continuity","evidence_state_integrity","failure_diagnosis_retry","mainline_convergence","plan_durability","proof_relevance_freshness","quiescence","residual_compute_sweep","upstream_provenance","actionable_continuation","runtime_tool_truthfulness","review_freshness","before_state_evidence"],
-      "strategy": "Use all decision-relevant safe available compute until an evidence-defined fixed point or exact blocker."
-    },
-    "efficient": {
-      "mode": "non_weakening_overlay",
-      "required_dimensions": ["canonical_identity","fresh_evidence_floor","scope_ownership","fixed_point_continuation","parallel_dispatch","capability_ladder","lane_isolation","local_proof_continuity","evidence_state_integrity","failure_diagnosis_retry","mainline_convergence","plan_durability","proof_relevance_freshness","quiescence","upstream_provenance","actionable_continuation","runtime_tool_truthfulness","review_freshness","before_state_evidence"],
-      "may_reduce": ["breadth of optional variants","number of redundant corroborating passes","exhaustive-only residual sweep depth when acceptance is already covered"],
-      "must_not_reduce": ["canonical_identity","fresh_evidence_floor","scope_ownership","fixed_point_continuation","parallel_dispatch","capability_ladder","lane_isolation","local_proof_continuity","evidence_state_integrity","failure_diagnosis_retry","mainline_convergence","plan_durability","proof_relevance_freshness","quiescence","upstream_provenance","actionable_continuation","runtime_tool_truthfulness","review_freshness","before_state_evidence"]
-    }
+    "exhaustive": {"mode":"non_weakening_overlay","required_dimensions":["canonical_identity","fresh_evidence_floor","scope_ownership","fixed_point_continuation","exhaustive_compute_depth","parallel_dispatch","capability_ladder","lane_isolation","local_proof_continuity","evidence_state_integrity","failure_diagnosis_retry","mainline_convergence","plan_durability","proof_relevance_freshness","quiescence","residual_compute_sweep","upstream_provenance","actionable_continuation","runtime_tool_truthfulness","review_freshness","before_state_evidence"],"strategy":"Use all decision-relevant safe available compute until an evidence-defined fixed point or exact blocker."},
+    "efficient": {"mode":"non_weakening_overlay","required_dimensions":["canonical_identity","fresh_evidence_floor","scope_ownership","fixed_point_continuation","parallel_dispatch","capability_ladder","lane_isolation","local_proof_continuity","evidence_state_integrity","failure_diagnosis_retry","mainline_convergence","plan_durability","proof_relevance_freshness","quiescence","upstream_provenance","actionable_continuation","runtime_tool_truthfulness","review_freshness","before_state_evidence"],"may_reduce":["breadth of optional variants","number of redundant corroborating passes","exhaustive-only residual sweep depth when acceptance is already covered"],"must_not_reduce":["canonical_identity","fresh_evidence_floor","scope_ownership","fixed_point_continuation","parallel_dispatch","capability_ladder","lane_isolation","local_proof_continuity","evidence_state_integrity","failure_diagnosis_retry","mainline_convergence","plan_durability","proof_relevance_freshness","quiescence","upstream_provenance","actionable_continuation","runtime_tool_truthfulness","review_freshness","before_state_evidence"]}
   },
-  "representation_invariants": {
-    "authoritative_source": "canonical prompt registry/body sources plus shared compiled policies",
-    "generated_html_is_authority": false,
-    "effective_prompt_default": "canonical-preserving composition",
-    "authorized_replacement_requires": ["explicit semantic migration record","affected prompt IDs","focused regression proof","proof that immutable semantic dimensions survive or are intentionally superseded by a stronger equivalent"],
-    "detail_copy_runtime_identity_required": true
-  },
-  "parallelism_invariants": {
-    "graph_width_two_requires_dispatch_when_capacity_exists": true,
-    "considered_parallelism_is_proof": false,
-    "serial_tool_calls_are_parallelism": false,
-    "degraded_parallelism_requires_autonomy_gap": true,
-    "convergence_owner_required": true
-  },
-  "upstream_adoption": {
-    "registered_sources": ["deepseek-ai/deepseek-harness","mattpocock/skills","michaelshimeles/skills","f/prompts.chat"],
-    "required_sequence": ["refresh pinned upstream identity","extract mechanic with source provenance","compare against current canonical owner","adopt only distinct residual","strengthen existing owner before adding a prompt identity","retain focused regression"]
-  },
+  "representation_invariants": {"authoritative_source":"canonical prompt registry/body sources plus shared compiled policies","generated_html_is_authority":false,"effective_prompt_default":"canonical-preserving composition","authorized_replacement_requires":["explicit semantic migration record","affected prompt IDs","focused regression proof","proof that immutable semantic dimensions survive or are intentionally superseded by a stronger equivalent"],"detail_copy_runtime_identity_required":true},
+  "parallelism_invariants": {"graph_width_two_requires_dispatch_when_capacity_exists":true,"considered_parallelism_is_proof":false,"serial_tool_calls_are_parallelism":false,"degraded_parallelism_requires_autonomy_gap":true,"convergence_owner_required":true},
+  "upstream_adoption": {"registered_sources":["deepseek-ai/deepseek-harness","mattpocock/skills","michaelshimeles/skills","f/prompts.chat"],"required_sequence":["refresh pinned upstream identity","extract mechanic with source provenance","compare against current canonical owner","adopt only distinct residual","strengthen existing owner before adding a prompt identity","retain focused regression"]},
   "validation": {
     "adversarial_matrix": "harness/evals/prompt-strength/adversarial-regression-matrix.v1.json",
     "validator": "scripts/validate_prompt_strength.py",
     "focused_tests": "tests/test_prompt_strength_contract_prompt.py",
-    "required_checks": [
-      "all contract dimensions are unique, typed, and carry semantic evidence terms",
-      "efficient mode preserves every dimension marked required_in efficient",
-      "exhaustive mode covers every dimension",
-      "every dimension is exercised by at least one adversarial case",
-      "every case credits only dimensions whose evidence terms appear in its stimulus/assertions",
-      "every adversarial case defines typed positive and negative assertions",
-      "PSA-031 preserves the explicit silent-stop boundary regression",
-      "dependency snapshots pin exact heads and content anchors instead of PR numbers alone",
-      "no case claims downstream model obedience from repository/static proof"
-    ]
+    "required_checks": ["all contract dimensions are unique, typed, and carry semantic evidence terms","efficient mode preserves every dimension marked required_in efficient","exhaustive mode covers every dimension","every dimension is exercised by at least one adversarial case","every case credits only dimensions whose evidence terms appear in its stimulus/assertions","every adversarial case defines typed positive and negative assertions","PSA-031 preserves the explicit silent-stop boundary regression","dependency snapshots pin exact heads and content anchors instead of PR numbers alone","no case claims downstream model obedience from repository/static proof"]
   },
   "proof_ceiling": "Repository contract, matrix, and validator semantics only. This design can prove coverage of declared prompt-strength dimensions and adversarial expectations; it does not prove downstream model obedience, live sub-agent availability, hosted CI availability, browser/device behavior, deployment, or operator acceptance."
 }
