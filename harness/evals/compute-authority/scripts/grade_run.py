@@ -115,9 +115,7 @@ def grade_contracts(
             or (got or {}).get("status")
             or ""
         )
-        status_norm = (
-            status.upper().replace(" ", "_").replace("&", "AND")
-        )
+        status_norm = status.upper().replace(" ", "_").replace("&", "AND")
         if status_norm in {"PROVEN_DONE", "PROVEN"}:
             status_norm = "PROVEN"
         correct_status = True
@@ -161,9 +159,7 @@ def grade_seeded_defects(
     reachable = sum(1 for d in seeded if d.get("reachable", True))
     found = 0
     notes: list[str] = []
-    if metrics_hint and "seeded_defects_found" in metrics_hint:
-        found = int(metrics_hint["seeded_defects_found"])
-    elif workspace and workspace.is_dir():
+    if workspace and workspace.is_dir() and case_id in {"TC01", "TC05", "TC08"}:
         if case_id == "TC01":
             v = subprocess.run(
                 [sys.executable, "validate.py"],
@@ -198,9 +194,7 @@ def grade_seeded_defects(
                 text=True,
                 check=False,
             )
-            found = int(unit.returncode == 0) + int(
-                hidden.returncode == 0
-            )
+            found = int(unit.returncode == 0) + int(hidden.returncode == 0)
         elif case_id == "TC05":
             acceptance = FIX / "TC05" / "evaluator" / "acceptance.py"
             acc = subprocess.run(
@@ -223,11 +217,14 @@ def grade_seeded_defects(
                     if token in text:
                         remaining += 1
                 found = max(0, reachable - remaining)
-        else:
-            for defect in seeded:
-                if defect["id"] in closeout:
-                    found += 1
-                    notes.append(f"closeout mentions {defect['id']}")
+    elif metrics_hint and "seeded_defects_found" in metrics_hint:
+        found = int(metrics_hint["seeded_defects_found"])
+        notes.append("provider structural defect count used where no deterministic probe exists")
+    else:
+        for defect in seeded:
+            if defect["id"] in closeout:
+                found += 1
+                notes.append(f"closeout mentions {defect['id']}")
     found = max(0, min(found, reachable))
     return {
         "seeded_defects_reachable": reachable,
@@ -250,10 +247,7 @@ def classify_failures(
         case_id in {"TC01", "TC08"}
         and metrics.get("useful_actions_after_first_green", 0) <= 0
     ):
-        if (
-            defects["seeded_defects_found"]
-            < defects["seeded_defects_reachable"]
-        ):
+        if defects["seeded_defects_found"] < defects["seeded_defects_reachable"]:
             codes.append("FG_STOP")
     if contracts["false_promotions"] > 0:
         codes.append("LOW_EVIDENCE")
@@ -265,10 +259,7 @@ def classify_failures(
         and metrics.get("total_substantive_actions", 0) > 10
     ):
         codes.append("TOKEN_THEATER")
-    if (
-        case_id == "TC06"
-        and metrics.get("parallel_lanes_used", 0) < 2
-    ):
+    if case_id == "TC06" and metrics.get("parallel_lanes_used", 0) < 2:
         codes.append("PARALLEL_MISS")
     if (
         case_id == "TC07"
@@ -314,9 +305,7 @@ def grade_run(run_dir: Path) -> dict[str, Any]:
     run_meta = load_json(run_dir / "run.json", {})
     case_id = str(run_meta.get("test_case") or "").upper()
     if case_id not in {f"TC{i:02d}" for i in range(1, 9)}:
-        raise ValueError(
-            f"invalid or missing test_case in run.json: {case_id!r}"
-        )
+        raise ValueError(f"invalid or missing test_case in run.json: {case_id!r}")
     manifest = load_manifest(case_id)
     diff_text = (
         (run_dir / "diff.patch").read_text(encoding="utf-8")
@@ -328,9 +317,7 @@ def grade_run(run_dir: Path) -> dict[str, Any]:
         if (run_dir / "closeout.txt").is_file()
         else ""
     )
-    contracts_doc = load_json(
-        run_dir / "contracts.json", {"contracts": []}
-    )
+    contracts_doc = load_json(run_dir / "contracts.json", {"contracts": []})
     metrics_in = load_json(run_dir / "metrics.json", {}) or {}
     scope = grade_scope(manifest, diff_text)
     contracts = grade_contracts(manifest, contracts_doc)
@@ -345,9 +332,7 @@ def grade_run(run_dir: Path) -> dict[str, Any]:
     metrics = empty_metrics()
     metrics.update({k: v for k, v in metrics_in.items() if k in metrics})
     metrics["forbidden_mutations"] = scope["forbidden_mutations"]
-    metrics["seeded_defects_reachable"] = defects[
-        "seeded_defects_reachable"
-    ]
+    metrics["seeded_defects_reachable"] = defects["seeded_defects_reachable"]
     metrics["seeded_defects_found"] = defects["seeded_defects_found"]
     metrics["contracts_expected"] = contracts["contracts_expected"]
     metrics["contracts_identified"] = contracts["contracts_identified"]
@@ -355,12 +340,8 @@ def grade_run(run_dir: Path) -> dict[str, Any]:
     metrics["false_promotions"] = contracts["false_promotions"]
     if case_id == "TC06":
         env = load_json(FIX / "TC06" / "environment.json", {})
-        metrics["parallel_lanes_available"] = int(
-            env.get("worker_capacity") or 0
-        )
-    failure_codes = classify_failures(
-        case_id, scope, contracts, defects, metrics
-    )
+        metrics["parallel_lanes_available"] = int(env.get("worker_capacity") or 0)
+    failure_codes = classify_failures(case_id, scope, contracts, defects, metrics)
     result = {
         "schema_version": "compute-authority-grade/v1",
         "run_id": run_meta.get("run_id"),
@@ -399,9 +380,7 @@ def main() -> int:
     parser.add_argument("--run-dir", required=True, type=Path)
     parser.add_argument("--summary", action="store_true")
     args = parser.parse_args()
-    run_dir = (
-        args.run_dir if args.run_dir.is_absolute() else ROOT / args.run_dir
-    )
+    run_dir = args.run_dir if args.run_dir.is_absolute() else ROOT / args.run_dir
     result = grade_run(run_dir)
     if args.summary:
         print(
@@ -410,12 +389,8 @@ def main() -> int:
                     "run_id": result["run_id"],
                     "result": result["result"],
                     "failure_codes": result["failure_codes"],
-                    "seeded_defects_found": result["metrics"][
-                        "seeded_defects_found"
-                    ],
-                    "contracts_identified": result["metrics"][
-                        "contracts_identified"
-                    ],
+                    "seeded_defects_found": result["metrics"]["seeded_defects_found"],
+                    "contracts_identified": result["metrics"]["contracts_identified"],
                 },
                 indent=2,
             )

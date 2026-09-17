@@ -226,6 +226,27 @@ print("SECRET RAW OUTPUT")
         self.assertIn("SCOPE_CREEP", grade["failure_codes"])
         self.assertEqual(grade["result"], "fail")
 
+    def test_deterministic_seeded_defect_probe_wins_over_provider_count(self) -> None:
+        run_dir = initialize_run(
+            case_id="TC01",
+            condition="control",
+            run_id="scope-test-deterministic-defects",
+        )
+        (run_dir / "metrics.json").write_text(
+            json.dumps({"seeded_defects_found": 999}) + "\n",
+            encoding="utf-8",
+        )
+        materialize_workspace_evidence(run_dir)
+        grade = grade_run(run_dir)
+        self.assertNotIn(
+            "provider structural defect count",
+            " ".join(grade["defects"]["notes"]),
+        )
+        self.assertLessEqual(
+            grade["defects"]["seeded_defects_found"],
+            grade["defects"]["seeded_defects_reachable"],
+        )
+
     def test_grader_preserves_repetition_identity(self) -> None:
         run_dir = initialize_run(case_id="TC01", condition="control", repetition=2, run_id="rep-test-one")
         materialize_workspace_evidence(run_dir)
