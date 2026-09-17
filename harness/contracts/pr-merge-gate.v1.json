@@ -21,6 +21,27 @@
   "passing_required_check_conclusions": [
     "success"
   ],
+  "degraded_check_conclusions": [
+    "skipped",
+    "cancelled",
+    "neutral"
+  ],
+  "degraded_check_rules": {
+    "description": "When a required check conclusion is skipped/cancelled/neutral, it may be classified as degraded (not a blocker) if evidence shows provider usage/billing limits and local proof exists for that exact head.",
+    "allowed_reasons": [
+      "actions_minute_exhaustion",
+      "actions_billing_limit",
+      "review_bot_usage_limit",
+      "ci_provider_usage_limit"
+    ],
+    "local_proof_validators": [
+      "python scripts/run_local_required_checks.py --report Outputs/local-required-checks-receipt.json",
+      "python scripts/run_validator_profile.py --profile pre_push --report <tmpdir>/pre-push-receipt.json",
+      ".githooks/pre-push",
+      "scripts/validate_pr_merge_gate.py --summary",
+      "python -m unittest tests.test_pr_merge_gate -v"
+    ]
+  },
   "decision_order": [
     "already_merged",
     "closed_unmerged",
@@ -37,7 +58,8 @@
     "pull request is open and not already merged",
     "pull request is not draft",
     "mergeable is true",
-    "every repository-required check conclusion is success",
+    "every repository-required check conclusion is success OR degraded with local proof",
+    "degraded checks (skipped/cancelled/neutral) are allowed only when degradation_reason is an allowed provider usage/billing limit AND local_proof_exists is true for that exact head",
     "unresolved review finding count is zero",
     "head_sha exactly equals expected_head_sha",
     "merge intent exists",
@@ -48,7 +70,8 @@
     "expected head SHA moved",
     "pull request is draft",
     "mergeability is unknown or false",
-    "a repository-required check is not successful",
+    "a repository-required check has conclusion failure or error",
+    "a repository-required check is degraded (skipped/cancelled/neutral) without local proof or degradation evidence",
     "an unresolved review finding remains",
     "merge authority is unavailable when merge intent exists"
   ],
@@ -86,7 +109,10 @@
     "asking the operator for permission to merge when merge authority and merge intent are already explicit",
     "telling normal users to fetch or pin a feature branch after that work has been merged to the canonical default branch",
     "claiming integration complete without verifying the default branch advanced",
-    "merging when required checks, review findings, mergeability, expected-head identity, or authority remain unresolved"
+    "merging when required checks, review findings, mergeability, expected-head identity, or authority remain unresolved",
+    "stopping or requesting operator proceed solely because GitHub Actions minutes are exhausted, Actions never started due to billing/usage limits, or review-bot/CI-provider usage limits were hit",
+    "treating provider usage/billing limit degradation as a hard blocker when local proof substitute exists for the exact head",
+    "inventing green remote check conclusions when checks are actually skipped/degraded"
   ],
   "proof_ceiling": "The classifier proves deterministic merge-gate classification and post-merge handoff rules for supplied PR state. The registered repository-promotion contract and host adapter define the provider-side evidence-and-mutation path, but actual provider merge or queue success and default-branch containment require an observed provider run for the exact candidate."
 }

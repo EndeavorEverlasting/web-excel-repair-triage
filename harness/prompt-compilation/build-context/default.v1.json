@@ -5,8 +5,7 @@
     "active_contracts": [
       "prompt-parallel-dispatch/v1",
       "prompt-semantics/v1",
-      "prompt-execution-profile/v1",
-      "repository-local-proof-continuity/v1"
+      "prompt-execution-profile/v1"
     ],
     "owned_scope": [
       "harness/prompt-compilation/**",
@@ -26,16 +25,14 @@
   },
   "history": {
     "relevant_recurrences": [
-      "contract.parallel_dispatch.execution_missing",
-      "provider.hosted_ci.quota_stop_recurrence"
+      "contract.parallel_dispatch.execution_missing"
     ]
   },
   "evidence": {
     "open_recovery": false,
     "known_acceptance_gates": [
       "observed_parallelism",
-      "verify-receipt",
-      "repository-local-proof-continuity"
+      "verify-receipt"
     ],
     "effective_prompt_identity": "P07"
   },

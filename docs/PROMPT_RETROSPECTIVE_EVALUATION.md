@@ -158,6 +158,14 @@ The focused tests prove, among other things:
 - Prompt Kit gap 5 cannot bypass prior-art/topology review;
 - no composite priority policy exists yet.
 
+## Regression safety is a separate layer
+
+The retrospective matrix evaluates **prompt uses**; it is not the complete defect detector. A recurring defect may instead be discovered by a local validator or required check, hosted CI, code review, runtime observation, operator feedback, or commit history.
+
+Those failures belong to the regression-safety loop in `docs/PROMPT_REGRESSION_SAFETY.md` and `harness/contracts/prompt-regression-safety.v1.json`. That loop can strengthen shared operational Prompt Kit behavior even when no single matrix row captures the defect. Trailing whitespace is the first registered example: repeated cross-repository incidents are treated as a patch-hygiene system defect rather than another one-off cleanup.
+
+The two systems therefore feed each other without collapsing into one metric: retrospective evaluation discovers useful prompt-use gaps; regression safety turns recurring defect evidence from **any supported intake surface** into a negative fixture, positive control, canonical-owner strengthening, local required-check proof, and a retained regression.
+
 ## Proof ceiling
 
 Repository validation can prove the rubric, consistency rules, and review-only candidate state. It cannot prove historical authorship or prompt effectiveness beyond the attached event, contemporaneous-library, and outcome evidence. It also does not authorize Prompt Kit mutation or new prompt identity creation.

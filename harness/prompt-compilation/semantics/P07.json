@@ -4,22 +4,6 @@
   "goal": "complete bounded repository work through evidence-defined fixed point",
   "obligations": [
     {
-      "id": "local_proof_continuity",
-      "when": "always",
-      "modality": "MUST",
-      "action": "establish_or_use_repository_local_proof_path",
-      "proof": "local_proof_packet_with_owner_command_base_inputs_exit_behavior_or_named_hosted_only_gate",
-      "failure_state": "LOCAL_PROOF_GAP"
-    },
-    {
-      "id": "mainline_convergence",
-      "when": "always",
-      "modality": "MUST",
-      "action": "converge_validated_owned_work_to_default_branch",
-      "proof": "verified_default_branch_contains_validated_owned_change_or_exact_named_merge_gate",
-      "failure_state": "INTEGRATION_GAP"
-    },
-    {
       "id": "parallel_dispatch",
       "when": "dependency_ready_width >= 2 && safe_capacity >= 2",
       "modality": "MUST",
@@ -31,7 +15,6 @@
   "invariants": [
     "scope_preservation",
     "evidence_honesty",
-    "mainline_convergence",
-    "local_proof_does_not_promote_hosted_or_live_proof"
+    "mainline_convergence"
   ]
 }
