@@ -12,6 +12,23 @@
     "local_required_check_owner": "harness/promotion/required-checks.v1.json",
     "hosted_provider_is_semantic_owner": false
   },
+  "defect_family_contract": {
+    "allowed_statuses": [
+      "SYSTEMIC"
+    ],
+    "allowed_classifications": [
+      "PATCH_HYGIENE",
+      "PROMPT_SEMANTICS",
+      "WORKFLOW_CONTROL",
+      "RUNTIME_BEHAVIOR",
+      "PROVIDER_PARITY"
+    ],
+    "allowed_prompt_strengthening": [
+      "GLOBAL_SHARED_POLICY",
+      "SCOPED_SHARED_POLICY"
+    ],
+    "occurrence_commit_format": "lowercase-40-hex"
+  },
   "recurrence": {
     "systemic_threshold": 2,
     "incident_sources": [
@@ -40,7 +57,7 @@
   "local_first_proof": {
     "semantic_authority": "Repository-owned validators, required-check profiles, fixtures, and exact-candidate receipts define the portable merge gate; hosted providers may execute those contracts but do not own their semantics.",
     "rules": [
-      "When local Git and the repository-owned required-check runner are available, run the local profile before hosted-provider proof.",
+      "When local Git and the repository-owned required-check runner are available, run the local profile before hosted provider proof.",
       "Bind local proof to the exact base/head candidate, invoked profile or command set, exit status, and produced receipt/artifact where the repository supports receipts.",
       "Provider unavailability does not erase valid local proof, but local proof does not grant merge authority when the repository's current promotion contract still requires provider mutation or another external gate.",
       "A local and hosted gate that intend to prove the same invariant must consume the same repository-owned command/profile contract rather than maintain divergent command lists."
@@ -61,7 +78,7 @@
     "The smallest canonical shared owner is strengthened; prompt-by-prompt copy edits are rejected when a shared owner exists.",
     "The regression is registered in the deterministic floor when repository convention classifies it as a focused Prompt Kit semantic regression.",
     "Affected local required checks pass before integration when executable in the current environment.",
-    "Hosted-provider parity is additional proof when applicable, not a replacement semantic owner.",
+    "Hosted provider parity is additional proof when applicable, not a replacement semantic owner.",
     "The retained regression remains present after integration."
   ],
   "proof_ceiling": "Repository contract and regression semantics only. It can prove that recurring defects are classified, assigned to a canonical owner, regression-tested, and included in repository-owned local proof surfaces. It does not by itself grant hostless merge authority, prove downstream model obedience, or replace provider-only/external gates still required by the active repository promotion contract."
