@@ -41,19 +41,33 @@ echo "never parse me as a directive"
 """
 
 
+def identity(sha: str = "a" * 40, path: str = "task-isolation/SKILL.md") -> prototype.ResourceIdentity:
+    return prototype.ResourceIdentity(
+        source_id="fixture-skills",
+        resource_id="fixture-skills:task-isolation",
+        repository="fixture/skills",
+        source_sha=sha,
+        path=path,
+    )
+
+
+def pinned_fixture() -> prototype.PinnedBody:
+    digest = hashlib.sha256(FIXTURE.encode()).hexdigest()
+    return prototype.verify_body(
+        identity=identity(),
+        body=FIXTURE,
+        expected_body_sha256=digest,
+        acquisition="verified_fixture",
+    )
+
+
 class ExternalSkillSemanticPrototypeTests(unittest.TestCase):
     def test_success_stack_extracts_provenance_rich_directive_candidates(self) -> None:
-        receipt = prototype.build_receipt(
-            source_id="fixture-skills",
-            resource_id="fixture-skills:task-isolation",
-            repository="fixture/skills",
-            source_sha="a" * 40,
-            path="task-isolation/SKILL.md",
-            body=FIXTURE,
-        )
+        receipt = prototype.build_receipt(pinned_fixture())
         self.assertEqual(receipt["schema_version"], prototype.SCHEMA_VERSION)
         self.assertEqual(receipt["document"]["name"], "task-isolation")
         self.assertEqual(receipt["source"]["body_sha256"], hashlib.sha256(FIXTURE.encode()).hexdigest())
+        self.assertEqual(receipt["source"]["acquisition"], "verified_fixture")
         directives = receipt["directive_candidates"]
         self.assertGreaterEqual(len(directives), 6)
         self.assertEqual([row["candidate_id"] for row in directives], [f"D{i:03d}" for i in range(1, len(directives) + 1)])
@@ -81,40 +95,61 @@ class ExternalSkillSemanticPrototypeTests(unittest.TestCase):
         self.assertEqual(directives[0]["text"], "Always verify the selected runtime.")
         self.assertNotIn("Linux", directives[0]["text"])
 
+    def test_tilde_fenced_code_is_not_extracted(self) -> None:
+        body = """# Tilde fence\n\n~~~bash\n# Never treat this as policy.\necho verify\n~~~\n\nAlways verify the real result.\n"""
+        _, directives = prototype.extract_directive_candidates(body)
+        self.assertEqual([row["text"] for row in directives], ["Always verify the real result."])
+
+    def test_descriptive_list_items_are_not_directives(self) -> None:
+        body = """# Inputs\n\n- PR number (optional).\n- Target platform and repository name.\n- Always verify the exact head before review.\n"""
+        _, directives = prototype.extract_directive_candidates(body)
+        self.assertEqual(len(directives), 1)
+        self.assertEqual(directives[0]["text"], "Always verify the exact head before review.")
+
     def test_failure_stack_rejects_stale_body_identity(self) -> None:
         with self.assertRaisesRegex(ValueError, "body sha256 mismatch"):
-            prototype.build_receipt(
-                source_id="fixture-skills",
-                resource_id="fixture-skills:task-isolation",
-                repository="fixture/skills",
-                source_sha="b" * 40,
-                path="task-isolation/SKILL.md",
+            prototype.verify_body(
+                identity=identity("b" * 40),
                 body=FIXTURE,
                 expected_body_sha256="0" * 64,
+                acquisition="verified_fixture",
+            )
+
+    def test_pinned_body_rejects_self_inconsistent_digest(self) -> None:
+        with self.assertRaisesRegex(ValueError, "digest does not match body"):
+            prototype.PinnedBody(
+                identity=identity(),
+                body=FIXTURE,
+                body_sha256="0" * 64,
+                acquisition="fixture",
             )
 
     def test_pinned_url_must_match_repository_sha_and_path_exactly(self) -> None:
-        sha = "c" * 40
-        good = f"https://raw.githubusercontent.com/fixture/skills/{sha}/task/SKILL.md"
-        prototype.validate_pinned_raw_url(good, repository="fixture/skills", source_sha=sha, path="task/SKILL.md")
+        ident = identity("c" * 40, "task/SKILL.md")
+        good = f"https://raw.githubusercontent.com/fixture/skills/{ident.source_sha}/task/SKILL.md"
+        prototype.validate_pinned_raw_url(good, ident)
         with self.assertRaisesRegex(ValueError, "exact raw.githubusercontent.com"):
             prototype.validate_pinned_raw_url(
                 "https://raw.githubusercontent.com/fixture/skills/main/task/SKILL.md",
-                repository="fixture/skills",
-                source_sha=sha,
-                path="task/SKILL.md",
+                ident,
             )
 
+    def test_resource_identity_rejects_movable_or_escaping_identity(self) -> None:
+        with self.assertRaisesRegex(ValueError, "40-character Git SHA"):
+            identity("main")
+        with self.assertRaisesRegex(ValueError, "relative repository path"):
+            identity("d" * 40, "../SKILL.md")
+
     def test_empty_semantic_result_fails_closed(self) -> None:
+        body = "# Empty\n\nDescriptive text without policy language.\n"
+        pinned = prototype.verify_body(
+            identity=identity("e" * 40, "empty/SKILL.md"),
+            body=body,
+            expected_body_sha256=hashlib.sha256(body.encode()).hexdigest(),
+            acquisition="verified_fixture",
+        )
         with self.assertRaisesRegex(ValueError, "no directive candidates"):
-            prototype.build_receipt(
-                source_id="fixture-skills",
-                resource_id="fixture-skills:empty",
-                repository="fixture/skills",
-                source_sha="d" * 40,
-                path="empty/SKILL.md",
-                body="# Empty\n\nDescriptive text without policy language.\n",
-            )
+            prototype.build_receipt(pinned)
 
     def test_unterminated_front_matter_fails_closed(self) -> None:
         with self.assertRaisesRegex(ValueError, "unterminated front matter"):
