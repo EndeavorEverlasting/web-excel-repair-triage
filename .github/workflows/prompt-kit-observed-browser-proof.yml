@@ -5,6 +5,8 @@ on:
     paths:
       - build_prompt_kit.py
       - scripts/build_prompt_kit_registry.py
+      - scripts/prompt_language_compiler.py
+      - scripts/prompt_context_engine.py
       - docs/prompt-kit.js
       - docs/prompt-kit-polish.js
       - docs/prompt-kit-hotkey-prototype.js
@@ -15,6 +17,7 @@ on:
       - registry/prompts/ai-engineering-level-up-prompts.v1.json
       - harness/contracts/prompt-kit-interactions.v1.json
       - harness/contracts/prompt-kit-cross-input-modality.v1.json
+      - harness/contracts/prompt-language-compiler-policy.v1.json
       - harness/prompt-compilation/semantics/**
       - harness/prompt-compilation/build-context/**
       - harness/observed-proof/**
@@ -37,6 +40,8 @@ on:
     paths:
       - build_prompt_kit.py
       - scripts/build_prompt_kit_registry.py
+      - scripts/prompt_language_compiler.py
+      - scripts/prompt_context_engine.py
       - docs/prompt-kit.js
       - docs/prompt-kit-polish.js
       - docs/prompt-kit-hotkey-prototype.js
@@ -47,6 +52,7 @@ on:
       - registry/prompts/ai-engineering-level-up-prompts.v1.json
       - harness/contracts/prompt-kit-interactions.v1.json
       - harness/contracts/prompt-kit-cross-input-modality.v1.json
+      - harness/contracts/prompt-language-compiler-policy.v1.json
       - harness/prompt-compilation/semantics/**
       - harness/prompt-compilation/build-context/**
       - harness/observed-proof/**
