@@ -202,3 +202,19 @@ Canonical terminal action: none; no safe actionable work remains
 - **Last proof:** commit:4d98a77369fe64f42a7be6cb79ea71dd6bbbeea1; merge:50229c36e21a32d8541ddfe2c957cf9095ce3546 integrated PR #515; local:python -m unittest tests.test_prompt_compilation tests.test_prompt_context_engine tests.test_prompt_improvement_compiler (29 OK); workflow:deterministic-test-floor + operational-harness + ledger contract green on PR head; artifact:scripts/prompt_improvement_compiler.py present on refreshed default branch
 - **Next action:** none; no safe actionable work remains
 - **Updated:** 2026-09-16T19:10:00-04:00
+
+## TRQ-013 — Prompt Compilation Sprint 4 Compute Mode product wiring
+
+- **Status:** VERIFY
+- **Priority:** P1
+- **Owner:** feat/prompt-compilation-compute-mode-20260916
+- **Branch / PR:** `feat/prompt-compilation-compute-mode-20260916` / PR pending
+- **Scope:** wire compiler-owned execution-profile overlays into Prompt Kit effective-copy/detail paths; expose global Exhaustive/Efficient preference and per-prompt overrides with Context Engine precedence parity; regenerate the canonical website through the builder; add focused product/compiler regressions
+- **Forbidden:** #450/#431 donor salvage; TRQ-007 frozen treatment mutation; raw conversation ingestion; new Evidence Spine event ownership; auto-promotion/auto-merge of improvement candidates; hand-editing generated `web/prompt-kit/index.html`
+- **Dependencies:** Sprints 1–3 integrated (#483/#485/#515); `prompt-execution-profile/v1`; `scripts/prompt_context_engine.py`; `scripts/prompt_language_compiler.py`; builder-owned Prompt Kit generation
+- **References:** `registry/prompts/prompt-compute-mode.v1.json`, `scripts/prompt_compute_mode.py`, `docs/prompt-kit-compute-mode.js`, `scripts/build_prompt_kit_registry.py`, `tests/test_prompt_compute_mode.py`, `harness/prompt-compilation/PROMPT_COMPILATION_SPRINT_MAP.md`
+- **Acceptance gate:** both profiles derive from canonical Context Engine definitions; browser resolution preserves `run > prompt > user > product`; Efficient removes only the shared exhaustive-only section; canonical prompt-specific/safety/evidence/privacy/scope/acceptance requirements remain; content-only prompts are unchanged; copy/detail surfaces consume effective content; generated site matches the canonical builder; focused + existing compilation tests and repository CI pass; exact validated head integrates to default branch
+- **Gate:** exact-head CI + review + merge
+- **Last proof:** implementation lane created from refreshed `main@93a8886d77e043023eeecca05f5e2e8e13b89f06`; validation pending
+- **Next action:** run the Sprint 4 carrier, inspect exact generated diff and focused tests, then open/validate/merge the exact green head
+- **Updated:** 2026-09-16T21:52:00-04:00

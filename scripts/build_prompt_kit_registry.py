@@ -15,6 +15,7 @@ if str(REPO_ROOT) not in sys.path:
 
 import build_prompt_kit  # noqa: E402
 from scripts import prompt_classification  # noqa: E402
+from scripts import prompt_compute_mode  # noqa: E402
 from scripts import prompt_registry_product_boundaries  # noqa: E402
 
 PRODUCT_BOUNDARIES = prompt_registry_product_boundaries.load_contract()
@@ -33,6 +34,7 @@ GUIDED_RECOMMENDATIONS = REPO_ROOT / "docs" / "prompt-kit-guided-recommendations
 PROMPT_JOURNEY_RUNTIME = REPO_ROOT / "docs" / "prompt-kit-journey.js"
 STORAGE_LIFECYCLE_RUNTIME = REPO_ROOT / "docs" / "prompt-kit-storage-lifecycle.js"
 PROFILE_RUNTIME = REPO_ROOT / "docs" / "prompt-kit-profiles.js"
+COMPUTE_MODE_RUNTIME = REPO_ROOT / "docs" / "prompt-kit-compute-mode.js"
 POLISH_RUNTIME = REPO_ROOT / "docs" / "prompt-kit-polish.js"
 CORRESPONDENCE_RUNTIME = REPO_ROOT / "docs" / "prompt-kit-correspondence.js"
 MANAGEMENT_RUNTIME = REPO_ROOT / "docs" / "prompt-kit-management.js"
@@ -637,6 +639,8 @@ def render() -> str:
     reference = _load_json(REFERENCE)
     ontology = build_ontology_model(prompts)
     ontology_json = json.dumps(ontology, ensure_ascii=False, separators=(",", ":")).replace("</", "<\/")
+    compute_mode_manifest = prompt_compute_mode.build_product_manifest()
+    compute_mode_json = json.dumps(compute_mode_manifest, ensure_ascii=False, separators=(",", ":")).replace("</", "<\/")
     html = build_prompt_kit.build_html(prompts, reference)
     guided_script = _read_runtime(GUIDED_RECOMMENDATIONS, "Guided recommendation behavior")
     journey_script = _read_runtime(PROMPT_JOURNEY_RUNTIME, "Guided next-step journey behavior")
@@ -644,6 +648,7 @@ def render() -> str:
         STORAGE_LIFECYCLE_RUNTIME, "Prompt Kit local storage lifecycle behavior"
     )
     profile_script = _read_runtime(PROFILE_RUNTIME, "Prompt Kit named profile behavior")
+    compute_mode_script = _read_runtime(COMPUTE_MODE_RUNTIME, "Prompt Kit Compute Mode behavior")
     polish_script = _read_runtime(POLISH_RUNTIME, "Prompt Kit polish behavior")
     correspondence_script = _read_runtime(
         CORRESPONDENCE_RUNTIME, "Prompt Kit correspondence profile behavior"
@@ -672,6 +677,8 @@ def render() -> str:
         f"<script>\n{journey_script}\n</script>\n"
         f"<script>\n{storage_lifecycle_script}\n</script>\n"
         f"<script>\n{profile_script}\n</script>\n"
+        f"<script>\nwindow.PROMPT_KIT_COMPUTE_MODE_MANIFEST = {compute_mode_json};\n</script>\n"
+        f"<script>\n{compute_mode_script}\n</script>\n"
         f"<script>\n{polish_script}\n</script>\n"
         f"<script>\n{correspondence_script}\n</script>\n"
         f"<script>\n{management_script}\n</script>\n"

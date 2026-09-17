@@ -297,3 +297,15 @@ After this design revision integrates:
 | State owned twice? | No durable candidate store; draft is ephemeral | Keep until a later artifact registry is authorized |
 | Failure ownership clear? | Gate vs eval vs promotion errors are distinct codes/exceptions | Keep |
 | Future change blast radius? | New failure identity = catalog entry + optional fixture | Low blast radius; preferred extension path |
+
+
+## Sprint 4 product wiring boundary
+
+The Prompt Kit product consumes compiler-owned **context-free execution-profile overlays** for the user Compute Mode surface. This is intentionally narrower than a context-bound `prompt-build-receipt/v1`: the static website must not fabricate a repository head, runtime capability state, or owner-native evidence merely to render a preference.
+
+- `scripts/prompt_compute_mode.py` derives profile overlays from the canonical Context Engine profile library and Language Engine revision.
+- `docs/prompt-kit-compute-mode.js` owns browser persistence and mirrors the canonical precedence `run > prompt > user > product`; it does not own lifecycle events or semantic policy.
+- Exhaustive keeps the canonical prompt body intact and adds the compiler-owned overlay.
+- Efficient removes only the shared `EXHAUSTIVE AVAILABLE COMPUTE RULE` block before adding the efficient overlay; safety, scope, evidence, privacy, destructive-operation, acceptance, and prompt-specific MUST obligations remain untouched.
+- Content-only prompts remain canonical and do not receive Compute Mode mutation.
+- A future runtime with observed owner-native context may invoke full `render(...)` and emit `prompt-build-receipt/v1`; the static browser surface does not promote itself to that proof level.

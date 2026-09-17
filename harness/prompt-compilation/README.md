@@ -7,6 +7,7 @@ Bounded Prompt Kit subsystem for compiling semantic prompt policy into effective
 - Language Engine: `scripts/prompt_language_compiler.py`
 - Context Engine adapters: `scripts/prompt_context_engine.py`
 - Improvement Compiler: `scripts/prompt_improvement_compiler.py`
+- Compute Mode product bridge: `scripts/prompt_compute_mode.py` + `docs/prompt-kit-compute-mode.js`
 - Focused tests: `tests/test_prompt_compilation.py`, `tests/test_prompt_context_engine.py`, `tests/test_prompt_improvement_compiler.py`
 
 ```bash
@@ -14,4 +15,6 @@ python -m unittest tests.test_prompt_compilation tests.test_prompt_context_engin
 python scripts/prompt_language_compiler.py validate-fixtures --summary
 python scripts/prompt_context_engine.py resolve-profile --summary
 python scripts/prompt_improvement_compiler.py run-journey --finding harness/prompt-compilation/improvement-journeys/IJ01-modality-recurrence/finding.json --summary
+python -m unittest tests.test_prompt_compute_mode -v
+python scripts/build_prompt_kit_registry.py --check
 ```

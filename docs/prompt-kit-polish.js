@@ -102,11 +102,11 @@ window.copyToClipboard=function(text,onSuccess){
   }else fallbackClipboard(text,onSuccess)
 };
 
-window.showCopyConfirmation=function(id){
+window.showCopyConfirmation=function(id,copyContentOverride){
   var promptId=String(id||'');
   var catalog=typeof PROMPTS!=='undefined'&&Array.isArray(PROMPTS)?PROMPTS:[];
   var prompt=catalog.find(function(item){return item&&item.id===promptId});
-  var copyContent=prompt&&prompt.copyContent?prompt.copyContent:'';
+  var copyContent=copyContentOverride!=null?String(copyContentOverride):(prompt&&prompt.copyContent?(window.PromptKitComputeMode?window.PromptKitComputeMode.effectivePrompt(window,prompt):prompt.copyContent):'');
   var model=buildCopyConfirmationToastModel(promptId,copyContent);
   var toast=document.getElementById('toast');
   if(toast){
@@ -128,14 +128,17 @@ window.showCopyConfirmation=function(id){
 
 window.copyPrompt=function(id){
   var p=PROMPTS.find(function(x){return x.id===id});
-  if(p&&p.copyContent)copyToClipboard(p.copyContent,function(){
-    showCopyConfirmation(id);
+  if(p&&p.copyContent){
+    var effectiveCopyContent=window.PromptKitComputeMode?window.PromptKitComputeMode.effectivePrompt(window,p):p.copyContent;
+    copyToClipboard(effectiveCopyContent,function(){
+    showCopyConfirmation(id,effectiveCopyContent);
     try{
       var selEl=document.querySelector('[data-prompt-id="'+String(id).replace(/"/g,'')+'"]');
       if(selEl){selEl.setAttribute('data-copy-state','success');selEl.classList.add('is-copied');setTimeout(function(){selEl.setAttribute('data-copy-state','idle');selEl.classList.remove('is-copied')},900)}
       if(typeof announceCopyStatus==='function')announceCopyStatus(String(id)+' copied to clipboard.');
     }catch(e){}
-  })
+    })
+  }
 };
 
 function clearTransientPromptFilters(){

@@ -213,6 +213,29 @@ def render_obligation(obligation: dict[str, Any], policy: dict[str, Any]) -> str
     return "\n".join(lines)
 
 
+def render_execution_profile_overlay(profile: dict[str, Any]) -> str:
+    """Render a context-free product overlay from validated execution-profile authority.
+
+    Full semantic compilation still uses render(...). This bounded overlay exists so the
+    static Prompt Kit can expose a user compute preference without fabricating runtime
+    evidence or a repository head.
+    """
+    profile = validate_profile(profile)
+    constraints = ", ".join(sorted(REQUIRED_NON_WEAKENABLE))
+    lines = [
+        "COMPILED EXECUTION PROFILE",
+        f"Execution profile: {profile['profile']}",
+        f"Compute policy: {profile['compute_policy']}",
+        f"Parallel policy: {profile['parallel_policy']}",
+        f"Hypothesis policy: {profile['hypothesis_policy']}",
+        f"Validation policy: {profile['validation_policy']}",
+        f"Stop policy: {profile['stop_policy']}",
+        f"Non-weakenable constraints remain mandatory: {constraints}.",
+        "This profile changes compute strategy only; canonical safety, scope, evidence, privacy, destructive-operation, and acceptance requirements remain authoritative.",
+    ]
+    return "\n".join(lines) + "\n"
+
+
 def render(
     semantics: dict[str, Any],
     profile: dict[str, Any],
