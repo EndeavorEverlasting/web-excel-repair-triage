@@ -1,0 +1,36 @@
+{
+  "schema_version": "p123-source-coverage-proof/v1",
+  "contract_id": "p123-source-coverage-proof",
+  "owner": "P123",
+  "eval_owner": "P67",
+  "plan": "harness/evals/P123_SOURCE_COVERAGE_PROOF_PLAN.md",
+  "fixture": "tests/fixtures/p123_source_coverage/drive_7UyhyhxdFsQ_20260910.v1.json",
+  "scorer": "scripts/evaluate_p123_source_coverage.py",
+  "related_quality_fixture": "tests/fixtures/p123_source_document_quality/drive_7UyhyhxdFsQ_20260910.v1.json",
+  "related_identity_receipt": "harness/evals/observations/prompt-outcome/2026-09-16-p123-gemini-drive-title.json",
+  "required_receipt_fields": [
+    "source_extent_seconds",
+    "last_inspected_position_seconds",
+    "full_source_coverage",
+    "unaccounted_spans",
+    "coverage_ledger",
+    "explicit_end_coverage_receipt",
+    "claims_specific_unrepresented_tail_facts"
+  ],
+  "coverage_values": ["PARTIAL", "COMPLETE"],
+  "ledger_dispositions": [
+    "NEW_FINDING",
+    "SUPPORTS_EXISTING",
+    "NO_REUSABLE_INSIGHT",
+    "UNAVAILABLE_UNVERIFIED"
+  ],
+  "failure_classes": [
+    "SOURCE_EXTENT_MISMATCH",
+    "MISSING_END_COVERAGE_RECEIPT",
+    "UNACCOUNTED_TAIL_UNRECEIPTED",
+    "COMPLETE_WITHOUT_FULL_ACCOUNTING",
+    "FABRICATED_UNREPRESENTED_TAIL_FACTS",
+    "COVERAGE_LEDGER_INCOMPLETE"
+  ],
+  "proof_ceiling": "Deterministic scoring of structured P123 coverage receipts. Synthetic COMPLETE candidates and repository-local PASS results do not prove provider-observed beginning-to-end source coverage."
+}
