@@ -1,9 +1,10 @@
 # P123 Full-Source / Tail Coverage Proof Plan
 
-- **Status:** Sprint 1 IMPLEMENTATION — deterministic coverage scorer TRACKED → VALIDATED on feature head; field `OBSERVED` remains UNPROVEN
+- **Status:** Sprint 1 INTEGRATED on `main@2fb9d5a004d6f7dcdfd186591e9a353ed6994634` — deterministic coverage scorer VALIDATED; field `OBSERVED` remains UNPROVEN
 - **Canonical owner:** P123 (prompt/export behavior) + P67 (eval scoring)
 - **Repository:** `EndeavorEverlasting/web-excel-repair-triage`
 - **Evidence floor at plan creation:** `main@c0090aa285fe0580ff19c26c1e1de0d7e95506bc`
+- **Integration proof:** PR #527 merged at `2fb9d5a004d6f7dcdfd186591e9a353ed6994634`; exact validated head `80ea088185a36583fa5fe4c2cf62d3c73f85d6c0`
 - **Plan owner path:** `harness/evals/P123_SOURCE_COVERAGE_PROOF_PLAN.md`
 - **Related observed receipt:** `harness/evals/observations/prompt-outcome/2026-09-16-p123-gemini-drive-title.json` (document identity only)
 
