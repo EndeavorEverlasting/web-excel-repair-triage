@@ -94,6 +94,38 @@ class DeterministicTestFloorCanaryTests(unittest.TestCase):
         )
         self.assertIn("RESTORE_MISMATCH", errors)
 
+    def test_atomic_write_replaces_complete_bytes_without_temp_residue(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            target = Path(tmp) / "target.txt"
+            target.write_bytes(b"before")
+            canary._atomic_write_bytes(target, b"after-complete")
+            self.assertEqual(target.read_bytes(), b"after-complete")
+            self.assertEqual(list(target.parent.glob(f".{target.name}.canary-*")), [])
+
+    def test_fresh_floor_report_discards_stale_receipt_before_process(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            report = Path(tmp) / "floor.json"
+            report.write_text(
+                json.dumps({"status": "FAIL", "failed_step": "test-floor-self-tests"}),
+                encoding="utf-8",
+            )
+            canary._prepare_fresh_report(report)
+            self.assertFalse(report.exists())
+            self.assertIsNone(None if report.exists() else None)
+
+    def test_missing_floor_receipt_cannot_prove_expected_gate(self) -> None:
+        marker = self.contract["witness"]["required_failure_signatures"][0]
+        errors = canary.evaluate_proof(
+            self.contract,
+            clean_witness={"returncode": 0, "stdout_tail": "", "stderr_tail": ""},
+            mutated_witness={"returncode": 1, "stdout_tail": marker, "stderr_tail": ""},
+            floor_process={"returncode": 1},
+            floor_receipt=None,
+            before_digest="f" * 64,
+            after_digest="f" * 64,
+        )
+        self.assertIn("FULL_FLOOR_RECEIPT_NOT_FAIL", errors)
+
     def test_contract_rejects_path_escape_before_mutation(self) -> None:
         broken = copy.deepcopy(self.contract)
         broken["target_path"] = "../outside.html"
