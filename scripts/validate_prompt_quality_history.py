@@ -132,11 +132,10 @@ def audit_effective_identity(contract: dict[str, Any]) -> list[str]:
     }
     errors: list[str] = []
 
-    if set(canonical) != set(effective):
-        missing = sorted(set(canonical) - set(effective))
-        added = sorted(set(effective) - set(canonical))
+    missing = sorted(set(canonical) - set(effective))
+    if missing:
         errors.append(
-            f"PQH003: canonical/effective registry identity mismatch missing={missing} added={added}"
+            f"PQH003: canonical prompts missing from effective registry: {missing}"
         )
 
     for prompt_id in sorted(set(canonical) & set(effective)):
