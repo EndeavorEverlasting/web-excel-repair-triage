@@ -31,7 +31,7 @@ Actions minute/billing exhaustion, never-started checks for usage limits, review
 
 ## 6. Repository identity and product boundary
 The core product domain is **spreadsheet intelligence**. Web Excel compatibility, billing, roster/time evidence, triage are first-class.
-**AFK Agent Flow** is operator-approved product identity, formerly Operant / Prompt Kit. Target: `UnderDeskDev/AFK-Agent-Flow`; unproven.
+**AFK Agent Flow** is the operator-approved product identity, formerly Operant / Prompt Kit. Target: `UnderDeskDev/AFK-Agent-Flow`; unproven.
 Until cutover, legacy `operant` / `prompt-kit` paths remain authoritative compatibility surfaces and must not be silently moved. This repo may consume AFK Agent Flow through historical Operant release seams but must not become a competing authority; keep cross-repo dependencies explicit and versioned.
 
 ## 7. Progressive disclosure and binding domain law
