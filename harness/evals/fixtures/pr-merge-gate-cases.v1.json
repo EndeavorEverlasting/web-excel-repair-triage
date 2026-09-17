@@ -191,6 +191,145 @@
       },
       "expected_decision": "already_merged",
       "expected_blocker": false
+    },
+    {
+      "id": "degraded-check-with-local-proof-merges",
+      "state": {
+        "pr_number": 190,
+        "state": "open",
+        "merged": false,
+        "draft": false,
+        "mergeable": true,
+        "required_checks": [
+          {
+            "name": "required-ci",
+            "conclusion": "skipped",
+            "degradation_reason": "actions_minute_exhaustion",
+            "local_proof_exists": true
+          }
+        ],
+        "unresolved_review_findings": 0,
+        "head_sha": "5555555555555555555555555555555555555555",
+        "expected_head_sha": "5555555555555555555555555555555555555555",
+        "merge_intent": true,
+        "merge_authorized": true,
+        "default_branch": "main",
+        "head_branch": "feat/example"
+      },
+      "expected_decision": "merge_now",
+      "expected_blocker": false
+    },
+    {
+      "id": "degraded-check-without-local-proof-blocks",
+      "state": {
+        "pr_number": 191,
+        "state": "open",
+        "merged": false,
+        "draft": false,
+        "mergeable": true,
+        "required_checks": [
+          {
+            "name": "required-ci",
+            "conclusion": "cancelled",
+            "degradation_reason": "review_bot_usage_limit",
+            "local_proof_exists": false
+          }
+        ],
+        "unresolved_review_findings": 0,
+        "head_sha": "6666666666666666666666666666666666666666",
+        "expected_head_sha": "6666666666666666666666666666666666666666",
+        "merge_intent": true,
+        "merge_authorized": true,
+        "default_branch": "main",
+        "head_branch": "feat/example"
+      },
+      "expected_decision": "blocked",
+      "expected_reason": "degraded_check_without_local_proof",
+      "expected_blocker": true
+    },
+    {
+      "id": "degraded-check-with-non-allowed-reason-blocks",
+      "state": {
+        "pr_number": 192,
+        "state": "open",
+        "merged": false,
+        "draft": false,
+        "mergeable": true,
+        "required_checks": [
+          {
+            "name": "required-ci",
+            "conclusion": "neutral",
+            "degradation_reason": "unrecognized_issue",
+            "local_proof_exists": true
+          }
+        ],
+        "unresolved_review_findings": 0,
+        "head_sha": "7777777777777777777777777777777777777777",
+        "expected_head_sha": "7777777777777777777777777777777777777777",
+        "merge_intent": true,
+        "merge_authorized": true,
+        "default_branch": "main",
+        "head_branch": "feat/example"
+      },
+      "expected_decision": "blocked",
+      "expected_reason": "degraded_check_without_allowed_reason",
+      "expected_blocker": true
+    },
+    {
+      "id": "multiple-checks-mixed-success-and-degraded-with-proof-merges",
+      "state": {
+        "pr_number": 193,
+        "state": "open",
+        "merged": false,
+        "draft": false,
+        "mergeable": true,
+        "required_checks": [
+          {"name": "prompt-kit-web", "conclusion": "success"},
+          {
+            "name": "review-bot-check",
+            "conclusion": "skipped",
+            "degradation_reason": "ci_provider_usage_limit",
+            "local_proof_exists": true
+          }
+        ],
+        "unresolved_review_findings": 0,
+        "head_sha": "8888888888888888888888888888888888888888",
+        "expected_head_sha": "8888888888888888888888888888888888888888",
+        "merge_intent": true,
+        "merge_authorized": true,
+        "default_branch": "main",
+        "head_branch": "feat/example"
+      },
+      "expected_decision": "merge_now",
+      "expected_blocker": false
+    },
+    {
+      "id": "failed-check-still-blocks-despite-usage-limits",
+      "state": {
+        "pr_number": 194,
+        "state": "open",
+        "merged": false,
+        "draft": false,
+        "mergeable": true,
+        "required_checks": [
+          {
+            "name": "required-ci",
+            "conclusion": "failure",
+            "degradation_reason": "actions_minute_exhaustion",
+            "local_proof_exists": true
+          }
+        ],
+        "unresolved_review_findings": 0,
+        "head_sha": "9999999999999999999999999999999999999999",
+        "expected_head_sha": "9999999999999999999999999999999999999999",
+        "merge_intent": true,
+        "merge_authorized": true,
+        "default_branch": "main",
+        "head_branch": "feat/example"
+      },
+      "expected_decision": "blocked",
+      "expected_reason": "required_check_not_green",
+      "expected_blocker": true
     }
   ],
   "handoff_cases": [

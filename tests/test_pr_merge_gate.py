@@ -152,6 +152,50 @@ class PrMergeGateTests(unittest.TestCase):
         ):
             validate_pr_merge_gate.classify_pr_state(state, self.contract)
 
+    def test_degraded_check_with_local_proof_merges(self) -> None:
+        result = validate_pr_merge_gate.classify_pr_state(
+            self.case("degraded-check-with-local-proof-merges")["state"], self.contract
+        )
+        self.assertEqual(result["decision"], "merge_now")
+        self.assertFalse(result["blocker"])
+        self.assertIn("Merge immediately", result["required_action"])
+
+    def test_degraded_check_without_local_proof_blocks(self) -> None:
+        result = validate_pr_merge_gate.classify_pr_state(
+            self.case("degraded-check-without-local-proof-blocks")["state"], self.contract
+        )
+        self.assertEqual(result["decision"], "blocked")
+        self.assertTrue(result["blocker"])
+        self.assertEqual(result["reason"], "degraded_check_without_local_proof")
+        self.assertIn("local proof", result["required_action"])
+
+    def test_degraded_check_with_non_allowed_reason_blocks(self) -> None:
+        result = validate_pr_merge_gate.classify_pr_state(
+            self.case("degraded-check-with-non-allowed-reason-blocks")["state"],
+            self.contract,
+        )
+        self.assertEqual(result["decision"], "blocked")
+        self.assertTrue(result["blocker"])
+        self.assertEqual(result["reason"], "degraded_check_without_allowed_reason")
+
+    def test_multiple_checks_mixed_success_and_degraded_with_proof_merges(self) -> None:
+        result = validate_pr_merge_gate.classify_pr_state(
+            self.case("multiple-checks-mixed-success-and-degraded-with-proof-merges")["state"],
+            self.contract,
+        )
+        self.assertEqual(result["decision"], "merge_now")
+        self.assertFalse(result["blocker"])
+
+    def test_failed_check_still_blocks_despite_usage_limits(self) -> None:
+        result = validate_pr_merge_gate.classify_pr_state(
+            self.case("failed-check-still-blocks-despite-usage-limits")["state"],
+            self.contract,
+        )
+        self.assertEqual(result["decision"], "blocked")
+        self.assertTrue(result["blocker"])
+        self.assertEqual(result["reason"], "required_check_not_green")
+        self.assertIn("failure", result["required_action"])
+
 
 if __name__ == "__main__":
     unittest.main()
