@@ -1,0 +1,39 @@
+{
+  "schema_version": "prompt-strength-dependency-reconciliation/v1",
+  "repository": "EndeavorEverlasting/web-excel-repair-triage",
+  "default_branch": "main",
+  "dependencies": [
+    {
+      "pr": 533,
+      "owner": "P07 effective-prompt identity",
+      "required_checks": [
+        "provider merge state refreshed",
+        "surviving canonical/effective/display/copy identity semantics inspected",
+        "owning focused validator/test executed when available"
+      ],
+      "status": "UNRESOLVED"
+    },
+    {
+      "pr": 535,
+      "owner": "repository-local proof continuity",
+      "required_checks": [
+        "provider merge state refreshed",
+        "local action/continuity semantics inspected",
+        "owning validator/tests executed when available"
+      ],
+      "status": "UNRESOLVED"
+    },
+    {
+      "pr": 536,
+      "owner": "prompt-quality history and semantic migrations",
+      "required_checks": [
+        "provider merge state refreshed",
+        "history/migration authority inspected",
+        "owning validator/tests executed when available"
+      ],
+      "status": "UNRESOLVED"
+    }
+  ],
+  "rule": "Ancestry or PR merge state alone is insufficient; current content plus owning validator evidence is required before Phase 3 shared-policy/compiler mutation.",
+  "proof_ceiling": "Template only. No dependency is reconciled until a refreshed agent records exact current evidence and runs the owning checks."
+}
