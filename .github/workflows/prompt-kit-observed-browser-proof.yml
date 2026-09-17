@@ -4,15 +4,22 @@ on:
   pull_request:
     paths:
       - build_prompt_kit.py
+      - scripts/build_prompt_kit_registry.py
+      - scripts/prompt_language_compiler.py
+      - scripts/prompt_context_engine.py
       - docs/prompt-kit.js
       - docs/prompt-kit-polish.js
       - docs/prompt-kit-hotkey-prototype.js
       - docs/prompt-kit-external-resources.js
+      - docs/prompt-kit-compute-mode.js
       - docs/PROMPT_KIT_HOTKEY_PROGRAM_DESIGN.md
       - docs/prompts.json
       - registry/prompts/ai-engineering-level-up-prompts.v1.json
       - harness/contracts/prompt-kit-interactions.v1.json
       - harness/contracts/prompt-kit-cross-input-modality.v1.json
+      - harness/contracts/prompt-language-compiler-policy.v1.json
+      - harness/prompt-compilation/semantics/**
+      - harness/prompt-compilation/build-context/**
       - harness/observed-proof/**
       - scripts/validate_observed_behavior_receipt.py
       - scripts/validate_prompt_kit_interactions.py
@@ -21,8 +28,10 @@ on:
       - tests/prompt_kit_favorite_browser_proof.py
       - tests/prompt_kit_hotkey_identity_browser_proof.py
       - tests/prompt_kit_external_resources_browser_proof.py
+      - tests/prompt_kit_compute_mode_browser_proof.py
       - tests/test_observed_behavior_proof_harness.py
       - tests/test_prompt_kit_hotkey_completion.py
+      - tests/test_prompt_kit_compute_mode.py
       - web/prompt-kit/index.html
       - web/prompt-kit/resources.v1.json
       - .github/workflows/prompt-kit-observed-browser-proof.yml
@@ -30,15 +39,22 @@ on:
     branches: [main]
     paths:
       - build_prompt_kit.py
+      - scripts/build_prompt_kit_registry.py
+      - scripts/prompt_language_compiler.py
+      - scripts/prompt_context_engine.py
       - docs/prompt-kit.js
       - docs/prompt-kit-polish.js
       - docs/prompt-kit-hotkey-prototype.js
       - docs/prompt-kit-external-resources.js
+      - docs/prompt-kit-compute-mode.js
       - docs/PROMPT_KIT_HOTKEY_PROGRAM_DESIGN.md
       - docs/prompts.json
       - registry/prompts/ai-engineering-level-up-prompts.v1.json
       - harness/contracts/prompt-kit-interactions.v1.json
       - harness/contracts/prompt-kit-cross-input-modality.v1.json
+      - harness/contracts/prompt-language-compiler-policy.v1.json
+      - harness/prompt-compilation/semantics/**
+      - harness/prompt-compilation/build-context/**
       - harness/observed-proof/**
       - scripts/validate_observed_behavior_receipt.py
       - scripts/validate_prompt_kit_interactions.py
@@ -47,8 +63,10 @@ on:
       - tests/prompt_kit_favorite_browser_proof.py
       - tests/prompt_kit_hotkey_identity_browser_proof.py
       - tests/prompt_kit_external_resources_browser_proof.py
+      - tests/prompt_kit_compute_mode_browser_proof.py
       - tests/test_observed_behavior_proof_harness.py
       - tests/test_prompt_kit_hotkey_completion.py
+      - tests/test_prompt_kit_compute_mode.py
       - web/prompt-kit/index.html
       - web/prompt-kit/resources.v1.json
       - .github/workflows/prompt-kit-observed-browser-proof.yml
@@ -68,10 +86,11 @@ jobs:
           python-version: '3.11'
       - name: Validate harness and deterministic contracts
         run: |
-          python -m unittest tests.test_observed_behavior_proof_harness tests.test_prompt_kit_hotkey_completion tests.test_ai_engineering_level_up -v
+          python -m unittest tests.test_observed_behavior_proof_harness tests.test_prompt_kit_hotkey_completion tests.test_prompt_kit_compute_mode tests.test_ai_engineering_level_up -v
           node --check docs/prompt-kit.js
           node --check docs/prompt-kit-polish.js
           node --check docs/prompt-kit-hotkey-prototype.js
+          node --check docs/prompt-kit-compute-mode.js
           if [ -f docs/prompt-kit-external-resources.js ]; then node --check docs/prompt-kit-external-resources.js; fi
           python scripts/validate_prompt_kit_interactions.py --require-implementation --summary
           python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html --check
@@ -84,6 +103,23 @@ jobs:
           mkdir -p Outputs/observed-proof
           python tests/prompt_kit_detail_browser_proof.py --receipt Outputs/observed-proof/prompt-detail-quick-actions-receipt.json --screenshot Outputs/observed-proof/prompt-detail-quick-actions.png
           python scripts/validate_observed_behavior_receipt.py Outputs/observed-proof/prompt-detail-quick-actions-receipt.json --expected-sha "$(git rev-parse HEAD)" --summary
+      - name: Observe Compute Mode resolution and effective copy
+        run: |
+          mkdir -p Outputs/observed-proof
+          set +e
+          python tests/prompt_kit_compute_mode_browser_proof.py --receipt Outputs/observed-proof/compute-mode-receipt.json --screenshot Outputs/observed-proof/compute-mode.png
+          proof_rc=$?
+          if [ -f Outputs/observed-proof/compute-mode-receipt.json ]; then
+            python scripts/validate_observed_behavior_receipt.py Outputs/observed-proof/compute-mode-receipt.json --expected-sha "$(git rev-parse HEAD)" --summary
+            validate_rc=$?
+          else
+            echo "Compute Mode proof did not emit its required receipt" >&2
+            validate_rc=1
+          fi
+          set -e
+          if [ "$proof_rc" -ne 0 ] || [ "$validate_rc" -ne 0 ]; then
+            exit 1
+          fi
       - name: Observe Favorite copy scroll and Enter behavior
         run: |
           mkdir -p Outputs/observed-proof
@@ -99,6 +135,7 @@ jobs:
           python tests/prompt_kit_external_resources_browser_proof.py --receipt Outputs/observed-proof/external-resources-receipt.json --screenshot Outputs/observed-proof/external-resources.png
           python scripts/validate_observed_behavior_receipt.py Outputs/observed-proof/external-resources-receipt.json --expected-sha "$(git rev-parse HEAD)" --summary
       - name: Upload observed proof receipt
+        if: ${{ always() }}
         uses: actions/upload-artifact@v4
         with:
           name: prompt-kit-observed-browser-proof
