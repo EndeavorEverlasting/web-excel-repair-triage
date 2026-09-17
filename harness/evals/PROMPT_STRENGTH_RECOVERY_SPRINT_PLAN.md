@@ -1,9 +1,13 @@
 # Prompt Strength Recovery Sprint Plan
 
-**Canonical plan owner:** this file  
-**Repository:** `EndeavorEverlasting/web-excel-repair-triage`  
-**Provider floor at design time:** `main@c99346be8269409ee5ecf24bdbbf33f9d6800bc1`  
-**State:** DESIGNED / TRACKED, not yet integrated  
+**Canonical plan owner:** this file
+
+**Repository:** `EndeavorEverlasting/web-excel-repair-triage`
+
+**Provider floor at design time:** `main@c99346be8269409ee5ecf24bdbbf33f9d6800bc1`
+
+**State:** DESIGNED / TRACKED, not yet integrated
+
 **Mission:** restore and then raise the semantic strength floor of operational prompts without duplicating active repair lanes or making hosted CI a single point of progress.
 
 ## Completed floor
@@ -36,8 +40,10 @@
 
 ### Phase 0 — Strength contract + adversarial matrix
 
-**Owner:** strategic-harness owner  
-**State:** current plan slice  
+**Owner:** strategic-harness owner
+
+**State:** current plan slice
+
 **Owned files:**
 - `harness/contracts/prompt-strength.v1.json`
 - `harness/evals/prompt-strength/adversarial-regression-matrix.v1.json`
@@ -49,14 +55,16 @@
 
 ### Phase 1 — Reconcile active repair dependencies
 
-**Hard dependencies:** #533, #535, #536 resolve or their exact surviving semantics are carried into the convergence candidate.  
+**Hard dependencies:** #533, #535, #536 resolve or their exact surviving semantics are carried into the convergence candidate.
+
 **Mission:** refresh `main`, prove surviving P07 identity, local-proof continuity, and quality-history contracts; update this plan only if their integrated APIs differ from the design assumptions.
 
 **Proof gate:** current-content + owning validators, not ancestry alone.
 
 ### Phase 2A — Upstream mechanics refresh
 
-**Parallel-safe after Phase 0; read-only until owner mapping is settled.**  
+**Parallel-safe after Phase 0; read-only until owner mapping is settled.**
+
 Refresh pinned identities for the registered donor sources. Produce a provenance-rich residual map:
 `source -> mechanic -> current owner -> existing coverage -> distinct residual -> disposition`.
 
@@ -72,14 +80,16 @@ No prompt identity creation.
 
 ### Phase 2B — Matrix-to-fixture implementation
 
-**Parallel-safe with Phase 2A after Phase 0.**  
+**Parallel-safe with Phase 2A after Phase 0.**
+
 Convert the highest-risk matrix rows into executable negative fixtures and positive controls, reusing the existing prompt-regression, compute-authority, prompt-parallel-dispatch, and compilation harnesses.
 
 Start with: PSA-001/002/003/005/006/007/011/012/017/018/023/024/027.
 
 ### Phase 3 — Compiler/shared-policy wiring
 
-**Depends on Phases 1, 2A, 2B.**  
+**Depends on Phases 1, 2A, 2B.**
+
 Strengthen the smallest canonical shared owners and compiler policies. Do not bulk edit prompt bodies when a shared owner can carry the invariant. Reconcile with #535/#536 instead of overwriting them.
 
 Required outcomes:
