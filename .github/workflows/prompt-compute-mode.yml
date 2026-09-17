@@ -1,0 +1,57 @@
+name: Prompt Compute Mode
+
+on:
+  pull_request:
+    paths:
+      - 'registry/prompts/prompt-compute-mode.v1.json'
+      - 'scripts/prompt_compute_mode.py'
+      - 'scripts/prompt_language_compiler.py'
+      - 'scripts/prompt_context_engine.py'
+      - 'scripts/build_prompt_kit_registry.py'
+      - 'docs/prompt-kit.js'
+      - 'docs/prompt-kit-polish.js'
+      - 'docs/prompt-kit-compute-mode.js'
+      - 'harness/prompt-compilation/**'
+      - 'tests/test_prompt_compute_mode.py'
+      - 'web/prompt-kit/index.html'
+      - '.ai/WORK_QUEUE.md'
+      - '.github/workflows/prompt-compute-mode.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'registry/prompts/prompt-compute-mode.v1.json'
+      - 'scripts/prompt_compute_mode.py'
+      - 'scripts/prompt_language_compiler.py'
+      - 'scripts/build_prompt_kit_registry.py'
+      - 'docs/prompt-kit-compute-mode.js'
+      - 'web/prompt-kit/index.html'
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Focused Prompt Compilation tests
+        run: python -m unittest tests.test_prompt_compilation tests.test_prompt_context_engine tests.test_prompt_improvement_compiler tests.test_prompt_compute_mode -v
+      - name: Compiler fixtures
+        run: python scripts/prompt_language_compiler.py validate-fixtures --summary
+      - name: Browser runtime syntax
+        run: |
+          node --check docs/prompt-kit-compute-mode.js
+          node --check docs/prompt-kit.js
+          node --check docs/prompt-kit-polish.js
+      - name: Canonical generated-site parity
+        run: python scripts/build_prompt_kit_registry.py --check
+      - name: Repository work ledger
+        run: python scripts/validate_repository_work_ledger.py
+      - name: Patch hygiene
+        run: git diff --check
