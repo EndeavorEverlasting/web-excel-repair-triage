@@ -1,0 +1,57 @@
+{
+  "schema_version": "prompt-outcome-receipt/v1",
+  "receipt_id": "field/20260916/p123-gemini-drive-title",
+  "related_receipt_ids": [
+    "field/20260916/p142-drive-organizer"
+  ],
+  "invocation": {
+    "invocation_id": "field/20260916/p123-gemini-drive-title",
+    "prompt_id": "P123",
+    "prompt_revision": "93a8886d77e043023eeecca05f5e2e8e13b89f06",
+    "surface_id": "chatgpt-google-drive",
+    "mission_id": "field-proof/p123-gemini-drive-title",
+    "target_runtime": "gemini-to-google-drive",
+    "repository": "EndeavorEverlasting/web-excel-repair-triage"
+  },
+  "observer": {
+    "observer_id": "agent/chatgpt",
+    "kind": "agent",
+    "surface_id": "google-drive-connector"
+  },
+  "observation": {
+    "type": "provider",
+    "summary": "The Drive-side title invariant passed on a synthetic Doc: the Drive file title exactly matched the first visible HEADING_1, but Gemini's export action was unavailable.",
+    "expected_state": "Gemini export creates a Drive Doc whose file title equals DOCUMENT_TITLE and its first visible H1.",
+    "observed_state": "Drive title equaled the first visible H1; the Gemini export stage itself was not executed.",
+    "claimed_state": "INTEGRATED",
+    "signal_ids": []
+  },
+  "result": "BLOCKED",
+  "classification": {
+    "primary": "environment",
+    "secondary": [],
+    "confidence": "HIGH",
+    "attribution": "PROVEN",
+    "actionability": "INFORMATION_ONLY",
+    "rationale": "No Gemini execution connector/runtime was available, so the Drive-side invariant is observed without promoting the full Gemini-to-Drive export path."
+  },
+  "evidence": [
+    {
+      "kind": "provider",
+      "ref": "github:pr/516#issuecomment-5707631503",
+      "supports": "Durable follow-up records the matching Drive title/H1 observation and explicitly names the unavailable Gemini execution stage."
+    },
+    {
+      "kind": "repository",
+      "ref": "github:commit/93a8886d77e043023eeecca05f5e2e8e13b89f06",
+      "supports": "Merged P123 document-identity contract remains the implementation floor for this field probe."
+    }
+  ],
+  "next_state": {
+    "owner": "operator/Gemini field runtime",
+    "action": "Run P123 through Gemini on a source-specific export and capture the resulting Drive file title plus first visible H1.",
+    "completion_gate": "The Gemini-created Drive document title equals DOCUMENT_TITLE and the first visible H1 on the exported artifact."
+  },
+  "occurred_at": "2026-09-17T01:55:55Z",
+  "retrospective": false
+}
