@@ -77,7 +77,8 @@
       "Confidence is recorded independently beside every rating.",
       "A high score is not the same thing as high confidence.",
       "Authorship confidence is about provenance, not prompt quality.",
-      "Current Prompt Kit coverage cannot by itself prove historical authorship."
+      "Current Prompt Kit coverage cannot by itself prove historical authorship.",
+      "An exact title or first-line anchor match is coverage evidence, not full-text authorship proof."
     ]
   },
   "authorship_evidence_policy": {
@@ -92,11 +93,12 @@
       "EXACT",
       "MATERIAL",
       "DOCTRINE_ONLY",
+      "ANCHOR_ONLY",
       "NONE",
       "UNKNOWN"
     ],
     "rules": [
-      "Scores 1-2 require at least one matched prompt ID and EXACT or MATERIAL evidence.",
+      "Scores 1-2 require at least one matched prompt ID and EXACT or MATERIAL evidence. EXACT means full-prompt equality after allowed placeholder/runtime normalization; ANCHOR_ONLY is never sufficient.",
       "Scores 4-5 require at least one manual novelty signal.",
       "Score 5 requires a contemporaneous Prompt Kit reference and a NONE match.",
       "HIGH authorship confidence requires CONTEMPORANEOUS or MIXED evidence with a contemporaneous Prompt Kit reference.",
