@@ -4,23 +4,67 @@
   "owner": "prompt-operations",
   "purpose": "Paired A/B evaluation of external-agent useful-compute behavior under Control vs Treatment Prompt Kit contracts.",
   "evaluation_question": "Does the strengthened compute-authority contract convert additional compute into additional relevant evidence rather than longer transcripts?",
-  "phase": "A_fixture_validation",
+  "phase": "B_runtime_harness",
   "sample_design": {
-    "recommended": {"cases": 8, "repetitions": 3, "conditions": 2, "total_runs": 48},
-    "pilot": {"cases": 8, "repetitions": 1, "conditions": 2, "total_runs": 16}
+    "recommended": {
+      "cases": 8,
+      "repetitions": 3,
+      "conditions": 2,
+      "total_runs": 48
+    },
+    "pilot": {
+      "cases": 8,
+      "repetitions": 1,
+      "conditions": 2,
+      "total_runs": 16
+    }
   },
   "prompt_identities": "harness/evals/compute-authority/prompts/identities.json",
+  "condition_manifest": "harness/evals/compute-authority/runtime/conditions.v1.json",
+  "adapter_contract": "harness/evals/compute-authority/runtime/adapter-contract.v1.json",
   "fixtures_root": "harness/evals/compute-authority/fixtures",
   "runs_root": "harness/evals/compute-authority/runs",
   "aggregate_root": "harness/evals/compute-authority/aggregate",
+  "runtime_evidence_root": "Outputs/repository-ai-evals/compute-authority",
   "scripts": {
     "materialize": "python harness/evals/compute-authority/scripts/materialize_fixtures.py",
     "reset": "python harness/evals/compute-authority/scripts/reset_fixture.py --case TC01",
     "validate_fixtures": "python harness/evals/compute-authority/scripts/validate_fixtures.py --summary",
+    "resolve_conditions": "python harness/evals/compute-authority/scripts/conditions.py --summary",
+    "init_run": "python harness/evals/compute-authority/scripts/init_run.py --case TC01 --condition control",
+    "pilot_plan": "python harness/evals/compute-authority/scripts/pilot.py --plan-only --summary",
+    "pilot_observed": "python harness/evals/compute-authority/scripts/pilot.py --adapter-config <adapter.json> --summary",
     "grade_run": "python harness/evals/compute-authority/scripts/grade_run.py --run-dir harness/evals/compute-authority/runs/<run-id> --summary",
     "aggregate": "python harness/evals/compute-authority/scripts/aggregate.py --summary"
   },
-  "cases": ["TC01", "TC02", "TC03", "TC04", "TC05", "TC06", "TC07", "TC08"],
-  "proof_ceiling": "Phase A proves fixture reachability and prompt-identity freeze only. External-agent effectiveness remains empirically under evaluation.",
-  "promotion_gate": "OBSERVED EFFECTIVE only after overall pass criteria in the evaluation plan are met."
+  "cases": [
+    "TC01",
+    "TC02",
+    "TC03",
+    "TC04",
+    "TC05",
+    "TC06",
+    "TC07",
+    "TC08"
+  ],
+  "runtime_contract": {
+    "condition_freeze_required": true,
+    "disposable_workspace_per_run": true,
+    "path_safe_run_ids": true,
+    "provider_adapter": "argv + temporary JSON result",
+    "raw_provider_output_tracked": false,
+    "privacy_fail_closed": true,
+    "minimum_capture_evidence": "complete status + provider + termination + action event + seeded defect count",
+    "workspace_delta_before_grading": "structural changed-path snapshot only",
+    "pair_identity_fields": [
+      "provider",
+      "agent",
+      "model"
+    ],
+    "pair_identity_mismatch": "invalidate_both",
+    "runtime_absence": "UNPROVEN_RUNTIME",
+    "invalid_runs_scored": false
+  },
+  "proof_ceiling": "Sprint 2 repository/runtime-harness proof: frozen conditions, isolated run bundles, provider-neutral sanitized capture, structural workspace mutation evidence, deterministic paired order, pair-identity enforcement, invalid-run classification, and explicit UNPROVEN_RUNTIME behavior. External-agent effectiveness remains unproven until observed provider runs execute.",
+  "promotion_gate": "OBSERVED EFFECTIVE only after the 48-valid-run main-study criteria in the canonical evaluation plan are met; Sprint 2 pilot alone never promotes effectiveness."
 }
