@@ -23,6 +23,7 @@ SCHEMA_VERSION = "operant-external-skill-semantic-prototype/v1"
 RAW_GITHUB_HOST = "raw.githubusercontent.com"
 HEADING_RE = re.compile(r"^(#{1,6})\s+(.+?)\s*$")
 LIST_RE = re.compile(r"^\s*(?:[-*+]\s+|\d+[.)]\s+)(.+?)\s*$")
+TABLE_ROW_RE = re.compile(r"^\s*\|.*\|\s*$")
 DIRECTIVE_RE = re.compile(
     r"\b(must|never|always|do not|don't|keep|use|stop|confirm|prefer|require|should|"
     r"follow|resolve|install|fetch|verify|record|capture|poll|retry|cleanup|remove|"
@@ -164,6 +165,10 @@ def extract_directive_candidates(body: str) -> tuple[dict[str, str], list[dict[s
             flush_list(line_no - 1)
             flush_paragraph(line_no - 1)
             section = heading.group(2).strip()
+            continue
+        if TABLE_ROW_RE.match(raw):
+            flush_list(line_no - 1)
+            flush_paragraph(line_no - 1)
             continue
         matched_list = LIST_RE.match(raw)
         if matched_list:
