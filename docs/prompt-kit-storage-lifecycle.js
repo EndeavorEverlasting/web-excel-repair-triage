@@ -19,7 +19,9 @@ var PERSONAL_STATE_KEYS=Object.freeze([
   'promptKit.activeProfileSlot.v1',
   'promptKit.profilePacks.v1',
   'promptKit.favoritePromptIds',
-  'promptKit.favorites'
+  'promptKit.favorites',
+  'promptKit.computeMode.userDefault.v1',
+  'promptKit.computeMode.promptOverrides.v1'
 ]);
 var POLICIES=Object.freeze({
   local_journal:Object.freeze({key:'promptKit.localJournal.v1',maxAgeMs:14*DAY_MS,maxBytes:2097152,maxItems:null}),

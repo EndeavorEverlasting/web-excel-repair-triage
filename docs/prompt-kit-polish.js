@@ -102,11 +102,23 @@ window.copyToClipboard=function(text,onSuccess){
   }else fallbackClipboard(text,onSuccess)
 };
 
+function resolvePromptCopyContent(prompt){
+  if(!prompt)return'';
+  try{
+    if(window.PromptKitComputeMode&&typeof window.PromptKitComputeMode.resolveCopyContent==='function'){
+      var resolved=window.PromptKitComputeMode.resolveCopyContent(prompt);
+      if(typeof resolved==='string'&&resolved)return resolved;
+      if(resolved&&typeof resolved==='object'&&typeof resolved.text==='string'&&resolved.text)return resolved.text
+    }
+  }catch(e){}
+  return prompt.copyContent?String(prompt.copyContent):''
+}
+
 window.showCopyConfirmation=function(id){
   var promptId=String(id||'');
   var catalog=typeof PROMPTS!=='undefined'&&Array.isArray(PROMPTS)?PROMPTS:[];
   var prompt=catalog.find(function(item){return item&&item.id===promptId});
-  var copyContent=prompt&&prompt.copyContent?prompt.copyContent:'';
+  var copyContent=resolvePromptCopyContent(prompt);
   var model=buildCopyConfirmationToastModel(promptId,copyContent);
   var toast=document.getElementById('toast');
   if(toast){
@@ -128,7 +140,8 @@ window.showCopyConfirmation=function(id){
 
 window.copyPrompt=function(id){
   var p=PROMPTS.find(function(x){return x.id===id});
-  if(p&&p.copyContent)copyToClipboard(p.copyContent,function(){
+  var copyContent=resolvePromptCopyContent(p);
+  if(p&&copyContent)copyToClipboard(copyContent,function(){
     showCopyConfirmation(id);
     try{
       var selEl=document.querySelector('[data-prompt-id="'+String(id).replace(/"/g,'')+'"]');
