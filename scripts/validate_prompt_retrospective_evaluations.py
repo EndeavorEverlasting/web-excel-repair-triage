@@ -88,7 +88,7 @@ def validate_rating(
     name: str,
     rating: Any,
     *,
-    evidence_ids: set[str],
+    evidence_supports: dict[str, set[str]],
     confidence_levels: set[str],
 ) -> tuple[int | None, str]:
     if not isinstance(rating, dict):
@@ -108,9 +108,14 @@ def validate_rating(
         raise RetrospectiveValidationError(f"rating {name}.evidence_refs must be a string list")
     if len(refs) != len(set(refs)):
         raise RetrospectiveValidationError(f"rating {name}.evidence_refs must be unique")
-    unknown = set(refs) - evidence_ids
+    unknown = set(refs) - set(evidence_supports)
     if unknown:
         raise RetrospectiveValidationError(f"rating {name} references unknown evidence: {sorted(unknown)}")
+    wrong_dimension = [ref for ref in refs if name not in evidence_supports[ref]]
+    if wrong_dimension:
+        raise RetrospectiveValidationError(
+            f"rating {name} references evidence that does not support this dimension: {sorted(wrong_dimension)}"
+        )
     if score is None and confidence != "NONE":
         raise RetrospectiveValidationError(f"rating {name} cannot have confidence without a score")
     if score is not None and confidence == "NONE":
@@ -120,11 +125,11 @@ def validate_rating(
     return score, str(confidence)
 
 
-def validate_evidence(items: Any, contract: dict[str, Any]) -> set[str]:
+def validate_evidence(items: Any, contract: dict[str, Any]) -> dict[str, set[str]]:
     if not isinstance(items, list):
         raise RetrospectiveValidationError("record.evidence must be a list")
     allowed_kinds = set(contract["record_contract"]["evidence_kinds"])
-    ids: set[str] = set()
+    supports_by_id: dict[str, set[str]] = {}
     for index, item in enumerate(items):
         if not isinstance(item, dict):
             raise RetrospectiveValidationError(f"evidence[{index}] must be an object")
@@ -132,9 +137,8 @@ def validate_evidence(items: Any, contract: dict[str, Any]) -> set[str]:
         if set(item) != required:
             raise RetrospectiveValidationError(f"evidence[{index}] fields must be exactly {sorted(required)}")
         evidence_id = require_one_line(item.get("id"), f"evidence[{index}].id", max_length=160)
-        if evidence_id in ids:
+        if evidence_id in supports_by_id:
             raise RetrospectiveValidationError(f"duplicate evidence id: {evidence_id}")
-        ids.add(evidence_id)
         if item.get("kind") not in allowed_kinds:
             raise RetrospectiveValidationError(f"evidence[{index}].kind is invalid")
         require_one_line(item.get("ref"), f"evidence[{index}].ref", max_length=240)
@@ -145,7 +149,8 @@ def validate_evidence(items: Any, contract: dict[str, Any]) -> set[str]:
             raise RetrospectiveValidationError(f"evidence[{index}].supports must name retrospective dimensions")
         if len(supports) != len(set(supports)):
             raise RetrospectiveValidationError(f"evidence[{index}].supports must be unique")
-    return ids
+        supports_by_id[evidence_id] = set(supports)
+    return supports_by_id
 
 
 def validate_prompt_ids(value: Any, field: str) -> list[str]:
@@ -177,14 +182,19 @@ def validate_record(record: Any, contract: dict[str, Any]) -> None:
     if record.get("status") not in contract["record_contract"]["allowed_statuses"]:
         raise RetrospectiveValidationError("record.status is invalid")
 
-    evidence_ids = validate_evidence(record["evidence"], contract)
+    evidence_supports = validate_evidence(record["evidence"], contract)
     ratings = record.get("ratings")
     dimensions = contract["record_contract"]["rating_dimensions"]
     if not isinstance(ratings, dict) or set(ratings) != set(dimensions):
         raise RetrospectiveValidationError("record.ratings must contain exactly the four retrospective dimensions")
     confidence_levels = set(contract["record_contract"]["confidence_levels"])
     scored: dict[str, tuple[int | None, str]] = {
-        name: validate_rating(name, ratings[name], evidence_ids=evidence_ids, confidence_levels=confidence_levels)
+        name: validate_rating(
+            name,
+            ratings[name],
+            evidence_supports=evidence_supports,
+            confidence_levels=confidence_levels,
+        )
         for name in dimensions
     }
 
@@ -224,6 +234,17 @@ def validate_record(record: Any, contract: dict[str, Any]) -> None:
     if authorship_score in {1, 2}:
         if not matched_ids or profile.get("match_kind") not in {"EXACT", "MATERIAL"}:
             raise RetrospectiveValidationError("authorship scores 1-2 require matched Prompt Kit ID and exact/material match")
+    if authorship_score == 3:
+        if not matched_ids:
+            raise RetrospectiveValidationError("HYBRID authorship requires a matched Prompt Kit ID")
+        if not novelty:
+            raise RetrospectiveValidationError("HYBRID authorship requires manual novelty signals")
+        if profile.get("match_kind") not in {"EXACT", "MATERIAL", "DOCTRINE_ONLY"}:
+            raise RetrospectiveValidationError("HYBRID authorship requires exact/material/doctrine Prompt Kit evidence")
+        if profile.get("comparison_basis") not in {"CONTEMPORANEOUS", "MIXED"}:
+            raise RetrospectiveValidationError("HYBRID authorship requires contemporaneous comparison evidence")
+        if not profile.get("contemporaneous_prompt_kit_ref"):
+            raise RetrospectiveValidationError("HYBRID authorship requires contemporaneous Prompt Kit ref")
     if authorship_score in {4, 5} and not novelty:
         raise RetrospectiveValidationError("authorship scores 4-5 require manual novelty signals")
     if authorship_score == 5:
@@ -259,8 +280,18 @@ def validate_record(record: Any, contract: dict[str, Any]) -> None:
 
     gap_score, _gap_confidence = scored["prompt_kit_gap"]
     if gap_score == 1:
+        gap_refs = ratings["prompt_kit_gap"]["evidence_refs"]
+        current_gap_evidence = [
+            item
+            for item in record["evidence"]
+            if item["id"] in gap_refs and item["kind"] == "current_registry"
+        ]
+        if kit.get("evaluation_basis") != "CURRENT":
+            raise RetrospectiveValidationError("gap score 1 requires CURRENT evaluation basis")
         if not kit_matches or kit.get("disposition") != "NO_KIT_CHANGE":
             raise RetrospectiveValidationError("gap score 1 requires matched current owner and NO_KIT_CHANGE")
+        if not current_gap_evidence:
+            raise RetrospectiveValidationError("gap score 1 requires current_registry evidence")
     if gap_score == 5:
         if not kit.get("prior_art_complete") or not kit.get("topology_ref") or kit.get("disposition") != "CREATE_NEW_REVIEW":
             raise RetrospectiveValidationError("gap score 5 requires completed prior-art/topology review and CREATE_NEW_REVIEW")
