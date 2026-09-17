@@ -75,7 +75,7 @@
         "disposition": "POINT_TO_EXTERNAL",
         "target_id": null,
         "target_title": null,
-        "score": 0.0,
+        "score": 0.5,
         "prompt_action": "REVIEW_ADD_PROMPT"
       }
     },

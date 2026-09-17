@@ -186,3 +186,35 @@ Canonical terminal action: none; no safe actionable work remains
 - **Last proof:** merge:c385735fa1b44f96392d6e07c67cf69a0b909a4e integrated PR #498; local:python scripts/validate_prompt_kit_ui_format_alignment.py --summary PASS; local:python -m unittest tests.test_prompt_kit_ui_format_alignment tests.test_prompt_kit_storage_lifecycle_runtime PASS; workflow:ui-format-alignment green on PR head; artifact:docs/prompt-kit-storage-lifecycle.js uses operant-resource-button on refreshed default branch
 - **Next action:** none; no safe actionable work remains
 - **Updated:** 2026-09-15T06:45:00Z
+
+## TRQ-012 — Prompt Compilation Sprint 3 Improvement Compiler program design
+
+- **Status:** DONE
+- **Priority:** P1
+- **Owner:** design/prompt-compilation-program-20260916
+- **Branch / PR:** main / #515 merged
+- **Scope:** revise Prompt Compilation program design so Sprint 3 owns Improvement-Candidate Compiler call-stack prototypes (success + failure) before UI; persist architecture module/ownership/call-stack/alternatives evidence; add hypothesis catalog, journey fixtures, `scripts/prompt_improvement_compiler.py`, focused tests; reorder sprint map so UI Compute Mode is Sprint 4; preserve P95 adapter-only and `reviewed_pr_only` boundaries
+- **Forbidden:** UI Compute Mode toggle; PR #450/#431 donor work; raw conversation ingestion; new Evidence Spine event types; universal event bus; automatic source mutation; automatic PR merge; model-generated policy promotion; mutating TRQ-007 frozen prompt identities; hand-editing generated Prompt Kit output
+- **Dependencies:** TRQ-010 DONE; P95 Evidence Spine architecture on main; planning floor `de42daf148a2f09754b3eb2f7fd88799162d1e05`
+- **References:** `harness/prompt-compilation/PROMPT_COMPILATION_ARCHITECTURE.md`, `harness/prompt-compilation/PROMPT_COMPILATION_SPRINT_MAP.md`, `scripts/prompt_improvement_compiler.py`, `harness/prompt-compilation/improvement-hypothesis-catalog.v1.json`, `tests/test_prompt_improvement_compiler.py`
+- **Acceptance gate:** architecture records SUCCESS/FAILURE call stacks and alternatives; sprint map places Improvement Compiler before UI; IJ01 journey emits reviewed_pr_only candidate with TC06 eval; failure gates fail closed; Sprint 1–2 tests remain green; exact validated head integrates to current default branch
+- **Gate:** none
+- **Last proof:** commit:4d98a77369fe64f42a7be6cb79ea71dd6bbbeea1; merge:50229c36e21a32d8541ddfe2c957cf9095ce3546 integrated PR #515; local:python -m unittest tests.test_prompt_compilation tests.test_prompt_context_engine tests.test_prompt_improvement_compiler (29 OK); workflow:deterministic-test-floor + operational-harness + ledger contract green on PR head; artifact:scripts/prompt_improvement_compiler.py present on refreshed default branch
+- **Next action:** none; no safe actionable work remains
+- **Updated:** 2026-09-16T19:10:00-04:00
+
+## TRQ-013 — Prompt Compilation Sprint 4 wiring + Compute Mode
+
+- **Status:** DONE
+- **Priority:** P1
+- **Owner:** feat/prompt-compilation-sprint4-wiring-20260916
+- **Branch / PR:** main / #519 merged
+- **Scope:** wire Language Engine compiled effective prompts into Prompt Kit builder for semantics-backed prompts (P07); add Compute Mode runtime (Exhaustive/Efficient) with run>prompt>user>product precedence and personal-state storage keys; route polish copy through Compute Mode; regenerate site via builder; focused tests; update sprint map
+- **Forbidden:** weakening safety gates; bypassing builder-owned generation; auto-promotion of improvement candidates; PR #450/#431 donor work; mutating TRQ-007 frozen prompt identities; hand-editing generated HTML outside the builder; new Evidence Spine event types; universal event bus
+- **Dependencies:** TRQ-012 DONE; Sprint 3 on main; planning floor `93a8886d77e043023eeecca05f5e2e8e13b89f06`
+- **References:** `harness/prompt-compilation/PROMPT_COMPILATION_SPRINT_MAP.md`, `docs/prompt-kit-compute-mode.js`, `scripts/build_prompt_kit_registry.py`, `harness/prompt-compilation/semantics/P07.json`, `tests/test_prompt_kit_compute_mode.py`
+- **Acceptance gate:** P07 carries compiledEffectivePrompts for exhaustive and efficient; builder embeds Compute Mode runtime; copy routing uses resolved compiled text when present; focused + Sprint 1–3 compilation tests green; builder --check parity; exact validated head integrates to current default branch
+- **Gate:** none
+- **Last proof:** commit:10167b309612e6e42aeceda4a1ca379db82939f3; merge:c4d065facd8fb647b7416d7741532d33466379d8 integrated PR #519; local:python -m unittest tests.test_prompt_kit_compute_mode (6 OK) + compilation suite; local:builder --check PASS; workflow required checks green on PR head; artifact:docs/prompt-kit-compute-mode.js and compiled P07 present on refreshed default branch
+- **Next action:** none; no safe actionable work remains
+- **Updated:** 2026-09-16T22:35:00-04:00
