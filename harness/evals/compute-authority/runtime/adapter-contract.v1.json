@@ -1,0 +1,97 @@
+{
+  "schema_version": "compute-authority-agent-adapter-contract/v1",
+  "config_schema_version": "compute-authority-agent-adapter/v1",
+  "capture_schema_version": "compute-authority-provider-capture/v1",
+  "execution": {
+    "mode": "argv",
+    "shell": false,
+    "result_transport": "temporary_json_file",
+    "stdout_stderr_persistence": "forbidden",
+    "allowed_placeholders": [
+      "workspace",
+      "task",
+      "prompt",
+      "result"
+    ],
+    "default_timeout_seconds": 900,
+    "max_timeout_seconds": 7200,
+    "environment": "minimal_os_plus_explicit_allowlist"
+  },
+  "capture": {
+    "top_level_allowed": [
+      "schema_version",
+      "provider",
+      "agent",
+      "model",
+      "status",
+      "termination_reason",
+      "usage",
+      "events",
+      "contracts",
+      "validations"
+    ],
+    "usage_allowed": [
+      "tool_calls",
+      "retries",
+      "input_tokens",
+      "output_tokens",
+      "total_tokens",
+      "cost_microusd",
+      "latency_ms"
+    ],
+    "event_allowed": [
+      "id",
+      "kind",
+      "useful",
+      "action_index",
+      "first_green",
+      "after_fixed_point",
+      "started_ns",
+      "ended_ns",
+      "hypothesis_id",
+      "validation_id",
+      "result_code"
+    ],
+    "event_kinds": [
+      "action",
+      "hypothesis",
+      "validation",
+      "parallel_lane",
+      "fixed_point"
+    ],
+    "contract_allowed": [
+      "id",
+      "status",
+      "correct"
+    ],
+    "validation_allowed": [
+      "id",
+      "status",
+      "return_code"
+    ],
+    "forbidden_key_tokens": [
+      "prompt",
+      "response",
+      "clipboard",
+      "transcript",
+      "content",
+      "text",
+      "query",
+      "user_id",
+      "session_id",
+      "identity"
+    ],
+    "free_text_payloads": "forbidden"
+  },
+  "invalid_run_codes": [
+    "RUNTIME_UNAVAILABLE",
+    "ADAPTER_CONFIG_INVALID",
+    "ADAPTER_EXIT_NONZERO",
+    "ADAPTER_RESULT_MISSING",
+    "ADAPTER_RESULT_INVALID",
+    "CAPTURE_PRIVACY_REJECTED",
+    "ADAPTER_TIMEOUT",
+    "EVIDENCE_INCOMPLETE"
+  ],
+  "proof_boundary": "Repository/runtime-harness behavior only. External-agent effectiveness requires observed provider runs and cannot be inferred from fake/local adapters."
+}
