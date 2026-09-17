@@ -1,11 +1,11 @@
 # Prompt Compilation & Adaptive Language — Canonical Sprint Map
 
-**Status:** TRACKED / SPRINTS 1–3 INTEGRATED ON MAIN VIA #483/#485/#515
+**Status:** TRACKED / SPRINTS 1–3 INTEGRATED ON MAIN; SPRINT 4 IMPLEMENTATION IN PROGRESS
 **Repository:** `EndeavorEverlasting/web-excel-repair-triage`
-**Planning floor:** refreshed `main@50229c36e21a32d8541ddfe2c957cf9095ce3546` (provider refresh 2026-09-16)
+**Planning floor:** refreshed `main@93a8886d77e043023eeecca05f5e2e8e13b89f06` (provider refresh 2026-09-16)
 **Architecture authority:** `harness/prompt-compilation/PROMPT_COMPILATION_ARCHITECTURE.md`
 **P95 constraint floor:** `harness/prompt-topology/EVIDENCE_SPINE_ARCHITECTURE.md` (adapter-only; no universal envelope/bus)
-**Ledger index:** TRQ-009 (Sprint 1), TRQ-010 (Sprint 2), TRQ-012 (Sprint 3 design/prototypes)
+**Ledger index:** TRQ-009 (Sprint 1), TRQ-010 (Sprint 2), TRQ-012 (Sprint 3), TRQ-013 (Sprint 4 wiring)
 
 This file is the durable phase map for Prompt Compilation. Chat is not the canonical plan surface.
 
@@ -123,11 +123,31 @@ Move Prompt Kit from a library of hand-maintained English prompts toward a **sel
 
 ### Sprint 4 — Prompt Kit wiring + Compute Mode product surface
 
-**Status:** PLANNED (dependency: Sprint 3 integrated)
+**Status:** IMPLEMENTED on `feat/prompt-compilation-sprint4-wiring-20260916` (integrate this sprint)
 
-**Owned:** wire compiler into effective-prompt generation path; user-facing Compute Mode (Exhaustive/Efficient) with per-prompt overrides; preserve builder-owned generation.
+**Dependency:** Sprint 3 INTEGRATED on main (`50229c36` / TRQ-012).
 
-**Forbidden:** weakening safety gates; bypassing builder-owned generation; auto-promotion of improvement candidates.
+**Owned:**
+
+- `docs/prompt-kit-compute-mode.js` (user default + prompt overrides + run override; Exhaustive/Efficient UI)
+- storage lifecycle personal-state keys for Compute Mode
+- polish copy routing through `PromptKitComputeMode.resolveCopyContent`
+- builder Language Engine attachment of `compiledEffectivePrompts` for semantics-backed prompts (P07)
+- `harness/prompt-compilation/semantics/P07.json` + `build-context/default.v1.json`
+- regenerate `web/prompt-kit/index.html` via `scripts/build_prompt_kit_registry.py`
+- focused tests `tests/test_prompt_kit_compute_mode.py`
+- ledger index TRQ-013
+
+**Forbidden:** weakening safety gates; bypassing builder-owned generation; auto-promotion of improvement candidates; #450/#431 donor work; mutating TRQ-007 frozen prompt identities; hand-editing generated HTML outside the builder.
+
+**Validation:**
+
+1. `python -m unittest tests.test_prompt_kit_compute_mode tests.test_prompt_compilation tests.test_prompt_context_engine tests.test_prompt_improvement_compiler -v`
+2. `python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html --check`
+3. `python scripts/validate_repository_work_ledger.py`
+4. `git diff --check`
+
+**Proof ceiling:** repository/static VALIDATED + INTEGRATED when merged. Browser/operator UX acceptance of the Compute Mode control remains UNPROVEN_RUNTIME until a live browser proof is recorded.
 
 ### Sprint 5 — Improvement-candidate production eval loop hardening
 
