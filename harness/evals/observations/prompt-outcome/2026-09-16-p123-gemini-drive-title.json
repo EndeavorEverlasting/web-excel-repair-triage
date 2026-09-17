@@ -22,7 +22,7 @@
     "type": "provider",
     "summary": "Provider readback located the existing Gemini-produced Drive export for source 7UyhyhxdFsQ and the same artifact identity was retained while its Drive title and first visible H1 were corrected to the source-specific document title.",
     "expected_state": "The Gemini-produced Drive document exists and its Drive file title equals DOCUMENT_TITLE and its first visible H1.",
-    "observed_state": "The existing exported artifact contains Gemini execution/output plus source-specific video analysis; its retained Drive artifact now has file title and first visible HEADING_1 equal to 'How WhatsApp Video Sharing Works?'.",
+    "observed_state": "Existing export contains Gemini execution/output and source analysis; Drive title and first H1 now equal 'How WhatsApp Video Sharing Works?'.",
     "claimed_state": "OBSERVED",
     "signal_ids": []
   },
