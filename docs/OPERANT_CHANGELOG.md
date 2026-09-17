@@ -13,6 +13,7 @@ Human-facing Operant releases. Git commit/artifact identity remains the forensic
 - feat(prompt-kit): add Drive organizer and harden P123 export titles (`9788d35f`)
 - feat(prompt-compilation): wire Compute Mode and Language Engine into Prompt Kit (`10167b30`)
 - feat(prompt-kit): register Michael Shimeles skill donor (`028ac5d8`)
+- feat(prompt-kit): add quota-resilient repository local actions (`48dc2bd0`)
 - feat(prompt-kit): compile recurring-defect safety into operational prompts (`4d40758c`)
 
 ### Fixes / performance
