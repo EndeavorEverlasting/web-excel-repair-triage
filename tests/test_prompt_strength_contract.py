@@ -2,6 +2,8 @@ from __future__ import annotations
 
 import copy
 import json
+import subprocess
+import sys
 import unittest
 from pathlib import Path
 
@@ -10,6 +12,7 @@ from scripts.validate_prompt_strength import PromptStrengthError, validate_docum
 ROOT = Path(__file__).resolve().parents[1]
 CONTRACT = ROOT / "harness/contracts/prompt-strength.v1.json"
 MATRIX = ROOT / "harness/evals/prompt-strength/adversarial-regression-matrix.v1.json"
+DISPATCH_SEED = ROOT / "harness/evals/prompt-strength/parallel-dispatch-manifest.seed.v1.json"
 
 
 class PromptStrengthContractTests(unittest.TestCase):
@@ -22,6 +25,35 @@ class PromptStrengthContractTests(unittest.TestCase):
         self.assertGreaterEqual(summary["dimensions"], 20)
         self.assertGreaterEqual(summary["cases"], 24)
         self.assertEqual(summary["dimensions"], summary["covered_dimensions"])
+
+    def test_validator_cli_passes_with_expected_summary(self) -> None:
+        completed = subprocess.run(
+            [sys.executable, "scripts/validate_prompt_strength.py", "--summary"],
+            cwd=ROOT,
+            check=False,
+            capture_output=True,
+            text=True,
+        )
+        self.assertEqual(completed.returncode, 0, completed.stderr)
+        self.assertIn("PROMPT STRENGTH: PASS", completed.stdout)
+        self.assertIn("dimensions=21", completed.stdout)
+        self.assertIn("cases=30", completed.stdout)
+
+    def test_dispatch_seed_passes_repository_validator(self) -> None:
+        completed = subprocess.run(
+            [
+                sys.executable,
+                "scripts/prompt_parallel_dispatch.py",
+                "validate",
+                "--manifest",
+                str(DISPATCH_SEED.relative_to(ROOT)),
+            ],
+            cwd=ROOT,
+            check=False,
+            capture_output=True,
+            text=True,
+        )
+        self.assertEqual(completed.returncode, 0, completed.stderr or completed.stdout)
 
     def test_efficient_profile_cannot_drop_immutable_dimension(self) -> None:
         mutated = copy.deepcopy(self.contract)
