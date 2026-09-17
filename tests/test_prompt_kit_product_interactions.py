@@ -118,7 +118,7 @@ class PromptKitProductInteractionTests(unittest.TestCase):
         self.assertIn("function escapePromptHtml(value)", js)
         self.assertIn("safeName=escapePromptHtml(p.name)", js)
         self.assertIn("safeUseWhen=escapePromptHtml(p.useWhen)", js)
-        self.assertIn("safeCopyContent=escapePromptHtml(p.copyContent||'')", js)
+        self.assertIn("safeCopyContent=escapePromptHtml(resolvePromptDetailContent(p))", js)
         self.assertIn("safeProofGate=escapePromptHtml(p.proofGate)", js)
         self.assertIn("safeName+'</span>", js)
         self.assertIn("safeUseWhen+'</pre>", js)

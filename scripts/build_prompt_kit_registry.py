@@ -500,7 +500,15 @@ def attach_compiled_effective_prompts(
                 context,
                 policy=policy,
             )
-            compiled[profile_name] = result["effective_prompt"]
+            canonical = str(item.get("copyContent") or "").rstrip()
+            overlay = str(result["effective_prompt"]).strip()
+            compiled[profile_name] = (
+                canonical
+                + "\n\nEXECUTION PROFILE OVERLAY\n"
+                + "The canonical prompt obligations remain in force; this profile only adjusts execution strategy.\n\n"
+                + overlay
+                + "\n"
+            )
         item["compiledEffectivePrompts"] = compiled
         enriched.append(item)
     return enriched

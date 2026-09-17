@@ -187,9 +187,11 @@ def predicate_satisfied(when: str, context: dict[str, Any], policy: dict[str, An
 
 
 def find_weakening(text: str, policy: dict[str, Any]) -> list[str]:
+    marker = "EXECUTION PROFILE OVERLAY"
+    scan_text = text.split(marker, 1)[1] if marker in text else text
     hits: list[str] = []
     for pattern in policy["must_weakening_patterns"]:
-        if re.search(pattern, text, flags=re.IGNORECASE):
+        if re.search(pattern, scan_text, flags=re.IGNORECASE):
             hits.append(pattern)
     return hits
 

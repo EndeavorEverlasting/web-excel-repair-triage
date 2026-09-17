@@ -59,5 +59,25 @@ class P07EffectivePromptIdentityTests(unittest.TestCase):
         self.assertIn("contentNode.textContent=resolveCopyContent(prompt,{storage:storage})", source)
 
 
+
+def test_canonical_p07_forbids_premature_terminal_states(self) -> None:
+    required = (
+        "NON-SILENT CONTINUATION / TERMINATION CONTRACT (MANDATORY)",
+        "CHECKPOINTS ARE NOT STOP CONDITIONS",
+        "If any item is SAFE & EXECUTABLE and progress-bearing, execute it now.",
+        "If progress stops because of a boundary, name the boundary immediately; never go silent at an unexplained edge.",
+        "A terminal response is allowed only when no SAFE & EXECUTABLE progress-bearing item remains",
+        "Any response that ends while SAFE & EXECUTABLE progress-bearing work remains is a P07 contract failure.",
+        "Repeated premature stopping is itself a system defect.",
+    )
+    for phrase in required:
+        with self.subTest(phrase=phrase):
+            self.assertIn(phrase, self.base)
+    for profile in ("exhaustive", "efficient"):
+        rendered = self.p07["compiledEffectivePrompts"][profile]
+        with self.subTest(profile=profile):
+            for phrase in required:
+                self.assertIn(phrase, rendered)
+
 if __name__ == "__main__":
     unittest.main()

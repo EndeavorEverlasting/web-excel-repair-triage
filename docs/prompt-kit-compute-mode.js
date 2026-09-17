@@ -192,10 +192,18 @@ function syncToggle(doc,profile){
   })
 }
 
-function refreshDetail(doc,storage,promptId){
+function refreshDetail(doc,storage,promptId,promptCatalog){
   if(!doc)return;
   var detail=doc.getElementById('promptDetail');
   if(!detail||String(detail.getAttribute('data-prompt-id')||'').toUpperCase()!==String(promptId||'').toUpperCase())return;
+  var prompt=null;
+  if(Array.isArray(promptCatalog)){
+    for(var pi=0;pi<promptCatalog.length;pi++){
+      if(String(promptCatalog[pi]&&promptCatalog[pi].id||'').toUpperCase()===String(promptId||'').toUpperCase()){prompt=promptCatalog[pi];break}
+    }
+  }
+  var contentNode=detail.querySelector('[data-prompt-effective-content]');
+  if(prompt&&contentNode)contentNode.textContent=resolveCopyContent(prompt,{storage:storage});
   var resolution=resolveProfile({
     runOverride:sessionRunOverride,
     promptOverride:getPromptOverride(promptId,storage),
@@ -230,7 +238,7 @@ function refreshDetail(doc,storage,promptId){
   select.value=getPromptOverride(promptId,storage)||'';
   select.addEventListener('change',function(){
     setPromptOverride(promptId,select.value||null,storage);
-    refreshDetail(doc,storage,promptId)
+    refreshDetail(doc,storage,promptId,root.PROMPTS)
   });
   label.appendChild(select);
   wrap.appendChild(label);
@@ -253,7 +261,7 @@ function install(root){
     var normalized=writeUserDefault(storage,profile);
     syncToggle(doc,normalized);
     var openId=doc.getElementById('promptDetail');
-    if(openId&&openId.getAttribute('data-prompt-id'))refreshDetail(doc,storage,openId.getAttribute('data-prompt-id'));
+    if(openId&&openId.getAttribute('data-prompt-id'))refreshDetail(doc,storage,openId.getAttribute('data-prompt-id'),root.PROMPTS);
     if(typeof root.showToast==='function')root.showToast('Compute Mode: '+normalized);
     return normalized
   }
@@ -289,7 +297,7 @@ function install(root){
     if(typeof baseOpen!=='function'||baseOpen.__promptKitComputeModeWrapped)return;
     var wrapped=function(id){
       var result=baseOpen.apply(root,arguments);
-      try{refreshDetail(doc,storage,id)}catch(error){}
+      try{refreshDetail(doc,storage,id,root.PROMPTS)}catch(error){}
       return result
     };
     wrapped.__promptKitComputeModeWrapped=true;
@@ -323,7 +331,7 @@ function install(root){
     clearRunOverride:clearRunOverride,
     getRunOverride:getRunOverride,
     installUi:ensureUi,
-    refreshDetail:function(promptId){return refreshDetail(doc,storage,promptId)}
+    refreshDetail:function(promptId){return refreshDetail(doc,storage,promptId,root.PROMPTS)}
   };
   root.__promptKitComputeModeController=controller;
   api.getUserDefault=controller.getUserDefault;
