@@ -1,6 +1,7 @@
 (function(){
 'use strict';
 var copyToastTimer=null;
+var pendingCopyConfirmation=null;
 var PROMPT_KIT_SHORTCUT_SEQUENCE_TIMEOUT_MS=1200;
 var PROMPT_KIT_COPY_CONFIRMATION_PREVIEW_CHARS=420;
 var PROMPT_KIT_COPY_CONFIRMATION_TOAST_MS=4200;
@@ -102,11 +103,13 @@ window.copyToClipboard=function(text,onSuccess){
   }else fallbackClipboard(text,onSuccess)
 };
 
-window.showCopyConfirmation=function(id,copyContentOverride){
+window.showCopyConfirmation=function(id){
   var promptId=String(id||'');
   var catalog=typeof PROMPTS!=='undefined'&&Array.isArray(PROMPTS)?PROMPTS:[];
   var prompt=catalog.find(function(item){return item&&item.id===promptId});
-  var copyContent=copyContentOverride!=null?String(copyContentOverride):(prompt&&prompt.copyContent?(window.PromptKitComputeMode?window.PromptKitComputeMode.effectivePrompt(window,prompt):prompt.copyContent):'');
+  var pending=pendingCopyConfirmation&&pendingCopyConfirmation.promptId===promptId?pendingCopyConfirmation:null;
+  var copyContent=pending?pending.copyContent:(prompt&&prompt.copyContent?(window.PromptKitComputeMode?window.PromptKitComputeMode.effectivePrompt(window,prompt):prompt.copyContent):'');
+  pendingCopyConfirmation=null;
   var model=buildCopyConfirmationToastModel(promptId,copyContent);
   var toast=document.getElementById('toast');
   if(toast){
@@ -131,7 +134,8 @@ window.copyPrompt=function(id){
   if(p&&p.copyContent){
     var effectiveCopyContent=window.PromptKitComputeMode?window.PromptKitComputeMode.effectivePrompt(window,p):p.copyContent;
     copyToClipboard(effectiveCopyContent,function(){
-    showCopyConfirmation(id,effectiveCopyContent);
+    pendingCopyConfirmation={promptId:String(id),copyContent:effectiveCopyContent};
+    showCopyConfirmation(id);
     try{
       var selEl=document.querySelector('[data-prompt-id="'+String(id).replace(/"/g,'')+'"]');
       if(selEl){selEl.setAttribute('data-copy-state','success');selEl.classList.add('is-copied');setTimeout(function(){selEl.setAttribute('data-copy-state','idle');selEl.classList.remove('is-copied')},900)}

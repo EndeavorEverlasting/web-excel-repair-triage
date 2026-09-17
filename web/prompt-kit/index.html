@@ -1433,12 +1433,13 @@ function storageFor(root){try{return root&&root.localStorage||null}catch(e){retu
 function readJson(storage,key,fallback){try{var raw=storage&&storage.getItem(key);return raw?JSON.parse(raw):fallback}catch(e){return fallback}}
 function writeJson(storage,key,value){if(!storage)return false;try{storage.setItem(key,JSON.stringify(value));return true}catch(e){return false}}
 function productDefault(root){var data=manifest(root);return data&&validMode(data.product_default)?data.product_default:'exhaustive'}
-function userDefault(root){var storage=storageFor(root);try{var raw=storage&&storage.getItem(STORAGE_KEYS.userDefault);return validMode(raw)?String(raw).toLowerCase():productDefault(root)}catch(e){return productDefault(root)}}
+function storedUserDefault(root){var storage=storageFor(root);try{var raw=storage&&storage.getItem(STORAGE_KEYS.userDefault);return validMode(raw)?String(raw).toLowerCase():null}catch(e){return null}}
+function userDefault(root){return storedUserDefault(root)||productDefault(root)}
 function setUserDefault(root,mode){mode=normalizeMode(mode);var storage=storageFor(root);if(storage)storage.setItem(STORAGE_KEYS.userDefault,mode);refreshOpenDetail(root);return mode}
 function promptOverrides(root){var payload=readJson(storageFor(root),STORAGE_KEYS.promptOverrides,{});if(!payload||typeof payload!=='object'||Array.isArray(payload))return{};var safe={};Object.keys(payload).forEach(function(id){if(validMode(payload[id]))safe[String(id).toUpperCase()]=String(payload[id]).toLowerCase()});return safe}
 function promptOverride(root,promptId){var map=promptOverrides(root);return map[String(promptId||'').toUpperCase()]||null}
 function setPromptOverride(root,promptId,mode){var id=String(promptId||'').toUpperCase();if(!/^P\d+$/.test(id))throw new Error('Invalid prompt id: '+promptId);var map=promptOverrides(root);if(mode==null||mode===''||mode==='inherit'){delete map[id]}else{map[id]=normalizeMode(mode)}writeJson(storageFor(root),STORAGE_KEYS.promptOverrides,map);refreshOpenDetail(root);return map[id]||null}
-function resolve(root,promptId,runOverride){var candidates=[['explicit_run_override',runOverride],['prompt_override',promptOverride(root,promptId)],['user_default',userDefault(root)],['product_default',productDefault(root)]];for(var i=0;i<candidates.length;i++){if(validMode(candidates[i][1]))return{profile:String(candidates[i][1]).toLowerCase(),resolved_from:candidates[i][0],precedence:['explicit_run_override','prompt_override','user_default','product_default']}}throw new Error('Unable to resolve Compute Mode')}
+function resolve(root,promptId,runOverride){var candidates=[['explicit_run_override',runOverride],['prompt_override',promptOverride(root,promptId)],['user_default',storedUserDefault(root)],['product_default',productDefault(root)]];for(var i=0;i<candidates.length;i++){if(validMode(candidates[i][1]))return{profile:String(candidates[i][1]).toLowerCase(),resolved_from:candidates[i][0],precedence:['explicit_run_override','prompt_override','user_default','product_default']}}throw new Error('Unable to resolve Compute Mode')}
 function eligible(root,prompt){var data=manifest(root);return !!(data&&prompt&&prompt.actionabilityPolicy===data.eligible_actionability_policy)}
 function stripLegacyExhaustive(root,text){var data=manifest(root);var legacy=data&&data.legacy_exhaustive_section||{};var startMarker=String(legacy.start_marker||'');var endMarker=String(legacy.end_marker||'');var start=text.indexOf(startMarker);if(start<0)throw new Error('Canonical prompt is missing exhaustive compute section');var duplicate=text.indexOf(startMarker,start+startMarker.length);if(duplicate>=0)throw new Error('Canonical prompt contains duplicate exhaustive compute sections');var end=text.indexOf(endMarker,start);if(end<0)throw new Error('Canonical prompt is missing post-exhaustive section boundary');var before=text.slice(0,start).replace(/\s+$/,'');var after=text.slice(end).replace(/^\s+/,'');return before?before+'\n\n'+after:after}
 function effectivePrompt(root,prompt,runOverride){var canonical=String(prompt&&prompt.copyContent||'').replace(/\s+$/,'');if(!canonical||!eligible(root,prompt))return canonical;var resolution=resolve(root,prompt.id,runOverride);var data=manifest(root);var profile=data&&data.profiles&&data.profiles[resolution.profile];if(!profile||typeof profile.overlay!=='string')throw new Error('Compiled Compute Mode overlay missing for '+resolution.profile);var base=resolution.profile==='efficient'?stripLegacyExhaustive(root,canonical):canonical;return base.replace(/\s+$/,'')+'\n\n'+profile.overlay.replace(/^\s+|\s+$/g,'')+'\n'}
@@ -1457,6 +1458,7 @@ return{STORAGE_KEYS:STORAGE_KEYS,MODES:MODES,validMode:validMode,resolve:resolve
 (function(){
 'use strict';
 var copyToastTimer=null;
+var pendingCopyConfirmation=null;
 var PROMPT_KIT_SHORTCUT_SEQUENCE_TIMEOUT_MS=1200;
 var PROMPT_KIT_COPY_CONFIRMATION_PREVIEW_CHARS=420;
 var PROMPT_KIT_COPY_CONFIRMATION_TOAST_MS=4200;
@@ -1558,11 +1560,13 @@ window.copyToClipboard=function(text,onSuccess){
   }else fallbackClipboard(text,onSuccess)
 };
 
-window.showCopyConfirmation=function(id,copyContentOverride){
+window.showCopyConfirmation=function(id){
   var promptId=String(id||'');
   var catalog=typeof PROMPTS!=='undefined'&&Array.isArray(PROMPTS)?PROMPTS:[];
   var prompt=catalog.find(function(item){return item&&item.id===promptId});
-  var copyContent=copyContentOverride!=null?String(copyContentOverride):(prompt&&prompt.copyContent?(window.PromptKitComputeMode?window.PromptKitComputeMode.effectivePrompt(window,prompt):prompt.copyContent):'');
+  var pending=pendingCopyConfirmation&&pendingCopyConfirmation.promptId===promptId?pendingCopyConfirmation:null;
+  var copyContent=pending?pending.copyContent:(prompt&&prompt.copyContent?(window.PromptKitComputeMode?window.PromptKitComputeMode.effectivePrompt(window,prompt):prompt.copyContent):'');
+  pendingCopyConfirmation=null;
   var model=buildCopyConfirmationToastModel(promptId,copyContent);
   var toast=document.getElementById('toast');
   if(toast){
@@ -1587,7 +1591,8 @@ window.copyPrompt=function(id){
   if(p&&p.copyContent){
     var effectiveCopyContent=window.PromptKitComputeMode?window.PromptKitComputeMode.effectivePrompt(window,p):p.copyContent;
     copyToClipboard(effectiveCopyContent,function(){
-    showCopyConfirmation(id,effectiveCopyContent);
+    pendingCopyConfirmation={promptId:String(id),copyContent:effectiveCopyContent};
+    showCopyConfirmation(id);
     try{
       var selEl=document.querySelector('[data-prompt-id="'+String(id).replace(/"/g,'')+'"]');
       if(selEl){selEl.setAttribute('data-copy-state','success');selEl.classList.add('is-copied');setTimeout(function(){selEl.setAttribute('data-copy-state','idle');selEl.classList.remove('is-copied')},900)}
