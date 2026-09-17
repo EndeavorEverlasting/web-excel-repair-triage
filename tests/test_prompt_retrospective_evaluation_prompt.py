@@ -61,9 +61,28 @@ class PromptRetrospectiveEvaluationTests(unittest.TestCase):
             "contemporaneous_prompt_kit_ref": "synthetic-kit@abc123",
             "matched_prompt_ids": ["P79"],
             "match_kind": "DOCTRINE_ONLY",
+            "manual_novelty_signals": ["synthetic manual constraint"],
         })
         summary = retrospective.validate_register(register, self.contract)
         self.assertEqual(summary["status"], "PASS")
+
+    def test_hybrid_requires_canonical_and_manual_evidence(self) -> None:
+        register = copy.deepcopy(self.register)
+        record = register["records"][1]
+        record["ratings"]["authorship_origin"] = {
+            "score": 3,
+            "confidence": "LOW",
+            "rationale": "Attempt to classify hybrid without a matched canonical owner.",
+            "evidence_refs": ["ev-p03-historical"],
+        }
+        record["authorship_profile"].update({
+            "origin_label": "HYBRID",
+            "matched_prompt_ids": [],
+            "match_kind": "DOCTRINE_ONLY",
+            "manual_novelty_signals": ["synthetic manual constraint"],
+        })
+        with self.assertRaisesRegex(retrospective.RetrospectiveValidationError, "matched Prompt Kit ID"):
+            retrospective.validate_register(register, self.contract)
 
     def test_manual_original_requires_contemporaneous_no_match_proof(self) -> None:
         register = copy.deepcopy(self.register)
@@ -106,6 +125,13 @@ class PromptRetrospectiveEvaluationTests(unittest.TestCase):
         with self.assertRaisesRegex(retrospective.RetrospectiveValidationError, "completed prior-art/topology review"):
             retrospective.validate_register(register, self.contract)
 
+    def test_gap_one_requires_current_basis(self) -> None:
+        register = copy.deepcopy(self.register)
+        record = register["records"][1]
+        record["kit_assessment"]["evaluation_basis"] = "CONTEMPORANEOUS"
+        with self.assertRaisesRegex(retrospective.RetrospectiveValidationError, "CURRENT evaluation basis"):
+            retrospective.validate_register(register, self.contract)
+
     def test_scored_rating_requires_evidence(self) -> None:
         register = copy.deepcopy(self.register)
         record = register["records"][1]
@@ -116,6 +142,18 @@ class PromptRetrospectiveEvaluationTests(unittest.TestCase):
             "evidence_refs": [],
         }
         with self.assertRaisesRegex(retrospective.RetrospectiveValidationError, "requires evidence"):
+            retrospective.validate_register(register, self.contract)
+
+    def test_scored_rating_rejects_cross_dimension_evidence(self) -> None:
+        register = copy.deepcopy(self.register)
+        record = register["records"][1]
+        record["ratings"]["productivity"] = {
+            "score": 4,
+            "confidence": "MEDIUM",
+            "rationale": "Attempt to justify productivity with evidence declared only for authorship.",
+            "evidence_refs": ["ev-p03-historical"],
+        }
+        with self.assertRaisesRegex(retrospective.RetrospectiveValidationError, "does not support this dimension"):
             retrospective.validate_register(register, self.contract)
 
     def test_anchor_only_match_cannot_prove_canonical_reuse(self) -> None:
