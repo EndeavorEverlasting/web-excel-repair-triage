@@ -1,7 +1,7 @@
 {
   "schema_version": "prompt-regression-defect-register/v1",
   "contract": "harness/contracts/prompt-regression-safety.v1.json",
-  "evaluation_time": "2026-09-17T19:12:00Z",
+  "evaluation_time": "2026-09-17T22:45:00Z",
   "families": [
     {
       "id": "TRAILING_WHITESPACE",
@@ -11,50 +11,34 @@
       "matrix_capture_required": false,
       "canonical_owner": "repository patch-hygiene validator and local required-check profile",
       "prompt_strengthening": "GLOBAL_SHARED_POLICY",
-      "detector_commands": [
-        "git diff --check",
-        "git diff --cached --check",
-        "git diff --check {base_sha}...{head_sha}"
-      ],
-      "prevention_surfaces": [
-        ".githooks/pre-commit",
-        "harness/validators.v1.json",
-        "harness/promotion/required-checks.v1.json",
-        "registry/prompts/actionable-next-step-policy.v1.json"
-      ],
+      "detector_commands": ["git diff --check", "git diff --cached --check", "git diff --check {base_sha}...{head_sha}"],
+      "prevention_surfaces": [".githooks/pre-commit", "harness/validators.v1.json", "harness/promotion/required-checks.v1.json", "registry/prompts/actionable-next-step-policy.v1.json"],
       "regression_gate": "tests/test_prompt_regression_safety_prompt.py",
       "local_first_requirement": "Run repository-owned patch-hygiene and affected local required-check profiles before relying on hosted CI when local Git is available.",
       "occurrences": [
-        {
-          "repository": "EndeavorEverlasting/web-excel-repair-triage",
-          "commit": "80ea088185a36583fa5fe4c2cf62d3c73f85d6c0",
-          "summary": "Coverage-plan work required a follow-up commit solely to strip trailing whitespace so patch hygiene could pass."
-        },
-        {
-          "repository": "EndeavorEverlasting/web-excel-repair-triage",
-          "commit": "0ef17dbc589e1eb3da126f44f1eb665bc1842999",
-          "summary": "Prompt Kit UI alignment planning required a separate trailing-whitespace cleanup commit."
-        },
-        {
-          "repository": "EndeavorEverlasting/web-excel-repair-triage",
-          "commit": "5d80188986b8ad330c1bbf52a8481cb08a9a6c28",
-          "summary": "Evidence Spine architecture documentation required patch-hygiene whitespace repair."
-        },
-        {
-          "repository": "EndeavorEverlasting/AgentSwitchboard",
-          "commit": "3f25d069bc391c1d3dacd5ba97281eeaf7655875",
-          "summary": "Automated-test-floor plan whitespace caused git diff --check to reject the candidate and block unrelated hygiene gates."
-        },
-        {
-          "repository": "EndeavorEverlasting/AgentSwitchboard",
-          "commit": "d9f9ddb942437804387f80b21693fd38d77a5caf",
-          "summary": "Tutorial ranking summary required a dedicated trailing-whitespace cleanup."
-        },
-        {
-          "repository": "EndeavorEverlasting/AgentSwitchboard",
-          "commit": "ba19f7c8b6aaa0994ac8e58e148c77719684395b",
-          "summary": "ASQ-016 preservation merge explicitly records trailing-whitespace hygiene repair alongside local-floor proof."
-        }
+        {"repository": "EndeavorEverlasting/web-excel-repair-triage", "commit": "80ea088185a36583fa5fe4c2cf62d3c73f85d6c0", "summary": "Coverage-plan work required a follow-up commit solely to strip trailing whitespace so patch hygiene could pass."},
+        {"repository": "EndeavorEverlasting/web-excel-repair-triage", "commit": "0ef17dbc589e1eb3da126f44f1eb665bc1842999", "summary": "Prompt Kit UI alignment planning required a separate trailing-whitespace cleanup commit."},
+        {"repository": "EndeavorEverlasting/web-excel-repair-triage", "commit": "5d80188986b8ad330c1bbf52a8481cb08a9a6c28", "summary": "Evidence Spine architecture documentation required patch-hygiene whitespace repair."},
+        {"repository": "EndeavorEverlasting/AgentSwitchboard", "commit": "3f25d069bc391c1d3dacd5ba97281eeaf7655875", "summary": "Automated-test-floor plan whitespace caused git diff --check to reject the candidate and block unrelated hygiene gates."},
+        {"repository": "EndeavorEverlasting/AgentSwitchboard", "commit": "d9f9ddb942437804387f80b21693fd38d77a5caf", "summary": "Tutorial ranking summary required a dedicated trailing-whitespace cleanup."},
+        {"repository": "EndeavorEverlasting/AgentSwitchboard", "commit": "ba19f7c8b6aaa0994ac8e58e148c77719684395b", "summary": "ASQ-016 preservation merge explicitly records trailing-whitespace hygiene repair alongside local-floor proof."}
+      ]
+    },
+    {
+      "id": "PROVIDER_QUOTA_TERMINATION",
+      "status": "SYSTEMIC",
+      "classification": "WORKFLOW_CONTROL",
+      "recurring_across_repositories": true,
+      "matrix_capture_required": false,
+      "canonical_owner": "repository-local proof continuity contract + reviewed local action registry/runner",
+      "prompt_strengthening": "GLOBAL_SHARED_POLICY",
+      "detector_commands": ["python scripts/run_local_required_checks.py --summary", "python scripts/run_repository_action.py --list"],
+      "prevention_surfaces": ["registry/prompts/actionable-next-step-policy.v1.json", "harness/contracts/repository-local-proof-continuity.v1.json", "harness/repository-actions.v1.json", "scripts/run_repository_action.py", ".github/workflows/repository-local-action.yml"],
+      "regression_gate": "tests/test_repository_local_proof_continuity_prompt.py",
+      "local_first_requirement": "When hosted provider proof is quota-limited or otherwise non-transiently unavailable, continue through reviewed repository-local actions for every gate they can honestly prove and keep hosted-only proof separately blocked.",
+      "occurrences": [
+        {"repository": "EndeavorEverlasting/nyc-hh-fieldops-lab", "commit": "835e0b5604acbe495f37f41b7ff61bc11933ba71", "summary": "Exact-head repository validation had to use a local evidence-integrity fallback while GitHub Actions was recorded QUOTA_EXHAUSTED; repeated agents treated hosted runner absence as a stopping condition."},
+        {"repository": "EndeavorEverlasting/web-excel-repair-triage", "commit": "82d6d3ea55cfb408a93c60a2a229a2ab9c0f2b53", "summary": "The quota-resilience repair branch itself observed all pull-request workflow runs returning action_required rather than executable proof, demonstrating that provider state cannot remain the sole proof path."}
       ]
     }
   ]
