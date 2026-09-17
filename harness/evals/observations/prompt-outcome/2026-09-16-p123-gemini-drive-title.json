@@ -20,37 +20,37 @@
   },
   "observation": {
     "type": "provider",
-    "summary": "The Drive-side title invariant passed on a synthetic Doc: the Drive file title exactly matched the first visible HEADING_1, but Gemini's export action was unavailable.",
-    "expected_state": "Gemini export creates a Drive Doc whose file title equals DOCUMENT_TITLE and its first visible H1.",
-    "observed_state": "Drive title equaled the first visible H1; the Gemini export stage itself was not executed.",
+    "summary": "Provider readback located the existing Gemini-produced Drive export for source 7UyhyhxdFsQ and the same artifact identity was retained while its Drive title and first visible H1 were corrected to the source-specific document title.",
+    "expected_state": "The Gemini-produced Drive document exists and its Drive file title equals DOCUMENT_TITLE and its first visible H1.",
+    "observed_state": "Existing export contains Gemini execution/output and source analysis; Drive title and first H1 now equal 'How WhatsApp Video Sharing Works?'.",
+    "claimed_state": "OBSERVED",
     "signal_ids": []
   },
-  "result": "BLOCKED",
+  "result": "SUCCESS",
   "classification": {
-    "primary": "environment",
+    "primary": null,
     "secondary": [],
     "confidence": "HIGH",
     "attribution": "PROVEN",
     "actionability": "INFORMATION_ONLY",
-    "rationale": "No Gemini execution connector/runtime was available, so the Drive-side invariant is observed without promoting the full Gemini-to-Drive export path."
+    "rationale": "Provider readback proves the Gemini-to-Drive artifact and the document-identity transition. This receipt does not promote the separate full-source/tail-coverage quality contract beyond the evidence present in the artifact."
   },
   "evidence": [
     {
       "kind": "provider",
-      "ref": "github:pr/516#issuecomment-5707631503",
-      "supports": "Durable follow-up records the matching Drive title/H1 observation and explicitly names the unavailable Gemini execution stage."
+      "ref": "google-drive:artifact/p123-7UyhyhxdFsQ",
+      "supports": "Bounded provider readback proved the existing Gemini-produced export, preserved artifact identity, source-specific Drive title, and matching first visible HEADING_1 after in-place correction."
     },
     {
       "kind": "repository",
       "ref": "github:commit/93a8886d77e043023eeecca05f5e2e8e13b89f06",
-      "supports": "Merged P123 document-identity contract remains the implementation floor for this field probe."
+      "supports": "Merged P123 document-identity contract is the implementation floor exercised by this field proof."
     }
   ],
-  "next_state": {
-    "owner": "operator/Gemini field runtime",
-    "action": "Run P123 through Gemini on a source-specific export and capture the resulting Drive file title plus first visible H1.",
-    "completion_gate": "The Gemini-created Drive document title equals DOCUMENT_TITLE and the first visible H1 on the exported artifact."
+  "state_transition": {
+    "from": "INTEGRATED",
+    "to": "OBSERVED"
   },
-  "occurred_at": "2026-09-17T01:55:55Z",
+  "occurred_at": "2026-09-17T03:58:31Z",
   "retrospective": false
 }
