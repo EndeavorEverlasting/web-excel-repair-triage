@@ -1,11 +1,11 @@
 # P123 Full-Source / Tail Coverage Proof Plan
 
-**Status:** Sprint 1 IMPLEMENTATION — deterministic coverage scorer TRACKED → VALIDATED on feature head; field `OBSERVED` remains UNPROVEN  
-**Canonical owner:** P123 (prompt/export behavior) + P67 (eval scoring)  
-**Repository:** `EndeavorEverlasting/web-excel-repair-triage`  
-**Evidence floor at plan creation:** `main@c0090aa285fe0580ff19c26c1e1de0d7e95506bc`  
-**Plan owner path:** `harness/evals/P123_SOURCE_COVERAGE_PROOF_PLAN.md`  
-**Related observed receipt:** `harness/evals/observations/prompt-outcome/2026-09-16-p123-gemini-drive-title.json` (document identity only)
+- **Status:** Sprint 1 IMPLEMENTATION — deterministic coverage scorer TRACKED → VALIDATED on feature head; field `OBSERVED` remains UNPROVEN
+- **Canonical owner:** P123 (prompt/export behavior) + P67 (eval scoring)
+- **Repository:** `EndeavorEverlasting/web-excel-repair-triage`
+- **Evidence floor at plan creation:** `main@c0090aa285fe0580ff19c26c1e1de0d7e95506bc`
+- **Plan owner path:** `harness/evals/P123_SOURCE_COVERAGE_PROOF_PLAN.md`
+- **Related observed receipt:** `harness/evals/observations/prompt-outcome/2026-09-16-p123-gemini-drive-title.json` (document identity only)
 
 ## 1. Mission
 
