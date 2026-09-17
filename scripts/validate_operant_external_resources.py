@@ -10,6 +10,11 @@ from pathlib import Path
 from typing import Any
 
 ROOT = Path(__file__).resolve().parents[1]
+if str(ROOT) not in sys.path:
+    sys.path.insert(0, str(ROOT))
+
+from scripts.operant_external_resource_paths import normalize_resource_root, resource_path_parts  # noqa: E402
+
 CONTRACT = ROOT / "harness" / "contracts" / "operant-external-resource-intake.v1.json"
 INDEX = ROOT / "web" / "prompt-kit" / "resources.v1.json"
 GAPS = ROOT / "registry" / "resources" / "operant-external-resource-gaps.v1.json"
@@ -117,7 +122,7 @@ def validate() -> dict[str, Any]:
             raise ValidationError(f"enumeration mismatch for donor {floor['id']}")
         if enumeration == "catalog_csv":
             catalog_floors += 1
-            root = str(source.get("resource_root", ".")).rstrip("/")
+            root = normalize_resource_root(source.get("resource_root", "."))
             expected_path = str(source["resource_filename"]) if root in {"", "."} else f"{root}/{source['resource_filename']}"
             if floor.get("catalog_path") != expected_path:
                 raise ValidationError(f"catalog_path mismatch for donor {floor['id']}")
@@ -157,15 +162,16 @@ def validate() -> dict[str, Any]:
         repo = str(floor["repository"])
         sha = str(floor["resolved_sha"])
         path = str(item.get("path", ""))
-        expected_prefix = str(source["resource_root"]).rstrip("/") + "/"
-        expected_suffix = "/" + str(source["resource_filename"])
-        if not path.startswith(expected_prefix) or not path.endswith(expected_suffix):
+        parts = resource_path_parts(
+            path=path,
+            resource_root=source["resource_root"],
+            resource_filename=source["resource_filename"],
+        )
+        if parts is None:
             raise ValidationError(f"resource path escapes configured donor root: {item.get('id')}")
         max_depth = int(source.get("max_depth", 1)) if str(source.get("enumeration", "git_skill_tree")) == "git_skill_tree" else None
         if max_depth is not None:
-            relative = path[len(expected_prefix) : -len(expected_suffix)]
-            parts = [part for part in relative.split("/") if part]
-            if not parts or len(parts) > max_depth:
+            if len(parts) > max_depth:
                 raise ValidationError(f"resource path depth exceeds configured max_depth: {item.get('id')}")
             exclude = {str(seg) for seg in source.get("exclude_root_segments", [])}
             if parts[0] in exclude:

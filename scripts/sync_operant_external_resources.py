@@ -21,6 +21,7 @@ if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
 from scripts import build_prompt_kit_registry  # noqa: E402
+from scripts.operant_external_resource_paths import normalize_resource_root, resource_path_parts  # noqa: E402
 
 CONTRACT = ROOT / "harness" / "contracts" / "operant-external-resource-intake.v1.json"
 DEFAULT_INDEX = ROOT / "web" / "prompt-kit" / "resources.v1.json"
@@ -98,6 +99,7 @@ def display_title(slug: str) -> str:
     return " ".join(piece.capitalize() for piece in re.split(r"[-_]+", slug) if piece)
 
 
+
 def skill_titles() -> list[tuple[str, str, set[str]]]:
     rows: list[tuple[str, str, set[str]]] = []
     for path in sorted(SKILLS_ROOT.glob("*/SKILL.md")):
@@ -171,20 +173,21 @@ def enumerate_git_skill_tree(
     if tree.get("truncated"):
         raise ValueError(f"{repo} recursive Git tree was truncated")
 
-    root = str(source["resource_root"]).rstrip("/")
+    root = normalize_resource_root(source["resource_root"])
     filename = str(source["resource_filename"])
-    prefix = root + "/"
-    suffix = "/" + filename
     max_depth = int(source.get("max_depth", 1))
     exclude = {str(item) for item in source.get("exclude_root_segments", [])}
     resources: list[dict[str, Any]] = []
     for item in tree.get("tree", []):
         path = str(item.get("path", ""))
-        if item.get("type") != "blob" or not path.startswith(prefix) or not path.endswith(suffix):
+        if item.get("type") != "blob":
             continue
-        relative = path[len(prefix) : -len(suffix)]
-        parts = [part for part in relative.split("/") if part]
-        if not parts or len(parts) > max_depth:
+        parts = resource_path_parts(
+            path=path,
+            resource_root=root,
+            resource_filename=filename,
+        )
+        if parts is None or len(parts) > max_depth:
             continue
         if parts[0] in exclude:
             continue
@@ -218,7 +221,7 @@ def enumerate_catalog_csv(
     tree = github_json(f"/repos/{repo}/git/trees/{tree_sha}?recursive=1")
     if tree.get("truncated"):
         raise ValueError(f"{repo} recursive Git tree was truncated")
-    root = str(source.get("resource_root", ".")).rstrip("/")
+    root = normalize_resource_root(source.get("resource_root", "."))
     filename = str(source["resource_filename"])
     catalog_path = filename if root in {"", "."} else f"{root}/{filename}"
     blob = next(
@@ -257,7 +260,7 @@ def enumerate_source(source: dict[str, Any]) -> tuple[dict[str, Any], list[dict[
     repo = str(source["repository"])
     default_branch, sha, branch = resolve_github_floor(source)
     enumeration = str(source.get("enumeration", "git_skill_tree"))
-    root = str(source["resource_root"]).rstrip("/")
+    root = normalize_resource_root(source["resource_root"])
     if enumeration == "git_skill_tree":
         resources = enumerate_git_skill_tree(source, repo=repo, sha=sha, branch=branch)
         receipt = {
@@ -265,7 +268,7 @@ def enumerate_source(source: dict[str, Any]) -> tuple[dict[str, Any], list[dict[
             "repository": repo,
             "default_branch": default_branch,
             "resolved_sha": sha,
-            "resource_root": root,
+            "resource_root": root if root else ".",
             "resource_count": len(resources),
             "enumeration": enumeration,
         }
