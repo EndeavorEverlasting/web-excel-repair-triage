@@ -28,6 +28,10 @@ class RepositoryActionTests(unittest.TestCase):
         self.assertIn("pre-push-proof", ids)
         self.assertIn("required-checks-proof", ids)
         for action in self.registry["actions"]:
+            self.assertTrue(action["proof_inputs"], action["id"])
+            self.assertEqual(len(action["proof_inputs"]), len(set(action["proof_inputs"])))
+            for proof_input in action["proof_inputs"]:
+                self.assertTrue((ROOT / proof_input).is_file(), proof_input)
             for step in action["steps"]:
                 self.assertIsInstance(step["argv"], list)
                 self.assertNotIn("sh -c", " ".join(step["argv"]))
@@ -55,7 +59,27 @@ class RepositoryActionTests(unittest.TestCase):
             with self.assertRaises(run_repository_action.RepositoryActionError):
                 run_repository_action.validate_base_ref(unsafe)
 
-    def test_contract_routes_provider_loss_to_local_proof_without_promotion(self) -> None:
+    def test_receipts_are_confined_to_ephemeral_repository_action_outputs(self) -> None:
+        allowed = run_repository_action.safe_report_path(
+            "Outputs/repository-actions/test-receipt.json", "test"
+        )
+        self.assertEqual(
+            allowed.parent.resolve(),
+            run_repository_action.DEFAULT_REPORT_ROOT.resolve(),
+        )
+        for unsafe in (
+            "harness/repository-actions.v1.json",
+            "Outputs/other/test-receipt.json",
+            "../test-receipt.json",
+        ):
+            with self.subTest(unsafe=unsafe):
+                with self.assertRaisesRegex(
+                    run_repository_action.RepositoryActionError,
+                    "Outputs/repository-actions",
+                ):
+                    run_repository_action.safe_report_path(unsafe, "test")
+
+    def test_contract_routes_provider_loss_and_unknown_state_to_local_proof_without_promotion(self) -> None:
         joined = "\n".join(
             self.contract["principles"]
             + self.contract["planning_requirements"]
@@ -64,6 +88,8 @@ class RepositoryActionTests(unittest.TestCase):
         )
         self.assertIn("before hosted CI becomes a single point of failure", joined)
         self.assertIn("Suppress blind hosted retries", joined)
+        self.assertIn("provider state remains UNKNOWN after a bounded refresh", joined)
+        self.assertIn("keep genuinely hosted-only gates BLOCKED until observed", joined)
         self.assertIn("do not relabel local PASS as hosted PASS", joined)
         self.assertIn("Stopping the whole sprint solely because hosted Actions", joined)
 
