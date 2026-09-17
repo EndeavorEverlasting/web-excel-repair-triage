@@ -69,6 +69,9 @@ def strengthen_p07() -> tuple[str, str]:
         """
     ).strip()
 
+    prior_proof_gate = str(p07.get("proofGate") or "").strip()
+    if not prior_proof_gate:
+        raise SystemExit("P07 proofGate missing; refusing to replace unknown proof obligations")
     p07["copyContent"] = p07["copyContent"].rstrip() + "\n\n" + section + "\n"
     p07["version"] = "1.9.0"
     p07["purpose"] = (
@@ -79,10 +82,10 @@ def strengthen_p07() -> tuple[str, str]:
         "Continue autonomously through every safe executable progress-bearing action until the terminal gate "
         "is satisfied; when blocked, name the exact boundary and smallest advancing action instead of silently stopping."
     )
-    p07["proofGate"] = (
-        "Canonical P07 and every compiled effective profile preserve the non-silent continuation contract; "
-        "focused regressions, prompt-quality history, generated-site parity, deterministic repository floor, "
-        "integration, and live website publication gates pass at their claimed proof level."
+    p07["proofGate"] = prior_proof_gate + (
+        " Additionally, canonical P07 and every compiled effective profile must preserve the non-silent "
+        "continuation contract; focused regressions, prompt-quality history, generated-site parity, deterministic "
+        "repository floor, integration, and live website publication gates must pass at their claimed proof level."
     )
     after = (json.dumps(prompts, indent=2, ensure_ascii=False) + "\n").encode("utf-8")
     PROMPTS.write_bytes(after)
