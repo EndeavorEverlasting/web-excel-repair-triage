@@ -161,6 +161,16 @@ def validate_prompt_ids(value: Any, field: str) -> list[str]:
     return list(value)
 
 
+def _rating_evidence(record: dict[str, Any], dimension: str) -> list[dict[str, Any]]:
+    refs = set(record["ratings"][dimension]["evidence_refs"])
+    return [item for item in record["evidence"] if item["id"] in refs]
+
+
+def _registry_evidence_matches_prompt(item: dict[str, Any], prompt_ids: list[str]) -> bool:
+    ref = item["ref"]
+    return any(ref.endswith(f"#{prompt_id}") for prompt_id in prompt_ids)
+
+
 def validate_record(record: Any, contract: dict[str, Any]) -> None:
     if not isinstance(record, dict):
         raise RetrospectiveValidationError("record must be an object")
@@ -231,29 +241,59 @@ def validate_record(record: Any, contract: dict[str, Any]) -> None:
         raise RetrospectiveValidationError(
             f"authorship origin_label must be {expected_label} for score {authorship_score}"
         )
-    if authorship_score in {1, 2}:
+
+    authorship_evidence = _rating_evidence(record, "authorship_origin")
+    historical_authorship_evidence = [item for item in authorship_evidence if item["kind"] == "historical_registry"]
+    matching_historical_evidence = [
+        item
+        for item in historical_authorship_evidence
+        if _registry_evidence_matches_prompt(item, matched_ids)
+    ]
+
+    if authorship_score is not None:
+        if profile.get("comparison_basis") not in {"CONTEMPORANEOUS", "MIXED"}:
+            raise RetrospectiveValidationError("scored authorship requires contemporaneous comparison evidence")
+        if not profile.get("contemporaneous_prompt_kit_ref"):
+            raise RetrospectiveValidationError("scored authorship requires contemporaneous Prompt Kit ref")
+    if authorship_score == 1:
+        if not matched_ids or profile.get("match_kind") != "EXACT":
+            raise RetrospectiveValidationError("CANONICAL_REUSE requires matched Prompt Kit ID and exact full-prompt match")
+        if novelty:
+            raise RetrospectiveValidationError("CANONICAL_REUSE cannot include manual novelty signals")
+        if not matching_historical_evidence:
+            raise RetrospectiveValidationError("CANONICAL_REUSE requires matching historical_registry evidence")
+    if authorship_score == 2:
         if not matched_ids or profile.get("match_kind") not in {"EXACT", "MATERIAL"}:
-            raise RetrospectiveValidationError("authorship scores 1-2 require matched Prompt Kit ID and exact/material match")
+            raise RetrospectiveValidationError("REUSE_DOMINANT requires matched Prompt Kit ID and exact/material match")
+        if not novelty:
+            raise RetrospectiveValidationError("REUSE_DOMINANT requires manual tailoring signals")
+        if not matching_historical_evidence:
+            raise RetrospectiveValidationError("REUSE_DOMINANT requires matching historical_registry evidence")
     if authorship_score == 3:
         if not matched_ids:
             raise RetrospectiveValidationError("HYBRID authorship requires a matched Prompt Kit ID")
         if not novelty:
             raise RetrospectiveValidationError("HYBRID authorship requires manual novelty signals")
-        if profile.get("match_kind") not in {"EXACT", "MATERIAL", "DOCTRINE_ONLY"}:
-            raise RetrospectiveValidationError("HYBRID authorship requires exact/material/doctrine Prompt Kit evidence")
-        if profile.get("comparison_basis") not in {"CONTEMPORANEOUS", "MIXED"}:
-            raise RetrospectiveValidationError("HYBRID authorship requires contemporaneous comparison evidence")
-        if not profile.get("contemporaneous_prompt_kit_ref"):
-            raise RetrospectiveValidationError("HYBRID authorship requires contemporaneous Prompt Kit ref")
-    if authorship_score in {4, 5} and not novelty:
-        raise RetrospectiveValidationError("authorship scores 4-5 require manual novelty signals")
+        if profile.get("match_kind") not in {"MATERIAL", "DOCTRINE_ONLY"}:
+            raise RetrospectiveValidationError("HYBRID authorship requires material/doctrine Prompt Kit evidence")
+        if not matching_historical_evidence:
+            raise RetrospectiveValidationError("HYBRID authorship requires matching historical_registry evidence")
+    if authorship_score == 4:
+        if not matched_ids or profile.get("match_kind") != "DOCTRINE_ONLY":
+            raise RetrospectiveValidationError("MANUAL_DOMINANT requires a matched doctrine-only Prompt Kit influence")
+        if not novelty:
+            raise RetrospectiveValidationError("MANUAL_DOMINANT requires manual novelty signals")
+        if not matching_historical_evidence:
+            raise RetrospectiveValidationError("MANUAL_DOMINANT requires matching historical_registry evidence")
     if authorship_score == 5:
-        if profile.get("comparison_basis") != "CONTEMPORANEOUS":
-            raise RetrospectiveValidationError("MANUAL_ORIGINAL requires contemporaneous comparison")
+        if matched_ids:
+            raise RetrospectiveValidationError("MANUAL_ORIGINAL cannot retain matched Prompt Kit IDs")
         if profile.get("match_kind") != "NONE":
             raise RetrospectiveValidationError("MANUAL_ORIGINAL requires no material contemporaneous match")
-        if not profile.get("contemporaneous_prompt_kit_ref"):
-            raise RetrospectiveValidationError("MANUAL_ORIGINAL requires contemporaneous Prompt Kit ref")
+        if not novelty:
+            raise RetrospectiveValidationError("MANUAL_ORIGINAL requires manual novelty signals")
+        if not historical_authorship_evidence:
+            raise RetrospectiveValidationError("MANUAL_ORIGINAL requires historical_registry no-match evidence")
     if authorship_confidence == "HIGH":
         if profile.get("comparison_basis") not in {"CONTEMPORANEOUS", "MIXED"}:
             raise RetrospectiveValidationError("HIGH authorship confidence requires contemporaneous evidence")
@@ -279,22 +319,33 @@ def validate_record(record: Any, contract: dict[str, Any]) -> None:
         require_one_line(kit.get("topology_ref"), "kit_assessment.topology_ref", max_length=240)
 
     gap_score, _gap_confidence = scored["prompt_kit_gap"]
-    if gap_score == 1:
-        gap_refs = ratings["prompt_kit_gap"]["evidence_refs"]
-        current_gap_evidence = [
-            item
-            for item in record["evidence"]
-            if item["id"] in gap_refs and item["kind"] == "current_registry"
-        ]
+    gap_evidence = _rating_evidence(record, "prompt_kit_gap")
+    current_gap_evidence = [item for item in gap_evidence if item["kind"] in {"current_registry", "topology"}]
+    if gap_score is not None:
         if kit.get("evaluation_basis") != "CURRENT":
-            raise RetrospectiveValidationError("gap score 1 requires CURRENT evaluation basis")
+            raise RetrospectiveValidationError("scored Prompt Kit gap requires CURRENT evaluation basis")
+        if not current_gap_evidence:
+            raise RetrospectiveValidationError("scored Prompt Kit gap requires current registry or topology evidence")
+    if gap_score == 1:
+        matching_current_evidence = [
+            item
+            for item in current_gap_evidence
+            if item["kind"] == "current_registry" and _registry_evidence_matches_prompt(item, kit_matches)
+        ]
         if not kit_matches or kit.get("disposition") != "NO_KIT_CHANGE":
             raise RetrospectiveValidationError("gap score 1 requires matched current owner and NO_KIT_CHANGE")
-        if not current_gap_evidence:
-            raise RetrospectiveValidationError("gap score 1 requires current_registry evidence")
+        if not matching_current_evidence:
+            raise RetrospectiveValidationError("gap score 1 requires current_registry evidence for the matched current owner")
     if gap_score == 5:
+        topology_evidence = [
+            item
+            for item in gap_evidence
+            if item["kind"] == "topology" and item["ref"] == kit.get("topology_ref")
+        ]
         if not kit.get("prior_art_complete") or not kit.get("topology_ref") or kit.get("disposition") != "CREATE_NEW_REVIEW":
             raise RetrospectiveValidationError("gap score 5 requires completed prior-art/topology review and CREATE_NEW_REVIEW")
+        if not topology_evidence:
+            raise RetrospectiveValidationError("gap score 5 requires topology evidence matching topology_ref")
     if kit.get("disposition") == "CREATE_NEW_REVIEW" and not kit.get("prior_art_complete"):
         raise RetrospectiveValidationError("CREATE_NEW_REVIEW requires completed prior-art review")
 
