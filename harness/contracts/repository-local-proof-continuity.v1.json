@@ -3,7 +3,7 @@
   "$id": "repository-local-proof-continuity/v1",
   "schema_version": "repository-local-proof-continuity/v1",
   "title": "Repository Local Proof Continuity Contract",
-  "purpose": "Keep repository planning, building, validation, and integration productive when hosted CI is quota-limited, rate-limited, unavailable, or permission-blocked without inflating local proof into hosted or live proof.",
+  "purpose": "Keep repository planning, building, validation, and integration productive when hosted CI is quota-limited, rate-limited, unavailable, permission-blocked, or still unresolved after bounded refresh without inflating local proof into hosted or live proof.",
   "applies_to": ["repository planning", "repository build and repair", "validation and regression proof", "integration and promotion preparation"],
   "principles": [
     "Hosted CI is one proof surface, not the sole execution authority.",
@@ -22,6 +22,7 @@
   "execution_requirements": [
     "Refresh provider state before classifying a hosted failure.",
     "When provider state is QUOTA_EXHAUSTED, RATE_LIMITED, RUNNER_UNAVAILABLE, or PERMISSION_DENIED, continue through the canonical local proof path for every gate it can honestly prove.",
+    "When provider state remains UNKNOWN after a bounded refresh, continue local proof for every gate it can honestly prove, suppress blind hosted retries while UNKNOWN is unchanged, and keep genuinely hosted-only gates BLOCKED until observed.",
     "Suppress blind hosted retries while the evidenced non-transient provider state is unchanged.",
     "If the local proof owner is missing and the active lane owns that seam, build the smallest deterministic local validator or launcher and prove it before continuing.",
     "If the local proof owner is missing but another owner controls it, preserve that exact gap as REQUIRED SUCCESSOR WORK or AUTONOMY_GAP while continuing independent executable work.",
@@ -31,7 +32,7 @@
     "candidate or exact-head identity",
     "required base or dependency identity",
     "validator/build/test entrypoint identity",
-    "proof-relevance fingerprint or equivalent versioned input set",
+    "complete canonical path-and-revision proof-relevance input set or an explicit freshness gap",
     "command result with nonzero failures propagated",
     "proof ceiling",
     "hosted-only gates left unproven"
