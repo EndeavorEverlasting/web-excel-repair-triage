@@ -204,28 +204,33 @@ class ImprovementCompilerCallStackTests(unittest.TestCase):
         self.assertIn("mainline_convergence", result["receipt"]["activated_obligations"])
 
     def test_cli_success_and_gate_failure_exit_codes(self) -> None:
-        self.assertEqual(
-            improvement.main(
-                [
-                    "run-journey",
-                    "--finding",
-                    str(IJ01 / "finding.json"),
-                    "--summary",
-                ]
-            ),
-            0,
-        )
-        self.assertEqual(
-            improvement.main(
-                [
-                    "recurrence-gate",
-                    "--finding",
-                    str(IJ02 / "finding.json"),
-                    "--summary",
-                ]
-            ),
-            2,
-        )
+        import contextlib
+        import io
+
+        sink = io.StringIO()
+        with contextlib.redirect_stdout(sink), contextlib.redirect_stderr(sink):
+            self.assertEqual(
+                improvement.main(
+                    [
+                        "run-journey",
+                        "--finding",
+                        str(IJ01 / "finding.json"),
+                        "--summary",
+                    ]
+                ),
+                0,
+            )
+            self.assertEqual(
+                improvement.main(
+                    [
+                        "recurrence-gate",
+                        "--finding",
+                        str(IJ02 / "finding.json"),
+                        "--summary",
+                    ]
+                ),
+                2,
+            )
 
 
 if __name__ == "__main__":
