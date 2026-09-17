@@ -21,13 +21,14 @@
   "effective_identity": {
     "canonical_loader": "scripts.build_prompt_kit_registry.load_prompt_registry",
     "effective_loader": "scripts.build_prompt_kit_registry.load_prompt_kit_registry",
-    "rule": "An effective or compiled prompt may append execution guidance, but must not replace or omit the governed canonical prompt unless an explicit reviewed semantic migration authorizes the changed obligation.",
+    "rule": "An effective or compiled prompt may append execution guidance, but must not replace or omit the governed canonical prompt unless an explicit reviewed semantic migration authorizes replacement for that prompt.",
+    "temporary_exception_policy": "A temporary exception is valid only while at least one compiled effective variant still violates canonical containment. Once the underlying representation is repaired, the validator fails the stale exception until it is removed.",
     "temporary_exceptions": [
       {
         "prompt_id": "P07",
         "reason": "Known effective-representation regression introduced by PR #519 is already owned by concurrent repair PR #533.",
         "owner_pr": 533,
-        "remove_when": "PR #533 canonical-preservation repair is integrated."
+        "remove_when": "Canonical containment is restored for every compiled P07 profile; PR #533 is the current repair owner."
       }
     ]
   },
@@ -42,7 +43,7 @@
     },
     {
       "id": "PQH003",
-      "rule": "Every compiledEffectivePrompts variant must contain the canonical copyContent verbatim unless a temporary exception or explicit semantic migration exists."
+      "rule": "Every compiledEffectivePrompts variant must contain the canonical copyContent verbatim unless an active temporary exception or explicit replacement-authorizing semantic migration exists."
     },
     {
       "id": "PQH004",
@@ -51,6 +52,10 @@
     {
       "id": "PQH005",
       "rule": "A mass prompt edit must be represented as one or more auditable migration records rather than silently resetting the baseline."
+    },
+    {
+      "id": "PQH006",
+      "rule": "Temporary exceptions fail closed when they become unnecessary; an exception cannot survive restoration of canonical containment."
     }
   ]
 }
