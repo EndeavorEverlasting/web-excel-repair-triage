@@ -1,0 +1,178 @@
+name: Temporary P07 nonstop publisher
+
+on:
+  push:
+    branches:
+      - fix/p07-nonstop-publication-20260917
+
+permissions:
+  contents: write
+
+jobs:
+  publish-p07:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Checkout exact branch
+        uses: actions/checkout@v7
+        with:
+          ref: fix/p07-nonstop-publication-20260917
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v7
+        with:
+          python-version: '3.11'
+
+      - name: Install deterministic floor dependencies
+        run: python -m pip install -r requirements-test-floor.txt
+
+      - name: Strengthen canonical P07 and record semantic migration
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          from __future__ import annotations
+
+          import hashlib
+          import json
+          from pathlib import Path
+
+          prompts_path = Path('docs/prompts.json')
+          migrations_path = Path('harness/prompt-compilation/prompt-semantic-migrations.v1.json')
+          test_path = Path('tests/test_p07_effective_prompt_identity.py')
+
+          def git_blob_sha(data: bytes) -> str:
+              return hashlib.sha1(f"blob {len(data)}\0".encode('ascii') + data).hexdigest()
+
+          before = prompts_path.read_bytes()
+          from_sha = git_blob_sha(before)
+          prompts = json.loads(before.decode('utf-8'))
+          p07 = next((item for item in prompts if item.get('id') == 'P07'), None)
+          if p07 is None:
+              raise SystemExit('P07 not found in canonical docs/prompts.json')
+
+          sentinel = 'NON-SILENT CONTINUATION / TERMINATION CONTRACT (MANDATORY)'
+          body = p07['copyContent']
+          if sentinel in body:
+              raise SystemExit('P07 already contains emergency non-silent continuation contract; refusing duplicate mutation')
+
+          section = r'''NON-SILENT CONTINUATION / TERMINATION CONTRACT (MANDATORY)
+          P07 is an execution prompt, not a planning or status-report prompt. Do not stop, summarize as if finished, hand control back, ask the operator to continue, or offer to do later what can still be done now while SAFE & EXECUTABLE progress-bearing work remains inside the authorized scope.
+
+          CHECKPOINTS ARE NOT STOP CONDITIONS
+          A plan, one patch, one passing test, a generated artifact, a commit, a push, an open PR, review-ready state, green CI, a mergeable branch, or a progress report is evidence of movement. None is a terminal state when another safe authorized action can materially advance the requested outcome.
+
+          MANDATORY CONTINUATION LOOP
+          1. After every evidence-changing pass, reconstruct the requested target state, acceptance criteria, proof requirements, and applicable end-state contracts.
+          2. Disposition every material remaining item exactly once as PROVEN DONE, SAFE & EXECUTABLE, REQUIRED SUCCESSOR WORK, BLOCKED, UNSAFE, or OUT OF SCOPE.
+          3. If any item is SAFE & EXECUTABLE and progress-bearing, execute it now. Do not replace execution with a recommendation, next-steps list, permission-seeking, or operator handoff.
+          4. If the next required action belongs to an available canonical owner, tool, workflow, or agent and the governing scope permits routing, invoke or route that owner and continue through the returned evidence instead of terminating at the handoff.
+          5. If at least two meaningful dependency-ready lanes are independent and safe autonomous capacity exists, dispatch them concurrently and rejoin their evidence. Serial calls, lane enumeration, or saying work could be parallelized do not count as parallel execution.
+          6. When validation fails, inspect the failure, repair the cause when owned, and rerun the affected gate. A failed or skipped check never becomes a completion claim.
+          7. After each meaningful pass, communicate compactly as CHANGED / PROVED / NEXT and continue. If progress stops because of a boundary, name the boundary immediately; never go silent at an unexplained edge.
+          8. Before any terminal response, perform a residual-compute sweep across implementation, regressions, focused and broad validation, review findings, integration, generated artifacts, deployment/runtime observation, operator acceptance, and durability/handoff obligations that apply to the requested outcome.
+
+          TERMINAL GATE
+          A terminal response is allowed only when no SAFE & EXECUTABLE progress-bearing item remains in the active authority; every material requested-scope item has a supported disposition; authorized integration is complete or an exact integration blocker is proven; REQUIRED SUCCESSOR WORK is durably owned with its first executable action; and the proof ceiling is explicit.
+
+          Any response that ends while SAFE & EXECUTABLE progress-bearing work remains is a P07 contract failure. `I can continue`, `ready for review`, `PR opened`, `CI is green`, `commit created`, and generic `next steps` are not valid terminal substitutes for work the agent can still perform.
+
+          QUIESCENCE / REAL BLOCKERS
+          Do not manufacture churn merely to remain active. When the decisive next transition requires an unavailable credential, protected runtime, physical device, user-only decision, external event, blocking review, or unavailable execution adapter, persist the blocker once with evidence, consequence, smallest advancing action, and proof ceiling. Two materially identical blocker observations with an unchanged proof-relevance fingerprint require quiescence rather than repetitive mutations.
+
+          RECURRENCE RULE
+          Repeated premature stopping is itself a system defect. When the same stop failure recurs, strengthen the canonical prompt, validator, test, trigger, workflow, or ownership contract that allowed it; do not merely tell the next agent to try harder.'''
+
+          p07['copyContent'] = body.rstrip() + '\n\n' + section + '\n'
+          p07['version'] = '1.9.0'
+          p07['purpose'] = 'Execute the next repository sprint to an evidence-backed fixed point, continuing automatically while safe executable progress-bearing work remains.'
+          p07['nextStep'] = 'Continue autonomously through every safe executable progress-bearing action until the terminal gate is satisfied; when blocked, name the exact boundary and smallest advancing action instead of silently stopping.'
+          p07['proofGate'] = 'Canonical P07 and every compiled effective profile preserve the non-silent continuation contract; focused regressions, prompt-quality history, generated-site parity, deterministic repository floor, integration, and live website publication gates pass at their claimed proof level.'
+
+          after = (json.dumps(prompts, indent=2, ensure_ascii=False) + '\n').encode('utf-8')
+          prompts_path.write_bytes(after)
+          to_sha = git_blob_sha(after)
+          if from_sha == to_sha:
+              raise SystemExit('P07 mutation produced no canonical blob change')
+
+          migrations = json.loads(migrations_path.read_text(encoding='utf-8'))
+          migration_id = '2026-09-17-p07-non-silent-continuation-v1'
+          if any(item.get('migration_id') == migration_id for item in migrations.get('migrations', [])):
+              raise SystemExit(f'duplicate migration id: {migration_id}')
+          migrations['migrations'].append({
+              'migration_id': migration_id,
+              'path': 'docs/prompts.json',
+              'from_git_blob_sha1': from_sha,
+              'to_git_blob_sha1': to_sha,
+              'affected_prompt_ids': ['P07'],
+              'change_kind': 'strengthening',
+              'effective_identity_change': 'preserve_canonical',
+              'rationale': 'Recurring agents prematurely terminalized repository sprints despite safe executable work remaining. Strengthen canonical P07 with an explicit non-silent continuation and terminal gate while preserving canonical identity through effective profiles.',
+              'focused_tests': ['tests/test_p07_effective_prompt_identity.py'],
+          })
+          migrations_path.write_text(json.dumps(migrations, indent=2, ensure_ascii=False) + '\n', encoding='utf-8')
+
+          test_text = test_path.read_text(encoding='utf-8')
+          test_name = 'test_canonical_p07_forbids_premature_terminal_states'
+          if test_name in test_text:
+              raise SystemExit('focused P07 nonstop regression already exists; refusing duplicate mutation')
+          marker = '\n\nif __name__ == "__main__":\n'
+          method = r'''
+              def test_canonical_p07_forbids_premature_terminal_states(self) -> None:
+                  required = (
+                      "NON-SILENT CONTINUATION / TERMINATION CONTRACT (MANDATORY)",
+                      "CHECKPOINTS ARE NOT STOP CONDITIONS",
+                      "If any item is SAFE & EXECUTABLE and progress-bearing, execute it now.",
+                      "If progress stops because of a boundary, name the boundary immediately; never go silent at an unexplained edge.",
+                      "A terminal response is allowed only when no SAFE & EXECUTABLE progress-bearing item remains",
+                      "Any response that ends while SAFE & EXECUTABLE progress-bearing work remains is a P07 contract failure.",
+                      "Repeated premature stopping is itself a system defect.",
+                  )
+                  for phrase in required:
+                      with self.subTest(phrase=phrase):
+                          self.assertIn(phrase, self.base)
+                  for profile in ("exhaustive", "efficient"):
+                      rendered = self.p07["compiledEffectivePrompts"][profile]
+                      with self.subTest(profile=profile):
+                          for phrase in required:
+                              self.assertIn(phrase, rendered)
+          '''
+          import textwrap
+          method = '\n' + textwrap.dedent(method).rstrip() + '\n'
+          if marker not in test_text:
+              raise SystemExit('could not find unittest footer in P07 focused test')
+          test_path.write_text(test_text.replace(marker, method + marker), encoding='utf-8')
+
+          print(f'P07 canonical migration: {from_sha} -> {to_sha}')
+          PY
+
+      - name: Rebuild canonical Prompt Kit website
+        run: python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html
+
+      - name: Validate P07, prompt history, generated parity, and patch hygiene
+        shell: bash
+        run: |
+          set -euo pipefail
+          python -m unittest tests.test_p07_effective_prompt_identity -v
+          python scripts/validate_prompt_quality_history.py --summary
+          python scripts/build_prompt_kit_registry.py --output /tmp/prompt-kit-index.html
+          cmp -s /tmp/prompt-kit-index.html web/prompt-kit/index.html
+          git diff --check
+          git diff --stat
+
+      - name: Run deterministic repository floor
+        run: python scripts/run_deterministic_test_floor.py --report /tmp/p07-deterministic-floor.json
+
+      - name: Remove temporary carrier and commit proven publication candidate
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm .github/workflows/tmp-p07-nonstop-publish.yml
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add docs/prompts.json harness/prompt-compilation/prompt-semantic-migrations.v1.json tests/test_p07_effective_prompt_identity.py web/prompt-kit/index.html .github/workflows/tmp-p07-nonstop-publish.yml
+          git diff --cached --check
+          git diff --cached --stat
+          git commit -m 'fix(prompt-kit): make P07 continue to fixed point'
+          git push origin HEAD:fix/p07-nonstop-publication-20260917
