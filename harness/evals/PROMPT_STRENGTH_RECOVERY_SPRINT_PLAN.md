@@ -6,7 +6,7 @@
 
 **Original design floor:** `main@c99346be8269409ee5ecf24bdbbf33f9d6800bc1`
 
-**Reconciled provider floor:** `main@80ead456dc6079997935105a77bf0690107aaf3a`
+**Reconciled provider floor:** `main@fc5fca0d4f1318a8671b7c8cd1be7abdf7b54050`
 
 **State:** TRACKED / VALIDATING on PR #537; not yet integrated
 
@@ -16,7 +16,8 @@
 
 - PR #519 integrated Compute Mode and compiler-backed effective prompts.
 - PR #534 integrated recurring-defect regression safety, including working/staged/exact-candidate patch hygiene.
-- PR #536 integrated prompt-quality-history protection at `main@80ead456dc6079997935105a77bf0690107aaf3a`.
+- PR #536 integrated prompt-quality-history protection at `80ead456dc6079997935105a77bf0690107aaf3a`.
+- PR #533 integrated the P07 effective-prompt identity repair at `fc5fca0d4f1318a8671b7c8cd1be7abdf7b54050`; its temporary prompt-quality-history waiver is removed on this branch.
 - The shared actionability policy carries compute, fixed-point, parallelism, evidence, convergence, durability, and recurring-defect doctrine.
 - Registered upstream donor/reference sources include DeepSeek Harness, Matt Pocock skills, Michael Shimeles skills, and prompts.chat.
 - `michaelshimeles/skills` was refreshed from audited `513f8a24...` to current `4b72f46b...`; only `README.md` changed, so the seven audited skill bodies remain semantically current.
@@ -25,7 +26,7 @@
 
 | Owner | Reconciled state | Exact head / integration | Exclusive surfaces this plan will not steal |
 | --- | --- | --- | --- |
-| PR #533 | open external owner | `807af11f89f3253c676b79d7556f506a5fd890b5` | P07 effective-prompt identity focused repair/test |
+| PR #533 | integrated | head `807af11f...`; merge `fc5fca0d...` | P07 effective-prompt identity focused repair/test now on main |
 | PR #535 | open external owner | `82d6d3ea55cfb408a93c60a2a229a2ab9c0f2b53` | local-proof continuity, repository actions, P07 compiler/build-context, shared actionability policy, generated Prompt Kit |
 | PR #536 | integrated | head `79416fe...`; merge `80ead456...` | prompt-quality history contract, semantic migrations, validator/test/workflow |
 | PR #524 | open external owner | refresh before collision-sensitive mutation | Compute Mode browser-observed proof lane; no Compute Mode semantic mutation here |
@@ -65,15 +66,16 @@
 - malformed dimension/profile/assertion structures fail closed;
 - case profiles are restricted to supported execution profiles;
 - adversarial dimension credits require matching semantic evidence;
-- focused suite is registered through the deterministic prompt-semantic test convention.
+- focused suite is registered through the deterministic prompt-semantic test convention;
+- stale P07 prompt-quality-history waiver is removed after #533 integration.
 
-**Acceptance:** exact-head focused validator/tests, deterministic floor, relevant harnesses, patch hygiene, and review reconciliation pass; no active external-owner surface is overwritten.
+**Acceptance:** exact-head focused validator/tests, deterministic floor, prompt-quality-history, relevant harnesses, patch hygiene, and review reconciliation pass; no active external-owner surface is overwritten.
 
 ### Phase 1 — Reconcile active repair dependencies
 
-**Hard dependencies:** #533 and #535 resolve or their exact surviving semantics are carried into the convergence candidate. #536 is already integrated.
+**State:** #533 and #536 integrated; #535 remains the sole hard external dependency for local-proof/shared-policy convergence.
 
-**Mission:** refresh `main`, prove surviving P07 identity, local-proof continuity, and quality-history contracts; update this plan whenever their exact heads or integrated APIs materially change.
+**Mission:** refresh `main`, prove surviving P07 identity, local-proof continuity, and quality-history contracts; update this plan whenever exact heads or integrated APIs materially change.
 
 **Proof gate:** exact revision + current content + owning validators, not PR number or ancestry alone.
 
@@ -81,7 +83,7 @@
 
 **State:** donor refresh performed; residual adoption remains successor work.
 
-Refresh pinned identities for registered donor sources and maintain a provenance-rich residual map:
+Maintain a provenance-rich residual map:
 `source -> mechanic -> current owner -> existing coverage -> distinct residual -> disposition`.
 
 Priority mechanics:
@@ -118,7 +120,7 @@ Required outcomes:
 
 ### Phase 4 — Deterministic/local required-check integration
 
-**State:** prompt-strength focused suite is registered in `harness/test-floor.v1.json`; the broader repository-local action owner is PR #535.
+**State:** prompt-strength focused suite is registered in `harness/test-floor.v1.json`; broader repository-local action ownership remains PR #535.
 
 PR #535 must own the allow-listed repository action registry/runner and local merge-equivalent proof path, including recurring whitespace/CRLF prevention. Hosted workflows may call the same repository-owned command/profile but do not become the semantic owner.
 
@@ -145,4 +147,4 @@ python scripts/validate_prompt_strength.py --summary
 python -m unittest tests.test_prompt_strength_contract_prompt -v
 ```
 
-Then run the repository-owned deterministic/local-required-check action and patch-hygiene profile, reconcile #533/#535 exact heads, and advance integration/publication gates without silently stopping at a provider boundary.
+Then run the repository-owned deterministic/local-required-check action and patch-hygiene profile, reconcile #535 exact head, and advance integration/publication gates without silently stopping at a provider boundary.
