@@ -9,8 +9,11 @@ Call-stack prototype (non-production):
     -> prompt-improvement-candidate/v1
     -> gold regression eval against Language Engine
     -> reviewed_pr_only draft package (never auto-merge / auto-mutate)
+    -> optional Outputs/ draft retention
+    -> P115-compatible work-request handoff (does not absorb P115 ownership)
 
-Does not own Evidence Spine lifecycle events. Does not write repository source.
+Does not own Evidence Spine lifecycle events. Does not write repository source
+except optional ephemeral draft retention under Outputs/prompt-improvement-drafts/.
 """
 from __future__ import annotations
 
@@ -33,6 +36,16 @@ FIXTURES_ROOT = ROOT / "harness" / "prompt-compilation" / "fixtures"
 HYPOTHESIS_CATALOG_PATH = (
     ROOT / "harness" / "prompt-compilation" / "improvement-hypothesis-catalog.v1.json"
 )
+DEFAULT_DRAFT_RETENTION_DIR = ROOT / "Outputs" / "prompt-improvement-drafts"
+P115_WORK_REQUEST_SCHEMA = "evidence-spine-p115-work-request/v1"
+P115_HANDOFF_COORDINATOR = "P115"
+REMEDIATION_OWNER_BY_AUTHORITY = {
+    "language-engine": "P07",
+    "prompt-semantics": "P07",
+    "execution-profile": "P07",
+    "prompt-context": "P07",
+    "fixtures": "P07",
+}
 
 ELIGIBLE_FINDING_STATES = frozenset({"confirmed_recurrence", "monitoring_reopened"})
 AFFECTED_AUTHORITIES = frozenset(
@@ -230,12 +243,107 @@ def build_pr_draft_package(
     }
 
 
+def retain_draft_package(
+    draft: dict[str, Any],
+    *,
+    retention_dir: Path | None = None,
+) -> Path:
+    """Optionally persist an ephemeral PR draft under Outputs/ (never auto-applies)."""
+    if not isinstance(draft, dict):
+        raise ImprovementCompilerError("draft must be an object")
+    if draft.get("promotion_authority") != "reviewed_pr_only":
+        raise ImprovementCompilerError("promotion_authority must remain reviewed_pr_only")
+    if draft.get("auto_merge") is not False or draft.get("auto_mutate_source") is not False:
+        raise ImprovementCompilerError("retained drafts must forbid auto_merge and auto_mutate_source")
+    fingerprint = str(draft.get("fingerprint") or "").strip()
+    if not fingerprint:
+        raise ImprovementCompilerError("draft fingerprint required for retention")
+    target_dir = Path(retention_dir) if retention_dir is not None else DEFAULT_DRAFT_RETENTION_DIR
+    if not target_dir.is_absolute():
+        target_dir = ROOT / target_dir
+    try:
+        target_dir.relative_to(ROOT / "Outputs")
+    except ValueError as exc:
+        raise ImprovementCompilerError(
+            "draft retention must stay under Outputs/ (ephemeral local evidence only)"
+        ) from exc
+    target_dir.mkdir(parents=True, exist_ok=True)
+    path = target_dir / f"pr-draft-{fingerprint[:16]}.json"
+    path.write_text(json.dumps(draft, indent=2) + "\n", encoding="utf-8")
+    return path
+
+
+def build_p115_work_request_handoff(
+    candidate: dict[str, Any],
+    eval_result: dict[str, Any],
+    *,
+    fingerprint: str,
+) -> dict[str, Any]:
+    """Emit a P115-compatible work-request handoff without absorbing P115 ownership.
+
+    Shape mirrors evidence-spine-p115-work-request/v1 required ticket fields so P115
+    can coordinate recovery. This module does not open queues, mutate P115 contracts,
+    or claim recovery ownership.
+    """
+    try:
+        candidate = compiler.validate_improvement_candidate(candidate)
+    except compiler.PromptCompilationError as exc:
+        raise ImprovementCompilerError(str(exc)) from exc
+    if candidate.get("promotion_authority") != "reviewed_pr_only":
+        raise ImprovementCompilerError("promotion_authority must remain reviewed_pr_only")
+    if not eval_result.get("ok"):
+        raise ImprovementCompilerError("cannot hand off failed evaluation to P115")
+    authority = str(candidate.get("affected_authority") or "").strip()
+    remediation_owner = REMEDIATION_OWNER_BY_AUTHORITY.get(authority)
+    if not remediation_owner:
+        raise ImprovementCompilerError(f"no remediation owner mapping for authority: {authority}")
+    evidence_refs = [str(item).strip() for item in (candidate.get("evidence_refs") or []) if str(item).strip()]
+    if not evidence_refs:
+        raise ImprovementCompilerError("P115 handoff requires linked evidence refs")
+    regressions = [item.get("case_id") for item in eval_result.get("regressions") or []]
+    proposed = candidate.get("proposed_change") or {}
+    expected_behavior = str(proposed.get("rule") or "").strip()
+    if not expected_behavior:
+        raise ImprovementCompilerError("P115 handoff requires proposed_change.rule")
+    return {
+        "compiled": True,
+        "schema_version": P115_WORK_REQUEST_SCHEMA,
+        "handoff_coordinator": P115_HANDOFF_COORDINATOR,
+        "source_subsystem": "prompt-compilation-improvement-compiler",
+        "absorbs_p115_ownership": False,
+        "remediation_owner": remediation_owner,
+        "contract_failure_id": candidate["failure_identity"],
+        "linked_receipt_ids": evidence_refs,
+        "observed_behavior": (
+            f"recurring instruction-construction failure `{candidate['failure_identity']}` "
+            f"under authority `{authority}`"
+        ),
+        "expected_behavior": expected_behavior,
+        "acceptance_criteria": (
+            "required gold regressions pass; promotion remains reviewed_pr_only; "
+            "no auto-merge or auto-mutate"
+        ),
+        "proof_requirements": (
+            "Language Engine fixture eval for "
+            + ", ".join(str(item) for item in regressions if item)
+            + "; human review before git apply"
+        ),
+        "promotion_authority": "reviewed_pr_only",
+        "auto_merge": False,
+        "fingerprint": fingerprint,
+        "candidate_id": candidate["candidate_id"],
+        "required_regressions": list(candidate.get("required_regressions") or []),
+    }
+
+
 def run_improvement_journey(
     finding: dict[str, Any],
     *,
     catalog: dict[str, Any] | None = None,
     fixtures_root: Path = FIXTURES_ROOT,
     candidate_id: str | None = None,
+    retain_draft: bool = False,
+    retention_dir: Path | None = None,
 ) -> dict[str, Any]:
     """Full success call stack for one admitted recurrence finding."""
     compiled = compile_candidate_from_finding(
@@ -252,21 +360,35 @@ def run_improvement_journey(
         evaluation,
         fingerprint=compiled["fingerprint"],
     )
+    handoff = build_p115_work_request_handoff(
+        compiled["candidate"],
+        evaluation,
+        fingerprint=compiled["fingerprint"],
+    )
+    stack = [
+        "normalize_finding",
+        "recurrence_gate",
+        "resolve_hypothesis",
+        "compile_improvement_candidate",
+        "evaluate_candidate_regressions",
+        "build_pr_draft_package",
+        "build_p115_work_request_handoff",
+    ]
+    retained_path: str | None = None
+    if retain_draft:
+        path = retain_draft_package(draft, retention_dir=retention_dir)
+        retained_path = str(path.relative_to(ROOT)).replace("\\", "/")
+        stack.append("retain_draft_package")
     return {
         "ok": True,
-        "stack": [
-            "normalize_finding",
-            "recurrence_gate",
-            "resolve_hypothesis",
-            "compile_improvement_candidate",
-            "evaluate_candidate_regressions",
-            "build_pr_draft_package",
-        ],
+        "stack": stack,
         "candidate": compiled["candidate"],
         "fingerprint": compiled["fingerprint"],
         "hypothesis_id": compiled["hypothesis_id"],
         "evaluation": evaluation,
         "pr_draft": draft,
+        "p115_work_request_handoff": handoff,
+        "retained_draft_path": retained_path,
     }
 
 
@@ -278,6 +400,16 @@ def build_parser() -> argparse.ArgumentParser:
     journey.add_argument("--finding", type=Path, required=True)
     journey.add_argument("--candidate-id")
     journey.add_argument("--output", type=Path)
+    journey.add_argument(
+        "--retain-draft",
+        action="store_true",
+        help="Optionally write the PR draft under Outputs/prompt-improvement-drafts/",
+    )
+    journey.add_argument(
+        "--retention-dir",
+        type=Path,
+        help="Override Outputs/ retention directory (must remain under Outputs/)",
+    )
     journey.add_argument("--summary", action="store_true")
 
     gate = sub.add_parser("recurrence-gate", help="Evaluate recurrence admission only")
@@ -296,7 +428,12 @@ def main(argv: list[str] | None = None) -> int:
             print(json.dumps(result, indent=2))
             return 0 if result.get("admitted") else 2
         if args.command == "run-journey":
-            result = run_improvement_journey(finding, candidate_id=args.candidate_id)
+            result = run_improvement_journey(
+                finding,
+                candidate_id=args.candidate_id,
+                retain_draft=bool(args.retain_draft),
+                retention_dir=args.retention_dir,
+            )
             if args.output:
                 args.output.write_text(json.dumps(result, indent=2) + "\n", encoding="utf-8")
             if args.summary or not args.output:
