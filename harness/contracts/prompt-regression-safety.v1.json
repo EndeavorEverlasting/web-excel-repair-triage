@@ -1,0 +1,68 @@
+{
+  "schema_version": "prompt-regression-safety/v1",
+  "contract_id": "prompt-regression-safety",
+  "purpose": "Turn repeated prompt, workflow, validation, review, runtime, and repository hygiene defects into retained regression controls instead of repeated one-off repairs.",
+  "prompt_marker": "REGRESSION SAFETY / RECURRING DEFECT CONTRACT",
+  "authority": {
+    "prompt_strengthening_owner": "registry/prompts/actionable-next-step-policy.v1.json",
+    "recurring_process_owner": "P13",
+    "regression_design_owner": "P94",
+    "transcript_judgment_intake_owner": "P100",
+    "prompt_identity_owner": "P79",
+    "local_required_check_owner": "harness/promotion/required-checks.v1.json",
+    "hosted_provider_is_semantic_owner": false
+  },
+  "recurrence": {
+    "systemic_threshold": 2,
+    "incident_sources": [
+      "local_validator",
+      "local_required_check",
+      "hosted_ci",
+      "code_review",
+      "runtime_observation",
+      "operator_feedback",
+      "retrospective_matrix",
+      "commit_history"
+    ],
+    "rule": "Two or more independently evidenced occurrences in the same defect family are a system defect. Repairing another instance without strengthening the canonical prevention owner is incomplete."
+  },
+  "required_loop": [
+    "REPAIR_INSTANCE",
+    "CLASSIFY_DEFECT_FAMILY",
+    "FIND_CANONICAL_OWNER",
+    "WRITE_NEGATIVE_FIXTURE",
+    "WRITE_POSITIVE_CONTROL",
+    "STRENGTHEN_CANONICAL_OWNER",
+    "RUN_LOCAL_REQUIRED_CHECKS",
+    "RUN_AFFECTED_PROVIDER_PARITY_WHEN_APPLICABLE",
+    "INTEGRATE_AND_RETAIN_REGRESSION"
+  ],
+  "local_first_proof": {
+    "semantic_authority": "Repository-owned validators, required-check profiles, fixtures, and exact-candidate receipts define the portable merge gate; hosted providers may execute those contracts but do not own their semantics.",
+    "rules": [
+      "When local Git and the repository-owned required-check runner are available, run the local profile before hosted-provider proof.",
+      "Bind local proof to the exact base/head candidate, invoked profile or command set, exit status, and produced receipt/artifact where the repository supports receipts.",
+      "Provider unavailability does not erase valid local proof, but local proof does not grant merge authority when the repository's current promotion contract still requires provider mutation or another external gate.",
+      "A local and hosted gate that intend to prove the same invariant must consume the same repository-owned command/profile contract rather than maintain divergent command lists."
+    ]
+  },
+  "repository_hygiene": {
+    "patch_hygiene_commands": [
+      "git diff --check",
+      "git diff --cached --check",
+      "git diff --check {base_sha}...{head_sha}"
+    ],
+    "rule": "Patch hygiene is an early local gate, not a late hosted-CI cleanup step. A recurring whitespace failure must strengthen prevention and regression coverage rather than only strip the latest whitespace."
+  },
+  "matrix_boundary": "The prompt retrospective matrix is one intake source, not the defect universe. A defect family may be created from local gates, CI, review, runtime, operator feedback, or commit history even when no prompt-use matrix row captures it.",
+  "systemic_repair_requirements": [
+    "A reproducing negative fixture or mutation case demonstrates the defect before the repair.",
+    "A positive control demonstrates allowed behavior is preserved.",
+    "The smallest canonical shared owner is strengthened; prompt-by-prompt copy edits are rejected when a shared owner exists.",
+    "The regression is registered in the deterministic floor when repository convention classifies it as a focused Prompt Kit semantic regression.",
+    "Affected local required checks pass before integration when executable in the current environment.",
+    "Hosted-provider parity is additional proof when applicable, not a replacement semantic owner.",
+    "The retained regression remains present after integration."
+  ],
+  "proof_ceiling": "Repository contract and regression semantics only. It can prove that recurring defects are classified, assigned to a canonical owner, regression-tested, and included in repository-owned local proof surfaces. It does not by itself grant hostless merge authority, prove downstream model obedience, or replace provider-only/external gates still required by the active repository promotion contract."
+}
