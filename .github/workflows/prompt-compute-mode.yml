@@ -13,6 +13,7 @@ on:
       - 'docs/prompt-kit-compute-mode.js'
       - 'harness/prompt-compilation/**'
       - 'tests/test_prompt_compute_mode.py'
+      - 'tests/prompt_compute_mode_runtime_test.js'
       - 'web/prompt-kit/index.html'
       - '.ai/WORK_QUEUE.md'
       - '.github/workflows/prompt-compute-mode.yml'
@@ -24,6 +25,7 @@ on:
       - 'scripts/prompt_language_compiler.py'
       - 'scripts/build_prompt_kit_registry.py'
       - 'docs/prompt-kit-compute-mode.js'
+      - 'tests/prompt_compute_mode_runtime_test.js'
       - 'web/prompt-kit/index.html'
 
 permissions:
@@ -44,11 +46,12 @@ jobs:
         run: python -m unittest tests.test_prompt_compilation tests.test_prompt_context_engine tests.test_prompt_improvement_compiler tests.test_prompt_compute_mode -v
       - name: Compiler fixtures
         run: python scripts/prompt_language_compiler.py validate-fixtures --summary
-      - name: Browser runtime syntax
+      - name: Browser runtime syntax and behavior
         run: |
           node --check docs/prompt-kit-compute-mode.js
           node --check docs/prompt-kit.js
           node --check docs/prompt-kit-polish.js
+          node tests/prompt_compute_mode_runtime_test.js
       - name: Canonical generated-site parity
         run: python scripts/build_prompt_kit_registry.py --check
       - name: Repository work ledger
