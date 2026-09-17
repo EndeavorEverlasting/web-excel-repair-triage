@@ -35,6 +35,8 @@
       "ci_provider_usage_limit"
     ],
     "local_proof_validators": [
+      "python scripts/run_local_required_checks.py --report Outputs/local-required-checks-receipt.json",
+      "python scripts/run_validator_profile.py --profile pre_push --report <tmpdir>/pre-push-receipt.json",
       ".githooks/pre-push",
       "scripts/validate_pr_merge_gate.py --summary",
       "python -m unittest tests.test_pr_merge_gate -v"
