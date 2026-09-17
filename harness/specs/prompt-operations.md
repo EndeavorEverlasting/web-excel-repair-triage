@@ -10,6 +10,16 @@ Binding for Prompt Kit prompt addition/repair, language audit, generated Prompt 
 - Reuse registered builders, schemas, skills, capabilities, triggers, and validators. Product behavior belongs in code/schemas/registries/contracts, not only in prompt prose.
 - Regenerate the canonical website/artifact deterministically and require exact parity before merge.
 
+### Hosted-provider / local-proof continuity
+
+`harness/contracts/repository-local-proof-continuity.v1.json` is the canonical cross-cutting contract for repository planning, build/repair, validation, and integration prompts.
+
+- Planning prompts that schedule repository implementation or validation must identify the repository-native local proof owner, exact command/entrypoint, required base and proof-relevant inputs, expected receipt/result, nonzero-exit behavior, and any hosted-only gate that local proof cannot close.
+- Build/repair prompts must establish or reuse that path before hosted CI becomes a single point of failure. `QUOTA_EXHAUSTED`, `RATE_LIMITED`, `RUNNER_UNAVAILABLE`, and `PERMISSION_DENIED` are execution-posture evidence, not automatic whole-sprint blockers when reviewed local actions can advance the gate.
+- If provider state remains `UNKNOWN` after a bounded refresh, continue every honestly provable local gate, suppress blind hosted retries while that state is unchanged, and keep genuinely hosted-only gates `BLOCKED` until observed.
+- The reviewed action registry is `harness/repository-actions.v1.json`; the canonical executor is `scripts/run_repository_action.py`. Actions are allow-listed, record exact candidate/base and versioned proof inputs, propagate nonzero exits, and confine receipts to `Outputs/repository-actions/`.
+- `.github/workflows/repository-local-action.yml` is an optional provider adapter to the same action IDs, never the semantic owner. Local PASS never becomes hosted-runner, deployment, live-runtime, device, or operator-acceptance proof by inference.
+
 ### Current P79 admission candidate
 
 `harness/prompt-topology/DURABLE_CONTRACT_FORMALIZER_CANDIDATE.md` is a **PROVISIONAL / P79 ADMISSION PENDING** contract candidate for the `DESIGNED / DECIDED -> CONTRACTED` transition. It is not prompt-registry authority. Before any identity mutation, run the registered P79 prior-art/overlap helper path recorded in that candidate and either STRENGTHEN an existing owner or ADD only through `scripts/prompt_registry_ops.py` if the distinct residual survives.
