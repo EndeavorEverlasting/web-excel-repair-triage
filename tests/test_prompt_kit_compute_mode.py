@@ -11,6 +11,7 @@ from scripts import prompt_language_compiler as compiler
 ROOT = Path(__file__).resolve().parents[1]
 BUILDER_SOURCE = ROOT / "scripts" / "build_prompt_kit_registry.py"
 COMPUTE_MODE_JS = ROOT / "docs" / "prompt-kit-compute-mode.js"
+COMPUTE_MODE_BROWSER_PROOF = ROOT / "tests" / "prompt_kit_compute_mode_browser_proof.py"
 OBSERVED_BROWSER_WORKFLOW = (
     ROOT / ".github" / "workflows" / "prompt-kit-observed-browser-proof.yml"
 )
@@ -129,6 +130,16 @@ class PromptKitComputeModeTests(unittest.TestCase):
                 2,
                 f"observed browser proof must trigger on pull_request and main push for {dependency}",
             )
+
+    def test_compute_mode_failure_evidence_survives_ci(self) -> None:
+        proof_source = COMPUTE_MODE_BROWSER_PROOF.read_text(encoding="utf-8")
+        workflow = OBSERVED_BROWSER_WORKFLOW.read_text(encoding="utf-8")
+        self.assertIn("def build_failure_receipt(", proof_source)
+        self.assertIn("except Exception as exc:", proof_source)
+        self.assertIn("write_receipt(receipt_path, receipt)", proof_source)
+        self.assertIn("proof_rc=$?", workflow)
+        self.assertIn("validate_rc=$?", workflow)
+        self.assertIn("if: ${{ always() }}", workflow)
 
 
 if __name__ == "__main__":
