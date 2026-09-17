@@ -4,6 +4,8 @@
   "repository": "EndeavorEverlasting/web-excel-repair-triage",
   "branch": "feat/prompt-strength-contract-matrix-20260917",
   "head_sha": null,
+  "dispatch_seed": "harness/evals/prompt-strength/parallel-dispatch-manifest.seed.v1.json",
+  "runtime_manifest": "Outputs/prompt-parallel-dispatch/manifest.json",
   "commands": [
     {
       "argv": ["python", "scripts/validate_prompt_strength.py", "--summary"],
@@ -12,6 +14,11 @@
     },
     {
       "argv": ["python", "-m", "unittest", "tests.test_prompt_strength_contract", "-v"],
+      "exit_code": null,
+      "stdout_tail": null
+    },
+    {
+      "operation": "materialize_dispatch_seed_to_runtime_manifest",
       "exit_code": null,
       "stdout_tail": null
     },
