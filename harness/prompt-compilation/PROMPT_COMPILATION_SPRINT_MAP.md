@@ -1,8 +1,8 @@
 # Prompt Compilation & Adaptive Language — Canonical Sprint Map
 
-**Status:** TRACKED / SPRINTS 1–4 INTEGRATED ON MAIN VIA #483/#485/#515/#519; SPRINT 5 IMPLEMENTATION IN PROGRESS
+**Status:** TRACKED / SPRINTS 1–5 INTEGRATED ON MAIN VIA #483/#485/#515/#519/#522
 **Repository:** `EndeavorEverlasting/web-excel-repair-triage`
-**Planning floor:** refreshed `main@d0442d3d193a8b78cb4d4c8b12e8add3b4414c10` (provider refresh 2026-09-16)
+**Planning floor:** refreshed `main@5f55e2a922534e7cae5087309fc2da296892af3d` (provider refresh 2026-09-17)
 **Architecture authority:** `harness/prompt-compilation/PROMPT_COMPILATION_ARCHITECTURE.md`
 **P95 constraint floor:** `harness/prompt-topology/EVIDENCE_SPINE_ARCHITECTURE.md` (adapter-only; no universal envelope/bus)
 **Ledger index:** TRQ-009 (Sprint 1), TRQ-010 (Sprint 2), TRQ-012 (Sprint 3), TRQ-013 (Sprint 4 wiring), TRQ-014 (Sprint 5 eval hardening)
@@ -151,7 +151,7 @@ Move Prompt Kit from a library of hand-maintained English prompts toward a **sel
 
 ### Sprint 5 — Improvement-candidate production eval loop hardening
 
-**Status:** IMPLEMENTED on `feat/prompt-compilation-sprint5-eval-hardening-20260916` (integrate this sprint)
+**Status:** INTEGRATED on `main` via #522 (`5f55e2a9`)
 
 **Dependency:** Sprint 3 INTEGRATED; Sprint 4 INTEGRATED on main (`c4d065fa` / TRQ-013).
 
