@@ -1,0 +1,33 @@
+{
+  "schema_version": "prompt-compute-mode/v1",
+  "product_default": "exhaustive",
+  "profiles": ["exhaustive", "efficient"],
+  "profile_precedence": [
+    "explicit_run_override",
+    "prompt_override",
+    "user_default",
+    "product_default"
+  ],
+  "eligible_actionability_policy": "actionable-next-command/v1",
+  "compiled_overlay_marker": "COMPILED EXECUTION PROFILE",
+  "legacy_exhaustive_section": {
+    "start_marker": "EXHAUSTIVE AVAILABLE COMPUTE RULE",
+    "end_marker": "NON-PROGRESS / QUIESCENCE CONTRACT"
+  },
+  "semantic_overlay": {
+    "goal_template": "Apply the selected execution profile to {prompt_id} without weakening canonical prompt requirements.",
+    "obligation": {
+      "id": "parallel_dispatch",
+      "when": "dependency_ready_width >= 2 && safe_capacity >= 2",
+      "modality": "MUST",
+      "action": "dispatch_independent_lanes",
+      "proof": "observed_parallel_dispatch_receipt",
+      "failure_state": "AUTONOMY_GAP"
+    },
+    "invariants": [
+      "scope_preservation",
+      "evidence_honesty",
+      "required_acceptance_gates"
+    ]
+  }
+}
