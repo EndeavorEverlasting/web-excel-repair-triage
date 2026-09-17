@@ -2,6 +2,8 @@ from __future__ import annotations
 
 import copy
 import json
+import subprocess
+import tempfile
 import unittest
 from pathlib import Path
 
@@ -12,6 +14,16 @@ ROOT = Path(__file__).resolve().parents[1]
 CONTRACT = ROOT / "harness" / "contracts" / "prompt-regression-safety.v1.json"
 REGISTER = ROOT / "harness" / "evals" / "prompt-regression" / "defect-families.v1.json"
 MARKER = "REGRESSION SAFETY / RECURRING DEFECT CONTRACT"
+
+
+def run_git(cwd: Path, *args: str) -> subprocess.CompletedProcess[str]:
+    return subprocess.run(
+        ["git", *args],
+        cwd=cwd,
+        text=True,
+        capture_output=True,
+        check=False,
+    )
 
 
 class PromptRegressionSafetyTests(unittest.TestCase):
@@ -48,6 +60,41 @@ class PromptRegressionSafetyTests(unittest.TestCase):
         }
         self.assertEqual(set(family["detector_commands"]), expected)
         self.assertEqual(set(self.contract["repository_hygiene"]["patch_hygiene_commands"]), expected)
+
+    def test_patch_hygiene_negative_and_positive_fixture(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            repo = Path(tmp)
+            self.assertEqual(run_git(repo, "init", "-q").returncode, 0)
+            self.assertEqual(run_git(repo, "config", "user.name", "Regression Fixture").returncode, 0)
+            self.assertEqual(run_git(repo, "config", "user.email", "fixture@example.invalid").returncode, 0)
+            sample = repo / "sample.txt"
+            sample.write_text("baseline\n", encoding="utf-8")
+            self.assertEqual(run_git(repo, "add", "sample.txt").returncode, 0)
+            self.assertEqual(run_git(repo, "commit", "-qm", "baseline").returncode, 0)
+            base = run_git(repo, "rev-parse", "HEAD").stdout.strip()
+
+            sample.write_text("bad trailing whitespace  \n", encoding="utf-8")
+            working = run_git(repo, "diff", "--check")
+            self.assertNotEqual(working.returncode, 0)
+            self.assertIn("trailing whitespace", (working.stdout + working.stderr).lower())
+
+            self.assertEqual(run_git(repo, "add", "sample.txt").returncode, 0)
+            staged = run_git(repo, "diff", "--cached", "--check")
+            self.assertNotEqual(staged.returncode, 0)
+            self.assertIn("trailing whitespace", (staged.stdout + staged.stderr).lower())
+
+            self.assertEqual(run_git(repo, "commit", "-qm", "bad candidate").returncode, 0)
+            exact_bad = run_git(repo, "diff", "--check", f"{base}...HEAD")
+            self.assertNotEqual(exact_bad.returncode, 0)
+            self.assertIn("trailing whitespace", (exact_bad.stdout + exact_bad.stderr).lower())
+
+            self.assertEqual(run_git(repo, "reset", "--hard", base).returncode, 0)
+            sample.write_text("clean candidate\n", encoding="utf-8")
+            self.assertEqual(run_git(repo, "diff", "--check").returncode, 0)
+            self.assertEqual(run_git(repo, "add", "sample.txt").returncode, 0)
+            self.assertEqual(run_git(repo, "diff", "--cached", "--check").returncode, 0)
+            self.assertEqual(run_git(repo, "commit", "-qm", "clean candidate").returncode, 0)
+            self.assertEqual(run_git(repo, "diff", "--check", f"{base}...HEAD").returncode, 0)
 
     def test_systemic_family_cannot_degrade_to_prompt_by_prompt_cleanup(self) -> None:
         register = copy.deepcopy(self.register)
