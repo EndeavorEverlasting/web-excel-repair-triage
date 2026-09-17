@@ -17,6 +17,7 @@
     "tests/test_correspondence_prompt_registry.py",
     "tests/test_gemini_youtube_playlist_ingestion_prompt.py",
     "tests/test_p123_source_document_quality_prompt.py",
+    "tests/test_p123_source_coverage_eval_prompt.py",
     "tests/test_google_drive_workspace_organizer_prompt.py",
     "tests/test_health_record_workspace_sync_prompt.py",
     "tests/test_job_search_prompt_registry.py",
