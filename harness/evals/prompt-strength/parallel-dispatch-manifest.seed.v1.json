@@ -1,0 +1,169 @@
+{
+  "schema_version": "prompt-parallel-dispatch/v1",
+  "run_id": "prompt-strength-recovery-20260917",
+  "graph_width": 3,
+  "parallel_disposition": "DEGRADED",
+  "autonomy_gap": "Current ChatGPT runtime has no evidenced native/local-agent execution adapter for OpenCode/Cursor/Auggie lanes and direct local git/network is unavailable. A local strategic-harness runtime must bind these lane records to its proven agent runner; do not treat manual chat launching as dispatch proof.",
+  "lanes": [
+    {
+      "lane_id": "lane-01-upstream-refresh",
+      "mission": "Refresh registered upstream skill identities and produce a provenance-rich mechanic residual map without mutating strategic prompt owners.",
+      "dependencies": [],
+      "owned_mutation_surfaces": [
+        "harness/evals/prompt-strength/upstream-residual-map.v1.json"
+      ],
+      "forbidden_surfaces": [
+        "registry/prompts/actionable-next-step-policy.v1.json",
+        "harness/contracts/prompt-quality-history.v1.json",
+        "harness/contracts/repository-local-proof-continuity.v1.json",
+        "harness/prompt-compilation/semantics/P07.json",
+        "web/prompt-kit/index.html"
+      ],
+      "adapter": {
+        "kind": "repo_runner",
+        "rung": 2
+      },
+      "launch": {
+        "mode": "runtime_tool",
+        "tool": "UNBOUND_LOCAL_AGENT_RUNTIME",
+        "operation": "dispatch",
+        "arguments": {
+          "authority_tier": "research-design-contributor",
+          "agent_candidates": ["opencode", "desktop-app", "google-antigravity"],
+          "requires_operator_binding": true
+        }
+      },
+      "expected_artifacts": [
+        "harness/evals/prompt-strength/upstream-residual-map.v1.json"
+      ],
+      "validation": [
+        "source identities pinned",
+        "each residual maps to an existing canonical owner or explicit no-gap disposition"
+      ],
+      "convergence_owner": "lane-04-shared-policy-convergence",
+      "status": "BLOCKED"
+    },
+    {
+      "lane_id": "lane-02-adversarial-fixtures",
+      "mission": "Implement executable negative fixtures and positive controls for the highest-risk prompt-strength matrix cases.",
+      "dependencies": [],
+      "owned_mutation_surfaces": [
+        "harness/evals/prompt-strength/fixtures/**",
+        "tests/test_prompt_strength_adversarial.py"
+      ],
+      "forbidden_surfaces": [
+        "registry/prompts/actionable-next-step-policy.v1.json",
+        "harness/prompt-compilation/semantics/P07.json",
+        "web/prompt-kit/index.html"
+      ],
+      "adapter": {
+        "kind": "repo_runner",
+        "rung": 2
+      },
+      "launch": {
+        "mode": "runtime_tool",
+        "tool": "UNBOUND_LOCAL_AGENT_RUNTIME",
+        "operation": "dispatch",
+        "arguments": {
+          "authority_tier": "bounded-application-executor",
+          "agent_candidates": ["opencode", "desktop-app"],
+          "requires_operator_binding": true
+        }
+      },
+      "expected_artifacts": [
+        "negative fixtures",
+        "positive controls",
+        "focused adversarial test"
+      ],
+      "validation": [
+        "each fixture reproduces the intended failure before the repair",
+        "positive controls preserve allowed behavior",
+        "no shared-policy mutation"
+      ],
+      "convergence_owner": "lane-04-shared-policy-convergence",
+      "status": "BLOCKED"
+    },
+    {
+      "lane_id": "lane-03-dependency-reconcile",
+      "mission": "Read-only reconcile the exact integrated/surviving semantics of PRs #533, #535, and #536 against current main before shared-policy mutation.",
+      "dependencies": [],
+      "owned_mutation_surfaces": [
+        "harness/evals/prompt-strength/dependency-reconciliation.v1.json"
+      ],
+      "forbidden_surfaces": [
+        "PR #533 owned files",
+        "PR #535 owned files",
+        "PR #536 owned files"
+      ],
+      "adapter": {
+        "kind": "repo_runner",
+        "rung": 2
+      },
+      "launch": {
+        "mode": "runtime_tool",
+        "tool": "UNBOUND_LOCAL_AGENT_RUNTIME",
+        "operation": "dispatch",
+        "arguments": {
+          "authority_tier": "research-design-contributor",
+          "agent_candidates": ["opencode", "desktop-app"],
+          "requires_operator_binding": true
+        }
+      },
+      "expected_artifacts": [
+        "harness/evals/prompt-strength/dependency-reconciliation.v1.json"
+      ],
+      "validation": [
+        "refresh main/provider truth",
+        "current content plus owning validators checked",
+        "collision surfaces enumerated"
+      ],
+      "convergence_owner": "lane-04-shared-policy-convergence",
+      "status": "BLOCKED"
+    },
+    {
+      "lane_id": "lane-04-shared-policy-convergence",
+      "mission": "As the singular strategic-harness writer, integrate proven residuals and adversarial controls into the smallest canonical shared owners after dependencies settle.",
+      "dependencies": [
+        "lane-01-upstream-refresh",
+        "lane-02-adversarial-fixtures",
+        "lane-03-dependency-reconcile"
+      ],
+      "owned_mutation_surfaces": [
+        "shared prompt-strength/compiler policy surfaces selected after reconciliation",
+        "prompt-strength test-floor registration"
+      ],
+      "forbidden_surfaces": [
+        "unresolved sibling-owned PR files",
+        "hand-edited generated Prompt Kit HTML"
+      ],
+      "adapter": {
+        "kind": "repo_runner",
+        "rung": 2
+      },
+      "launch": {
+        "mode": "runtime_tool",
+        "tool": "UNBOUND_LOCAL_AGENT_RUNTIME",
+        "operation": "dispatch",
+        "arguments": {
+          "authority_tier": "strategic-harness-owner",
+          "agent_candidates": ["chatgpt", "auggie"],
+          "requires_operator_binding": true
+        }
+      },
+      "expected_artifacts": [
+        "strengthened canonical owners",
+        "updated focused regressions",
+        "combined convergence proof"
+      ],
+      "validation": [
+        "prompt-strength validator",
+        "focused adversarial tests",
+        "canonical builder parity",
+        "affected local required checks",
+        "patch hygiene"
+      ],
+      "convergence_owner": "strategic-harness-owner",
+      "status": "BLOCKED"
+    }
+  ]
+}
