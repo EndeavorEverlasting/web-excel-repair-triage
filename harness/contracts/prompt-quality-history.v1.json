@@ -23,14 +23,39 @@
     "effective_loader": "scripts.build_prompt_kit_registry.load_prompt_kit_registry",
     "rule": "An effective or compiled prompt may append execution guidance, but must not replace or omit the governed canonical prompt unless an explicit reviewed semantic migration authorizes replacement for that prompt.",
     "temporary_exception_policy": "A temporary exception is valid only while at least one compiled effective variant still violates canonical containment. Once the underlying representation is repaired, the validator fails the stale exception until it is removed.",
-    "temporary_exceptions": []
+    "temporary_exceptions": [
+      {
+        "prompt_id": "P07",
+        "reason": "Known effective-representation regression introduced by PR #519 is already owned by concurrent repair PR #533.",
+        "owner_pr": 533,
+        "remove_when": "Canonical containment is restored for every compiled P07 profile; PR #533 is the current repair owner."
+      }
+    ]
   },
   "invariants": [
-    {"id": "PQH001", "rule": "Known-good canonical prompt-body source blobs are immutable unless a semantic migration chains the accepted blob to the new blob."},
-    {"id": "PQH002", "rule": "Prompt-body source shrinkage below its accepted predecessor requires an explicit semantic migration with affected prompt IDs and focused proof."},
-    {"id": "PQH003", "rule": "Every compiledEffectivePrompts variant must contain the canonical copyContent verbatim unless an active temporary exception or explicit replacement-authorizing semantic migration exists."},
-    {"id": "PQH004", "rule": "Generated Prompt Kit output is not history authority; canonical registry sources and reviewed semantic migrations are."},
-    {"id": "PQH005", "rule": "A mass prompt edit must be represented as one or more auditable migration records rather than silently resetting the baseline."},
-    {"id": "PQH006", "rule": "Temporary exceptions fail closed when they become unnecessary; an exception cannot survive restoration of canonical containment."}
+    {
+      "id": "PQH001",
+      "rule": "Known-good canonical prompt-body source blobs are immutable unless a semantic migration chains the accepted blob to the new blob."
+    },
+    {
+      "id": "PQH002",
+      "rule": "Prompt-body source shrinkage below its accepted predecessor requires an explicit semantic migration with affected prompt IDs and focused proof."
+    },
+    {
+      "id": "PQH003",
+      "rule": "Every compiledEffectivePrompts variant must contain the canonical copyContent verbatim unless an active temporary exception or explicit replacement-authorizing semantic migration exists."
+    },
+    {
+      "id": "PQH004",
+      "rule": "Generated Prompt Kit output is not history authority; canonical registry sources and reviewed semantic migrations are."
+    },
+    {
+      "id": "PQH005",
+      "rule": "A mass prompt edit must be represented as one or more auditable migration records rather than silently resetting the baseline."
+    },
+    {
+      "id": "PQH006",
+      "rule": "Temporary exceptions fail closed when they become unnecessary; an exception cannot survive restoration of canonical containment."
+    }
   ]
 }

@@ -139,6 +139,20 @@ Keep `Candidates/` and `Active/` read-only. Use sanitized fixtures. Write runtim
 
 Inspect base/head SHAs, unique commits, file deltas, required checks, review findings, and dependencies. Preserve unique work before closure. Integrate in dependency order. Never force-push, delete unique work, destructively clean, or merge with unresolved required gates.
 
+**Provider degradation continuity:** GitHub Actions minute exhaustion, never-started checks for billing/usage limits, and review-bot/CI-provider usage limits are expected provider degradation, NOT merge blockers. When remote required checks are skipped/cancelled/neutral/unavailable solely due to provider usage/billing limits AND equivalent local validator proof exists for that exact head (`.githooks/pre-push`, focused validators, `scripts/run_repo_native_update.py validate`), proceed: refresh default base, exact-head validation, local proof, merge when authorized and all non-degraded gates pass, post-merge containment. Report remote status honestly as skipped/degraded. Do not stop after narrating the limit; do not ask operator to proceed solely for that reason; do not invent green remote checks. Repository branch protection rules requiring named Actions checks that cannot run remain a named BLOCKER only when local proof-substitute also fails or is unavailable, with exact next operator/admin action to resolve the branch protection or quota.
+
+**Local proof substitute for degraded remote checks:** When GitHub Actions/CI-provider usage limits degrade remote required checks (governance-contract, operational-harness), run the deterministic local equivalent and use the receipt as proof:
+
+```bash
+python scripts/run_local_required_checks.py --report Outputs/local-required-checks-receipt.json
+```
+
+This invokes `run_validator_profile.py --profile required_checks`, which runs the same semantic gates as:
+- `.github/workflows/governance-contract.yml`
+- `.github/workflows/harness-contract.yml` (operational-harness job)
+
+The machine-readable receipt at `Outputs/local-required-checks-receipt.json` proves which checks ran, pass/fail status, and exact head. Exit code 0 = all checks passed; 1 = blocking failure; 2 = contract error. Agents and operators must run this before merging when remote checks are degraded. If the local substitute also fails, that is a true blocker requiring fix/resolution. The `.githooks/pre-push` hook also runs `run_validator_profile.py --profile pre_push`, which includes a superset of required checks plus additional validators.
+
 ### F. Prompt-language audit or repair
 
 **Workflow ID:** `prompt-language-audit`

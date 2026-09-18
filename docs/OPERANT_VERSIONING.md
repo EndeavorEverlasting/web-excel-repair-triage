@@ -4,7 +4,7 @@
 
 Operant uses repository-owned pre-1.0 Semantic Versioning with `OPERANT_VERSION` as the single human-facing product release authority. Exact Git commit and generated-artifact identities remain independent freshness proof.
 
-The current cutover is `0.2.0`. Operant 0.1 was established by PR #329; subsequent user-visible Operant features make a minor pre-1.0 cutover more truthful than leaving the product at 0.1 indefinitely.
+The original repository-owned cutover was `0.2.0`. Operant 0.1 was established by PR #329; later releases advance only through `OPERANT_VERSION`, while this document describes the deterministic policy rather than duplicating the current version value.
 
 ## Reference architecture evidence
 
@@ -30,7 +30,7 @@ No upstream source code is copied. Only workflow/state-model mechanisms are emul
 ### Available to emulate externally
 
 - Conventional-commit classification and highest bump selection.
-- Reviewable, automatically prepared release candidates plus a machine-readable first-PR publication request.
+- Reviewable, automatically prepared release candidates plus a machine-readable external publication request for both first publication and later PR-head refreshes.
 - Synchronized version mirrors generated from one authority.
 - Tag/release creation only after the version change is validated on the default branch.
 
@@ -38,7 +38,7 @@ No upstream source code is copied. Only workflow/state-model mechanisms are emul
 
 Operant lives inside a multi-product repository. A root-wide release tool would incorrectly treat Billing/Roster/Triage commits as Operant releases, while a single-directory component model would miss Operant changes spread across registry, web, launcher, harness, and compatibility surfaces. Therefore Operant needs a small repository-owned path/scope relevance policy rather than a foreign package-directory assumption.
 
-GitHub repository settings currently prohibit the workflow `GITHUB_TOKEN` from creating the first pull request even when the job has `pull-requests: write`. That boundary is deliberate and explicit: Actions owns release planning, candidate generation, validation, pushing, and refreshing an already-open release PR; an external provider/agent with repository PR authority owns creation of the first PR from the emitted request artifact.
+GitHub repository settings prohibit the workflow `GITHUB_TOKEN` from creating the first pull request even when the job has `pull-requests: write`. A second provider boundary was observed on 2026-09-18: when `github-actions[bot]` refreshed an already-open release PR head, pull-request workflows entered `action_required` with zero jobs. Re-authoring the exact same candidate tree through the external provider caused the normal PR suites to execute. Therefore Actions owns release planning, deterministic candidate generation, validation, and staging-branch pushes; an external provider/agent owns every mutation of the stable review head, both creating/advancing it for first publication and refreshing it later. Actions never pushes a branch that may become the review head. This separates deterministic release computation from provider event provenance instead of weakening CI.
 
 ## Canonical authority and synchronized surfaces
 
@@ -75,8 +75,8 @@ The exact patterns are machine-owned in the `release_versioning` block of `harne
 2. A push to `main` runs the Operant version workflow.
 3. The planner starts from the latest reachable `operant-v*` tag; before the first canonical tag it uses the PR #329 identity merge as the bootstrap floor.
 4. Non-Operant and no-bump-only work produces no release candidate.
-5. Release-worthy work produces a deterministic plan, a validated `automation/operant-release-*` candidate branch, and `Outputs/operant-release-pr-request.json` plus `Outputs/operant-release-pr.md`. If no Operant release PR exists, the request is uploaded as the durable handoff to the external PR publisher instead of failing the workflow on a forbidden `gh pr create` call.
-6. The external provider/agent creates the first release PR from that exact request. While one Operant release PR is open, later accepted mainline Operant work is Actions-owned again: the workflow refreshes that same branch in place (merge refreshed `main`, recompute, replace the candidate changelog section) and updates the existing PR title/body. PR CI rejects a stale candidate whose version/changelog no longer matches a recomputed plan from current `main`.
+5. Release-worthy work produces a deterministic plan, a validated candidate, and `Outputs/operant-release-pr-request.json` plus `Outputs/operant-release-pr.md`. Actions always writes only to `automation/operant-release-staging-vX.Y.Z`. The stable review head remains `automation/operant-release-vX.Y.Z` (or the already-open release PR head) and is never pushed or edited by Actions.
+6. The external provider/agent consumes the exact publication request. For first publication it creates or fast-forwards the stable review head from the staged candidate and then opens the PR. For an existing PR it reads the staged candidate SHA/tree, current review-head SHA, and source-main SHA, creates a non-force two-parent convergence commit whose tree is the validated candidate tree, then fast-forwards the stable review head and updates the PR metadata. The two parents preserve both review-head ancestry and the accepted mainline dependency. Pull-request CI then evaluates an externally authorized head mutation; stale-candidate validation still rejects a version/changelog that no longer matches current `main`.
 7. After the release PR reaches `main`, the same workflow validates the exact mainline version change, creates `operant-vX.Y.Z`, and creates the GitHub Release against that exact commit. Manual `workflow_dispatch` runs are pinned to `main` so unaccepted feature refs cannot plan a release.
 8. The tag is release identity; rollback means redeploying/restoring a previously tagged commit/artifact. Versions are never decremented, renamed, or reused.
 
@@ -89,11 +89,11 @@ python scripts/operant_version.py apply --plan Outputs/operant-version-plan.json
 python scripts/operant_version.py validate
 python scripts/operant_version.py validate-release-candidate --base origin/main
 python scripts/validate_operant_product_identity.py --summary
-python scripts/operant_release_pr_request.py --version X.Y.Z --source-sha <sha> --head <branch> --output Outputs/operant-release-pr-request.json --body-output Outputs/operant-release-pr.md
+python scripts/operant_release_pr_request.py --version X.Y.Z --source-sha <main-sha> --head <review-head> --candidate-branch <candidate-branch> --candidate-sha <candidate-sha> --candidate-tree-sha <tree-sha> --output Outputs/operant-release-pr-request.json --body-output Outputs/operant-release-pr.md
 python -m unittest tests.test_operant_product_identity tests.test_operant_versioning_workflow -v
 python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html --check
 ```
 
 ## Proof ceiling
 
-Repository tests and pull-request CI can prove classification, idempotent version calculation, path relevance, mirror synchronization, generated-site parity, full-push version-change detection, deterministic publication-request generation, and workflow syntax/execution in the tested event. A successful mainline run can prove the release candidate was generated, validated, pushed, and either refreshed into an existing PR or emitted as a machine-readable external-publication request. First-PR creation remains provider/runtime proof because repository Actions settings independently deny that authority to `GITHUB_TOKEN`. Exact GitHub Release/tag creation is proven only after a version-changing commit reaches `main` and the push workflow completes.
+Repository tests and pull-request CI can prove classification, idempotent version calculation, path relevance, mirror synchronization, generated-site parity, full-push version-change detection, deterministic publication-request generation, staging ownership, and workflow syntax/execution in the tested event. A successful mainline run proves only that the release candidate was generated, validated, committed, and pushed to its candidate/staging branch and that an exact external-publication request was emitted. Mutation of the review PR head is provider/runtime proof and must preserve the request's candidate tree plus review-head/mainline ancestry without force. Exact GitHub Release/tag creation is proven only after a version-changing commit reaches `main` and the push workflow completes.

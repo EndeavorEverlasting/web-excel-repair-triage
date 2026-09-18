@@ -2,8 +2,17 @@
   "schema_version": "deterministic-test-floor/v1",
   "python_version": "3.11",
   "dependency_file": "requirements-test-floor.txt",
-  "environment": {"PYTHONHASHSEED":"0","TZ":"UTC","LC_ALL":"C.UTF-8","LANG":"C.UTF-8","CI":"true"},
-  "compile_targets": ["triage","scripts"],
+  "environment": {
+    "PYTHONHASHSEED": "0",
+    "TZ": "UTC",
+    "LC_ALL": "C.UTF-8",
+    "LANG": "C.UTF-8",
+    "CI": "true"
+  },
+  "compile_targets": [
+    "triage",
+    "scripts"
+  ],
   "self_tests": [
     "tests/test_deterministic_test_floor.py",
     "tests/test_deterministic_test_floor_canary.py",
@@ -34,6 +43,7 @@
     "tests/test_prompt_retrospective_evaluation_prompt.py",
     "tests/test_prompt_regression_safety_prompt.py",
     "tests/test_prompt_strength_contract_prompt.py",
+    "tests/test_repository_local_proof_continuity_prompt.py",
     "tests/test_prompt_registry_expansion_regression_design_teach.py",
     "tests/test_prompt_registry_product_boundaries.py",
     "tests/test_repository_versioning_system_prompt.py",
@@ -43,18 +53,81 @@
     "tests/test_teams_attendance_roster_prompt.py",
     "tests/test_test_floor_evolution_prompt.py",
     "tests/test_ux_design_prompt_suite.py",
-    "tests/test_hh_ticket_tracking_prompt.py"
+    "tests/test_hh_ticket_tracking_prompt.py",
+    "tests/test_execution_boundary_enforcement_prompt.py",
+    "tests/test_privacy_preserving_failure_observatory_prompt.py"
   ],
-  "prompt_semantic_test_globs": ["tests/test_*_prompt.py","tests/test_*_prompts.py","tests/test_*_prompt_registry.py","tests/test_*_prompt_suite.py","tests/test_prompt_registry_*.py"],
-  "prompt_semantic_test_excludes": ["tests/test_skill_prompt_registry.py"],
+  "prompt_semantic_test_globs": [
+    "tests/test_*_prompt.py",
+    "tests/test_*_prompts.py",
+    "tests/test_*_prompt_registry.py",
+    "tests/test_*_prompt_suite.py",
+    "tests/test_prompt_registry_*.py"
+  ],
+  "prompt_semantic_test_excludes": [
+    "tests/test_skill_prompt_registry.py"
+  ],
   "artifact_engine_workflow": ".github/workflows/artifact-engines.yml",
-  "artifact_imports": ["triage.nw_prj_neuron_track_hours.cli","triage.nw_prj_neuron_track_hours.bonita_cli","triage.nth_qualitative_admin","triage.nth_evidence_bounded_allocation","triage.admin_billing_summary.cli","triage.one_marcus_recon.cli","triage.sidecar_html","triage.artifact_fingerprint","triage.artifact_profiles","triage.artifact_compare","triage.same_family_compare","triage.roster_log_compare.compare","triage.roster_log_review_queue.cli","triage.roster_log_v2.cli","triage.gitignore_hygiene"],
-  "artifact_tests": ["tests/test_nw_prj_neuron_track_hours.py","tests/test_nw_prj_neuron_track_hours_bonita.py","tests/test_nth_qualitative_admin.py","tests/test_nth_evidence_bounded_allocation.py","tests/test_admin_billing_summary.py","tests/test_admin_billing_client_hygiene.py","tests/test_one_marcus_recon.py","tests/test_one_marcus_generate.py","tests/test_one_marcus_immutability.py","tests/test_sidecar_html_portal.py","tests/test_artifact_compare.py","tests/test_roster_log_compare.py","tests/test_same_family_compare.py","tests/test_gitignore_hygiene.py","tests/test_roster_log_review_queue.py","tests/test_roster_log_v2.py","tests/test_artifact_engine_workflow_contract.py"],
-  "allowed_artifact_skip_reasons": ["private operator reference workbook not present","private real workbook not present","Real roster log not present"],
+  "artifact_imports": [
+    "triage.nw_prj_neuron_track_hours.cli",
+    "triage.nw_prj_neuron_track_hours.bonita_cli",
+    "triage.nth_qualitative_admin",
+    "triage.nth_evidence_bounded_allocation",
+    "triage.admin_billing_summary.cli",
+    "triage.one_marcus_recon.cli",
+    "triage.sidecar_html",
+    "triage.artifact_fingerprint",
+    "triage.artifact_profiles",
+    "triage.artifact_compare",
+    "triage.same_family_compare",
+    "triage.roster_log_compare.compare",
+    "triage.roster_log_review_queue.cli",
+    "triage.roster_log_v2.cli",
+    "triage.gitignore_hygiene"
+  ],
+  "artifact_tests": [
+    "tests/test_nw_prj_neuron_track_hours.py",
+    "tests/test_nw_prj_neuron_track_hours_bonita.py",
+    "tests/test_nth_qualitative_admin.py",
+    "tests/test_nth_evidence_bounded_allocation.py",
+    "tests/test_admin_billing_summary.py",
+    "tests/test_admin_billing_client_hygiene.py",
+    "tests/test_one_marcus_recon.py",
+    "tests/test_one_marcus_generate.py",
+    "tests/test_one_marcus_immutability.py",
+    "tests/test_sidecar_html_portal.py",
+    "tests/test_artifact_compare.py",
+    "tests/test_roster_log_compare.py",
+    "tests/test_same_family_compare.py",
+    "tests/test_gitignore_hygiene.py",
+    "tests/test_roster_log_review_queue.py",
+    "tests/test_roster_log_v2.py",
+    "tests/test_artifact_engine_workflow_contract.py"
+  ],
+  "allowed_artifact_skip_reasons": [
+    "private operator reference workbook not present",
+    "private real workbook not present",
+    "Real roster log not present"
+  ],
   "private_input_requirements": [
-    {"id":"neuron-real-roster","input_path":"Candidates/attendacne artifacts 6-1-2026/INTERNAL_May_Billing_Active_Roster_Log_2026-06-01-update so that partial hours are flagged before submission.xlsx","test_selector":"tests/test_nw_prj_neuron_track_hours.py::test_neuron_track_totals_match_reference_targets","missing_reason":"Real roster log not present"},
-    {"id":"one-marcus-real-recon","input_path":"Candidates/inventory recon/WEBSAFE_Tab-Linked_1_Marcus_Compiled_Recon_Integrated_5-28-2026_PARTNUMBERS_LINKED_CANDIDATE_v2.xlsx","test_selector":"tests/test_one_marcus_recon.py::test_real_workbook_idempotent_regression","missing_reason":"private real workbook not present"},
-    {"id":"one-marcus-operator-reference","input_path":"Candidates/inventory recon/1M_Recon_READY.xlsx","test_selector":"tests/test_one_marcus_generate.py::test_generate_from_operator_reference","missing_reason":"private operator reference workbook not present"}
+    {
+      "id": "neuron-real-roster",
+      "input_path": "Candidates/attendacne artifacts 6-1-2026/INTERNAL_May_Billing_Active_Roster_Log_2026-06-01-update so that partial hours are flagged before submission.xlsx",
+      "test_selector": "tests/test_nw_prj_neuron_track_hours.py::test_neuron_track_totals_match_reference_targets",
+      "missing_reason": "Real roster log not present"
+    },
+    {
+      "id": "one-marcus-real-recon",
+      "input_path": "Candidates/inventory recon/WEBSAFE_Tab-Linked_1_Marcus_Compiled_Recon_Integrated_5-28-2026_PARTNUMBERS_LINKED_CANDIDATE_v2.xlsx",
+      "test_selector": "tests/test_one_marcus_recon.py::test_real_workbook_idempotent_regression",
+      "missing_reason": "private real workbook not present"
+    },
+    {
+      "id": "one-marcus-operator-reference",
+      "input_path": "Candidates/inventory recon/1M_Recon_READY.xlsx",
+      "test_selector": "tests/test_one_marcus_generate.py::test_generate_from_operator_reference",
+      "missing_reason": "private operator reference workbook not present"
+    }
   ],
   "validator_registry": "harness/validators.v1.json",
   "validator_profile": "pre_push",

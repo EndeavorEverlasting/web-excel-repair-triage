@@ -1,0 +1,352 @@
+{
+  "schema_version": "execution-boundary-enforcement/v1",
+  "contract_id": "execution-boundary-enforcement",
+  "status": "TRACKED_VALIDATING",
+  "purpose": "Make every material loss or change of forward execution a first-class, observable state transition that is checkpointed, disclosed to the operator, recovered when possible, durably published to repository-native evidence when applicable, and externally detectable when the acting agent cannot report for itself.",
+  "theorem": "A workflow cannot guarantee the absence of unexplained stops unless every material non-normal execution transition is observable, classifiable, checkpointed, publicly reportable, recoverable or explicitly terminal, durably attributable, and externally supervised when the acting process can terminate before self-reporting.",
+  "core_invariants": [
+    "Silence is never a valid terminal state.",
+    "Recovery does not cancel the obligation to disclose the boundary that materially changed the viable execution path.",
+    "An event may remain internal only while it is provably non-material: it does not change viable path, proof state, mutation certainty, scope disposition, authority, or terminal possibility.",
+    "If disclosure of raw operational detail is unsafe or private, redact the detail but still publish the existence, impact, proven checkpoint, recovery disposition, and next action.",
+    "A material boundary is an opportunity for immediate primary-task recovery and, when repository-relevant or systemic, for durable harness improvement; system improvement must not replace the user's primary outcome.",
+    "No agent-local prompt can guarantee reporting after hard termination; an out-of-process supervisor must synthesize a terminal boundary event from the last durable checkpoint.",
+    "No completion claim may bypass the finalization gate or promote weaker evidence into a stronger execution state.",
+    "Liveness is explicit: while an objective remains unfinished, the run must be actively progressing, explicitly recovering, or durably quiescent on a named blocker with a resumption trigger; disappearance is a contract violation.",
+    "Boundary delivery is crash-safe and idempotent: checkpoint plus pending publication intent must become durable before user-visible publication, and retries reuse a stable event identity rather than duplicating the event.",
+    "Every MATERIAL or CRITICAL boundary on an unfinished objective opens a bounded primary recovery sprint; classification selects the recovery route but never decides whether the boundary is sprint-worthy.",
+    "The primary boundary sprint applies equally to already-classified, unclassified, externally caused, and agent-created or arbitrary boundaries; a boundary may change mechanics without silently shrinking the requested outcome.",
+    "Systemic learning is a separate second lane for novel, recurrent, or prevention-gap events and must never replace the primary recovery sprint."
+  ],
+  "materiality_rule": {
+    "public_when_any": [
+      "viable execution path changes",
+      "proof state changes or a required proof becomes unavailable",
+      "mutation side effects are confirmed, partially possible, or uncertain",
+      "owned scope, authority, safety, or external-gate disposition changes",
+      "the run may otherwise terminate, quiesce, hand off, or silently reduce scope",
+      "a retry/fallback changes the mechanism whose success the operator would reasonably interpret as part of the run",
+      "the same class of defect recurs or exposes a missing systemic prevention owner"
+    ],
+    "may_remain_internal_only_when_all": [
+      "no user-visible outcome, path, proof, mutation, authority, scope, or terminal interpretation changes",
+      "the retry is bounded and does not alter the claimed proof surface",
+      "the event is not a recurrence trigger or evidence of a missing harness invariant"
+    ]
+  },
+  "execution_states": [
+    "OBJECTIVE_ACTIVE",
+    "BOUNDARY_OBSERVED",
+    "BOUNDARY_CLASSIFIED",
+    "CHECKPOINTED",
+    "PUBLIC_TRANSITION_EMITTED",
+    "RECOVERY_SELECTED",
+    "PRIMARY_RECOVERY_SPRINT_OPENED",
+    "RECOVERING",
+    "OBJECTIVE_ACTIVE_RESUMED",
+    "QUIESCENT_BLOCKED",
+    "FINALIZING",
+    "COMPLETE",
+    "HARD_TERMINATED_SYNTHETIC"
+  ],
+  "transition_invariants": [
+    "OBJECTIVE_ACTIVE may reach COMPLETE only through FINALIZING.",
+    "A material BOUNDARY_OBSERVED must reach CHECKPOINTED before any retry that could duplicate or overwrite side effects.",
+    "A material BOUNDARY_OBSERVED must reach PUBLIC_TRANSITION_EMITTED before ordinary agent-controlled termination.",
+    "RECOVERING must resolve to OBJECTIVE_ACTIVE_RESUMED, QUIESCENT_BLOCKED, another BOUNDARY_OBSERVED, or FINALIZING; it may not disappear.",
+    "HARD_TERMINATED_SYNTHETIC is emitted only by a supervisor outside the failed acting process.",
+    "A recovered boundary remains part of the run history; successful recovery does not erase it.",
+    "Every MATERIAL or CRITICAL non-hard, non-cancelled boundary must pass through PRIMARY_RECOVERY_SPRINT_OPENED before RECOVERING or QUIESCENT_BLOCKED."
+  ],
+  "boundary_event_envelope": {
+    "required_fields": [
+      "event_id",
+      "run_id",
+      "objective_id",
+      "observed_at",
+      "detector",
+      "classification_id",
+      "materiality",
+      "execution_state_before",
+      "execution_state_after",
+      "impact",
+      "side_effect_state",
+      "last_proven_checkpoint",
+      "public_transition",
+      "recovery_disposition",
+      "next_action",
+      "persistence_disposition",
+      "proof_ceiling",
+      "event_sequence",
+      "dedupe_key",
+      "causation_event_id",
+      "publication_ack_state"
+    ],
+    "deferred_to_taxonomy_phase": [
+      "classification_id vocabulary",
+      "severity vocabulary",
+      "recovery_disposition vocabulary",
+      "side_effect_state vocabulary",
+      "terminal-disposition vocabulary"
+    ],
+    "raw_detail_policy": "Raw provider/tool/runtime messages may be stored only when repository/privacy policy allows. Public reporting must use the smallest safe detail sufficient to identify the boundary and its operational consequence."
+  },
+  "architecture_layers": [
+    {
+      "id": "objective_contract",
+      "responsibility": "Bind mission, owned scope, acceptance criteria, authority, proof ceiling, and current execution state before mutation.",
+      "failure_prevented": "The agent cannot silently redefine success after encountering friction."
+    },
+    {
+      "id": "boundary_capture",
+      "responsibility": "Capture tool/provider/runtime/validator/model-control/user-interrupt events plus semantic cessation where no exception was raised but required progress stopped.",
+      "failure_prevented": "Only explicit exceptions becoming visible while agent-chosen abandonment remains invisible."
+    },
+    {
+      "id": "normalizer_classifier",
+      "responsibility": "Normalize captured events into the canonical boundary taxonomy and typed execution impact.",
+      "failure_prevented": "Repository-specific anecdotes replacing reusable system classes."
+    },
+    {
+      "id": "append_only_journal",
+      "responsibility": "Record checkpoint, attempted operation, confirmed/possible side effects, proof obtained, uncertainty, and recovery attempts.",
+      "failure_prevented": "Retries that duplicate mutations or invent state after partial execution."
+    },
+    {
+      "id": "durable_transition_outbox",
+      "responsibility": "Persist each material boundary event and pending publication intent durably before user/repository publication; acknowledge delivery idempotently so an external supervisor can drain unacknowledged transitions after process loss.",
+      "failure_prevented": "A crash between checkpoint and disclosure recreating a silent boundary, or retries duplicating public/repository incident records."
+    },
+    {
+      "id": "public_transition_publisher",
+      "responsibility": "Emit a compact operator-visible transition whenever materiality is met.",
+      "required_shape": "BOUNDARY | IMPACT | PROVED | RECOVERY | NEXT",
+      "failure_prevented": "Operationally meaningful information remaining private until the operator notices a stall."
+    },
+    {
+      "id": "recovery_router",
+      "responsibility": "Map the canonical class plus current evidence to an authorized continuation and instantiate the typed primary recovery sprint before recovery, fallback, serialization, retry, quiescence, handoff, or terminal disposition.",
+      "failure_prevented": "Classification remaining advisory while no executable recovery sprint is created, or the agent improvising whether friction means retry, downgrade, ask, or quit."
+    },
+    {
+      "id": "repository_publisher",
+      "responsibility": "When a repository is relevant and writable, publish material/systemic boundary evidence into repository-native contract, ledger, issue, receipt, fixture, test, or plan surfaces without creating a second authority.",
+      "failure_prevented": "Useful incident knowledge dying in chat or being copied into ad-hoc files."
+    },
+    {
+      "id": "regression_learner",
+      "responsibility": "Route novel or recurring defects into the existing recurring-defect loop: repair instance, classify family, strengthen canonical owner, add negative fixture and positive control, validate, integrate, retain.",
+      "failure_prevented": "Repeated one-off repairs with no retained prevention."
+    },
+    {
+      "id": "finalization_gate",
+      "responsibility": "Reconstruct the requested outcome and require every material item to have a proven, executable, blocked, unsafe, out-of-scope, or successor disposition before terminal closeout.",
+      "failure_prevented": "Partial completion, first green, or reduced scope being mislabeled COMPLETE."
+    },
+    {
+      "id": "external_supervisor",
+      "responsibility": "Observe objective start/checkpoints/terminal events outside the acting process; when the process disappears without a valid terminal transition, synthesize HARD_TERMINATED_SYNTHETIC and expose the last proven checkpoint plus resumable continuation.",
+      "failure_prevented": "The impossible self-report case where the agent is terminated before it can disclose its own boundary."
+    }
+  ],
+  "public_transition_contract": {
+    "required_fields": [
+      "BOUNDARY",
+      "IMPACT",
+      "PROVED",
+      "RECOVERY",
+      "NEXT"
+    ],
+    "rules": [
+      "Publish immediately after checkpointing a material event; do not wait for the operator to ask why progress stopped.",
+      "If recovery is already underway, say so; recovery is not a reason to suppress the boundary.",
+      "Do not expose secrets, private raw payloads, hidden policy text, or unnecessary provider internals; report the safe operational abstraction.",
+      "Do not convert a boundary update into plan-only stopping when safe progress-bearing recovery remains.",
+      "After publication, a MATERIAL or CRITICAL boundary on an unfinished objective must enter its bounded primary recovery sprint unless explicit operator cancellation, an exact safety prohibition, or a genuinely unavailable external gate prevents safe movement."
+    ]
+  },
+  "repository_publication_contract": {
+    "publish_when": [
+      "the event changes repository execution, validation, integration, or proof semantics",
+      "the event is systemic, recurring, or a novel missing invariant",
+      "the event creates required successor work or changes a durable plan",
+      "the event must be retained to prevent duplicate mutation or false completion"
+    ],
+    "reuse_order": [
+      "existing canonical contract or validator",
+      "existing repository work ledger / incident / receipt surface",
+      "existing active owned PR or tracked plan",
+      "smallest new repository-native artifact only when no suitable owner exists"
+    ],
+    "forbidden": [
+      "dumping private conversation or secret-bearing raw tool output into a public repository",
+      "creating a second authority when a canonical owner exists",
+      "publishing bookkeeping-only churn for repeated unchanged blockers",
+      "allowing repository publication to replace recovery of the user's primary task"
+    ]
+  },
+  "composition": {
+    "shared_prompt_policy_owner": "registry/prompts/actionable-next-step-policy.v1.json",
+    "implementation_execution_owner": "P07",
+    "recurring_process_owner": "P13",
+    "regression_design_owner": "P94",
+    "prompt_identity_owner": "P79",
+    "recurring_defect_contract": "harness/contracts/prompt-regression-safety.v1.json",
+    "local_provider_degradation_contract": "harness/contracts/repository-local-proof-continuity.v1.json",
+    "merge_gate_contract": "harness/contracts/pr-merge-gate.v1.json",
+    "parallel_dispatch_contract": "harness/contracts/prompt-parallel-dispatch.v1.json",
+    "prompt_strength_successor": "harness/contracts/prompt-strength.v1.json when integrated",
+    "external_supervisor_owner": "HOST_RUNTIME_REQUIRED_OUTSIDE_REPOSITORY_AGENT",
+    "privacy_failure_observatory_owner": "harness/contracts/privacy-preserving-failure-observatory.v1.json"
+  },
+  "phase_dependencies": {
+    "phase_1": "This contract and human-readable architecture spec define enforcement topology and invariants.",
+    "phase_2": "Canonical boundary taxonomy is defined in harness/contracts/execution-boundary-taxonomy.v1.json, including an unclassified-material fallback.",
+    "phase_3": "Positive/negative regression coverage is registered for every canonical class plus architecture mutation tests; runtime-agent and host-supervisor obedience remain separate proof surfaces.",
+    "phase_4": "Strengthen the canonical shared prompt policy so every effective prompt inherits universal boundary-to-sprint continuation, while P07/P13/P94 composition keeps primary recovery distinct from conditional systemic prevention.",
+    "phase_5": "Prove repository/provider integration and retain regression coverage."
+  },
+  "proof_ceiling": "This architecture, taxonomy, shared Prompt Kit inheritance seam, deterministic boundary engine, and retained regression contract are tracked and validating. Registered checks can prove repository structure, universal primary-sprint instantiation, state transition, and first-action selection. They do not by themselves prove that an arbitrary downstream model/host executed the selected external action or that an out-of-process host supervisor is installed; those require observed runtime/provider evidence.",
+  "delivery_contract": {
+    "invariant": "Checkpoint state and a pending publication record form one durable boundary observation before best-effort delivery begins.",
+    "publication_ack_states": [
+      "PENDING",
+      "USER_VISIBLE",
+      "USER_VISIBLE_REPOSITORY_NOT_APPLICABLE",
+      "USER_AND_REPOSITORY"
+    ],
+    "rules": [
+      "event_id plus dedupe_key is stable across retries of the same observed boundary; retries do not mint a new incident merely because delivery failed",
+      "event_sequence is monotonic within one objective/run so later recovery cannot reorder earlier boundary history",
+      "user-visible publication is mandatory for every MATERIAL or CRITICAL event unless the acting process is already unable to publish, in which case the external supervisor drains the pending event",
+      "repository publication is separately acknowledged only when repository_publication_contract says it applies and a writable canonical destination exists",
+      "failure of repository persistence cannot suppress the required user-visible transition; it becomes its own boundary if material",
+      "raw unsafe/private data is replaced by a safe abstraction before entering public or public-repository delivery surfaces"
+    ]
+  },
+  "boundary_sprint_contract": {
+    "applies_when": "Every MATERIAL or CRITICAL boundary while the requested objective remains unfinished, including already-classified, unclassified, externally caused, and agent-created or arbitrary boundaries.",
+    "purpose": "Turn the boundary itself into a bounded execution unit that advances the original objective instead of making classification, friction, or an agent-created scope edge a stopping condition.",
+    "required_fields": [
+      "trigger_event_id",
+      "parent_objective_id",
+      "preserved_outcome",
+      "bounded_owned_scope",
+      "first_executable_action",
+      "completion_gate",
+      "return_condition"
+    ],
+    "rules": [
+      "Classification is routing, not sprint eligibility.",
+      "Open the primary recovery sprint immediately after the material boundary is checkpointed and published; a known taxonomy class never waives the sprint.",
+      "When a safe progress-bearing action exists, execute the first executable action in the same run before ordinary termination; classification, reporting, planning, or handoff prose alone is nonterminal.",
+      "An agent-created or arbitrary boundary may narrow mutation mechanics, but it may not silently narrow the requested outcome or convert required work into out-of-scope work.",
+      "If progress requires a genuinely unavailable external gate, enter QUIESCENT_BLOCKED with the exact blocker, resumption trigger, preserved sprint state, and next transition instead of inventing completion.",
+      "Explicit operator cancellation may terminate primary recovery; safety or prohibited-action gates remain exact gates rather than excuses to abandon other safe paths.",
+      "Hard termination cannot self-open a sprint; the external supervisor preserves the last checkpoint and exposes resumable continuation state for the next run."
+    ],
+    "executable_oracle": "scripts/execution_boundary_engine.py",
+    "state_transition": "PRIMARY_RECOVERY_SPRINT_OPENED",
+    "proof_boundary": "The deterministic engine proves sprint instantiation, state transition, and first-action selection. The active host/agent must execute the selected action; external side effects remain runtime proof."
+  },
+  "dual_lane_policy": {
+    "primary_lane": "For every MATERIAL or CRITICAL boundary on an unfinished objective, instantiate the boundary_sprint_contract and advance the original requested outcome through its first safe progress-bearing action.",
+    "systemic_lane": "Separately, when the boundary is novel/unclassified, recurrent/systemic, or exposes a missing invariant/canonical prevention owner, open a bounded prevention sprint through the existing repository authority and regression loop.",
+    "ordering_rules": [
+      "Primary recovery-sprint creation is universal for MATERIAL and CRITICAL boundaries on unfinished objectives; taxonomy classification is routing, never eligibility.",
+      "Systemic learning never replaces primary-task recovery when recovery can continue safely.",
+      "Run the systemic lane concurrently when mutation surfaces do not collide; otherwise checkpoint it as required successor work and continue the primary recovery sprint.",
+      "A novel unclassified material boundary is sufficient to open taxonomy/prevention review even before recurrence threshold; recurrence threshold governs promotion of repeated known families to systemic defect status.",
+      "Publish the systemic artifact to a writable relevant remote repository when policy permits; otherwise preserve the exact persistence gate without inventing a repository."
+    ]
+  },
+  "state_machine": {
+    "initial_state": "OBJECTIVE_ACTIVE",
+    "success_state": "COMPLETE",
+    "stable_stop_states": [
+      "COMPLETE",
+      "QUIESCENT_BLOCKED",
+      "HARD_TERMINATED_SYNTHETIC"
+    ],
+    "allowed_transitions": {
+      "OBJECTIVE_ACTIVE": [
+        "BOUNDARY_OBSERVED",
+        "FINALIZING"
+      ],
+      "BOUNDARY_OBSERVED": [
+        "BOUNDARY_CLASSIFIED"
+      ],
+      "BOUNDARY_CLASSIFIED": [
+        "CHECKPOINTED"
+      ],
+      "CHECKPOINTED": [
+        "PUBLIC_TRANSITION_EMITTED"
+      ],
+      "PUBLIC_TRANSITION_EMITTED": [
+        "RECOVERY_SELECTED"
+      ],
+      "RECOVERY_SELECTED": [
+        "PRIMARY_RECOVERY_SPRINT_OPENED",
+        "RECOVERING",
+        "QUIESCENT_BLOCKED",
+        "FINALIZING"
+      ],
+      "RECOVERING": [
+        "OBJECTIVE_ACTIVE_RESUMED",
+        "BOUNDARY_OBSERVED",
+        "QUIESCENT_BLOCKED",
+        "FINALIZING"
+      ],
+      "OBJECTIVE_ACTIVE_RESUMED": [
+        "OBJECTIVE_ACTIVE",
+        "BOUNDARY_OBSERVED",
+        "FINALIZING"
+      ],
+      "QUIESCENT_BLOCKED": [
+        "OBJECTIVE_ACTIVE",
+        "BOUNDARY_OBSERVED"
+      ],
+      "FINALIZING": [
+        "COMPLETE",
+        "BOUNDARY_OBSERVED",
+        "QUIESCENT_BLOCKED"
+      ],
+      "COMPLETE": [],
+      "HARD_TERMINATED_SYNTHETIC": [],
+      "PRIMARY_RECOVERY_SPRINT_OPENED": [
+        "RECOVERING",
+        "QUIESCENT_BLOCKED",
+        "BOUNDARY_OBSERVED",
+        "FINALIZING"
+      ]
+    },
+    "external_only_transitions": [
+      "Any nonterminal state -> HARD_TERMINATED_SYNTHETIC when the acting process loses its execution lease or dies without a valid terminal event."
+    ]
+  },
+  "external_supervisor_contract": {
+    "required_observations": [
+      "objective_started",
+      "last_durable_checkpoint",
+      "pending_boundary_outbox",
+      "last_publication_ack",
+      "valid_terminal_event_or_absence"
+    ],
+    "rules": [
+      "The supervisor must be outside the acting process whose death it detects.",
+      "Host-specific heartbeat/lease timing is implementation-defined, but a lost lease cannot be converted into COMPLETE.",
+      "Pending unacknowledged material boundary events are emitted or summarized before/with HARD_TERMINATED_SYNTHETIC.",
+      "Synthetic termination records the last proven checkpoint and a resumable continuation token or equivalent stable checkpoint identity when available.",
+      "Restart/resume creates an attributable continuation and does not erase the termination event."
+    ]
+  },
+  "observability_clause_ids": {
+    "EBE.NO_SILENT_STOP": "A run may not stop or disappear with unfinished safe work and no classified terminal transition.",
+    "EBE.PUBLIC_TRANSITION": "Every material boundary must become an operator-visible BOUNDARY/IMPACT/PROVED/RECOVERY/NEXT transition.",
+    "EBE.READ_AFTER_WRITE": "Possible or unknown side effects must be reconciled before retry.",
+    "EBE.FINALIZATION_GATE": "Completion requires the requested outcome to pass the finalization gate.",
+    "EBE.SYSTEMIC_SPRINT": "Novel, recurrent, or prevention-gap boundaries additionally create a systemic-learning lane without replacing the universal primary recovery sprint.",
+    "EBE.DURABLE_OUTBOX": "A material boundary and pending publication intent survive process loss until delivery is acknowledged.",
+    "EBE.BOUNDARY_SPRINT": "Every MATERIAL or CRITICAL boundary on an unfinished objective opens a bounded primary recovery sprint; classification is routing rather than sprint eligibility."
+  }
+}

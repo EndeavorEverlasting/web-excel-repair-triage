@@ -36,6 +36,7 @@ class PromptRegressionSafetyTests(unittest.TestCase):
         cls.required_checks = regression.load_json(regression.REQUIRED_CHECKS_PATH)
         cls.validators = regression.load_json(regression.VALIDATORS_PATH)
         cls.pre_commit_text = regression.PRE_COMMIT_PATH.read_text(encoding="utf-8")
+        cls.gitattributes_text = regression.GITATTRIBUTES_PATH.read_text(encoding="utf-8")
 
     def wiring_kwargs(self) -> dict[str, object]:
         return {
@@ -44,13 +45,21 @@ class PromptRegressionSafetyTests(unittest.TestCase):
             "required_checks": copy.deepcopy(self.required_checks),
             "validators": copy.deepcopy(self.validators),
             "pre_commit_text": self.pre_commit_text,
+            "gitattributes_text": self.gitattributes_text,
         }
 
     def test_current_contract_and_register_pass(self) -> None:
         result = regression.validate_all(copy.deepcopy(self.contract), copy.deepcopy(self.register))
         self.assertEqual(result["status"], "PASS")
-        self.assertEqual(result["families"], 1)
-        self.assertGreaterEqual(result["occurrences"], 6)
+        self.assertEqual(result["families"], len(self.register["families"]))
+        self.assertEqual(
+            {family["id"] for family in self.register["families"]},
+            {"TRAILING_WHITESPACE", "PROVIDER_QUOTA_TERMINATION", "LINE_ENDING_DRIFT"},
+        )
+        self.assertGreaterEqual(
+            result["occurrences"],
+            sum(len(family["occurrences"]) for family in self.register["families"]),
+        )
         self.assertFalse(result["matrix_is_exhaustive"])
         self.assertFalse(result["hosted_provider_is_semantic_owner"])
 
@@ -245,6 +254,83 @@ class PromptRegressionSafetyTests(unittest.TestCase):
         kwargs["pre_commit_text"] = "#!/bin/sh\nexit 0\n"
         with self.assertRaisesRegex(regression.RegressionSafetyError, "pre-commit hook"):
             regression.validate_repository_wiring(self.contract, **kwargs)
+
+    def test_line_ending_policy_has_positive_git_attribute_control(self) -> None:
+        policy = self.contract["repository_hygiene"]["line_ending_policy"]
+        self.assertEqual(policy["owner"], ".gitattributes")
+        self.assertIn("*.py", policy["lf_patterns"])
+        self.assertIn("*.cmd", policy["crlf_patterns"])
+        self.assertIn("*.png", policy["binary_patterns"])
+
+        with tempfile.TemporaryDirectory() as tmp:
+            repo = Path(tmp)
+            self.assertEqual(run_git(repo, "init", "-q").returncode, 0)
+            (repo / ".gitattributes").write_text(self.gitattributes_text, encoding="utf-8")
+            (repo / "source.py").write_text("print('ok')\n", encoding="utf-8")
+            (repo / "notes.unknowntext").write_text("portable text\n", encoding="utf-8")
+            (repo / "launcher.cmd").write_bytes(b"@echo off\r\n")
+            (repo / "image.png").write_bytes(b"\x89PNG\r\n\x1a\n")
+            attrs = run_git(
+                repo,
+                "check-attr",
+                "eol",
+                "text",
+                "--",
+                "source.py",
+                "notes.unknowntext",
+                "launcher.cmd",
+                "image.png",
+            )
+            self.assertEqual(attrs.returncode, 0, attrs.stderr)
+            self.assertIn("source.py: eol: lf", attrs.stdout)
+            self.assertIn("notes.unknowntext: eol: lf", attrs.stdout)
+            self.assertIn("launcher.cmd: eol: crlf", attrs.stdout)
+            self.assertIn("image.png: text: unset", attrs.stdout)
+
+    def test_line_ending_policy_rejects_missing_required_rule(self) -> None:
+        kwargs = self.wiring_kwargs()
+        kwargs["gitattributes_text"] = self.gitattributes_text.replace("*.py text eol=lf\n", "")
+        with self.assertRaisesRegex(regression.RegressionSafetyError, "line-ending policy"):
+            regression.validate_repository_wiring(self.contract, **kwargs)
+
+        kwargs = self.wiring_kwargs()
+        kwargs["gitattributes_text"] = self.gitattributes_text + "\n*.py text eol=crlf\n"
+        with self.assertRaisesRegex(regression.RegressionSafetyError, "exactly match"):
+            regression.validate_repository_wiring(self.contract, **kwargs)
+
+        contract = copy.deepcopy(self.contract)
+        contract["repository_hygiene"]["line_ending_policy"]["binary_patterns"].remove("*.xlsm")
+        with self.assertRaisesRegex(regression.RegressionSafetyError, "binary pattern inventory drifted"):
+            regression.validate_contract(contract)
+
+        contract = copy.deepcopy(self.contract)
+        contract["repository_hygiene"]["line_ending_policy"]["owner"] = "docs/line-endings.txt"
+        with self.assertRaisesRegex(regression.RegressionSafetyError, "owner must be .gitattributes"):
+            regression.validate_contract(contract)
+
+    def test_line_ending_drift_is_retained_as_systemic_recurrence(self) -> None:
+        family = next(item for item in self.register["families"] if item["id"] == "LINE_ENDING_DRIFT")
+        self.assertEqual(family["status"], "SYSTEMIC")
+        self.assertEqual(family["classification"], "PATCH_HYGIENE")
+        self.assertFalse(family["recurring_across_repositories"])
+        self.assertFalse(family["matrix_capture_required"])
+        self.assertIn(".gitattributes", family["prevention_surfaces"])
+        self.assertGreaterEqual(
+            len(family["occurrences"]),
+            self.contract["recurrence"]["systemic_threshold"],
+        )
+        self.assertEqual(
+            {item["repository"] for item in family["occurrences"]},
+            {"EndeavorEverlasting/web-excel-repair-triage"},
+        )
+
+    def test_line_ending_drift_family_cannot_disappear(self) -> None:
+        register = copy.deepcopy(self.register)
+        register["families"] = [
+            item for item in register["families"] if item["id"] != "LINE_ENDING_DRIFT"
+        ]
+        with self.assertRaisesRegex(regression.RegressionSafetyError, "retain LINE_ENDING_DRIFT"):
+            regression.validate_register(register, self.contract)
 
     def test_required_loop_retains_negative_and_positive_controls(self) -> None:
         loop = self.contract["required_loop"]

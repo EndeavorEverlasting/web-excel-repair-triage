@@ -131,7 +131,7 @@ Move Prompt Kit from a library of hand-maintained English prompts toward a **sel
 
 - `docs/prompt-kit-compute-mode.js` (user default + prompt overrides + run override; Exhaustive/Efficient UI)
 - storage lifecycle personal-state keys for Compute Mode
-- polish copy routing through `PromptKitComputeMode.resolveCopyContent`
+- polish copy routing through `PromptKitComputeMode.resolveCopyContent` while preserving operator-visible canonical `copyContent`; `compiledEffectivePrompts` remain execution-profile metadata/fallback and may not replace a present canonical body
 - builder Language Engine attachment of `compiledEffectivePrompts` for semantics-backed prompts (P07)
 - `harness/prompt-compilation/semantics/P07.json` + `build-context/default.v1.json`
 - regenerate `web/prompt-kit/index.html` via `scripts/build_prompt_kit_registry.py`

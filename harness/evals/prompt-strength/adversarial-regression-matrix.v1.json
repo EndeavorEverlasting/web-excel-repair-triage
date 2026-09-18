@@ -5,7 +5,7 @@
   "source_floor": {
     "repository": "EndeavorEverlasting/web-excel-repair-triage",
     "default_branch": "main",
-    "observed_default_head_at_reconciliation": "fc5fca0d4f1318a8671b7c8cd1be7abdf7b54050",
+    "observed_default_head_at_reconciliation": "2ecf9136611e2f26559afd90cde22e3f082e59b9",
     "active_dependencies": {
       "p07_effective_identity": {
         "pr": 533,
@@ -14,8 +14,8 @@
       },
       "local_proof_continuity": {
         "pr": 535,
-        "head_sha_at_reconciliation": "82d6d3ea55cfb408a93c60a2a229a2ab9c0f2b53",
-        "state": "OPEN_EXTERNAL_OWNER"
+        "head_sha_at_reconciliation": "22d5560e0fd74798e09a0cbd36cb7631fdfbd872",
+        "state": "INTEGRATED"
       },
       "quality_history": {
         "pr": 536,

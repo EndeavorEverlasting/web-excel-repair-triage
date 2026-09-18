@@ -183,3 +183,6 @@ promptkit-reducer-buffer*
 *.promptkit-key
 *.promptkit-recovery
 *.pairing-secret
+
+# Local AFK failure-observatory state — zero-content but device-owned runtime data.
+.afk-observatory/

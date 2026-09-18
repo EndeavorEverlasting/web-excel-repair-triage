@@ -1,330 +1,110 @@
 {
   "schema_version": "prompt-parallel-dispatch/v1",
-  "run_id": "prompt-strength-closeout-20260918",
-  "graph_width": 3,
-  "parallel_disposition": "DEGRADED",
-  "autonomy_gap": "Active graph width is 3, but this planning runtime has no evidenced bound local autonomous-agent adapter. A local strategic-harness runtime must bind these runtime_tool lanes to its proven repo runner and preserve dispatch receipts; manual operator scheduling is portability fallback only.",
+  "run_id": "prompt-strength-provider-convergence-20260918",
+  "graph_width": 2,
+  "parallel_disposition": "REQUIRED",
+  "autonomy_gap": null,
   "lanes": [
     {
-      "lane_id": "lane-01-p537-strength-core",
-      "mission": "Repair PR #537 prompt-strength semantic defects without touching shared current-main owners.",
-      "dependencies": [],
-      "owned_mutation_surfaces": [
-        "harness/contracts/prompt-strength.v1.json",
-        "harness/evals/prompt-strength/adversarial-regression-matrix.v1.json",
-        "scripts/validate_prompt_strength.py",
-        "tests/test_prompt_strength_contract_prompt.py",
-        "harness/evals/prompt-strength/**"
-      ],
-      "forbidden_surfaces": [
-        "harness/test-floor.v1.json",
-        "registry/prompts/actionable-next-step-policy.v1.json",
-        "harness/prompt-compilation/semantics/P07.json",
-        "harness/contracts/prompt-language-compiler-policy.v1.json",
-        "harness/repository-actions.v1.json",
-        "web/prompt-kit/index.html",
-        "PR #542 owned implementation files"
-      ],
-      "adapter": {"kind": "repo_runner", "rung": 2},
-      "launch": {
-        "mode": "runtime_tool",
-        "tool": "UNBOUND_LOCAL_AGENT_RUNTIME",
-        "operation": "dispatch",
-        "arguments": {
-          "instruction_path": "harness/evals/prompt-strength/LANE_01_UPSTREAM_REFRESH.md",
-          "target_branch": "feat/prompt-strength-contract-matrix-20260917",
-          "target_pr": 537,
-          "authority_tier": "bounded-strategic-harness-repair"
-        }
-      },
-      "expected_artifacts": [
-        "focused prompt-strength repair commit on PR #537",
-        "focused validator/test evidence",
-        "Lane-07 handoff"
-      ],
-      "validation": [
-        "python scripts/validate_prompt_strength.py --summary",
-        "python -m unittest tests.test_prompt_strength_contract_prompt -v",
-        "git diff --check",
-        "git diff --cached --check"
-      ],
-      "convergence_owner": "lane-07-p537-convergence",
-      "status": "BLOCKED"
-    },
-    {
-      "lane_id": "lane-04-p543-local-proof",
-      "mission": "Repair source/generated parity, prove effective-P07 local-proof continuity, and integrate PR #543.",
+      "lane_id": "lane-p543-local-proof",
+      "mission": "Reconcile PR #543 to current main, execute the canonical Prompt Kit build-proof action through a branch-scoped provider adapter, regenerate only the canonical Prompt Kit output, remove the temporary adapter, revalidate, and integrate when gates pass.",
       "dependencies": [],
       "owned_mutation_surfaces": [
         "harness/contracts/prompt-language-compiler-policy.v1.json",
         "harness/prompt-compilation/semantics/P07.json",
         "harness/repository-actions.v1.json",
         "tests/test_prompt_compilation.py",
-        "web/prompt-kit/index.html"
-      ],
-      "forbidden_surfaces": [
-        "PR #542 boundary/observatory files",
-        "PR #537 prompt-strength files",
-        "manual edits to web/prompt-kit/index.html",
-        "unrelated navigation product logic"
-      ],
-      "adapter": {"kind": "repo_runner", "rung": 2},
-      "launch": {
-        "mode": "runtime_tool",
-        "tool": "UNBOUND_LOCAL_AGENT_RUNTIME",
-        "operation": "dispatch",
-        "arguments": {
-          "instruction_path": "harness/evals/prompt-strength/LANE_04_SHARED_POLICY_CONVERGENCE.md",
-          "target_branch": "fix/local-proof-continuity-20260917",
-          "target_pr": 543,
-          "merge_when_green": true
-        }
-      },
-      "expected_artifacts": [
-        "prompt-kit-proof repository-action receipt",
-        "canonical regenerated Prompt Kit",
-        "PR #543 merge and main containment proof"
-      ],
-      "validation": [
-        "python -m unittest tests.test_prompt_compilation -v",
-        "python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html",
-        "python scripts/run_repository_action.py --action prompt-kit-proof --base-ref origin/main --report Outputs/repository-actions/prompt-kit-proof.json",
-        "python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html --check",
-        "git diff --check",
-        "git diff --cached --check"
-      ],
-      "convergence_owner": "mainline-integration",
-      "status": "BLOCKED"
-    },
-    {
-      "lane_id": "lane-05-line-ending-guard",
-      "mission": "Establish repository-wide line-ending normalization and regression safety without mass-renormalizing unrelated files.",
-      "dependencies": [],
-      "owned_mutation_surfaces": [
-        ".gitattributes",
-        "harness/contracts/prompt-regression-safety.v1.json",
-        "scripts/validate_prompt_regression_safety.py",
-        "tests/test_prompt_regression_safety_prompt.py"
-      ],
-      "forbidden_surfaces": [
-        "harness/repository-actions.v1.json",
         "web/prompt-kit/index.html",
-        "PR #542 owned files",
-        "PR #543 owned files",
-        "PR #537 prompt-strength files",
-        "whole-repository renormalization"
-      ],
-      "adapter": {"kind": "repo_runner", "rung": 2},
-      "launch": {
-        "mode": "runtime_tool",
-        "tool": "UNBOUND_LOCAL_AGENT_RUNTIME",
-        "operation": "dispatch",
-        "arguments": {
-          "instruction_path": "harness/evals/prompt-strength/LANE_05_LINE_ENDING_GUARD.md",
-          "base_ref": "origin/main",
-          "isolated_branch": "fix/line-ending-policy-20260918",
-          "merge_when_green": true
-        }
-      },
-      "expected_artifacts": [
-        ".gitattributes",
-        "CRLF negative fixture/mutation regression",
-        "positive normalization control",
-        "mainline integration proof"
-      ],
-      "validation": [
-        "python scripts/validate_prompt_regression_safety.py --summary",
-        "python -m unittest tests.test_prompt_regression_safety_prompt -v",
-        "git check-attr --all -- .gitattributes '*.py' '*.json' '*.md' '*.sh' '*.ps1' '*.cmd'",
-        "git diff --check",
-        "git diff --cached --check"
-      ],
-      "convergence_owner": "mainline-integration",
-      "status": "BLOCKED"
-    },
-    {
-      "lane_id": "lane-06-p542-finalization",
-      "mission": "Refresh newest main, repair deterministic Operant external-resource projection drift, revalidate, and integrate PR #542.",
-      "dependencies": [
-        "lane-04-p543-local-proof",
-        "lane-05-line-ending-guard"
-      ],
-      "owned_mutation_surfaces": [
-        "PR #542 full owned diff",
-        "web/prompt-kit/resources.v1.json",
-        "registry/resources/operant-external-resource-gaps.v1.json",
-        "web/prompt-kit/index.html"
+        ".github/workflows/tmp-p07-local-proof-regenerate.yml"
       ],
       "forbidden_surfaces": [
         "PR #537 prompt-strength semantic files",
-        "PR #543 source-owner files beyond merged-main reconciliation",
+        "manual edits to web/prompt-kit/index.html",
         "unrelated release/versioning files",
-        "manual donor projection edits when canonical producer can generate them"
+        "default-branch history rewrites"
       ],
-      "adapter": {"kind": "repo_runner", "rung": 2},
+      "adapter": {
+        "kind": "connected_provider",
+        "rung": 3
+      },
       "launch": {
         "mode": "runtime_tool",
-        "tool": "UNBOUND_LOCAL_AGENT_RUNTIME",
-        "operation": "dispatch",
+        "tool": "GitHub provider connector",
+        "operation": "isolated_branch_mutation_and_ci",
         "arguments": {
-          "instruction_path": "harness/evals/prompt-strength/LANE_06_P542_CONVERGENCE.md",
-          "target_branch": "feat/execution-boundary-enforcement-architecture-20260918",
-          "target_pr": 542,
-          "observed_head_at_plan_refresh": "c6e330fe6676a974a79cf384dd279edfea4a9ab3",
+          "pull_request": 543,
+          "branch": "fix/local-proof-continuity-20260917",
+          "base_sha": "2ecf9136611e2f26559afd90cde22e3f082e59b9",
           "merge_when_green": true
         }
       },
       "expected_artifacts": [
-        "current donor projection generated by canonical producer",
-        "required-checks repository-action receipt",
-        "exact-head provider check disposition",
-        "PR #542 merge and main containment proof"
+        "prompt-kit-build-proof provider artifact receipt",
+        "canonical regenerated web/prompt-kit/index.html",
+        "review-clean exact-head PR #543",
+        "mainline containment proof"
       ],
       "validation": [
-        "python scripts/validate_operant_external_resources.py --summary",
-        "python -m unittest tests.test_operant_external_resources tests.test_external_prior_art_gate -v",
-        "canonical Prompt Kit builder parity",
-        "required-checks-proof repository action",
-        "git diff --check",
-        "git diff --cached --check"
+        "python scripts/run_repository_action.py --action prompt-kit-build-proof --base-ref origin/main --report Outputs/repository-actions/prompt-kit-build-proof.json",
+        "python -m unittest tests.test_prompt_compilation -v",
+        "python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html --check",
+        "git diff --check"
       ],
       "convergence_owner": "mainline-integration",
-      "status": "BLOCKED"
+      "status": "DISPATCHED"
     },
     {
-      "lane_id": "lane-07-p537-convergence",
-      "mission": "Reconcile stale PR #537 with strengthened main, remove superseded edits, validate, and integrate prompt-strength semantics.",
-      "dependencies": [
-        "lane-01-p537-strength-core",
-        "lane-06-p542-finalization"
-      ],
+      "lane_id": "lane-p537-prompt-strength",
+      "mission": "Rebuild PR #537 from current main using only the prompt-strength semantic floor, current dependency snapshots, deterministic-test-floor registration, and durable current plan/dispatch artifacts; drop stale shared-owner snapshots and retired lane files.",
+      "dependencies": [],
       "owned_mutation_surfaces": [
-        "PR #537 full owned diff",
-        "harness/contracts/prompt-quality-history.v1.json",
-        "harness/test-floor.v1.json",
         "harness/contracts/prompt-strength.v1.json",
-        "harness/evals/prompt-strength/adversarial-regression-matrix.v1.json"
+        "harness/evals/PROMPT_STRENGTH_RECOVERY_SPRINT_PLAN.md",
+        "harness/evals/prompt-strength/README.md",
+        "harness/evals/prompt-strength/FACTORIZATION_LEDGER.md",
+        "harness/evals/prompt-strength/adversarial-regression-matrix.v1.json",
+        "harness/evals/prompt-strength/parallel-dispatch-manifest.seed.v1.json",
+        "Outputs/prompt-parallel-dispatch/manifest.json",
+        "harness/test-floor.v1.json",
+        "scripts/validate_prompt_strength.py",
+        "tests/test_prompt_strength_contract_prompt.py"
       ],
       "forbidden_surfaces": [
-        "duplicating #542 shared boundary policy",
-        "restoring stale whole-file snapshots",
-        "manual generated Prompt Kit edits",
-        "unrelated release/versioning work"
+        "harness/contracts/prompt-quality-history.v1.json",
+        "registry/prompts/actionable-next-step-policy.v1.json",
+        "PR #543 source/generated files",
+        "unrelated release/versioning files",
+        "retired lane playbooks from superseded pre-integration state"
       ],
-      "adapter": {"kind": "repo_runner", "rung": 2},
+      "adapter": {
+        "kind": "connected_provider",
+        "rung": 3
+      },
       "launch": {
         "mode": "runtime_tool",
-        "tool": "UNBOUND_LOCAL_AGENT_RUNTIME",
-        "operation": "dispatch",
+        "tool": "GitHub provider connector",
+        "operation": "isolated_branch_convergence",
         "arguments": {
-          "instruction_path": "harness/evals/prompt-strength/LANE_07_P537_CONVERGENCE.md",
-          "target_branch": "feat/prompt-strength-contract-matrix-20260917",
-          "target_pr": 537,
+          "pull_request": 537,
+          "branch": "feat/prompt-strength-contract-matrix-20260917",
+          "base_sha": "2ecf9136611e2f26559afd90cde22e3f082e59b9",
           "merge_when_green": true
         }
       },
       "expected_artifacts": [
-        "current-main-reconciled PR #537",
-        "prompt-strength and quality-history proof",
-        "required-checks receipt",
-        "PR #537 merge and main containment proof"
+        "current-main-reconciled prompt-strength contract/matrix",
+        "deterministic-test-floor registration",
+        "current durable closeout plan and dispatch manifest",
+        "exact-head provider validation and mainline containment proof"
       ],
       "validation": [
-        "python scripts/validate_prompt_quality_history.py --summary",
         "python scripts/validate_prompt_strength.py --summary",
         "python -m unittest tests.test_prompt_strength_contract_prompt -v",
-        "required-checks-proof repository action",
-        "canonical builder parity",
-        "git diff --check",
-        "git diff --cached --check"
+        "python scripts/prompt_parallel_dispatch.py validate --manifest Outputs/prompt-parallel-dispatch/manifest.json",
+        "git diff --check"
       ],
       "convergence_owner": "mainline-integration",
-      "status": "BLOCKED"
-    },
-    {
-      "lane_id": "lane-08-publication-release",
-      "mission": "Verify final main Prompt Kit publication, refresh the existing Operant release carrier, merge release, and verify tag/release identity.",
-      "dependencies": [
-        "lane-07-p537-convergence"
-      ],
-      "owned_mutation_surfaces": [
-        "existing Operant release PR #538 through canonical automation",
-        "provider Pages deployment state",
-        "provider release/tag state"
-      ],
-      "forbidden_surfaces": [
-        "second release PR/workspace",
-        "manual Prompt Kit HTML edits",
-        "manual version/changelog bypass of Operant automation",
-        "treating PR preview as production"
-      ],
-      "adapter": {"kind": "repo_runner", "rung": 2},
-      "launch": {
-        "mode": "runtime_tool",
-        "tool": "UNBOUND_LOCAL_AGENT_RUNTIME",
-        "operation": "dispatch",
-        "arguments": {
-          "instruction_path": "harness/evals/prompt-strength/LANE_08_PUBLICATION_RELEASE.md",
-          "release_pr": 538,
-          "requires_provider_pages_and_release_observation": true
-        }
-      },
-      "expected_artifacts": [
-        "main Pages deployment proof",
-        "refreshed PR #538 exact candidate",
-        "release merge SHA",
-        "operant tag/release identity"
-      ],
-      "validation": [
-        "canonical Prompt Kit builder parity on final main",
-        "Prompt Kit release identity validator",
-        "Operant product/versioning tests",
-        "provider Pages deployment observation",
-        "provider release/tag observation"
-      ],
-      "convergence_owner": "release-owner",
-      "status": "BLOCKED"
-    },
-    {
-      "lane_id": "lane-09-p67-observed-effectiveness",
-      "mission": "Execute the canonical P67 16-run external-agent pilot against the frozen integrated/published treatment identity.",
-      "dependencies": [
-        "lane-08-publication-release"
-      ],
-      "owned_mutation_surfaces": [
-        "harness/evals/compute-authority runtime evidence surfaces allowed by canonical plan",
-        "Outputs/repository-ai-evals/compute-authority/**"
-      ],
-      "forbidden_surfaces": [
-        "treatment prompt mutation during frozen study",
-        "second evaluation framework",
-        "provider secrets or raw transcripts in tracked files",
-        "Sprint 3 before valid pilot"
-      ],
-      "adapter": {"kind": "repo_runner", "rung": 2},
-      "launch": {
-        "mode": "runtime_tool",
-        "tool": "UNBOUND_LOCAL_AGENT_RUNTIME",
-        "operation": "dispatch",
-        "arguments": {
-          "instruction_path": "harness/evals/prompt-strength/LANE_09_P67_OBSERVED_EFFECTIVENESS.md",
-          "canonical_plan": "harness/evals/COMPUTE_AUTHORITY_EVALUATION_SPRINT_PLAN.md",
-          "requires_external_agent_adapter": true
-        }
-      },
-      "expected_artifacts": [
-        "16 classified paired external-agent runs or exact UNPROVEN_RUNTIME blocker",
-        "pilot aggregate",
-        "fixture-validity disposition"
-      ],
-      "validation": [
-        "compute-authority fixture validation",
-        "compute-authority condition validation",
-        "compute-authority harness tests",
-        "observed pilot through canonical adapter when accessible"
-      ],
-      "convergence_owner": "P67-skill-evaluation",
-      "status": "BLOCKED"
+      "status": "DISPATCHED"
     }
   ]
 }
