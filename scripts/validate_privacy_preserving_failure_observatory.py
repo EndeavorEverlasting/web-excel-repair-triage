@@ -6,7 +6,10 @@ import ast
 import json
 from pathlib import Path
 
-from scripts.failure_observatory import CAPSULE_KEYS, CLAUSE_BY_BOUNDARY, CONTENT_BEARING_HOOKS, SUPPORTED_CURSOR_HOOKS
+try:
+    from scripts.failure_observatory import CAPSULE_KEYS, CLAUSE_BY_BOUNDARY, CONTENT_BEARING_HOOKS, SUPPORTED_CURSOR_HOOKS
+except ModuleNotFoundError:
+    from failure_observatory import CAPSULE_KEYS, CLAUSE_BY_BOUNDARY, CONTENT_BEARING_HOOKS, SUPPORTED_CURSOR_HOOKS
 
 ROOT = Path(__file__).resolve().parents[1]
 CONTRACT_PATH = ROOT / "harness/contracts/privacy-preserving-failure-observatory.v1.json"
