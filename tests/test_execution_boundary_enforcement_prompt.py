@@ -17,6 +17,7 @@ from scripts.validate_execution_boundary_enforcement import (
     validate_documents,
     validate_paths,
 )
+from scripts import build_prompt_kit_registry as prompt_builder
 
 ROOT = Path(__file__).resolve().parents[1]
 ARCHITECTURE = ROOT / "harness/contracts/execution-boundary-enforcement.v1.json"
@@ -41,6 +42,51 @@ class ExecutionBoundaryEnforcementTests(unittest.TestCase):
             matrix if matrix is not None else self.matrix,
             shared_policy=policy if policy is not None else self.policy,
         )
+
+    def test_boundary_to_sprint_continuation_precedes_classification(self) -> None:
+        contract = self.architecture["boundary_to_sprint_contract"]
+        self.assertIs(contract["applies_before_classification"], True)
+        self.assertIn("diagnostic", contract["classification_role"].lower())
+        self.assertIn("must not wait", contract["classification_role"].lower())
+        decision_text = " ".join(contract["decision_order"]).lower()
+        self.assertIn("successor sprint", decision_text)
+        self.assertIn("genuinely terminal", decision_text)
+
+    def test_shared_boundary_to_sprint_policy_reaches_every_prompt(self) -> None:
+        marker = self.policy["boundary_sprint_marker"]
+        policy_id = self.policy["boundary_sprint_policy_id"]
+        prompts = prompt_builder.load_prompt_kit_registry()
+        self.assertTrue(prompts)
+        missing_marker = [
+            prompt["id"]
+            for prompt in prompts
+            if marker not in str(prompt.get("copyContent", ""))
+        ]
+        missing_policy = [
+            prompt["id"]
+            for prompt in prompts
+            if prompt.get("boundaryContinuationPolicy") != policy_id
+        ]
+        self.assertEqual(missing_marker, [])
+        self.assertEqual(missing_policy, [])
+        content_only = [
+            prompt
+            for prompt in prompts
+            if prompt.get("actionabilityPolicy") == "not-applicable:content-only"
+        ]
+        self.assertTrue(content_only)
+        self.assertTrue(
+            all(marker in prompt["copyContent"] for prompt in content_only)
+        )
+
+    def test_shared_boundary_to_sprint_policy_fails_closed_when_weakened(self) -> None:
+        mutated = copy.deepcopy(self.policy)
+        mutated["boundary_sprint_suffix"] = "BOUNDARY-TO-SPRINT CONTINUATION CONTRACT\n- classify it first"
+        with self.assertRaisesRegex(
+            ExecutionBoundaryContractError,
+            "shared boundary sprint policy missing required semantic",
+        ):
+            self.validate(policy=mutated)
 
     def test_current_documents_validate(self) -> None:
         summary = validate_paths()
