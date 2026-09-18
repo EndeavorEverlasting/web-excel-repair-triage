@@ -13,12 +13,21 @@ on:
           - required-checks-proof
           - pre-push-proof
           - repo-native-update-check
+  pull_request:
+    branches:
+      - main
+    paths:
+      - .github/workflows/repository-local-action.yml
+      - registry/prompts/actionable-next-step-policy.v1.json
+      - harness/contracts/execution-boundary-enforcement.v1.json
+      - harness/contracts/execution-boundary-taxonomy.v1.json
+      - harness/evals/execution-boundaries/boundary-regression-matrix.v1.json
 
 permissions:
-  contents: read
+  contents: write
 
 concurrency:
-  group: repository-local-action-${{ github.ref }}-${{ inputs.action }}
+  group: repository-local-action-${{ github.ref }}-${{ github.event_name == 'pull_request' && 'prompt-kit-build-proof' || inputs.action }}
   cancel-in-progress: false
 
 env:
@@ -30,13 +39,14 @@ env:
 
 jobs:
   repository-action:
+    if: github.event_name == 'workflow_dispatch' || github.event.pull_request.head.repo.full_name == github.repository
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
       - uses: actions/checkout@v7
         with:
-          ref: ${{ github.sha }}
-          persist-credentials: false
+          ref: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}
+          persist-credentials: true
           fetch-depth: 0
       - uses: actions/setup-python@v7
         with:
@@ -50,17 +60,33 @@ jobs:
       - name: Run reviewed repository-local action
         shell: bash
         env:
-          ACTION_ID: ${{ inputs.action }}
+          ACTION_ID: ${{ github.event_name == 'pull_request' && 'prompt-kit-build-proof' || inputs.action }}
         run: |
           set -euo pipefail
           python scripts/run_repository_action.py \
             --action "$ACTION_ID" \
             --base-ref "origin/${{ github.event.repository.default_branch }}" \
             --report "Outputs/repository-actions/${ACTION_ID}.json"
+      - name: Commit canonical generated Prompt Kit for same-repository PR
+        if: github.event_name == 'pull_request'
+        shell: bash
+        env:
+          HEAD_REF: ${{ github.event.pull_request.head.ref }}
+        run: |
+          set -euo pipefail
+          if git diff --quiet -- web/prompt-kit/index.html; then
+            echo "Canonical Prompt Kit already current."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add web/prompt-kit/index.html
+          git commit -m "build(prompt-kit): publish execution boundary policy"
+          git push origin "HEAD:${HEAD_REF}"
       - name: Upload local-action receipt
         if: always()
         uses: actions/upload-artifact@v7
         with:
-          name: repository-local-action-${{ inputs.action }}
-          path: Outputs/repository-actions/${{ inputs.action }}.json
+          name: repository-local-action-${{ github.event_name == 'pull_request' && 'prompt-kit-build-proof' || inputs.action }}
+          path: Outputs/repository-actions/${{ github.event_name == 'pull_request' && 'prompt-kit-build-proof' || inputs.action }}.json
           if-no-files-found: error
