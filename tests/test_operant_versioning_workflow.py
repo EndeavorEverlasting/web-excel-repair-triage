@@ -186,7 +186,7 @@ class OperantVersioningWorkflowTests(unittest.TestCase):
             workflow,
         )
         self.assertNotIn(
-            r'startswith(\\\"automation/operant-release-v\\\")',
+            r'startswith(\"automation/operant-release-v\")',
             workflow,
         )
         self.assertEqual(
