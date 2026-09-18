@@ -1,9 +1,9 @@
 {
   "schema_version": "prompt-parallel-dispatch/v1",
   "run_id": "prompt-strength-closeout-20260918",
-  "graph_width": 5,
+  "graph_width": 3,
   "parallel_disposition": "DEGRADED",
-  "autonomy_gap": "Graph width is 5, but this planning runtime has no evidenced bound local autonomous-agent adapter. A local strategic-harness runtime must bind these runtime_tool lanes to its proven repo runner and preserve dispatch receipts; manual operator scheduling is portability fallback only.",
+  "autonomy_gap": "Active graph width is 3, but this planning runtime has no evidenced bound local autonomous-agent adapter. A local strategic-harness runtime must bind these runtime_tool lanes to its proven repo runner and preserve dispatch receipts; manual operator scheduling is portability fallback only.",
   "lanes": [
     {
       "lane_id": "lane-01-p537-strength-core",
@@ -49,105 +49,6 @@
         "git diff --cached --check"
       ],
       "convergence_owner": "lane-07-p537-convergence",
-      "status": "BLOCKED"
-    },
-    {
-      "lane_id": "lane-02-p542-boundary-core",
-      "mission": "Close still-valid PR #542 execution-boundary core review findings in an isolated writer lane.",
-      "dependencies": [],
-      "owned_mutation_surfaces": [
-        "harness/contracts/execution-boundary-enforcement.v1.json",
-        "harness/contracts/execution-boundary-taxonomy.v1.json",
-        "harness/evals/execution-boundaries/boundary-regression-matrix.v1.json",
-        "scripts/execution_boundary_engine.py",
-        "scripts/validate_execution_boundary_enforcement.py",
-        "tests/test_execution_boundary_enforcement_prompt.py",
-        "harness/validators.v1.json",
-        "harness/test-floor.v1.json"
-      ],
-      "forbidden_surfaces": [
-        "scripts/failure_observatory.py",
-        "scripts/cursor_failure_sentinel.py",
-        "harness/contracts/privacy-preserving-failure-observatory.v1.json",
-        "tests/test_privacy_preserving_failure_observatory_prompt.py",
-        "harness/prompt-compilation/semantics/P07.json",
-        "harness/repository-actions.v1.json",
-        "PR #537 prompt-strength files"
-      ],
-      "adapter": {"kind": "repo_runner", "rung": 2},
-      "launch": {
-        "mode": "runtime_tool",
-        "tool": "UNBOUND_LOCAL_AGENT_RUNTIME",
-        "operation": "dispatch",
-        "arguments": {
-          "instruction_path": "harness/evals/prompt-strength/LANE_02_ADVERSARIAL_FIXTURES.md",
-          "source_branch": "feat/execution-boundary-enforcement-architecture-20260918",
-          "target_pr": 542,
-          "isolated_branch": "local/lane-02-boundary-core"
-        }
-      },
-      "expected_artifacts": [
-        "isolated boundary-core repair commit",
-        "review finding disposition",
-        "Lane-06 integration handoff"
-      ],
-      "validation": [
-        "python scripts/validate_execution_boundary_enforcement.py --summary",
-        "python -m unittest tests.test_execution_boundary_enforcement_prompt -v",
-        "python scripts/run_validator_profile.py --profile pre_push --report Outputs/execution-boundary-core-pre-push.json",
-        "git diff --check",
-        "git diff --cached --check"
-      ],
-      "convergence_owner": "lane-06-p542-convergence",
-      "status": "BLOCKED"
-    },
-    {
-      "lane_id": "lane-03-p542-observatory",
-      "mission": "Close PR #542 privacy-observatory security, integrity, and stability findings in an isolated writer lane.",
-      "dependencies": [],
-      "owned_mutation_surfaces": [
-        "harness/contracts/privacy-preserving-failure-observatory.v1.json",
-        "harness/specs/privacy-preserving-failure-observatory.md",
-        "harness/prototypes/failure-observatory/cursor-hooks.example.json",
-        "scripts/failure_observatory.py",
-        "scripts/cursor_failure_sentinel.py",
-        "scripts/validate_privacy_preserving_failure_observatory.py",
-        "tests/test_privacy_preserving_failure_observatory_prompt.py"
-      ],
-      "forbidden_surfaces": [
-        "harness/test-floor.v1.json",
-        "registry/prompts/actionable-next-step-policy.v1.json",
-        "harness/contracts/execution-boundary-taxonomy.v1.json",
-        "scripts/execution_boundary_engine.py",
-        "harness/prompt-compilation/semantics/P07.json",
-        "harness/repository-actions.v1.json",
-        "PR #537 prompt-strength files",
-        "web/prompt-kit/index.html"
-      ],
-      "adapter": {"kind": "repo_runner", "rung": 2},
-      "launch": {
-        "mode": "runtime_tool",
-        "tool": "UNBOUND_LOCAL_AGENT_RUNTIME",
-        "operation": "dispatch",
-        "arguments": {
-          "instruction_path": "harness/evals/prompt-strength/LANE_03_DEPENDENCY_RECONCILIATION.md",
-          "source_branch": "feat/execution-boundary-enforcement-architecture-20260918",
-          "target_pr": 542,
-          "isolated_branch": "local/lane-03-observatory"
-        }
-      },
-      "expected_artifacts": [
-        "isolated privacy-observatory repair commit",
-        "privacy negative/positive regression evidence",
-        "Lane-06 integration handoff"
-      ],
-      "validation": [
-        "python scripts/validate_privacy_preserving_failure_observatory.py --summary",
-        "python -m unittest tests.test_privacy_preserving_failure_observatory_prompt -v",
-        "git diff --check",
-        "git diff --cached --check"
-      ],
-      "convergence_owner": "lane-06-p542-convergence",
       "status": "BLOCKED"
     },
     {
@@ -242,24 +143,23 @@
       "status": "BLOCKED"
     },
     {
-      "lane_id": "lane-06-p542-convergence",
-      "mission": "Converge Lane 02 and Lane 03 into PR #542, refresh current main, resolve shared surfaces, validate, and merge.",
+      "lane_id": "lane-06-p542-finalization",
+      "mission": "Refresh newest main, repair deterministic Operant external-resource projection drift, revalidate, and integrate PR #542.",
       "dependencies": [
-        "lane-02-p542-boundary-core",
-        "lane-03-p542-observatory",
         "lane-04-p543-local-proof",
         "lane-05-line-ending-guard"
       ],
       "owned_mutation_surfaces": [
         "PR #542 full owned diff",
-        "harness/test-floor.v1.json",
-        "registry/prompts/actionable-next-step-policy.v1.json",
+        "web/prompt-kit/resources.v1.json",
+        "registry/resources/operant-external-resource-gaps.v1.json",
         "web/prompt-kit/index.html"
       ],
       "forbidden_surfaces": [
         "PR #537 prompt-strength semantic files",
         "PR #543 source-owner files beyond merged-main reconciliation",
-        "unrelated release/versioning files"
+        "unrelated release/versioning files",
+        "manual donor projection edits when canonical producer can generate them"
       ],
       "adapter": {"kind": "repo_runner", "rung": 2},
       "launch": {
@@ -270,18 +170,19 @@
           "instruction_path": "harness/evals/prompt-strength/LANE_06_P542_CONVERGENCE.md",
           "target_branch": "feat/execution-boundary-enforcement-architecture-20260918",
           "target_pr": 542,
+          "observed_head_at_plan_refresh": "c6e330fe6676a974a79cf384dd279edfea4a9ab3",
           "merge_when_green": true
         }
       },
       "expected_artifacts": [
-        "converged PR #542 exact candidate",
+        "current donor projection generated by canonical producer",
         "required-checks repository-action receipt",
-        "review closure evidence",
+        "exact-head provider check disposition",
         "PR #542 merge and main containment proof"
       ],
       "validation": [
-        "focused execution-boundary validation",
-        "focused privacy-observatory validation",
+        "python scripts/validate_operant_external_resources.py --summary",
+        "python -m unittest tests.test_operant_external_resources tests.test_external_prior_art_gate -v",
         "canonical Prompt Kit builder parity",
         "required-checks-proof repository action",
         "git diff --check",
@@ -292,10 +193,10 @@
     },
     {
       "lane_id": "lane-07-p537-convergence",
-      "mission": "Reconcile stale PR #537 with fully strengthened main, remove superseded edits, validate, and integrate prompt-strength semantics.",
+      "mission": "Reconcile stale PR #537 with strengthened main, remove superseded edits, validate, and integrate prompt-strength semantics.",
       "dependencies": [
         "lane-01-p537-strength-core",
-        "lane-06-p542-convergence"
+        "lane-06-p542-finalization"
       ],
       "owned_mutation_surfaces": [
         "PR #537 full owned diff",
