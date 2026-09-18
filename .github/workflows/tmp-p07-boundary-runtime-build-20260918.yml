@@ -1,0 +1,55 @@
+name: Temporary P07 boundary runtime build
+
+on:
+  push:
+    branches:
+      - fix/local-proof-continuity-20260917
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: fix/local-proof-continuity-20260917
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Build canonical Prompt Kit
+        run: |
+          python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html
+      - name: Prove effective P07 boundary liveness
+        run: |
+          python -m unittest tests.test_prompt_compilation.PromptLanguageCompilerTests.test_p07_effective_prompt_requires_local_proof_and_boundary_continuation -v
+          python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html --check
+          python scripts/validate_prompt_quality_history.py --summary
+          git diff --check
+      - name: Remove execution carrier and assert durable scope
+        run: |
+          rm .github/workflows/tmp-p07-boundary-runtime-build-20260918.yml
+          python - <<'PY'
+          import subprocess
+          allowed = {
+              "web/prompt-kit/index.html",
+              ".github/workflows/tmp-p07-boundary-runtime-build-20260918.yml",
+          }
+          changed = set(subprocess.check_output(["git", "status", "--short"], text=True).splitlines())
+          paths = {line[3:] for line in changed}
+          unexpected = sorted(paths - allowed)
+          if unexpected:
+              raise SystemExit(f"durable scope mismatch unexpected={unexpected}")
+          if "web/prompt-kit/index.html" not in paths:
+              raise SystemExit("canonical Prompt Kit build produced no tracked site change")
+          PY
+      - name: Commit canonical generated site
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add web/prompt-kit/index.html .github/workflows/tmp-p07-boundary-runtime-build-20260918.yml
+          git commit -m "build(prompt-kit): publish boundary-live effective P07"
+          git push origin HEAD:fix/local-proof-continuity-20260917
