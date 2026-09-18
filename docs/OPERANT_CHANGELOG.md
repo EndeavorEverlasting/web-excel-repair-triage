@@ -38,6 +38,7 @@ Human-facing Operant releases. Git commit/artifact identity remains the forensic
 - fix(prompt): harden raw verifier successor semantics (`72f55265`)
 - fix(prompt-kit): restore canonical prompt copy identity (`2e82c646`)
 - fix(prompt-kit): bind boundary marker to shared suffix (`c94eb060`)
+- fix(prompt-kit): turn every material boundary into recovery sprint (#549) (`ce4b5a3c`)
 
 ## 0.8.1 - 2026-09-14
 
