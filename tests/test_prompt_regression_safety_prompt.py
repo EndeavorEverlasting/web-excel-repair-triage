@@ -54,7 +54,7 @@ class PromptRegressionSafetyTests(unittest.TestCase):
         self.assertEqual(result["families"], len(self.register["families"]))
         self.assertEqual(
             {family["id"] for family in self.register["families"]},
-            {"TRAILING_WHITESPACE", "PROVIDER_QUOTA_TERMINATION"},
+            {"TRAILING_WHITESPACE", "PROVIDER_QUOTA_TERMINATION", "LINE_ENDING_DRIFT"},
         )
         self.assertGreaterEqual(
             result["occurrences"],
@@ -307,6 +307,30 @@ class PromptRegressionSafetyTests(unittest.TestCase):
         contract["repository_hygiene"]["line_ending_policy"]["owner"] = "docs/line-endings.txt"
         with self.assertRaisesRegex(regression.RegressionSafetyError, "owner must be .gitattributes"):
             regression.validate_contract(contract)
+
+    def test_line_ending_drift_is_retained_as_systemic_recurrence(self) -> None:
+        family = next(item for item in self.register["families"] if item["id"] == "LINE_ENDING_DRIFT")
+        self.assertEqual(family["status"], "SYSTEMIC")
+        self.assertEqual(family["classification"], "PATCH_HYGIENE")
+        self.assertFalse(family["recurring_across_repositories"])
+        self.assertFalse(family["matrix_capture_required"])
+        self.assertIn(".gitattributes", family["prevention_surfaces"])
+        self.assertGreaterEqual(
+            len(family["occurrences"]),
+            self.contract["recurrence"]["systemic_threshold"],
+        )
+        self.assertEqual(
+            {item["repository"] for item in family["occurrences"]},
+            {"EndeavorEverlasting/web-excel-repair-triage"},
+        )
+
+    def test_line_ending_drift_family_cannot_disappear(self) -> None:
+        register = copy.deepcopy(self.register)
+        register["families"] = [
+            item for item in register["families"] if item["id"] != "LINE_ENDING_DRIFT"
+        ]
+        with self.assertRaisesRegex(regression.RegressionSafetyError, "retain LINE_ENDING_DRIFT"):
+            regression.validate_register(register, self.contract)
 
     def test_required_loop_retains_negative_and_positive_controls(self) -> None:
         loop = self.contract["required_loop"]
