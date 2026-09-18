@@ -267,11 +267,23 @@ class PromptRegressionSafetyTests(unittest.TestCase):
             self.assertEqual(run_git(repo, "init", "-q").returncode, 0)
             (repo / ".gitattributes").write_text(self.gitattributes_text, encoding="utf-8")
             (repo / "source.py").write_text("print('ok')\n", encoding="utf-8")
+            (repo / "notes.unknowntext").write_text("portable text\n", encoding="utf-8")
             (repo / "launcher.cmd").write_bytes(b"@echo off\r\n")
             (repo / "image.png").write_bytes(b"\x89PNG\r\n\x1a\n")
-            attrs = run_git(repo, "check-attr", "eol", "text", "--", "source.py", "launcher.cmd", "image.png")
+            attrs = run_git(
+                repo,
+                "check-attr",
+                "eol",
+                "text",
+                "--",
+                "source.py",
+                "notes.unknowntext",
+                "launcher.cmd",
+                "image.png",
+            )
             self.assertEqual(attrs.returncode, 0, attrs.stderr)
             self.assertIn("source.py: eol: lf", attrs.stdout)
+            self.assertIn("notes.unknowntext: eol: lf", attrs.stdout)
             self.assertIn("launcher.cmd: eol: crlf", attrs.stdout)
             self.assertIn("image.png: text: unset", attrs.stdout)
 
@@ -280,6 +292,16 @@ class PromptRegressionSafetyTests(unittest.TestCase):
         kwargs["gitattributes_text"] = self.gitattributes_text.replace("*.py text eol=lf\n", "")
         with self.assertRaisesRegex(regression.RegressionSafetyError, "line-ending policy"):
             regression.validate_repository_wiring(self.contract, **kwargs)
+
+        kwargs = self.wiring_kwargs()
+        kwargs["gitattributes_text"] = self.gitattributes_text + "\n*.py text eol=crlf\n"
+        with self.assertRaisesRegex(regression.RegressionSafetyError, "exactly match"):
+            regression.validate_repository_wiring(self.contract, **kwargs)
+
+        contract = copy.deepcopy(self.contract)
+        contract["repository_hygiene"]["line_ending_policy"]["binary_patterns"].remove("*.xlsm")
+        with self.assertRaisesRegex(regression.RegressionSafetyError, "binary pattern inventory drifted"):
+            regression.validate_contract(contract)
 
         contract = copy.deepcopy(self.contract)
         contract["repository_hygiene"]["line_ending_policy"]["owner"] = "docs/line-endings.txt"
