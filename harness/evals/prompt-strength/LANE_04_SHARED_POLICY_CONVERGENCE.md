@@ -1,39 +1,82 @@
-# Lane 04 — Shared Policy Convergence
+# LANE 04 — Close #543 Effective-P07 Local-Proof Continuity
 
-**Authority:** strategic-harness owner only
-
-**Hard dependencies:** completed Lane 01, Lane 02, Lane 03; exact current reconciliation of #533/#535/#536
-
-**Owned scope:** only the smallest canonical shared prompt/compiler owners selected by refreshed evidence; focused proof registration; canonical regeneration through existing builders
-
-**Forbidden:** unresolved sibling-owned files, bulk prompt copy edits where one shared owner exists, hand-edited generated Prompt Kit HTML, proof-state promotion.
+**Repo:** EndeavorEverlasting/web-excel-repair-triage  
+**PR / branch:** #543 / `fix/local-proof-continuity-20260917`  
+**Wave:** A  
+**Hard dependencies:** current main only  
+**Safe parallel work:** Lanes 01, 02, 03, 05  
+**Convergence owner:** this lane; merge #543 when green
 
 ## Mission
 
-Converge the recovery work into durable shared semantics without duplicating active owners or turning upstream donor prose into local authority.
+Finish the effective-P07 compiler/local-action delta, make generated Prompt Kit bytes current through the canonical builder, and integrate #543 before later #542/#537 convergence when safe.
 
 ## Read first
 
 - `AGENTS.md`
-- `harness/contracts/prompt-strength.v1.json`
-- `harness/evals/prompt-strength/adversarial-regression-matrix.v1.json`
-- Lane 01 upstream residual map
-- Lane 02 adversarial fixture/test results
-- Lane 03 dependency reconciliation artifact
-- current prompt-quality-history/local-proof/P07 identity contracts after refresh
+- #543 current checks/reviews
+- `harness/contracts/prompt-language-compiler-policy.v1.json`
+- `harness/prompt-compilation/semantics/P07.json`
+- `harness/repository-actions.v1.json`
+- `tests/test_prompt_compilation.py`
+- `scripts/build_prompt_kit_registry.py`
+- `docs/HARNESS_LOCAL_FIRST_REQUIRED_CHECKS_REFERENCE_ARCHITECTURE.md`
+
+## Known evidence
+
+At head `a641a85e...`, Prompt Quality History passed. Pages failed because generated `web/prompt-kit/index.html` was stale. Operational harness then reported order/navigation baseline drift from the same stale product state. Deterministic floor failed its generated-site negative canary. Treat this as one source/generated parity defect family until evidence proves otherwise.
+
+## Owned scope
+
+The four #543 source/test files; generated Prompt Kit only through the builder at the final integration candidate.
+
+## Forbidden scope
+
+#542 boundary/observatory files, #537 strength files, manual HTML edits, unrelated navigation product logic.
 
 ## Tasks
 
-1. Refresh provider/default-branch truth and prove all hard dependencies against current content plus owning validators.
-2. Select the smallest canonical shared owner for each proven residual.
-3. Wire profile-aware non-weakening semantics so Exhaustive adds depth and Efficient never removes immutable dimensions.
-4. Preserve canonical/effective/detail/copy identity and governed semantic migration behavior.
-5. Preserve repository-local proof continuity when hosted CI is unavailable.
-6. Register focused prompt-strength proof on the repository-owned deterministic/local test floor without duplicating hosted command lists.
-7. Regenerate product artifacts only through canonical builders.
-8. Run focused, adversarial, builder/parity, local required-check, and patch-hygiene gates.
-9. Converge validated owned work into current default branch when merge gates permit; otherwise record the exact blocker and next executable gate.
+1. Refresh main and rebase/merge it into #543 without force; if a source-owner collision appears, diagnose before resolving.
+2. Run focused P07 compilation tests before generation.
+3. Regenerate `web/prompt-kit/index.html` via `scripts/build_prompt_kit_registry.py`.
+4. Run `prompt-kit-proof` against refreshed `origin/main`.
+5. Re-run order/navigation and deterministic generated-site gates.
+6. Inspect exact-head reviews/checks.
+7. Mark PR ready only after local proof and generated parity are green.
+8. Merge #543 if all merge gates permit; verify new main contains the exact source semantics and generated artifact.
 
-## Proof ceiling
+## Validation order
 
-Repository/static/integration proof only until a separate runtime evaluation observes downstream agent behavior. Do not call repository PASS model-effectiveness proof.
+```bash
+python -m unittest tests.test_prompt_compilation -v
+python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html
+python scripts/run_repository_action.py --action prompt-kit-proof --base-ref origin/main --report Outputs/repository-actions/prompt-kit-proof.json
+python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html --check
+git diff --check
+git diff --cached --check
+```
+
+Then run the repository-owned deterministic/local-required-check action if registered and available.
+
+## Safety
+
+No direct HTML edits. No hosted-CI-only substitution for local repository action when local proof is available. Do not preserve a stale generated artifact to avoid a merge conflict.
+
+## Commit / push / merge contract
+
+Use the existing #543 branch. Commit regenerated output only with its causal source/test repair. Push normally. Remove draft status and merge only after exact-head proof.
+
+## Proof level / ceiling
+
+Target: VALIDATED + INTEGRATED on main.  
+Ceiling: repository/local/provider integration; not downstream model behavior or operator acceptance.
+
+## Exact final response
+
+Report pre/post main SHA, #543 exact head, source files, generated artifact hash/parity, local action receipt path, checks, merge SHA, containment/content proof.
+
+## NEXT COMMAND
+
+```bash
+git fetch --all --prune --tags && git switch fix/local-proof-continuity-20260917 && git merge --no-edit origin/main
+```
