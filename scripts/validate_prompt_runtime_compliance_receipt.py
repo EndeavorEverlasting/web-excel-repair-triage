@@ -126,15 +126,10 @@ def _semantic_context(receipt: dict[str, Any]) -> dict[str, Any]:
     }
 
 
-def _evaluate_nonaggregate(receipt: dict[str, Any]) -> list[dict[str, Any]]:
-    ctx = _semantic_context(receipt)
+def _evaluate_identity_reference_time_rules(receipt: dict[str, Any], findings: dict[str, dict[str, Any]], ctx: dict[str, Any]) -> None:
     boundaries = ctx["boundaries"]
     actions = ctx["actions"]
     evidence = ctx["evidence"]
-    findings: dict[str, dict[str, Any]] = {
-        rule_id: _na(rule_id, "receipt", "Trigger conditions were not met.")
-        for rule_id in RULE_IDS
-    }
 
     def setf(row: dict[str, Any]) -> None:
         findings[row["rule_id"]] = row
@@ -244,6 +239,15 @@ def _evaluate_nonaggregate(receipt: dict[str, Any]) -> list[dict[str, Any]]:
             else _fail("PRCR.TIME.ACTION_ORDER", "actions", "Action time order failed for " + ", ".join(bad_action_times))
         )
     )
+
+
+def _evaluate_boundary_rules(receipt: dict[str, Any], findings: dict[str, dict[str, Any]], ctx: dict[str, Any]) -> None:
+    boundaries = ctx["boundaries"]
+    actions = ctx["actions"]
+    evidence = ctx["evidence"]
+
+    def setf(row: dict[str, Any]) -> None:
+        findings[row["rule_id"]] = row
 
     fallback = [row for row in receipt["boundary_events"] if row["classification_status"] == "FALLBACK_UNCLASSIFIED"]
     setf(
@@ -397,6 +401,15 @@ def _evaluate_nonaggregate(receipt: dict[str, Any]) -> list[dict[str, Any]]:
         "Single receipt cannot prove a previously omitted recovered boundary; retained material events remain present."
     )
 
+
+def _evaluate_action_rules(receipt: dict[str, Any], findings: dict[str, dict[str, Any]], ctx: dict[str, Any]) -> None:
+    boundaries = ctx["boundaries"]
+    actions = ctx["actions"]
+    evidence = ctx["evidence"]
+
+    def setf(row: dict[str, Any]) -> None:
+        findings[row["rule_id"]] = row
+
     linked = [row for row in receipt["actions"] if row["boundary_event_id"] is not None]
     bad_links = [
         row["action_id"]
@@ -517,6 +530,15 @@ def _evaluate_nonaggregate(receipt: dict[str, Any]) -> list[dict[str, Any]]:
         )
     )
 
+
+def _evaluate_terminal_rules(receipt: dict[str, Any], findings: dict[str, dict[str, Any]], ctx: dict[str, Any]) -> None:
+    boundaries = ctx["boundaries"]
+    actions = ctx["actions"]
+    evidence = ctx["evidence"]
+
+    def setf(row: dict[str, Any]) -> None:
+        findings[row["rule_id"]] = row
+
     terminal = receipt["terminal"]
     if terminal["state"] == "COMPLETE":
         complete_ok = (
@@ -593,6 +615,15 @@ def _evaluate_nonaggregate(receipt: dict[str, Any]) -> list[dict[str, Any]]:
     else:
         setf(_na("PRCR.TERMINAL.USER_ONLY", "terminal", "Terminal state is not USER_ONLY_DECISION_REQUIRED."))
 
+
+def _evaluate_violation_rules(receipt: dict[str, Any], findings: dict[str, dict[str, Any]], ctx: dict[str, Any]) -> None:
+    boundaries = ctx["boundaries"]
+    actions = ctx["actions"]
+    evidence = ctx["evidence"]
+
+    def setf(row: dict[str, Any]) -> None:
+        findings[row["rule_id"]] = row
+
     if receipt["violations"]:
         missing_ev = [v["violation_id"] for v in receipt["violations"] if not v["evidence_refs"] or any(ref not in evidence for ref in v["evidence_refs"])]
         bad_rule = [v["violation_id"] for v in receipt["violations"] if v["rule_id"] not in RULE_IDS]
@@ -663,6 +694,15 @@ def _evaluate_nonaggregate(receipt: dict[str, Any]) -> list[dict[str, Any]]:
             else _fail("PRCR.VIOLATION.RUNTIME_FAMILY", "violations", "Violation family is not canonical.")
         )
     )
+
+
+def _evaluate_proof_rules(receipt: dict[str, Any], findings: dict[str, dict[str, Any]], ctx: dict[str, Any]) -> None:
+    boundaries = ctx["boundaries"]
+    actions = ctx["actions"]
+    evidence = ctx["evidence"]
+
+    def setf(row: dict[str, Any]) -> None:
+        findings[row["rule_id"]] = row
 
     proof = receipt["proof"]
     runtime_evidence = [row for row in receipt["evidence"] if row["kind"] == "runtime"]
@@ -743,6 +783,15 @@ def _evaluate_nonaggregate(receipt: dict[str, Any]) -> list[dict[str, Any]]:
         setf(_na("PRCR.PROOF.FINGERPRINT.FRESH", "proof", "No prior receipt reuse/comparison is claimed."))
         setf(_na("PRCR.PROOF.FINGERPRINT.UNKNOWN", "proof", "No required prior fingerprint comparison is claimed."))
 
+
+def _evaluate_regression_rules(receipt: dict[str, Any], findings: dict[str, dict[str, Any]], ctx: dict[str, Any]) -> None:
+    boundaries = ctx["boundaries"]
+    actions = ctx["actions"]
+    evidence = ctx["evidence"]
+
+    def setf(row: dict[str, Any]) -> None:
+        findings[row["rule_id"]] = row
+
     linkage = receipt["regression_linkage"]
     if linkage["status"] != "NONE":
         setf(
@@ -817,6 +866,15 @@ def _evaluate_nonaggregate(receipt: dict[str, Any]) -> list[dict[str, Any]]:
     else:
         setf(_na("PRCR.REGRESSION.NONE_CONSISTENT", "regression_linkage", "Regression status is not NONE."))
 
+
+def _evaluate_privacy_rules(receipt: dict[str, Any], findings: dict[str, dict[str, Any]], ctx: dict[str, Any]) -> None:
+    boundaries = ctx["boundaries"]
+    actions = ctx["actions"]
+    evidence = ctx["evidence"]
+
+    def setf(row: dict[str, Any]) -> None:
+        findings[row["rule_id"]] = row
+
     privacy = receipt.get("privacy")
     for rule_id, field, label in (
         ("PRCR.PRIVACY.NO_RAW_TRANSCRIPT", "raw_transcript_persisted", "raw transcript"),
@@ -835,6 +893,15 @@ def _evaluate_nonaggregate(receipt: dict[str, Any]) -> list[dict[str, Any]]:
     else:
         setf(_pass("PRCR.PRIVACY.REDACTION_ACCOUNTING", "privacy", "Redaction count is explicitly recorded."))
 
+
+def _evaluate_model_rules(receipt: dict[str, Any], findings: dict[str, dict[str, Any]], ctx: dict[str, Any]) -> None:
+    boundaries = ctx["boundaries"]
+    actions = ctx["actions"]
+    evidence = ctx["evidence"]
+
+    def setf(row: dict[str, Any]) -> None:
+        findings[row["rule_id"]] = row
+
     model = receipt["model_config"]
     identity_ok = all(model.get(key) for key in ("provider", "model", "configuration_id", "configuration_fingerprint", "host_surface"))
     setf(
@@ -852,6 +919,15 @@ def _evaluate_nonaggregate(receipt: dict[str, Any]) -> list[dict[str, Any]]:
         setf(_na("PRCR.MODEL.REVISION_UNKNOWN_EXPLICIT", "model_config", "Exact model revision is known."))
     setf(_na("PRCR.MODEL.CONFIG_FINGERPRINT_STABLE", "model_config", "Cross-run configuration stability requires another receipt for comparison."))
 
+
+def _evaluate_scenario_rules(receipt: dict[str, Any], findings: dict[str, dict[str, Any]], ctx: dict[str, Any]) -> None:
+    boundaries = ctx["boundaries"]
+    actions = ctx["actions"]
+    evidence = ctx["evidence"]
+
+    def setf(row: dict[str, Any]) -> None:
+        findings[row["rule_id"]] = row
+
     invariants = receipt["scenario"]["protected_invariants"]
     setf(
         _pass("PRCR.SCENARIO.PROTECTED_INVARIANTS", "scenario", "Scenario declares protected invariants.")
@@ -867,6 +943,27 @@ def _evaluate_nonaggregate(receipt: dict[str, Any]) -> list[dict[str, Any]]:
     else:
         setf(_na("PRCR.SCENARIO.FIXTURE_REQUIRED", "scenario", "Observed scenario does not require a synthetic fixture path."))
 
+
+def _evaluate_nonaggregate(receipt: dict[str, Any]) -> list[dict[str, Any]]:
+    ctx = _semantic_context(receipt)
+    findings: dict[str, dict[str, Any]] = {
+        rule_id: _na(rule_id, "receipt", "Trigger conditions were not met.")
+        for rule_id in RULE_IDS
+    }
+    evaluators = (
+        _evaluate_identity_reference_time_rules,
+        _evaluate_boundary_rules,
+        _evaluate_action_rules,
+        _evaluate_terminal_rules,
+        _evaluate_violation_rules,
+        _evaluate_proof_rules,
+        _evaluate_regression_rules,
+        _evaluate_privacy_rules,
+        _evaluate_model_rules,
+        _evaluate_scenario_rules,
+    )
+    for evaluator in evaluators:
+        evaluator(receipt, findings, ctx)
     return [findings[rule["rule_id"]] for rule in CONTRACT["rules"]]
 
 
