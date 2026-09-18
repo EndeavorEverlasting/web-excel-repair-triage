@@ -3,7 +3,8 @@
 ## Current floor
 
 - Repository: `EndeavorEverlasting/web-excel-repair-triage`
-- Reconciled default branch: `main@fc9437ff3fa83ce9df82c6ad85a79d09d7e0bd17`
+- Frozen release/treatment floor: `main@fc9437ff3fa83ce9df82c6ad85a79d09d7e0bd17`.
+- Prompt-strength closeout integration: PR #553 / `b507c421a15e1d1bec974e5d75598b80c8f0f90d`; this documentation/control-plane commit does not change the frozen treatment identity.
 - Integrated prerequisites: #533, #535, #536, #542, #543, #546, #548, #551, #552, #537, and #538.
 - #537 prompt-strength convergence is integrated at `96717034e595864b2ac4bb28a88d99ac3523674e`.
 - #538 release v0.9.0 is integrated at `fc9437ff3fa83ce9df82c6ad85a79d09d7e0bd17`; both tag `operant-v0.9.0` and GitHub Release `Operant v0.9.0` target that exact commit.
