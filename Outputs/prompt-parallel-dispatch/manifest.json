@@ -1,67 +1,85 @@
 {
   "schema_version": "prompt-parallel-dispatch/v1",
-  "run_id": "prompt-strength-final-convergence-20260918",
-  "graph_width": 1,
-  "parallel_disposition": "NOT_APPLICABLE",
-  "autonomy_gap": null,
+  "run_id": "ssh-local-execution-bridge-floor-20260918",
+  "graph_width": 2,
+  "parallel_disposition": "DEGRADED",
+  "autonomy_gap": "Current coordinator has no repository-local autonomous worker or networked local checkout: native subagents are unavailable; AgentSwitchboard/FirstMate operational worker is not yet implemented; the connected GitHub provider is not an independent coding worker; hosted CI is not a substitute for the Actions-off target; and the isolated container cannot resolve GitHub. Build the thin AgentSwitchboard local worker adapter after the evidence floor is recovered.",
   "lanes": [
     {
-      "lane_id": "lane-p537-prompt-strength",
-      "mission": "Converge the prompt-strength semantic floor onto current main after #543 integration, prove the focused semantic/adversarial contract and repository hygiene, and merge the exact validated candidate.",
+      "lane_id": "lane-ssh-current-prior-art",
+      "mission": "Re-evaluate the stale PR #399 SSH transport use case against the current Prompt Kit registry and registered upstream prior-art before any prompt identity recovery.",
       "dependencies": [],
-      "owned_mutation_surfaces": [
-        ".gitignore",
-        "triage/artifact_hygiene_policy.py",
-        "tests/test_gitignore_hygiene.py",
-        "harness/contracts/prompt-strength.v1.json",
-        "harness/evals/PROMPT_STRENGTH_RECOVERY_SPRINT_PLAN.md",
-        "harness/evals/prompt-strength/README.md",
-        "harness/evals/prompt-strength/FACTORIZATION_LEDGER.md",
-        "harness/evals/prompt-strength/adversarial-regression-matrix.v1.json",
-        "harness/evals/prompt-strength/parallel-dispatch-manifest.seed.v1.json",
-        "Outputs/prompt-parallel-dispatch/manifest.json",
-        "harness/test-floor.v1.json",
-        "scripts/validate_prompt_strength.py",
-        "tests/test_prompt_strength_contract_prompt.py"
-      ],
+      "owned_mutation_surfaces": [],
       "forbidden_surfaces": [
-        "registry/prompts/actionable-next-step-policy.v1.json",
-        "harness/contracts/prompt-quality-history.v1.json",
-        "PR #543 compiler/repository-action/generated-site files now integrated on main",
-        "OPERANT_VERSION and release candidate files",
-        "default-branch history rewrites"
+        "registry/prompts/management-operations-prompts.v1.json",
+        "manual prompt id/seq/copySheet allocation",
+        "web/prompt-kit/index.html",
+        "PR #399 branch mutation before current owner disposition"
       ],
       "adapter": {
-        "kind": "connected_provider",
-        "rung": 3
+        "kind": "repo_runner",
+        "rung": 2
       },
       "launch": {
-        "mode": "runtime_tool",
-        "tool": "GitHub provider connector",
-        "operation": "isolated_branch_convergence",
-        "arguments": {
-          "pull_request": 537,
-          "branch": "feat/prompt-strength-contract-matrix-20260917",
-          "base_sha": "378f855cb05f540e65f2c964a3b9e9e1e1c3faf7",
-          "merge_when_green": true
-        }
+        "mode": "argv",
+        "argv": [
+          "python",
+          "scripts/prompt_registry_ops.py",
+          "prior-art",
+          "--query",
+          "repository SSH transport authentication existing repository convert HTTPS host trust git ls-remote push dry-run setup usage"
+        ],
+        "cwd": ".",
+        "timeout_seconds": 300
       },
       "expected_artifacts": [
-        "prompt-strength contract and 31-case adversarial matrix on current main floor",
-        "deterministic-test-floor registration",
-        "tracked control-plane dispatch manifest with runtime receipts still forbidden",
-        "exact-head provider validation and mainline containment proof"
+        "current prior-art receipt with all_registered_sources_searched=true",
+        "owner disposition: STRENGTHEN existing owner or distinct residual for current helper admission"
       ],
       "validation": [
-        "python scripts/validate_prompt_strength.py --summary",
-        "python -m unittest tests.test_prompt_strength_contract_prompt -v",
-        "python scripts/prompt_parallel_dispatch.py validate --manifest Outputs/prompt-parallel-dispatch/manifest.json",
-        "python -m unittest tests.test_gitignore_hygiene -v",
-        "python -m triage.gitignore_hygiene",
-        "git diff --check"
+        "python scripts/prompt_registry_ops.py prior-art --query \"repository SSH transport authentication existing repository convert HTTPS host trust git ls-remote push dry-run setup usage\""
       ],
-      "convergence_owner": "mainline-integration",
-      "status": "PASS"
+      "convergence_owner": "P04 SSH/local-execution bridge coordinator",
+      "status": "BLOCKED"
+    },
+    {
+      "lane_id": "lane-local-proof-floor",
+      "mission": "Prove the current repository-local proof registry/runner and provider-degradation contract are executable before designing any new operational bridge authority.",
+      "dependencies": [],
+      "owned_mutation_surfaces": [],
+      "forbidden_surfaces": [
+        "harness/repository-actions.v1.json mutation",
+        "scripts/run_repository_action.py mutation",
+        "runtime-compliance adapter identity changes",
+        "new CI fallback implementation"
+      ],
+      "adapter": {
+        "kind": "repo_runner",
+        "rung": 2
+      },
+      "launch": {
+        "mode": "argv",
+        "argv": [
+          "python",
+          "-m",
+          "unittest",
+          "tests.test_repository_actions",
+          "tests.test_repository_local_proof_continuity_prompt",
+          "-v"
+        ],
+        "cwd": ".",
+        "timeout_seconds": 600
+      },
+      "expected_artifacts": [
+        "process receipt proving current repository action/local-proof contract tests",
+        "confirmed canonical action ids including prompt-kit-build-proof and current proof ceiling"
+      ],
+      "validation": [
+        "python -m unittest tests.test_repository_actions tests.test_repository_local_proof_continuity_prompt -v",
+        "python scripts/run_repository_action.py --list"
+      ],
+      "convergence_owner": "P04 SSH/local-execution bridge coordinator",
+      "status": "BLOCKED"
     }
   ]
 }

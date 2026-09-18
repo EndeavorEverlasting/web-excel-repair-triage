@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import importlib.util
+import json
 import threading
 import time
 import unittest
@@ -180,6 +181,53 @@ class PromptParallelDispatchTests(unittest.TestCase):
         self.assertEqual(receipt["status"], "PASS")
         self.assertFalse(receipt["observed_parallelism"])
         self.assertEqual(receipt["autonomy_gap"], payload["autonomy_gap"])
+
+    def test_declared_blocked_lane_is_never_launched_even_with_degraded_serial_opt_in(self) -> None:
+        blocked_a = lane("lane-a")
+        blocked_b = lane("lane-b")
+        blocked_a["status"] = "BLOCKED"
+        blocked_b["status"] = "BLOCKED"
+        payload = manifest(
+            blocked_a,
+            blocked_b,
+            disposition="DEGRADED",
+            autonomy_gap="no autonomous repository runner is available",
+        )
+        calls: list[str] = []
+
+        def forbidden_runner(item: dict) -> dict:
+            calls.append(item["lane_id"])
+            raise AssertionError("BLOCKED lane must not execute")
+
+        receipt = MOD.dispatch_manifest(
+            payload,
+            runner=forbidden_runner,
+            allow_degraded_serial=True,
+        )
+        self.assertEqual(calls, [])
+        self.assertEqual(receipt["status"], "FAIL")
+        self.assertFalse(receipt["observed_parallelism"])
+        self.assertEqual(
+            {item["status"] for item in receipt["lanes"]},
+            {"BLOCKED"},
+        )
+        for item in receipt["lanes"]:
+            self.assertEqual(item["evidence"][0]["type"], "manifest_status")
+
+    def test_terminal_manifest_lane_state_requires_refresh_before_run(self) -> None:
+        completed = lane("lane-a")
+        completed["status"] = "PASS"
+        payload = manifest(completed, width=1, disposition="NOT_APPLICABLE")
+        with self.assertRaisesRegex(MOD.DispatchError, "is not executable"):
+            MOD.dispatch_manifest(payload)
+
+    def test_tracked_primary_manifest_validates_through_dispatch_owner(self) -> None:
+        tracked = json.loads(
+            (ROOT / "Outputs/prompt-parallel-dispatch/manifest.json").read_text(encoding="utf-8")
+        )
+        summary = MOD.validate_manifest(tracked)
+        self.assertEqual(summary["run_id"], tracked["run_id"])
+        self.assertEqual(summary["graph_width"], tracked["graph_width"])
 
     def test_runtime_tool_lane_is_machine_validated_but_cli_refuses_to_impersonate_runtime(self) -> None:
         external = lane("lane-a")
