@@ -21,6 +21,40 @@ class ContextToArtifactPromptTests(unittest.TestCase):
         self.assertEqual(self.p56["type"], "BUILD + ARTIFACT")
         self.assertIn("actual requested artifact", self.p56["expectedOutput"].lower())
 
+    def test_p56_recovers_whole_relevant_context_and_resolves_target(self) -> None:
+        for marker in (
+            "THE CURRENT REQUEST IS THE ANCHOR, NOT THE CONTEXT BOUNDARY",
+            "CONTEXT IS AN ANCHOR, NOT A BOUNDARY",
+            "accepted and rejected decisions",
+            "internal context ledger",
+            "PASS 1 reads forward",
+            "PASS 2 traverses the same relevant context from the opposite direction",
+            "ARTIFACT TARGET RESOLUTION",
+            "CREATE_NEW",
+            "UPDATE_EXISTING",
+            "REPAIR_EXISTING",
+            "EXPORT/PUBLISH",
+            "IMPLEMENTATION_PACKET",
+        ):
+            self.assertIn(marker, self.content)
+        self.assertIn("Recover facts yourself before asking the user to repeat them.", self.p56["inspectFirst"])
+        self.assertIn("whole relevant context", self.p56["expectedOutput"].lower())
+
+    def test_p56_reuses_artifact_derivation_and_provider_owners(self) -> None:
+        for marker in (
+            "CANONICAL OWNER + DERIVATION CONTRACT",
+            "Creation language such as create/generate/build/produce/make/draft/export defaults to CREATE_NEW",
+            "preferred read-only reference",
+            "Same-identity mutation requires explicit update/repair-in-place intent",
+            "artifact-derivation owner",
+            "choose a distinct output identity before opening a writer/save path",
+            "reuse the existing stable identity and specialized synchronization owner",
+            "Do not hand-edit generated output as source truth",
+            "COMPLEMENT — DO NOT MERELY TRANSCRIBE",
+            "SECOND-PASS COMPLETENESS REVIEW",
+        ):
+            self.assertIn(marker, self.content)
+
     def test_p56_has_explicit_capability_modes_and_no_repo_access_failure_boundary(self) -> None:
         for marker in (
             "CAPABILITY BOUNDARY — CHOOSE ONE MODE",
