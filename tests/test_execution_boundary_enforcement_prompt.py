@@ -190,6 +190,18 @@ class ExecutionBoundaryEnforcementTests(unittest.TestCase):
         with self.assertRaisesRegex(ExecutionBoundaryContractError, "apply to every prompt"):
             self.validate(policy=mutated)
 
+    def test_boundary_continuation_subpolicy_is_mandatory(self) -> None:
+        mutated = copy.deepcopy(self.policy)
+        mutated["boundary_sprint_suffix"] = mutated["boundary_sprint_suffix"].replace(
+            "sprint eligibility",
+            "taxonomy preference",
+        )
+        with self.assertRaisesRegex(
+            ExecutionBoundaryContractError,
+            "boundary continuation subpolicy missing semantic",
+        ):
+            self.validate(policy=mutated)
+
     def test_redaction_cannot_become_suppression(self) -> None:
         mutated = copy.deepcopy(self.policy)
         mutated["copy_content_appendix"] = mutated["copy_content_appendix"].replace(
