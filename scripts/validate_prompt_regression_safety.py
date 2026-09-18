@@ -25,6 +25,9 @@ GITATTRIBUTES_PATH = ROOT / ".gitattributes"
 VALIDATORS_PATH = ROOT / "harness" / "validators.v1.json"
 FOCUSED_TEST = "tests/test_prompt_regression_safety_prompt.py"
 COMMIT_RE = re.compile(r"^[0-9a-f]{40}$")
+CANONICAL_LF_PATTERNS = [".gitattributes","*.py","*.json","*.md","*.yml","*.yaml","*.toml","*.ini","*.cfg","*.js","*.css","*.html","*.sh","*.ps1","*.txt","*.csv","*.tsv","*.xml","*.sha256","*.webmanifest"]
+CANONICAL_CRLF_PATTERNS = ["*.cmd","*.bat"]
+CANONICAL_BINARY_PATTERNS = ["*.xlsx","*.xlsm","*.xlsb","*.xls","*.docx","*.pptx","*.pdf","*.zip","*.png","*.jpg","*.jpeg","*.gif","*.webp"]
 
 
 class RegressionSafetyError(ValueError):
@@ -182,20 +185,17 @@ def validate_contract(contract: dict[str, Any]) -> None:
         raise RegressionSafetyError("line-ending policy fields do not match contract")
     if line_policy.get("owner") != ".gitattributes":
         raise RegressionSafetyError("line-ending policy owner must be .gitattributes")
-    if line_policy.get("text_default") != "* text=auto":
-        raise RegressionSafetyError("line-ending policy must retain * text=auto")
+    if line_policy.get("text_default") != "* text=auto eol=lf":
+        raise RegressionSafetyError("line-ending policy must retain * text=auto eol=lf")
     lf_patterns = _string_list(line_policy.get("lf_patterns"), "repository_hygiene.line_ending_policy.lf_patterns")
     crlf_patterns = _string_list(line_policy.get("crlf_patterns"), "repository_hygiene.line_ending_policy.crlf_patterns")
     binary_patterns = _string_list(line_policy.get("binary_patterns"), "repository_hygiene.line_ending_policy.binary_patterns")
-    for required_pattern in (".gitattributes", "*.py", "*.json", "*.md", "*.sh", "*.ps1"):
-        if required_pattern not in lf_patterns:
-            raise RegressionSafetyError(f"line-ending LF policy missing pattern: {required_pattern}")
-    for required_pattern in ("*.cmd", "*.bat"):
-        if required_pattern not in crlf_patterns:
-            raise RegressionSafetyError(f"line-ending CRLF policy missing pattern: {required_pattern}")
-    for required_pattern in ("*.xlsx", "*.docx", "*.pdf", "*.zip", "*.png"):
-        if required_pattern not in binary_patterns:
-            raise RegressionSafetyError(f"line-ending binary policy missing pattern: {required_pattern}")
+    if lf_patterns != CANONICAL_LF_PATTERNS:
+        raise RegressionSafetyError("line-ending LF pattern inventory drifted")
+    if crlf_patterns != CANONICAL_CRLF_PATTERNS:
+        raise RegressionSafetyError("line-ending CRLF pattern inventory drifted")
+    if binary_patterns != CANONICAL_BINARY_PATTERNS:
+        raise RegressionSafetyError("line-ending binary pattern inventory drifted")
     _text(line_policy.get("rule"), "repository_hygiene.line_ending_policy.rule")
 
     _text(contract.get("matrix_boundary"), "matrix_boundary")
@@ -369,21 +369,19 @@ def validate_repository_wiring(
         if gitattributes_text is None
         else gitattributes_text
     )
-    attribute_lines = {
+    attribute_lines = [
         line.strip()
         for line in gitattributes_text.splitlines()
         if line.strip() and not line.lstrip().startswith("#")
-    }
+    ]
     line_policy = contract["repository_hygiene"]["line_ending_policy"]
-    expected_attribute_lines = {line_policy["text_default"]}
-    expected_attribute_lines.update(f"{pattern} text eol=lf" for pattern in line_policy["lf_patterns"])
-    expected_attribute_lines.update(f"{pattern} text eol=crlf" for pattern in line_policy["crlf_patterns"])
-    expected_attribute_lines.update(f"{pattern} binary" for pattern in line_policy["binary_patterns"])
-    missing_attribute_lines = sorted(expected_attribute_lines - attribute_lines)
-    if missing_attribute_lines:
+    expected_attribute_lines = [line_policy["text_default"]]
+    expected_attribute_lines.extend(f"{pattern} text eol=lf" for pattern in line_policy["lf_patterns"])
+    expected_attribute_lines.extend(f"{pattern} text eol=crlf" for pattern in line_policy["crlf_patterns"])
+    expected_attribute_lines.extend(f"{pattern} binary" for pattern in line_policy["binary_patterns"])
+    if attribute_lines != expected_attribute_lines:
         raise RegressionSafetyError(
-            "line-ending policy is missing required .gitattributes rules: "
-            + ", ".join(missing_attribute_lines)
+            "line-ending policy must exactly match contracted .gitattributes order and rules"
         )
 
     required_checks = load_json(REQUIRED_CHECKS_PATH) if required_checks is None else required_checks
