@@ -64,6 +64,18 @@ Authority boundaries:
 - GitHub provider tooling owns remote repository/PR mutations and independent hosted proof when available.
 - Runtime-compliance adapter/capture stays evaluation-only unless a later reviewed contract explicitly generalizes it.
 
+### Control-plane wakeup gate
+
+A local worker is not autonomous merely because an executable exists. Sprint 1B must resolve the machine-to-machine activation surface before Sprint 2B claims an operational bridge.
+
+Preferred order:
+1. reuse an already implemented AgentSwitchboard/FirstMate local invocation or connected runtime-tool surface when current evidence proves one;
+2. otherwise use the smallest provider-backed bounded work-request inbox/wakeup that can carry only sanitized request identity, repository/ref, lane/action identity, and correlation metadata without GitHub Actions;
+3. if inbound wakeup is unavailable, a bounded local poller may consume that provider queue with dedupe/idempotency and explicit cadence;
+4. manual operator launch is portability/recovery fallback only and cannot satisfy the autonomous-worker completion gate.
+
+The readiness sprint must choose among these from evidence. This plan does not invent a FirstMate webhook, daemon, or queue that current repository evidence has not proved.
+
 ## Viable path comparison
 
 | Path | Disposition | Reason |
@@ -220,6 +232,7 @@ Dependencies:
 
 Mission:
 - consume a bounded work request that identifies repository, exact base/head intent, lane/manifest identity, owned/forbidden surfaces, and reviewed action id or admitted P07 task;
+- bind that request to the evidence-proven machine-to-machine wakeup/inbox surface from Sprint 1B; if no direct runtime-tool surface exists, implement the smallest provider-backed sanitized request carrier plus dedupe/idempotency rather than requiring operator launch;
 - create/use an isolated checkout/worktree;
 - refresh remote truth without destructive reset;
 - invoke the repository-owned action/validator/generator through its canonical CLI;
