@@ -2,6 +2,47 @@
 
 Human-facing Operant releases. Git commit/artifact identity remains the forensic freshness proof.
 
+## 0.9.0 - 2026-09-18
+
+### Features / breaking pre-1.0 changes
+
+- feat(prompt-kit): add prompt detail quick actions (`e8da5377`)
+- feat(prompt-kit): require progress-bearing execution and quiescence (`45fc40de`)
+- feat(prompt-kit): add isolated writer convergence contract (`017f7836`)
+- feat(prompt-kit): enforce Drive-primary artifact handoff (`5a295e0a`)
+- feat(prompt-kit): add Drive organizer and harden P123 export titles (`9788d35f`)
+- feat(prompt-compilation): wire Compute Mode and Language Engine into Prompt Kit (`10167b30`)
+- feat(prompt-kit): register Michael Shimeles skill donor (`028ac5d8`)
+- feat(prompt-kit): add quota-resilient repository local actions (`48dc2bd0`)
+- feat(prompt-kit): compile recurring-defect safety into operational prompts (`4d40758c`)
+- feat(prompt-kit): make execution boundaries public state (`3ffd70be`)
+- feat(harness): close execution boundary delivery gaps (`dc019578`)
+- feat(prompt-kit): make conversation truth artifact-durable (#547) (`92624c15`)
+
+### Fixes / performance
+
+- fix(prompt-kit): enforce autonomous parallel dispatch (`ff824e6e`)
+- fix(prompt-kit): preserve P07 freshness and fixed-point contracts (`fe016975`)
+- fix(prompt-kit): make parallel dispatch manifest executable (`c78a47b7`)
+- fix(prompt-kit): restore P07 mainline/readability contracts with parallel dispatch (`cb934bb1`)
+- fix(prompt-kit): restore P07 closeout and phase-continuity nextStep gates (`8d7eff77`)
+- fix(prompt-kit): correct P04 OUTPUT ORDER numbering and CLI path refs (`4ccc5b9d`)
+- fix(prompt-kit): avoid nested backticks in P04 dispatch CLI examples (`17be3de9`)
+- fix(prompt-kit): route detail Home End before page hotkeys (`ebf6461a`)
+- fix(prompt-kit): make continuation explicitly progress-bearing (`1731d94b`)
+- fix(prompt-kit): scope proof freshness to relevant inputs (`5d8eb2bc`)
+- fix(prompt-kit): scope appendix head movement to proof relevance (`6e06182e`)
+- fix(prompt-kit): align Storage UI and add format-alignment ledger (`3a288914`)
+- fix(prompt-kit): keep prompt headers visible when snapping (`d660c056`)
+- fix(prompt): preserve required successor obligations (`7e93b4fa`)
+- fix(prompt): harden raw verifier successor semantics (`72f55265`)
+- fix(prompt-kit): restore canonical prompt copy identity (`2e82c646`)
+- fix(prompt-kit): bind boundary marker to shared suffix (`c94eb060`)
+- fix(prompt-kit): turn every material boundary into recovery sprint (#549) (`ce4b5a3c`)
+- fix(operant): externalize release PR head refreshes (#545) (`2ecf9136`)
+- fix(prompt-kit): propagate boundary continuation to every prompt (#551) (`84a47c14`)
+- fix(operant): repair release PR jq lookup quoting (#552) (`58a2785a`)
+
 ## 0.8.1 - 2026-09-14
 
 ### Fixes / performance
