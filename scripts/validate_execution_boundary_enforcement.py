@@ -17,6 +17,7 @@ MATRIX = ROOT / "harness/evals/execution-boundaries/boundary-regression-matrix.v
 SHARED_POLICY = ROOT / "registry/prompts/actionable-next-step-policy.v1.json"
 
 MARKER = "EXECUTION BOUNDARY ACCOUNTABILITY CONTRACT"
+BOUNDARY_SPRINT_MARKER = "BOUNDARY-TO-SPRINT CONTINUATION CONTRACT"
 REQUIRED_PUBLIC_FIELDS = ["BOUNDARY", "IMPACT", "PROVED", "RECOVERY", "NEXT"]
 REQUIRED_LAYERS = {
     "objective_contract",
@@ -81,6 +82,54 @@ def validate_documents(
     for phrase in ("silence is never", "recovery does not cancel", "out-of-process supervisor"):
         if phrase not in invariant_text:
             raise ExecutionBoundaryContractError(f"architecture missing core invariant: {phrase}")
+    for phrase in ("classification is not a liveness prerequisite", "bounded successor sprint"):
+        if phrase not in invariant_text:
+            raise ExecutionBoundaryContractError(
+                f"architecture missing boundary-to-sprint invariant: {phrase}"
+            )
+
+    boundary_sprint = architecture.get("boundary_to_sprint_contract")
+    if not isinstance(boundary_sprint, dict):
+        raise ExecutionBoundaryContractError("boundary-to-sprint contract missing")
+    if boundary_sprint.get("applies_before_classification") is not True:
+        raise ExecutionBoundaryContractError(
+            "boundary-to-sprint continuation must apply before classification"
+        )
+    if not _nonempty(boundary_sprint.get("classification_role")):
+        raise ExecutionBoundaryContractError("boundary classification role missing")
+    classification_role = boundary_sprint["classification_role"].lower()
+    for phrase in ("diagnostic", "must not wait"):
+        if phrase not in classification_role:
+            raise ExecutionBoundaryContractError(
+                f"boundary classification role missing semantic: {phrase}"
+            )
+    if not _string_list(boundary_sprint.get("decision_order")):
+        raise ExecutionBoundaryContractError("boundary-to-sprint decision order missing")
+    decision_text = " ".join(boundary_sprint["decision_order"]).lower()
+    for phrase in ("successor sprint", "genuinely terminal", "independent work"):
+        if phrase not in decision_text:
+            raise ExecutionBoundaryContractError(
+                f"boundary-to-sprint decision order missing semantic: {phrase}"
+            )
+    required_successor_fields = {
+        "boundary",
+        "last_proven_checkpoint",
+        "owned_scope",
+        "forbidden_scope",
+        "dependencies_and_collision_risks",
+        "first_progress_bearing_action",
+        "expected_artifact_or_proof",
+        "proof_ceiling",
+    }
+    successor_fields = boundary_sprint.get("successor_sprint_required_fields")
+    if not isinstance(successor_fields, list) or set(successor_fields) != required_successor_fields:
+        raise ExecutionBoundaryContractError(
+            "boundary successor sprint required fields drifted"
+        )
+    if not _string_list(boundary_sprint.get("terminal_evidence_required")):
+        raise ExecutionBoundaryContractError("boundary terminal evidence rules missing")
+    if not _string_list(boundary_sprint.get("anti_patterns")):
+        raise ExecutionBoundaryContractError("boundary anti-patterns missing")
 
     states = architecture.get("execution_states")
     if not _string_list(states) or len(states) != len(set(states)):
@@ -372,8 +421,13 @@ def validate_documents(
         raise ExecutionBoundaryContractError("shared policy must continue to apply to every prompt")
     suffix = shared_policy.get("next_step_suffix")
     appendix = shared_policy.get("copy_content_appendix")
-    if not _nonempty(suffix) or not _nonempty(appendix):
+    boundary_sprint_suffix = shared_policy.get("boundary_sprint_suffix")
+    if not _nonempty(suffix) or not _nonempty(appendix) or not _nonempty(boundary_sprint_suffix):
         raise ExecutionBoundaryContractError("shared prompt policy surfaces missing")
+    if shared_policy.get("boundary_sprint_policy_id") != "boundary-to-sprint-continuation/v1":
+        raise ExecutionBoundaryContractError("shared boundary sprint policy identity drifted")
+    if shared_policy.get("boundary_sprint_marker") != BOUNDARY_SPRINT_MARKER:
+        raise ExecutionBoundaryContractError("shared boundary sprint marker drifted")
     if MARKER not in suffix or MARKER not in appendix:
         raise ExecutionBoundaryContractError("boundary accountability marker missing from shared inheritance surfaces")
     for path in (
@@ -382,6 +436,18 @@ def validate_documents(
     ):
         if path not in suffix and path not in appendix:
             raise ExecutionBoundaryContractError(f"shared prompt policy missing boundary contract reference: {path}")
+    boundary_sprint_lower = boundary_sprint_suffix.lower()
+    for phrase in (
+        "classification is optional reporting metadata",
+        "convert it immediately into the next bounded sprint",
+        "phase, tool, provider, context, proof, review, branch, prompt, or agent boundary",
+        "what boundary am i treating as terminal",
+    ):
+        if phrase not in boundary_sprint_lower:
+            raise ExecutionBoundaryContractError(
+                f"shared boundary sprint policy missing required semantic: {phrase}"
+            )
+
     appendix_lower = appendix.lower()
     for phrase in (
         "recovery does not erase",
