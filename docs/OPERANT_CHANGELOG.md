@@ -2,6 +2,16 @@
 
 Human-facing Operant releases. Git commit/artifact identity remains the forensic freshness proof.
 
+## 0.10.0 - 2026-09-18
+
+### Features / breaking pre-1.0 changes
+
+- feat(prompt-kit): strengthen P56 context artifact recovery (`ee5052af`)
+
+### Fixes / performance
+
+- fix(prompt-kit): route artifact creation to P56 (`8760e100`)
+
 ## 0.9.0 - 2026-09-18
 
 ### Features / breaking pre-1.0 changes
