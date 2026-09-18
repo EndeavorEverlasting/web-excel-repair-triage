@@ -61,7 +61,7 @@
         "git diff --check"
       ],
       "convergence_owner": "mainline-integration",
-      "status": "DISPATCHED"
+      "status": "PASS"
     }
   ]
 }
