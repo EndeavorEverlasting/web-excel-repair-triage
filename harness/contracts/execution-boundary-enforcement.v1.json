@@ -14,7 +14,8 @@
     "No completion claim may bypass the finalization gate or promote weaker evidence into a stronger execution state.",
     "Liveness is explicit: while an objective remains unfinished, the run must be actively progressing, explicitly recovering, or durably quiescent on a named blocker with a resumption trigger; disappearance is a contract violation.",
     "Boundary delivery is crash-safe and idempotent: checkpoint plus pending publication intent must become durable before user-visible publication, and retries reuse a stable event identity rather than duplicating the event.",
-    "Every material boundary opens two possible lanes: recover the primary objective first, and independently retain systemic learning when the event is novel, recurrent, or reveals a missing prevention invariant."
+    "Every material boundary opens two possible lanes: recover the primary objective first, and independently retain systemic learning when the event is novel, recurrent, or reveals a missing prevention invariant.",
+    "Classification is not a liveness prerequisite: every perceived boundary is first evaluated for whether it is genuinely terminal and whether a safe bounded successor sprint can preserve forward progress; taxonomy may refine reporting but cannot manufacture a stop."
   ],
   "materiality_rule": {
     "public_when_any": [
@@ -309,5 +310,42 @@
     "EBE.FINALIZATION_GATE": "Completion requires the requested outcome to pass the finalization gate.",
     "EBE.SYSTEMIC_SPRINT": "Novel, recurrent, or prevention-gap boundaries create a systemic-learning lane without replacing primary recovery.",
     "EBE.DURABLE_OUTBOX": "A material boundary and pending publication intent survive process loss until delivery is acknowledged."
+  },
+  "boundary_to_sprint_contract": {
+    "purpose": "Prevent named, unnamed, novel, phase-local, mechanism-local, and agent-created boundaries from becoming arbitrary whole-mission stops.",
+    "applies_before_classification": true,
+    "classification_role": "Classification is diagnostic and reporting metadata. Recovery, checkpointing, and successor-sprint declaration must not wait for a known taxonomy match; unknown material events use the fail-safe unclassified identity only as needed for durable reporting.",
+    "decision_order": [
+      "Checkpoint the strongest proven state and disclose a material boundary before agent-controlled cessation.",
+      "Ask what exact evidence makes the boundary terminal rather than assuming the end of a phase, tool, provider, prompt, branch, proof surface, or context is the end of the mission.",
+      "If safe progress remains authorized, declare the smallest bounded successor sprint that crosses or works around the boundary and execute its first progress-bearing action.",
+      "If independent work remains while one gate is real, continue those lanes and isolate the blocked gate.",
+      "Only quiesce when the remaining required transition is genuinely blocked, unsafe, forbidden, user-only, or unavailable; preserve a resumption trigger and exact next action.",
+      "Classify and retain systemic learning without making taxonomy work a prerequisite for primary-task recovery."
+    ],
+    "successor_sprint_required_fields": [
+      "boundary",
+      "last_proven_checkpoint",
+      "owned_scope",
+      "forbidden_scope",
+      "dependencies_and_collision_risks",
+      "first_progress_bearing_action",
+      "expected_artifact_or_proof",
+      "proof_ceiling"
+    ],
+    "terminal_evidence_required": [
+      "explicit user cancellation or whole-mission scope limit",
+      "safety/privacy/destructive-operation rule forbids the next required action",
+      "authorization, credential, physical-world, protected-runtime, or user-only dependency blocks every remaining required path",
+      "required external event or unavailable environment leaves no independent safe progress-bearing lane",
+      "requested outcome is fully proven and finalization gate passes"
+    ],
+    "anti_patterns": [
+      "treating completion of one phase or mechanism as mission completion",
+      "inventing a taxonomy category and then treating membership as permission to stop",
+      "magnifying a narrow proof or provider limit into abandonment of unrelated safe work",
+      "stopping because a boundary is unfamiliar or cannot yet be named precisely",
+      "writing a handoff or plan when the current agent can execute the successor sprint itself"
+    ]
   }
 }
