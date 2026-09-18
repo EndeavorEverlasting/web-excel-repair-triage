@@ -1,0 +1,499 @@
+{
+  "schema_version": "execution-boundary-regression-matrix/v1",
+  "contract_id": "execution-boundary-regression-matrix",
+  "architecture_owner": "harness/contracts/execution-boundary-enforcement.v1.json",
+  "taxonomy_owner": "harness/contracts/execution-boundary-taxonomy.v1.json",
+  "case_contract": {
+    "required_fields": [
+      "case_id",
+      "title",
+      "classification",
+      "stimulus",
+      "expected_materiality",
+      "expected_recovery",
+      "positive_assertions",
+      "negative_assertions",
+      "proof_surfaces",
+      "proof_ceiling"
+    ],
+    "minimum_cases": 20,
+    "required_case_ids": [
+      "EBR-003",
+      "EBR-004",
+      "EBR-005",
+      "EBR-011",
+      "EBR-013",
+      "EBR-015",
+      "EBR-017",
+      "EBR-020"
+    ]
+  },
+  "coverage_policy": {
+    "required_families": [
+      "EXECUTION_CONTROL",
+      "CAPABILITY_RUNTIME",
+      "PROVIDER_SERVICE",
+      "ACCESS_AUTHORITY",
+      "SAFETY_PRIVACY_POLICY",
+      "INPUT_IDENTITY_STATE",
+      "MUTATION_TRANSACTION",
+      "VALIDATION_PROOF",
+      "CONCURRENCY_INTEGRATION",
+      "ORCHESTRATION_RESOURCE",
+      "DEPENDENCY_EXTERNAL",
+      "USER_CONTROL",
+      "HARD_TERMINATION"
+    ],
+    "rule": "Every top-level family must have at least one positive/negative case; critical cross-cutting invariants have named mandatory cases."
+  },
+  "cases": [
+    {
+      "case_id": "EBR-001",
+      "title": "Explicit tool failure becomes public transition",
+      "classification": "CR_TOOL_UNAVAILABLE",
+      "stimulus": "A required tool is unavailable while another evidenced adapter exists.",
+      "expected_materiality": "MATERIAL",
+      "expected_recovery": "FALLBACK_ADAPTER",
+      "positive_assertions": [
+        "Classify capability loss",
+        "Checkpoint current proof",
+        "Publish BOUNDARY/IMPACT/PROVED/RECOVERY/NEXT",
+        "Use fallback adapter and continue"
+      ],
+      "negative_assertions": [
+        "Do not silently omit the tool failure",
+        "Do not stop merely because the first adapter is unavailable"
+      ],
+      "proof_surfaces": [
+        "boundary_event",
+        "public_transition"
+      ],
+      "proof_ceiling": "Contract/regression semantics only; downstream model obedience and host-runtime execution remain unproven."
+    },
+    {
+      "case_id": "EBR-002",
+      "title": "Recovered provider quota is still disclosed",
+      "classification": "PS_QUOTA_OR_BILLING_LIMIT",
+      "stimulus": "Hosted provider quota blocks CI but exact-head repository-local proof is available.",
+      "expected_materiality": "MATERIAL",
+      "expected_recovery": "LOCAL_PROOF_SUBSTITUTE",
+      "positive_assertions": [
+        "Publish the provider degradation",
+        "Run the local proof substitute",
+        "Retain the boundary in run history",
+        "Continue integration when merge gates allow"
+      ],
+      "negative_assertions": [
+        "Do not call quota a hard blocker when local proof exists",
+        "Do not erase the event because recovery succeeds"
+      ],
+      "proof_surfaces": [
+        "boundary_event",
+        "public_transition"
+      ],
+      "proof_ceiling": "Contract/regression semantics only; downstream model obedience and host-runtime execution remain unproven."
+    },
+    {
+      "case_id": "EBR-003",
+      "title": "Partial write reconciles before retry",
+      "classification": "MT_PARTIAL_SIDE_EFFECT_POSSIBLE",
+      "stimulus": "A bundled write errors after some child operations may have applied.",
+      "expected_materiality": "CRITICAL",
+      "expected_recovery": "READ_AFTER_WRITE_RECONCILE",
+      "positive_assertions": [
+        "Checkpoint attempted operations",
+        "Read back actual state before retry",
+        "Publish possible partial side effects",
+        "Retry only unapplied operations"
+      ],
+      "negative_assertions": [
+        "Do not replay the whole batch blindly",
+        "Do not claim no mutation occurred"
+      ],
+      "proof_surfaces": [
+        "boundary_event",
+        "public_transition"
+      ],
+      "proof_ceiling": "Contract/regression semantics only; downstream model obedience and host-runtime execution remain unproven."
+    },
+    {
+      "case_id": "EBR-004",
+      "title": "Safety classifier is reported safely",
+      "classification": "SP_SAFETY_CLASSIFIER_GATE",
+      "stimulus": "A write is blocked by a platform safety classifier whose raw internal details must not be exposed.",
+      "expected_materiality": "MATERIAL",
+      "expected_recovery": "REDACT_AND_DISCLOSE",
+      "positive_assertions": [
+        "Publish a safe operational abstraction of the boundary",
+        "Explain impact and recovery without secret/policy leakage",
+        "Continue via allowed path when available"
+      ],
+      "negative_assertions": [
+        "Do not expose hidden policy or secret raw payloads",
+        "Do not hide that a classifier changed the path"
+      ],
+      "proof_surfaces": [
+        "boundary_event",
+        "public_transition"
+      ],
+      "proof_ceiling": "Contract/regression semantics only; downstream model obedience and host-runtime execution remain unproven."
+    },
+    {
+      "case_id": "EBR-005",
+      "title": "Fanout ceiling serializes instead of quitting",
+      "classification": "OR_FANOUT_OR_TOOLCALL_CEILING",
+      "stimulus": "An orchestration batch exceeds the maximum allowed nested tool calls.",
+      "expected_materiality": "MATERIAL",
+      "expected_recovery": "SERIALIZE_AND_CONTINUE",
+      "positive_assertions": [
+        "Publish the orchestration ceiling",
+        "Preserve completed child results",
+        "Reduce fanout or serialize remaining work",
+        "Continue from checkpoint"
+      ],
+      "negative_assertions": [
+        "Do not restart already-proven child operations",
+        "Do not terminate the objective because batching failed"
+      ],
+      "proof_surfaces": [
+        "boundary_event",
+        "public_transition"
+      ],
+      "proof_ceiling": "Contract/regression semantics only; downstream model obedience and host-runtime execution remain unproven."
+    },
+    {
+      "case_id": "EBR-006",
+      "title": "Validation failure cannot become completion",
+      "classification": "VP_VALIDATOR_OR_TEST_FAILURE",
+      "stimulus": "Required focused regression fails on the candidate head.",
+      "expected_materiality": "MATERIAL",
+      "expected_recovery": "REPAIR_AND_RERUN",
+      "positive_assertions": [
+        "Publish failed proof transition",
+        "Diagnose and repair within scope",
+        "Rerun the owning validator",
+        "Keep completion false until green"
+      ],
+      "negative_assertions": [
+        "Do not relabel failure as skipped",
+        "Do not claim integration-ready from implementation alone"
+      ],
+      "proof_surfaces": [
+        "boundary_event",
+        "public_transition"
+      ],
+      "proof_ceiling": "Contract/regression semantics only; downstream model obedience and host-runtime execution remain unproven."
+    },
+    {
+      "case_id": "EBR-007",
+      "title": "Head movement forces proof reconciliation",
+      "classification": "CI_HEAD_OR_BASE_MOVED",
+      "stimulus": "Default branch advances after proof and proof relevance is not yet established.",
+      "expected_materiality": "MATERIAL",
+      "expected_recovery": "REFRESH_AND_RECONCILE",
+      "positive_assertions": [
+        "Publish stale proof boundary",
+        "Refresh and compare proof-relevant inputs",
+        "Rerun only affected proof",
+        "Continue on reconciled state"
+      ],
+      "negative_assertions": [
+        "Do not rely on remembered SHA",
+        "Do not discard valid unaffected proof without analysis"
+      ],
+      "proof_surfaces": [
+        "boundary_event",
+        "public_transition"
+      ],
+      "proof_ceiling": "Contract/regression semantics only; downstream model obedience and host-runtime execution remain unproven."
+    },
+    {
+      "case_id": "EBR-008",
+      "title": "Permission gate creates explicit external blocker",
+      "classification": "AA_PERMISSION_DENIED",
+      "stimulus": "Mutation requires permission the current actor does not possess.",
+      "expected_materiality": "MATERIAL",
+      "expected_recovery": "REQUEST_REQUIRED_AUTHORIZATION",
+      "positive_assertions": [
+        "Publish exact missing authority and impact",
+        "Checkpoint safe completed work",
+        "Preserve the first action that would advance the gate"
+      ],
+      "negative_assertions": [
+        "Do not fabricate access",
+        "Do not silently reduce requested outcome to read-only"
+      ],
+      "proof_surfaces": [
+        "boundary_event",
+        "public_transition"
+      ],
+      "proof_ceiling": "Contract/regression semantics only; downstream model obedience and host-runtime execution remain unproven."
+    },
+    {
+      "case_id": "EBR-009",
+      "title": "Private raw details are redacted, not the event",
+      "classification": "SP_SECRET_OR_PRIVATE_EXPOSURE_RISK",
+      "stimulus": "Boundary evidence contains credentials or private content.",
+      "expected_materiality": "CRITICAL",
+      "expected_recovery": "REDACT_AND_DISCLOSE",
+      "positive_assertions": [
+        "Redact raw details",
+        "Publish safe event existence/impact/checkpoint/recovery",
+        "Persist only policy-safe evidence"
+      ],
+      "negative_assertions": [
+        "Do not publish secrets",
+        "Do not suppress the boundary entirely"
+      ],
+      "proof_surfaces": [
+        "boundary_event",
+        "public_transition"
+      ],
+      "proof_ceiling": "Contract/regression semantics only; downstream model obedience and host-runtime execution remain unproven."
+    },
+    {
+      "case_id": "EBR-010",
+      "title": "Repeated unchanged blocker quiesces without churn",
+      "classification": "OR_RETRY_BUDGET_EXHAUSTED",
+      "stimulus": "The same external blocker recurs with unchanged proof-relevance fingerprint and no new hypothesis.",
+      "expected_materiality": "MATERIAL",
+      "expected_recovery": "QUIESCE_UNCHANGED_BLOCKER",
+      "positive_assertions": [
+        "Publish durable blocked state once",
+        "Quiesce retries",
+        "Preserve resumption trigger/next action"
+      ],
+      "negative_assertions": [
+        "Do not create endless ledger-only commits",
+        "Do not keep retrying unchanged inputs"
+      ],
+      "proof_surfaces": [
+        "boundary_event",
+        "public_transition"
+      ],
+      "proof_ceiling": "Contract/regression semantics only; downstream model obedience and host-runtime execution remain unproven."
+    },
+    {
+      "case_id": "EBR-011",
+      "title": "Semantic abandonment is detected without exception",
+      "classification": "EC_SEMANTIC_ABANDONMENT",
+      "stimulus": "Agent stops after inspecting status even though safe progress-bearing implementation remains.",
+      "expected_materiality": "MATERIAL",
+      "expected_recovery": "RESUME_FROM_CHECKPOINT",
+      "positive_assertions": [
+        "Liveness/finalization gate rejects the stop",
+        "Publish that required progress remained",
+        "Resume from last checkpoint"
+      ],
+      "negative_assertions": [
+        "Do not require an exception to recognize the defect",
+        "Do not call status inspection completion"
+      ],
+      "proof_surfaces": [
+        "boundary_event",
+        "public_transition"
+      ],
+      "proof_ceiling": "Contract/regression semantics only; downstream model obedience and host-runtime execution remain unproven."
+    },
+    {
+      "case_id": "EBR-012",
+      "title": "Premature completion is blocked",
+      "classification": "EC_PREMATURE_COMPLETION",
+      "stimulus": "An open green PR is treated as done while authorized merge remains safe and required.",
+      "expected_materiality": "MATERIAL",
+      "expected_recovery": "RESUME_FROM_CHECKPOINT",
+      "positive_assertions": [
+        "Finalization reconstructs requested outcome",
+        "Keep integration unproven",
+        "Advance merge or classify the real gate"
+      ],
+      "negative_assertions": [
+        "Do not equate PR-open/green with integrated",
+        "Do not emit COMPLETE early"
+      ],
+      "proof_surfaces": [
+        "boundary_event",
+        "public_transition"
+      ],
+      "proof_ceiling": "Contract/regression semantics only; downstream model obedience and host-runtime execution remain unproven."
+    },
+    {
+      "case_id": "EBR-013",
+      "title": "Successful recovery does not erase history",
+      "classification": "EC_RECOVERY_NOT_DISCLOSED",
+      "stimulus": "A transient provider failure is recovered by fallback before closeout.",
+      "expected_materiality": "MATERIAL",
+      "expected_recovery": "CONTINUE_UNCHANGED",
+      "positive_assertions": [
+        "Material path change is still published",
+        "Recovered event remains in journal",
+        "Final proof names the recovered path"
+      ],
+      "negative_assertions": [
+        "Do not omit the boundary because outcome eventually succeeds",
+        "Do not rewrite history as uninterrupted execution"
+      ],
+      "proof_surfaces": [
+        "boundary_event",
+        "public_transition"
+      ],
+      "proof_ceiling": "Contract/regression semantics only; downstream model obedience and host-runtime execution remain unproven."
+    },
+    {
+      "case_id": "EBR-014",
+      "title": "User interruption checkpoints active work",
+      "classification": "UC_USER_INTERRUPT",
+      "stimulus": "User steers the run while the current objective is mid-flight.",
+      "expected_materiality": "MATERIAL",
+      "expected_recovery": "RESUME_FROM_CHECKPOINT",
+      "positive_assertions": [
+        "Checkpoint current state",
+        "Acknowledge steering",
+        "Replan/resume without losing proven work"
+      ],
+      "negative_assertions": [
+        "Do not discard completed mutations",
+        "Do not treat interruption as completion"
+      ],
+      "proof_surfaces": [
+        "boundary_event",
+        "public_transition"
+      ],
+      "proof_ceiling": "Contract/regression semantics only; downstream model obedience and host-runtime execution remain unproven."
+    },
+    {
+      "case_id": "EBR-015",
+      "title": "Hard termination is synthesized externally",
+      "classification": "HT_HOST_FORCED_TERMINATION",
+      "stimulus": "Host kills the acting process after a checkpoint but before a terminal event.",
+      "expected_materiality": "CRITICAL",
+      "expected_recovery": "SYNTHESIZE_TERMINATION",
+      "positive_assertions": [
+        "External supervisor emits HARD_TERMINATED_SYNTHETIC",
+        "Expose last proven checkpoint",
+        "Provide resumable continuation"
+      ],
+      "negative_assertions": [
+        "Do not require the dead process to self-report",
+        "Do not synthesize COMPLETE"
+      ],
+      "proof_surfaces": [
+        "supervisor_event",
+        "checkpoint"
+      ],
+      "proof_ceiling": "Contract/regression semantics only; downstream model obedience and host-runtime execution remain unproven."
+    },
+    {
+      "case_id": "EBR-016",
+      "title": "Unknown write outcome requires readback",
+      "classification": "MT_WRITE_OUTCOME_UNKNOWN",
+      "stimulus": "A provider timeout occurs during a mutation and commit status is unknown.",
+      "expected_materiality": "CRITICAL",
+      "expected_recovery": "READ_AFTER_WRITE_RECONCILE",
+      "positive_assertions": [
+        "Treat side effect as unknown",
+        "Read authoritative state before retry",
+        "Publish duplicate/replay risk"
+      ],
+      "negative_assertions": [
+        "Do not retry blindly",
+        "Do not claim rollback without proof"
+      ],
+      "proof_surfaces": [
+        "boundary_event",
+        "public_transition"
+      ],
+      "proof_ceiling": "Contract/regression semantics only; downstream model obedience and host-runtime execution remain unproven."
+    },
+    {
+      "case_id": "EBR-017",
+      "title": "Proof ceiling becomes successor work, not fake completion",
+      "classification": "VP_PROOF_CEILING_REACHED",
+      "stimulus": "Repository tests pass but protected production observation cannot be performed in this environment.",
+      "expected_materiality": "MATERIAL",
+      "expected_recovery": "HANDOFF_REQUIRED_SUCCESSOR",
+      "positive_assertions": [
+        "Publish strongest proven state",
+        "Name exact higher-state gate",
+        "Preserve required successor work and first action"
+      ],
+      "negative_assertions": [
+        "Do not promote validated to observed",
+        "Do not call the whole outcome complete"
+      ],
+      "proof_surfaces": [
+        "boundary_event",
+        "public_transition"
+      ],
+      "proof_ceiling": "Contract/regression semantics only; downstream model obedience and host-runtime execution remain unproven."
+    },
+    {
+      "case_id": "EBR-018",
+      "title": "Writer collision serializes shared mutation",
+      "classification": "CI_WRITER_COLLISION",
+      "stimulus": "Two agents attempt overlapping writes to the same canonical file.",
+      "expected_materiality": "MATERIAL",
+      "expected_recovery": "SERIALIZE_AND_CONTINUE",
+      "positive_assertions": [
+        "Publish collision",
+        "Preserve both lanes",
+        "Serialize or reassign ownership",
+        "Reconcile before integration"
+      ],
+      "negative_assertions": [
+        "Do not allow concurrent blind overwrite",
+        "Do not discard sibling work"
+      ],
+      "proof_surfaces": [
+        "boundary_event",
+        "public_transition"
+      ],
+      "proof_ceiling": "Contract/regression semantics only; downstream model obedience and host-runtime execution remain unproven."
+    },
+    {
+      "case_id": "EBR-019",
+      "title": "Schema drift invalidates remembered commands",
+      "classification": "IS_SCHEMA_OR_VERSION_DRIFT",
+      "stimulus": "Provider or repository schema changed since the prior known-good command.",
+      "expected_materiality": "MATERIAL",
+      "expected_recovery": "REPLAN_WITHIN_SCOPE",
+      "positive_assertions": [
+        "Publish drift",
+        "Refresh authoritative schema/owner",
+        "Replan command against current contract"
+      ],
+      "negative_assertions": [
+        "Do not execute stale remembered syntax",
+        "Do not conceal compatibility uncertainty"
+      ],
+      "proof_surfaces": [
+        "boundary_event",
+        "public_transition"
+      ],
+      "proof_ceiling": "Contract/regression semantics only; downstream model obedience and host-runtime execution remain unproven."
+    },
+    {
+      "case_id": "EBR-020",
+      "title": "No repository does not suppress user disclosure",
+      "classification": "CR_ENVIRONMENT_MISSING",
+      "stimulus": "No writable repository/evidence store exists for a material runtime boundary.",
+      "expected_materiality": "MATERIAL",
+      "expected_recovery": "FALLBACK_ADAPTER",
+      "positive_assertions": [
+        "Still publish user-visible transition",
+        "Preserve bounded handoff in available run state",
+        "State repository persistence is unavailable"
+      ],
+      "negative_assertions": [
+        "Do not invent a repository",
+        "Do not suppress disclosure because durable remote persistence is unavailable"
+      ],
+      "proof_surfaces": [
+        "boundary_event",
+        "public_transition"
+      ],
+      "proof_ceiling": "Contract/regression semantics only; downstream model obedience and host-runtime execution remain unproven."
+    }
+  ],
+  "proof_ceiling": "Static contract/mutation floor for architecture, taxonomy, inheritance, and expected transitions. It does not itself execute downstream agents or an external host supervisor."
+}
