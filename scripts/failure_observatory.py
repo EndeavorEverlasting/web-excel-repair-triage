@@ -76,7 +76,7 @@ def new_state() -> dict[str, Any]:
 def _public_marker(prompt: Any) -> tuple[str, str]:
     if not isinstance(prompt, str):
         return "UNKNOWN", "UNKNOWN"
-    match = MARKER_RE.search(prompt[:512])
+    match = MARKER_RE.match(prompt[:512])
     if not match:
         return "UNKNOWN", "UNKNOWN"
     return match.group("prompt_id"), match.group("release")
