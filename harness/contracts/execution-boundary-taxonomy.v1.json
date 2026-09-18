@@ -437,7 +437,7 @@
         {
           "id": "UC_CANCELLED",
           "default_materiality": "MATERIAL",
-          "default_recovery": "CONTINUE_UNCHANGED",
+          "default_recovery": "QUIESCE_UNCHANGED_BLOCKER",
           "description": "User explicitly cancels the objective; checkpoint and stop without pretending completion."
         }
       ]
