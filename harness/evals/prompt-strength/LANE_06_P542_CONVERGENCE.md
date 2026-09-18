@@ -1,53 +1,79 @@
-# LANE 06 — Converge and Integrate #542
+# LANE 06 — Repair Drift and Integrate #542
 
 **Repo:** EndeavorEverlasting/web-excel-repair-triage  
 **PR / branch:** #542 / `feat/execution-boundary-enforcement-architecture-20260918`  
+**Current observed head:** `c6e330fe6676a974a79cf384dd279edfea4a9ab3`  
 **Wave:** B  
-**Hard dependencies:** Lane 02 commit + Lane 03 commit; refresh after any Lane 04/05 mainline merges  
-**Writer:** singular #542 convergence owner
+**Hard dependencies for mutation/integration:** Lane 04 + Lane 05 integrated; read-only diagnosis may begin earlier  
+**Writer:** singular #542 finalization owner
 
 ## Mission
 
-Combine the boundary-core and observatory repairs into #542, reconcile shared validator/test-floor/prompt-policy/generated-site surfaces once, close review, and integrate the exact candidate.
+Finish the already review-closed #542 candidate, repair the one observed deterministic donor-projection drift, refresh onto the newest main, rerun exact proof, and merge.
+
+## Current evidence
+
+- zero unresolved #542 review threads at `c6e330fe...`;
+- Prompt Quality History, validator profile, App, Operational, Pages, Artifact, AI evals, boundary-adjacent web/topology checks were green or still running at last refresh;
+- `Operant external resource refresh` failed because:
+  `Outputs/operant-external-resources/resources.v1.json` differed from tracked `web/prompt-kit/resources.v1.json`;
+- this is a tracked projection drift, not provider degradation.
 
 ## Read first
 
-- Lane 02 and Lane 03 handoffs/commit SHAs
-- current #542 diff/review/checks
-- current main after #543/line-ending merges that completed
-- `harness/test-floor.v1.json`
-- `harness/validators.v1.json`
-- `registry/prompts/actionable-next-step-policy.v1.json`
-- canonical Prompt Kit builder and Pages promotion docs
+- current #542 checks/reviews
+- `.ai/skills/operant-external-resource-intake/SKILL.md`
+- `harness/contracts/operant-external-resource-intake.v1.json`
+- `scripts/sync_operant_external_resources.py`
+- `scripts/validate_operant_external_resources.py`
+- `.github/workflows/operant-external-resource-refresh.yml`
+- current main after Lane 04/05
+- canonical Prompt Kit builder
 
 ## Owned scope
 
-All #542-owned files, plus conflict resolution required to integrate Lane 02/03 commits and refreshed main. No new feature scope.
+Existing #542 diff plus current donor projection files:
+- `web/prompt-kit/resources.v1.json`
+- `registry/resources/operant-external-resource-gaps.v1.json`
+- generated Prompt Kit only through canonical builder when affected.
 
 ## Forbidden scope
 
-#537 prompt-strength semantics, #543 compiler/local-action source ownership, unrelated release/versioning changes.
+#537 prompt-strength semantics, #543 source-owner files beyond merged-main reconciliation, unrelated release/versioning files, manual donor JSON edits when canonical sync can produce them.
 
 ## Tasks
 
-1. Refresh main and #542.
-2. Prove Lane-02 and Lane-03 commits are based on the expected #542 lineage and contain no forbidden-scope writes.
-3. Merge/cherry-pick them into #542 without rewriting their evidence.
-4. Merge/rebase refreshed main using repository policy; resolve `harness/test-floor.v1.json`, validator profile, and generated-site conflicts from current owners.
-5. Regenerate Prompt Kit only via builder.
-6. Re-fetch current #542 review threads; resolve each still-valid thread with current-head evidence.
-7. Diagnose the current Operant external-resource-refresh failure. If it is external/provider-only and not required by the merge contract, type it accurately; if it reflects candidate behavior, repair it.
-8. Run focused boundary/privacy suites, deterministic floor, local required checks, builder parity, and exact-candidate hygiene.
-9. Push existing #542 branch.
-10. Merge when green/authorized; refresh main and prove containment + current boundary/policy content.
+1. Refresh main/#542. Confirm review threads are still resolved; if new ones exist, disposition them first.
+2. Wait for no provider job: run local/current deterministic proof while hosted jobs are pending.
+3. Reproduce donor drift without mutating tracked output:
+
+```bash
+mkdir -p Outputs/operant-external-resources
+python scripts/sync_operant_external_resources.py \
+  --output Outputs/operant-external-resources/resources.v1.json \
+  --gaps-output Outputs/operant-external-resources/gaps.v1.json
+cmp Outputs/operant-external-resources/resources.v1.json web/prompt-kit/resources.v1.json
+cmp Outputs/operant-external-resources/gaps.v1.json registry/resources/operant-external-resource-gaps.v1.json
+```
+
+4. If drift persists and source identities are valid, update canonical tracked projections through the producer:
+
+```bash
+python scripts/sync_operant_external_resources.py
+```
+
+5. Validate resource contract/tests and catalog live-proof where network/provider access exists.
+6. After Lane 04 and Lane 05 integrate, merge refreshed main into #542 and rerun affected proof under final generated/line-ending policy.
+7. Regenerate Prompt Kit through builder if source/projection changes affect it.
+8. Run local required checks + exact-candidate hygiene.
+9. Push #542 and inspect exact-head provider checks. Diagnose any red check; do not label candidate drift provider-degraded.
+10. Merge when exact head is green/authorized. Refresh main and prove containment + current boundary/resource content.
 
 ## Validation order
 
 ```bash
-python scripts/validate_execution_boundary_enforcement.py --summary
-python -m unittest tests.test_execution_boundary_enforcement_prompt -v
-python scripts/validate_privacy_preserving_failure_observatory.py --summary
-python -m unittest tests.test_privacy_preserving_failure_observatory_prompt -v
+python scripts/validate_operant_external_resources.py --summary
+python -m unittest tests.test_operant_external_resources tests.test_external_prior_art_gate -v
 python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html
 python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html --check
 python scripts/run_repository_action.py --action required-checks-proof --base-ref origin/main --report Outputs/repository-actions/required-checks-proof.json
@@ -55,25 +81,31 @@ git diff --check
 git diff --cached --check
 ```
 
+If external network proof is available:
+
+```bash
+python scripts/search_operant_external_catalog.py --live-proof --summary --receipt-output Outputs/operant-external-resources/catalog-search-live-proof.json
+```
+
 ## Safety
 
-One convergence writer only. Preserve sibling branch/worktree commits until merge proof is complete. No force push. No manual generated HTML edits.
+No manual generated HTML. No force push. No raw donor body copying. Preserve metadata-only/copyright boundary. Do not retry an unchanged external provider merely for activity.
 
 ## Commit / push / merge contract
 
-Commit conflict resolutions/regeneration separately when useful for auditability. Push #542 normally. Merge only at exact validated head.
+Use existing #542 branch. Commit deterministic projection refresh separately when useful. Merge only at exact validated head.
 
 ## Proof level / ceiling
 
-Target: VALIDATED + INTEGRATED execution-boundary and observatory controls.  
-Ceiling: repository/provider integration; installed host-level supervisor behavior remains separately observed.
+Target: VALIDATED + INTEGRATED #542 with current donor projection.  
+Ceiling: repository/provider integration; no universal external donor availability or downstream model-effectiveness proof.
 
 ## Exact final response
 
-Report dependency commit SHAs, pre/post main, conflicts and resolutions, review disposition, validation receipts, #542 head, merge SHA, post-merge containment/content proof, remaining runtime ceiling.
+Report #542 refreshed head, donor source/resolved revisions, projection drift before/after, local receipts/tests, provider checks, merge SHA, current-main containment/content proof, and next #537 gate.
 
 ## NEXT COMMAND
 
 ```bash
-git fetch --all --prune --tags && git switch feat/execution-boundary-enforcement-architecture-20260918 && git merge --no-edit origin/main
+git fetch --all --prune --tags && git switch feat/execution-boundary-enforcement-architecture-20260918 && python scripts/sync_operant_external_resources.py --output Outputs/operant-external-resources/resources.v1.json --gaps-output Outputs/operant-external-resources/gaps.v1.json
 ```
