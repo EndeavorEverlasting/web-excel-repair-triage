@@ -1,0 +1,65 @@
+{
+  "schema_version": "prompt-runtime-compliance-scenario-index/v1",
+  "pilot_id": "P07-runtime-compliance-pilot",
+  "scenario_schema": "prompt-runtime-compliance-scenario/v1",
+  "scenarios": [
+    {
+      "scenario_id": "RTC01",
+      "path": "harness/evals/runtime-compliance/fixtures/rtc01.v1.json",
+      "protected_rule_ids": [
+        "PRCR.BOUNDARY.MATERIAL_PUBLICATION",
+        "PRCR.BOUNDARY.RECOVERY_REQUIRED",
+        "PRCR.BOUNDARY.RECOVERY_OPENED",
+        "PRCR.BOUNDARY.FIRST_ACTION_PROGRESS",
+        "PRCR.PROOF.NO_PROMOTION_FROM_BLOCKED"
+      ]
+    },
+    {
+      "scenario_id": "RTC02",
+      "path": "harness/evals/runtime-compliance/fixtures/rtc02.v1.json",
+      "protected_rule_ids": [
+        "PRCR.BOUNDARY.RECOVERY_REQUIRED",
+        "PRCR.BOUNDARY.FIRST_ACTION_PROGRESS",
+        "PRCR.ACTION.PROGRESS_TRUTH",
+        "PRCR.PROOF.FINGERPRINT.FRESH"
+      ]
+    },
+    {
+      "scenario_id": "RTC03",
+      "path": "harness/evals/runtime-compliance/fixtures/rtc03.v1.json",
+      "protected_rule_ids": [
+        "PRCR.TERMINAL.COMPLETE_GATE",
+        "PRCR.BOUNDARY.PRESERVE_OUTCOME",
+        "PRCR.BOUNDARY.RECOVERY_OPENED",
+        "PRCR.BOUNDARY.FIRST_ACTION_PROGRESS"
+      ]
+    },
+    {
+      "scenario_id": "RTC04",
+      "path": "harness/evals/runtime-compliance/fixtures/rtc04.v1.json",
+      "protected_rule_ids": [
+        "PRCR.ACTION.PARTIAL_READBACK",
+        "PRCR.REF.RESOLVES",
+        "PRCR.ACTION.NO_FALSE_PROOF_PROMOTION",
+        "PRCR.BOUNDARY.CHECKPOINT_REQUIRED"
+      ]
+    },
+    {
+      "scenario_id": "RTC05",
+      "path": "harness/evals/runtime-compliance/fixtures/rtc05.v1.json",
+      "protected_rule_ids": [
+        "PRCR.BOUNDARY.RECOVERY_REQUIRED",
+        "PRCR.BOUNDARY.FIRST_ACTION_PROGRESS",
+        "PRCR.ACTION.PROGRESS_TRUTH",
+        "PRCR.TERMINAL.NO_SAFE_PATH_EVIDENCE"
+      ]
+    }
+  ],
+  "invariants": [
+    "Exactly RTC01 through RTC05 are registered once each.",
+    "Every protected rule ID resolves to prompt-runtime-compliance/v1.",
+    "Every fixture declares starting state, one injected boundary, expected continuation, forbidden terminal behavior, expected rule outcomes, and proof ceiling.",
+    "RTC04 carries a deterministic readback-before-retry oracle.",
+    "RTC05 carries an explicit graph-width and adapter-ladder oracle."
+  ]
+}
