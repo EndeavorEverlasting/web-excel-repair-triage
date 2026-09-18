@@ -24,6 +24,7 @@ class ActionablePromptRegistryTests(unittest.TestCase):
         )
         cls.policy = json.loads(cls.policy_path.read_text(encoding="utf-8"))
         cls.prompts = build_prompt_kit_registry.load_prompt_registry()
+        cls.prompt_kit_prompts = build_prompt_kit_registry.load_prompt_kit_registry()
 
     def test_policy_is_tracked_and_complete(self) -> None:
         self.assertTrue(self.policy_path.is_file())
@@ -54,6 +55,46 @@ class ActionablePromptRegistryTests(unittest.TestCase):
             "none; no safe actionable work remains",
         ):
             self.assertIn(phrase, self.policy["copy_content_appendix"])
+
+    def test_boundary_continuation_subpolicy_reaches_every_prompt(self) -> None:
+        policy = self.policy
+        self.assertEqual(
+            policy["boundary_sprint_policy_id"],
+            "boundary-to-sprint-continuation/v1",
+        )
+        self.assertEqual(
+            policy["boundary_sprint_marker"],
+            "BOUNDARY-TO-SPRINT CONTINUATION CONTRACT",
+        )
+        for phrase in (
+            "sprint eligibility",
+            "first safe progress-bearing action",
+            "What boundary am I treating as terminal?",
+        ):
+            self.assertIn(phrase, policy["boundary_sprint_suffix"])
+
+        for prompt in self.prompt_kit_prompts:
+            with self.subTest(prompt=prompt["id"]):
+                content = prompt["copyContent"]
+                self.assertEqual(
+                    prompt["boundaryContinuationPolicy"],
+                    policy["boundary_sprint_policy_id"],
+                )
+                self.assertIn("BOUNDARY-TO-SPRINT CONTINUATION", content)
+                self.assertIn("sprint eligibility", content.lower())
+                self.assertIn("first safe progress-bearing action", content.lower())
+
+        by_id = {prompt["id"]: prompt for prompt in self.prompt_kit_prompts}
+        for prompt_id in ("P72", "P73"):
+            with self.subTest(content_only_prompt=prompt_id):
+                prompt = by_id[prompt_id]
+                self.assertEqual(
+                    prompt["actionabilityPolicy"],
+                    "not-applicable:content-only",
+                )
+                self.assertIn(policy["boundary_sprint_marker"], prompt["copyContent"])
+                self.assertNotIn(policy["marker"], prompt["copyContent"])
+
 
     def test_compute_authority_and_end_state_contract_horizon_are_global_policy(self) -> None:
         appendix = self.policy["copy_content_appendix"]
@@ -302,6 +343,29 @@ class ActionablePromptRegistryTests(unittest.TestCase):
         self.assertIn(self.policy["marker"], effective_p34["copyContent"])
         self.assertNotIn("REMOTE FRESHNESS / BRANCH FLOOR CONTRACT", raw_p34["copyContent"])
         self.assertLessEqual(len(raw_p34["copyContent"]), 4200)
+
+    def test_boundary_continuation_application_is_idempotent(self) -> None:
+        sample = {
+            "id": "PX",
+            "nextStep": "Produce the requested artifact.",
+            "copyContent": "Complete the requested transformation.",
+        }
+        once = build_prompt_kit_registry.apply_boundary_sprint_policy(
+            sample, self.policy
+        )
+        twice = build_prompt_kit_registry.apply_boundary_sprint_policy(
+            once, self.policy
+        )
+        self.assertEqual(once, twice)
+        self.assertEqual(
+            once["boundaryContinuationPolicy"],
+            self.policy["boundary_sprint_policy_id"],
+        )
+        self.assertEqual(
+            once["copyContent"].count(self.policy["boundary_sprint_marker"]),
+            1,
+        )
+
 
     def test_policy_rejects_an_empty_next_step(self) -> None:
         sample = {

@@ -7,7 +7,7 @@
 - #536 prompt-quality history — integrated.
 - #542 execution-boundary enforcement — integrated at `ae09d616...`.
 - #548 deterministic line-ending / LINE_ENDING_DRIFT prevention — integrated at `e4c2fe12...`.
-- Current refreshed main for this convergence: `2ecf9136611e2f26559afd90cde22e3f082e59b9`.
+- Current refreshed main for this convergence: `84a47c1495ac6d6fcfde1835d0ea503ef3d98c87`.
 
 ## Active owners
 

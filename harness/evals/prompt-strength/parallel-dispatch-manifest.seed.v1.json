@@ -34,7 +34,7 @@
         "arguments": {
           "pull_request": 543,
           "branch": "fix/local-proof-continuity-20260917",
-          "base_sha": "2ecf9136611e2f26559afd90cde22e3f082e59b9",
+          "base_sha": "84a47c1495ac6d6fcfde1835d0ea503ef3d98c87",
           "merge_when_green": true
         }
       },
@@ -87,7 +87,7 @@
         "arguments": {
           "pull_request": 537,
           "branch": "feat/prompt-strength-contract-matrix-20260917",
-          "base_sha": "2ecf9136611e2f26559afd90cde22e3f082e59b9",
+          "base_sha": "84a47c1495ac6d6fcfde1835d0ea503ef3d98c87",
           "merge_when_green": true
         }
       },
