@@ -202,12 +202,20 @@ No networking is implemented until the local diode earns proof.
 
 ## Durable phase map
 
-- **P0 LOCAL PROTOTYPE:** this PR; local only; executable seams + privacy canaries.
-- **P1 HOST INSTALLATION:** installable Cursor plugin/hook package and observed real runs.
+- **P0 LOCAL PROTOTYPE:** validated and integrated; local-only executable seams + privacy canaries.
+- **P1 HOST INSTALLATION:** repository project hooks are installed through tracked `.cursor/hooks.json` and validated through the real sentinel CLI; synthetic stdio covers success, abandonment, user abort, and host error. Real local Cursor observation and an out-of-band provenance handoff remain required before P1 closes.
 - **P2 ANONYMOUS CONTRIBUTION:** separately approved privacy design; opt-in; aggregation/thresholding/unlinkability proof.
 - **P3 REPOSITORY LEARNER:** consumes only approved aggregates and proposes regression work.
 
 Broad implementation must preserve P0 interfaces and tests rather than bypassing them.
+
+### P1 repository installation
+
+The project-scoped installation is `.cursor/hooks.json`. Cursor runs project hooks from the repository root in trusted workspaces, so every installed command targets the canonical `scripts/cursor_failure_sentinel.py` entry point and the gitignored `.afk-observatory/` state directory. The hooks are deliberately passive (`failClosed: false`): observability failure must not become an agent-execution blocker.
+
+Repository proof executes the same stdin JSON -> sentinel CLI path used by Cursor for all four terminal scenarios. This proves packaging and protocol reachability, not that a particular Cursor desktop has loaded the project hooks.
+
+P1 cannot close by prefixing or suffixing prompt text with hidden identity metadata. Canonical Prompt Kit copy identity remains unchanged. The unresolved provenance transition is an out-of-band local handoff that identifies the copied prompt without exporting raw Cursor generation/session IDs or the derived local run key.
 
 ## Proof ceiling
 
