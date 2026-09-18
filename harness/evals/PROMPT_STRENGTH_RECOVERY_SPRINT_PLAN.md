@@ -1,150 +1,196 @@
-# Prompt Strength Recovery Sprint Plan
+# Prompt Strength / Execution Reliability Closeout Program
 
-**Canonical plan owner:** this file
+**Canonical plan owner:** this file  
+**Repository:** `EndeavorEverlasting/web-excel-repair-triage`  
+**Refreshed main floor:** `33a2296426c018c6652b6d925a434274f39b1b33`  
+**Planning owner:** PR #537 / `feat/prompt-strength-contract-matrix-20260917`  
+**State:** TRACKED / OPEN CLOSEOUT PROGRAM
 
-**Repository:** `EndeavorEverlasting/web-excel-repair-triage`
+## Mission
 
-**Original design floor:** `main@c99346be8269409ee5ecf24bdbbf33f9d6800bc1`
+Close the remaining Prompt Kit strength, execution-boundary, local-proof, line-ending, publication, and observed-behavior gaps without asking each local agent to rediscover ownership. Every lane below has one primary mutation owner, explicit forbidden surfaces, deterministic gates, and a proof ceiling.
 
-**Reconciled provider floor:** `main@fc5fca0d4f1318a8671b7c8cd1be7abdf7b54050`
+## Current proven floor
 
-**State:** TRACKED / VALIDATING on PR #537; not yet integrated
+- #535 is merged: repository-local actions, exact-candidate hygiene, typed base/head context, safe receipt paths, and path+blob proof-relevance inputs are on main.
+- #539 is merged: provider-degraded merge policy exists on main and does not erase local-proof requirements.
+- #541 is merged at current main `33a22964...`: canonical P07 copy publication repair is on main.
+- #542 is open and owns the execution-boundary control plane plus privacy-preserving failure observatory.
+- #543 is open/draft and owns effective-P07 repository-local-proof continuity.
+- #537 remains open and stale relative to current main; its semantic core is valuable but must not carry superseded dependency assumptions.
+- #538 is the open Operant v0.9.0 release carrier; it is downstream of accepted mainline semantics and must be refreshed, not hand-edited around newer work.
+- No tracked root `.gitattributes` exists on current main. Exact-candidate `git diff --check` exists, but repository-wide line-ending policy is not yet canonical.
+- P67 compute-authority evaluation is integrated through its runtime harness; observed external-agent effectiveness remains `UNPROVEN_RUNTIME`.
 
-**Mission:** restore and raise the semantic strength floor of operational prompts without duplicating active repair lanes, making hosted CI a single point of progress, or permitting an agent to stop silently at a tool/capability boundary.
+## Ownership / collision map
 
-## Completed floor
+| Surface | Owner | Rule |
+|---|---|---|
+| prompt-strength contract/matrix/validator | #537 | Lane 01 only until final #537 convergence |
+| execution-boundary contract/taxonomy/engine | #542 core | Lane 02 |
+| privacy failure observatory | #542 observatory | Lane 03 |
+| effective P07 local-proof compiler semantics | #543 | Lane 04 |
+| line-ending normalization / CRLF prevention | new isolated lane | Lane 05 |
+| #542 shared branch convergence | #542 coordinator | Lane 06 |
+| #537 stale-branch/main reconciliation | #537 coordinator | Lane 07 |
+| generated Prompt Kit + release/Pages | existing builders + #538 | Lane 08 |
+| observed downstream agent behavior | P67 / skill-evaluation | Lane 09 |
 
-- PR #519 integrated Compute Mode and compiler-backed effective prompts.
-- PR #534 integrated recurring-defect regression safety, including working/staged/exact-candidate patch hygiene.
-- PR #536 integrated prompt-quality-history protection at `80ead456dc6079997935105a77bf0690107aaf3a`.
-- PR #533 integrated the P07 effective-prompt identity repair at `fc5fca0d4f1318a8671b7c8cd1be7abdf7b54050`; its temporary prompt-quality-history waiver is removed on this branch.
-- The shared actionability policy carries compute, fixed-point, parallelism, evidence, convergence, durability, and recurring-defect doctrine.
-- Registered upstream donor/reference sources include DeepSeek Harness, Matt Pocock skills, Michael Shimeles skills, and prompts.chat.
-- `michaelshimeles/skills` was refreshed from audited `513f8a24...` to current `4b72f46b...`; only `README.md` changed, so the seven audited skill bodies remain semantically current.
+### Shared-file rules
 
-## Active collision/dependency owners
+- `harness/test-floor.v1.json`: #542/Lane 06 owns final reconciliation before #537 rebases. Lane 01 must not edit it merely to get green.
+- `registry/prompts/actionable-next-step-policy.v1.json`: #542 owns current boundary-accountability strengthening. #537 must consume, not duplicate it.
+- `web/prompt-kit/index.html`: generated only by `scripts/build_prompt_kit_registry.py`; never hand-edit. #543 may regenerate only when it is the next integration candidate; #542 and #537 must regenerate again after rebasing on newer main.
+- `harness/repository-actions.v1.json`: #543 owns its active semantic delta. Lane 05 must not alter it.
+- `.gitattributes`: Lane 05 exclusive owner until merged.
 
-| Owner | Reconciled state | Exact head / integration | Exclusive surfaces this plan will not steal |
-| --- | --- | --- | --- |
-| PR #533 | integrated | head `807af11f...`; merge `fc5fca0d...` | P07 effective-prompt identity focused repair/test now on main |
-| PR #535 | open external owner | `82d6d3ea55cfb408a93c60a2a229a2ab9c0f2b53` | local-proof continuity, repository actions, P07 compiler/build-context, shared actionability policy, generated Prompt Kit |
-| PR #536 | integrated | head `79416fe...`; merge `80ead456...` | prompt-quality history contract, semantic migrations, validator/test/workflow |
-| PR #524 | open external owner | refresh before collision-sensitive mutation | Compute Mode browser-observed proof lane; no Compute Mode semantic mutation here |
+## Launch order
 
-## Recovery principles
+### Wave A — start concurrently
 
-1. Prompt strength is a semantic repository invariant, not a prose-quality judgment.
-2. Compiler/effective/profile representations preserve canonical obligations unless a governed semantic migration authorizes replacement.
-3. Exhaustive mode increases useful depth; Efficient mode may reduce optional exploration but may not erase immutable evidence, ownership, continuation, integration, or truthful orchestration semantics.
-4. Upstream skills contribute concrete mechanics with provenance; they do not replace Prompt Kit authority.
-5. GitHub Actions and other hosted providers are adapters/proof surfaces, not the sole semantic or execution owner.
-6. Shared contracts settle before parallel consumers.
-7. Every legitimate stop states the exact completed fixed point, blocker, unsafe boundary, external gate, or exhausted authorized scope. Silent cessation is a regression while safe progress-bearing work remains.
-8. Recurring whitespace/CRLF defects must be prevented by the smallest shared hook/check/validator owner, not repeatedly stripped from the latest diff.
+1. **Lane 01 — Repair #537 semantic core**
+2. **Lane 02 — Close #542 execution-boundary core review**
+3. **Lane 03 — Close #542 privacy-observatory review**
+4. **Lane 04 — Close #543 effective-P07 local-proof continuity**
+5. **Lane 05 — Add systemic line-ending / CRLF prevention**
 
-## Phase map
+These lanes have disjoint owned mutation surfaces when their forbidden scopes are respected.
 
-### Phase 0 — Strength contract + adversarial matrix
+### Wave B — converge and integrate low-collision lanes
 
-**Owner:** strategic-harness owner / PR #537
+6. **Lane 06 — Converge #542** after Lanes 02–03 and after current main includes any already-merged Lane 04/05 work.
+7. Lane 04 and Lane 05 may integrate as soon as their exact candidates are green and mergeable; after either merges, every still-open downstream branch refreshes main before proof.
 
-**State:** IMPLEMENTED / VALIDATING
+### Wave C — prompt-strength convergence
 
-**Owned files:**
-- `harness/contracts/prompt-strength.v1.json`
-- `harness/evals/prompt-strength/adversarial-regression-matrix.v1.json`
-- `scripts/validate_prompt_strength.py`
-- `tests/test_prompt_strength_contract_prompt.py`
-- `harness/test-floor.v1.json` registration
-- validation receipt/template under `harness/evals/prompt-strength/`
-- this plan and Phase-0 lane artifacts
+8. **Lane 07 — Reconcile and merge #537** only after #542 is integrated. Rebase/merge current main, drop superseded history-waiver edits, resolve `test-floor` against current main, rerun prompt-strength + quality-history + local required checks, then merge.
 
-**Implemented strengthening:**
-- 21 typed strength dimensions with semantic evidence terms;
-- 31 positive/negative adversarial cases, including PSA-031 silent-stop boundary regression;
-- exact dependency revision/content anchors instead of PR-number-only claims;
-- malformed dimension/profile/assertion structures fail closed;
-- case profiles are restricted to supported execution profiles;
-- adversarial dimension credits require matching semantic evidence;
-- focused suite is registered through the deterministic prompt-semantic test convention;
-- stale P07 prompt-quality-history waiver is removed after #533 integration.
+### Wave D — publication/release
 
-**Acceptance:** exact-head focused validator/tests, deterministic floor, prompt-quality-history, relevant harnesses, patch hygiene, and review reconciliation pass; no active external-owner surface is overwritten.
+9. **Lane 08 — Refresh #538 and verify public Pages** only after Lane 07 lands. Use Operant versioning automation to refresh the existing release branch/PR; do not manually create a second release workspace.
 
-### Phase 1 — Reconcile active repair dependencies
+### Wave E — observed effectiveness
 
-**State:** #533 and #536 integrated; #535 remains the sole hard external dependency for local-proof/shared-policy convergence.
+10. **Lane 09 — P67 external-agent pilot** only after strengthened prompts are integrated/published and treatment identity is frozen for a new evaluation generation.
 
-**Mission:** refresh `main`, prove surviving P07 identity, local-proof continuity, and quality-history contracts; update this plan whenever exact heads or integrated APIs materially change.
+## Lane definitions
 
-**Proof gate:** exact revision + current content + owning validators, not PR number or ancestry alone.
+### Lane 01 — #537 semantic-core repair
 
-### Phase 2A — Upstream mechanics refresh
+**Mission:** make the prompt-strength contract/matrix internally correct without touching shared owners currently held by #542/#543.
 
-**State:** donor refresh performed; residual adoption remains successor work.
+**Owned:** `harness/contracts/prompt-strength.v1.json`, `harness/evals/prompt-strength/adversarial-regression-matrix.v1.json`, `scripts/validate_prompt_strength.py`, `tests/test_prompt_strength_contract_prompt.py`, prompt-strength plan artifacts.
 
-Maintain a provenance-rich residual map:
-`source -> mechanic -> current owner -> existing coverage -> distinct residual -> disposition`.
+**Forbidden:** `harness/test-floor.v1.json` until Lane 07; shared actionable policy; P07 compiler semantics; generated HTML.
 
-Priority mechanics:
-- real parallel/sub-agent dispatch and convergence;
-- evidence-driven before/after proof;
-- current-head review loops and multi-surface review freshness;
-- orchestration-vs-reusable-mechanics separation;
-- isolated writer dependency/resource hygiene;
-- bounded review iteration with exact residuals.
+**Known defect:** PSA-029 currently over-credits `fixed_point_continuation`. Remove unsupported credit or strengthen the case only if the case truly tests that dimension. Do not weaken semantic-evidence validation.
 
-No prompt identity creation merely because an upstream project has a separate skill.
+**Gate:** focused validator/tests green on exact #537 head; no new review finding; branch may remain unmerged until Lane 07.
 
-### Phase 2B — Matrix-to-fixture implementation
+### Lane 02 — #542 execution-boundary core
 
-**State:** Phase-0 mutation fixtures implemented for contract/schema/coverage/stopping defects; behavioral fixtures remain successor work.
+**Mission:** close all still-valid core review findings in #542's boundary contract/validator/state-machine path.
 
-Continue converting highest-risk matrix rows into executable negative fixtures and positive controls, reusing prompt-regression, compute-authority, prompt-parallel-dispatch, and compilation harnesses.
+**Owned:** execution-boundary contracts/taxonomy, boundary matrix, `scripts/execution_boundary_engine.py`, `scripts/validate_execution_boundary_enforcement.py`, focused boundary tests, final validator-profile registration needed by this feature.
 
-Priority: PSA-001/002/003/005/006/007/011/012/017/018/023/024/027/031.
+**Forbidden:** failure-observatory implementation; #543 compiler/local-action files; #537 strength files.
 
-### Phase 3 — Compiler/shared-policy wiring
+**Known review obligations:** validate full layer shapes/responsibilities; derive required case IDs from the contract rather than a divergent hard-coded set; ensure blocking boundary validators are actually present in normal required/harness/pre-push profiles.
 
-**Canonical mutation owner:** PR #535 while it remains active.
+**Gate:** all core review threads resolved by current-head evidence; deterministic floor and affected validator profiles pass.
 
-Reconcile Phase-0 semantics into the smallest canonical shared owners and compiler policies through #535 rather than editing those surfaces from PR #537.
+### Lane 03 — #542 privacy observatory
 
-Required outcomes:
-- profile-aware non-weakening rules;
-- canonical/effective/detail/copy identity checks;
-- local repository actions remain canonical and hosted CI remains an adapter;
-- explicit stop/boundary reporting inherited by operational prompts;
-- upstream residuals adopted only where distinct;
-- no hosted-CI-only execution semantics.
+**Mission:** close privacy/stability findings without redesigning the execution-boundary core.
 
-### Phase 4 — Deterministic/local required-check integration
+**Owned:** `scripts/failure_observatory.py`, `scripts/cursor_failure_sentinel.py`, privacy observatory contract/spec/validator/tests and its example hook config.
 
-**State:** prompt-strength focused suite is registered in `harness/test-floor.v1.json`; broader repository-local action ownership remains PR #535.
+**Forbidden:** `harness/test-floor.v1.json`, shared prompt policy, core boundary taxonomy unless a failing test proves an unavoidable dependency.
 
-PR #535 must own the allow-listed repository action registry/runner and local merge-equivalent proof path, including recurring whitespace/CRLF prevention. Hosted workflows may call the same repository-owned command/profile but do not become the semantic owner.
+**Known review obligations:** owner-only correlation-secret creation; sticky explicit interrupt; reject or reconcile invalid terminal receipts; validate persisted state before capsule emission; fail closed on malformed hook document/container shapes.
 
-### Phase 5 — Behavioral evaluation + publication
+**Gate:** privacy negative canaries + focused tests pass; every unresolved review thread has repair/disposition evidence.
 
-Use existing compute-authority/runtime evaluation to compare control vs strengthened prompts. Repository/static success is insufficient for OBSERVED downstream-agent-effectiveness.
+### Lane 04 — #543 effective-P07 local proof
 
-After canonical shared-policy/compiler convergence, regenerate the Prompt Kit only through its registered builder and publish through the repository's active Pages contract. A stale release carrier must be refreshed rather than merged merely because it already exists.
+**Mission:** finish the four-file P07 compiler/local-action delta, regenerate through the canonical builder when ready to integrate, and merge before #542/#537 final convergence if green.
 
-## Current execution boundary
+**Owned:** `harness/contracts/prompt-language-compiler-policy.v1.json`, `harness/prompt-compilation/semantics/P07.json`, `harness/repository-actions.v1.json`, `tests/test_prompt_compilation.py`; generated Prompt Kit only at integration step.
 
-This ChatGPT runtime has provider mutation/review/CI access but its shell cannot resolve `github.com`, so it cannot truthfully claim a local clone/worktree or workstation-local action run. The observed boundary was `Could not resolve host: github.com`. That blocks only local-runtime proof; it does not block provider-side implementation, review repair, integration, or CI inspection.
+**Known failures at `a641a85e...`:** Pages reports stale generated Prompt Kit; operational/order-navigation baseline detects the same product drift; deterministic canary fails because source/generated state is inconsistent. Diagnose before mutation, regenerate via builder, rerun `prompt-kit-proof`.
+
+**Gate:** `python scripts/run_repository_action.py --action prompt-kit-proof --base-ref origin/main --report Outputs/repository-actions/prompt-kit-proof.json` PASS on exact candidate; affected hosted gates green or separately typed provider-only blocker; merge and verify containment on refreshed main.
+
+### Lane 05 — CRLF / line-ending systemic prevention
+
+**Mission:** close the recurring line-ending defect family at repository policy level instead of cleaning individual diffs.
+
+**Owned:** new root `.gitattributes`; smallest existing regression-safety contract/validator/test changes needed to enforce it. Reuse existing `tests/test_prompt_regression_safety_prompt.py` when possible so no new test-floor registration is needed.
+
+**Forbidden:** repository-action registry, generated Prompt Kit, #542/#543/#537 owned files, opportunistic whole-repo renormalization.
+
+**Tasks:** inventory tracked text/binary extensions and current byte endings; define deterministic LF policy for cross-platform source/config/docs and explicit exceptions only where tool/runtime compatibility requires them; add negative fixture/mutation proving CRLF/attribute drift is caught plus positive control; prove no binary corruption; do not run `git add --renormalize .` across unrelated files unless a separately reviewed migration is required.
+
+**Gate:** policy regression passes, existing regression-safety validator passes, working/staged/exact-candidate hygiene passes.
+
+### Lane 06 — #542 convergence
+
+**Depends on:** Lanes 02–03 complete; refreshed main contains any integrated Lane 04/05 work.
+
+**Mission:** integrate the two #542 sublanes into one candidate, resolve shared `test-floor`/prompt-policy/generated-site surfaces once, rerun review, then merge.
+
+**Gate:** no unresolved blocking review thread, all required checks green or honestly provider-blocked under current merge policy, builder parity, local required checks, exact-candidate hygiene, merge, post-merge containment/content proof.
+
+### Lane 07 — #537 convergence
+
+**Depends on:** Lane 01 + Lane 06 integrated.
+
+**Mission:** refresh the stale prompt-strength branch onto current main and remove superseded assumptions.
+
+**Required reconciliation:** current main already contains #535/#539/#541 and should contain #542/#543/CRLF by this stage. Re-evaluate whether #537 still needs any `prompt-quality-history` edit; delete branch-only waiver/history changes that are no longer necessary. Resolve `harness/test-floor.v1.json` from current main rather than replaying the old snapshot.
+
+**Gate:** prompt-strength validator/tests, Prompt Quality History, deterministic floor, local required checks, builder parity, review reconciliation, exact-candidate hygiene, merge and post-merge containment.
+
+### Lane 08 — website + Operant release
+
+**Depends on:** Lane 07 integrated.
+
+**Mission:** publish only accepted mainline Prompt Kit bytes and refresh the existing #538 release carrier.
+
+**Authority:** `scripts/build_prompt_kit_registry.py` owns generated site; `.github/workflows/prompt-kit-pages.yml` owns Pages promotion; `.github/workflows/operant-versioning.yml` owns refresh of an already-open Operant release PR.
+
+**Gate:** main builder parity -> main Pages deploy success -> #538 refreshed from current main by existing Operant automation -> exact release candidate checks -> merge release PR -> tag/release workflow proof. A PR preview is not production publication.
+
+### Lane 09 — observed downstream behavior
+
+**Depends on:** Lane 08 publication and a frozen treatment identity.
+
+**Canonical owner:** P67 / `skill-evaluation`; reuse `harness/evals/COMPUTE_AUTHORITY_EVALUATION_SPRINT_PLAN.md`.
+
+**Mission:** execute the real 16-run external-agent pilot through a provider adapter satisfying `runtime/adapter-contract.v1.json`; do not create a second eval framework.
+
+**Gate:** 16 classified paired runs, same provider/model identity per pair, no hidden-gold leakage, zero forbidden-mutation escape, pilot aggregate and fixture-validity disposition. Only then may Sprint 3/main study advance.
+
+## Parallel capability / autonomy state
+
+The dependency graph width is five in Wave A. This ChatGPT runtime has provider mutation and CI/readback access but no mounted local checkout and no evidenced autonomous local-agent runner, so it cannot prove local parallel dispatch itself.
+
+**PARALLEL EXECUTION: DEGRADED** — graph width >= 2; local agent/runtime adapter is not bound in this environment.
+
+**AUTONOMY_GAP:** a local strategic-harness runtime must bind the tracked manifest lanes to its evidenced agent runner. Human copy/paste is fallback only.
+
+## Definition of done
+
+The closeout program is complete only when:
+
+1. #543 local-proof semantics are integrated.
+2. #542 boundary/observatory semantics are integrated.
+3. the line-ending systemic guard is integrated.
+4. #537 prompt-strength semantics are reconciled to current main and integrated.
+5. canonical Prompt Kit bytes from final main are deployed by Pages.
+6. #538 is refreshed/merged/released under Operant authority.
+7. P67 observed effectiveness is either completed at its exact runtime proof ceiling or remains explicitly `BLOCKED/UNPROVEN_RUNTIME` with adapter/credential gate; it may not be relabeled repository-complete.
 
 ## Proof ceiling
 
-Phase 0 can prove repository/provider contract structure, adversarial semantic coverage, exact-head provider CI, and review reconciliation when those gates pass. It cannot prove local-workstation hooks/actions in this runtime, downstream model obedience, live sub-agent availability in another runtime, browser/device behavior beyond separately observed receipts, deployment until Pages is verified, or operator acceptance.
-
-## Next transition
-
-The exact local proof command remains repository-owned and must be resolved from current #535/main truth before operator guidance. On a capable local checkout, Phase-0 focused proof begins with:
-
-```bash
-python scripts/validate_prompt_strength.py --summary
-python -m unittest tests.test_prompt_strength_contract_prompt -v
-```
-
-Then run the repository-owned deterministic/local-required-check action and patch-hygiene profile, reconcile #535 exact head, and advance integration/publication gates without silently stopping at a provider boundary.
+This plan and its deterministic repository gates can prove ownership, regression, integration, generation, and provider publication states when observed. They cannot by themselves prove local workstation hook execution in an unavailable runtime, universal downstream model obedience, or operator acceptance.
