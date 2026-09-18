@@ -156,12 +156,13 @@ Forbidden:
 - P55/P61 role expansion unless current prior-art proves strengthening is the correct current owner;
 - secrets/private keys;
 - global workstation SSH policy;
-- hand-editing generated HTML.
+- hand-editing generated HTML;
+- reviving the historical write-capable temporary carrier workflow pattern from #399; current helper/generator paths must remain the mutation authority.
 
 Acceptance gate:
 - `prior-art` proves the owner disposition;
 - current prompt identity is collision-free;
-- preserved semantics include key reuse, private-key boundary, provider-neutral host trust, bounded `git ls-remote`, safe write proof, blocker typing, and HOW TO USE THIS SSH SETUP;
+- preserved semantics include pre-mutation repository governance/Git/PR/validator/artifact/recent-history inspection, key reuse, private-key boundary, provider-neutral host trust, bounded `git ls-remote`, safe write proof, blocker typing, complete Git/status/commit/push/PR closeout evidence, an exact next command, and HOW TO USE THIS SSH SETUP;
 - focused prompt tests + registry validation + generated-site parity + deterministic floor pass;
 - exact validated head integrates to main;
 - PR #399 is then marked superseded/closed only after the replacement is safely integrated.
