@@ -12,9 +12,12 @@ from scripts.failure_observatory import (
     adapt_cursor_hook,
     apply_signal,
     compile_capsule,
+    derive_local_run_key,
+    load_or_create_local_secret,
     load_state,
     receipt_signal,
     save_state,
+    state_path_for_run,
 )
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -28,37 +31,58 @@ def _load_contract(path: Path) -> dict:
 
 def main() -> int:
     parser = argparse.ArgumentParser(description="Local zero-content Cursor failure observatory prototype.")
-    parser.add_argument("--state", type=Path, required=True)
+    parser.add_argument("--state-dir", type=Path, required=True)
     sub = parser.add_subparsers(dest="command", required=True)
+
     hook = sub.add_parser("hook")
     hook.add_argument("hook_name")
+
     receipt = sub.add_parser("receipt")
+    receipt.add_argument("--run-key", required=True)
     receipt.add_argument("--prompt-id", required=True)
     receipt.add_argument("--release", required=True)
     receipt.add_argument("--proof-state", required=True)
-    sub.add_parser("capsule")
-    sub.add_parser("reset")
+
+    capsule = sub.add_parser("capsule")
+    capsule.add_argument("--run-key", required=True)
+
+    reset = sub.add_parser("reset")
+    reset.add_argument("--run-key")
+
     args = parser.parse_args()
-
-    if args.command == "reset":
-        if args.state.exists():
-            args.state.unlink()
-        return 0
-
-    architecture = _load_contract(ARCHITECTURE)
-    taxonomy = _load_contract(TAXONOMY)
-    state = load_state(args.state)
     try:
+        if args.command == "reset":
+            if args.run_key:
+                path = state_path_for_run(args.state_dir, args.run_key)
+                if path.exists():
+                    path.unlink()
+            else:
+                runs = args.state_dir / "runs"
+                if runs.exists():
+                    for path in runs.glob("*.json"):
+                        path.unlink()
+            return 0
+
+        architecture = _load_contract(ARCHITECTURE)
+        taxonomy = _load_contract(TAXONOMY)
+
         if args.command == "hook":
             raw = json.load(sys.stdin)
+            secret = load_or_create_local_secret(args.state_dir / "correlation.key")
+            run_key = derive_local_run_key(raw.get("generation_id"), secret)
+            state_path = state_path_for_run(args.state_dir, run_key)
+            state = load_state(state_path)
             state = apply_signal(
                 state,
                 adapt_cursor_hook(args.hook_name, raw),
                 architecture,
                 taxonomy,
             )
-            save_state(args.state, state)
+            save_state(state_path, state)
             return 0
+
+        state_path = state_path_for_run(args.state_dir, args.run_key)
+        state = load_state(state_path)
         if args.command == "receipt":
             state = apply_signal(
                 state,
@@ -66,8 +90,9 @@ def main() -> int:
                 architecture,
                 taxonomy,
             )
-            save_state(args.state, state)
+            save_state(state_path, state)
             return 0
+
         sys.stdout.write(json.dumps(compile_capsule(state), sort_keys=True, separators=(",", ":")) + "\n")
         return 0
     except (ObservatoryError, json.JSONDecodeError, OSError, KeyError, TypeError, ValueError) as exc:
