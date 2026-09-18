@@ -58,6 +58,14 @@ class PrivacyPreservingFailureObservatoryTests(unittest.TestCase):
         self.assertNotIn(secret, encoded)
         self.assertNotIn("private@example.com", encoded)
 
+    def test_marker_inside_user_content_is_not_attributed(self) -> None:
+        signal = adapt_cursor_hook(
+            "beforeSubmitPrompt",
+            {"prompt": "ordinary user text [[AFK_PROMPT:P07@2026.09]]"},
+        )
+        self.assertEqual(signal["prompt_id"], "UNKNOWN")
+        self.assertEqual(signal["prompt_release"], "UNKNOWN")
+
     def test_tool_failure_adapter_drops_command_error_path_and_ids(self) -> None:
         secret = "INTERNAL-HOSTNAME-DO-NOT-LEAK"
         signal = adapt_cursor_hook(
