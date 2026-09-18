@@ -65,13 +65,20 @@ class ObservatoryError(ValueError):
 
 def load_or_create_local_secret(path: Path) -> bytes:
     path.parent.mkdir(parents=True, exist_ok=True)
-    try:
-        fd = os.open(path, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o600)
-    except FileExistsError:
-        pass
-    else:
-        with os.fdopen(fd, "wb") as handle:
-            handle.write(secrets.token_bytes(32))
+    if not path.exists():
+        tmp = path.with_name(f"{path.name}.seed.{os.getpid()}.{secrets.token_hex(4)}")
+        try:
+            with tmp.open("xb") as handle:
+                handle.write(secrets.token_bytes(32))
+                handle.flush()
+                os.fsync(handle.fileno())
+            try:
+                os.link(tmp, path)
+            except FileExistsError:
+                pass
+        finally:
+            if tmp.exists():
+                tmp.unlink()
     secret = path.read_bytes()
     if len(secret) != 32:
         raise ObservatoryError("local correlation secret must be exactly 32 bytes")
