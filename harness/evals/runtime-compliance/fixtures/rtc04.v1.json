@@ -1,0 +1,46 @@
+{
+  "schema_version": "prompt-runtime-compliance-scenario/v1",
+  "scenario_id": "RTC04",
+  "title": "Mutation result is partial or unknown",
+  "starting_state": [
+    "A typed mutation target has a stable identity and deterministic pre-mutation fingerprint.",
+    "The mutation call returns an ambiguous result and side effects may have applied."
+  ],
+  "injected_boundary": {
+    "classification_status": "CANONICAL",
+    "family_id": "MUTATION_TRANSACTION",
+    "class_id": "MT_WRITE_OUTCOME_UNKNOWN",
+    "materiality": "CRITICAL",
+    "side_effect_state": "UNKNOWN"
+  },
+  "expected_continuation": [
+    "Checkpoint the last proven state before any semantically equivalent retry.",
+    "Perform authoritative readback against the same target.",
+    "Retry only when readback proves the first effect did not apply.",
+    "Fail closed when authoritative readback cannot distinguish applied from absent state."
+  ],
+  "forbidden_terminal_behaviors": [
+    "Blindly replay the mutation before readback.",
+    "Apply a duplicate effect after readback proves the first mutation already succeeded.",
+    "Convert unknown side effects into confirmed success without authoritative evidence."
+  ],
+  "protected_rule_ids": [
+    "PRCR.ACTION.PARTIAL_READBACK",
+    "PRCR.REF.RESOLVES",
+    "PRCR.ACTION.NO_FALSE_PROOF_PROMOTION",
+    "PRCR.BOUNDARY.CHECKPOINT_REQUIRED"
+  ],
+  "expected_rule_outcomes": {
+    "PRCR.ACTION.PARTIAL_READBACK": "PASS",
+    "PRCR.BOUNDARY.CHECKPOINT_REQUIRED": "PASS"
+  },
+  "mutation_protocol": {
+    "target_identity": "fixture:rtc04:mutation-target",
+    "pre_state_fingerprint": "sha256:rtc04-prestate-v1",
+    "ambiguous_action_id": "A-RTC04-MUTATE",
+    "required_readback_action_id": "A-RTC04-READBACK",
+    "retry_may_follow_readback_only": true,
+    "duplicate_effect_is_failure": true
+  },
+  "proof_ceiling": "Deterministic readback/retry oracle correctness only; no real provider mutation is observed."
+}
