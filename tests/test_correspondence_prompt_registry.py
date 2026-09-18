@@ -20,6 +20,7 @@ class CorrespondencePromptRegistryTests(unittest.TestCase):
             prompt["id"]: prompt
             for prompt in build_prompt_kit_registry.load_prompt_kit_registry()
         }
+        cls.policy = build_prompt_kit_registry.load_actionability_policy()
 
     def test_correspondence_prompts_are_content_only_with_stable_identity(self) -> None:
         self.assertNotIn("P72", self.operational_prompts)
@@ -34,6 +35,14 @@ class CorrespondencePromptRegistryTests(unittest.TestCase):
             self.assertEqual(prompt["color"], "Magenta")
             self.assertEqual(
                 prompt["actionabilityPolicy"], "not-applicable:content-only"
+            )
+            self.assertEqual(
+                prompt["boundaryContinuationPolicy"],
+                self.policy["boundary_sprint_policy_id"],
+            )
+            self.assertIn(
+                self.policy["boundary_sprint_marker"],
+                prompt["copyContent"],
             )
 
     def test_operational_prompts_keep_global_actionability_policy(self) -> None:
@@ -145,6 +154,12 @@ class CorrespondencePromptRegistryTests(unittest.TestCase):
                     "GREEN BRANCH INTEGRATION CONTRACT",
                     content,
                 )
+                self.assertIn(
+                    self.policy["boundary_sprint_marker"],
+                    content,
+                )
+                self.assertIn("sprint eligibility", content.lower())
+                self.assertIn("first safe progress-bearing action", content.lower())
 
     def test_render_includes_correspondence_runtime_and_profile_tokens(self) -> None:
         html = build_prompt_kit_registry.render()
