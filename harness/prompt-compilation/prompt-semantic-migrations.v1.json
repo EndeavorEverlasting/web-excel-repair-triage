@@ -4,5 +4,22 @@
     "preserve_canonical",
     "replacement_authorized"
   ],
-  "migrations": []
+  "migrations": [
+    {
+      "migration_id": "2026-09-18-p65-route-context-artifacts-to-p56",
+      "path": "registry/prompts/tutorial-discovery-prompts.v1.json",
+      "from_git_blob_sha1": "e35ee86a19c6b7704544aaad6947f1324c7f3b2b",
+      "to_git_blob_sha1": "272921ae2706f6329f29b7865137915ca0b69cfe",
+      "affected_prompt_ids": [
+        "P65"
+      ],
+      "change_kind": "strengthening",
+      "effective_identity_change": "preserve_canonical",
+      "rationale": "P65 already asks whether the user wants to create an artifact but its primary routing map omitted the canonical P56 Context-to-Artifact Generator. This migration records the reviewed strengthening that routes context-derived artifact creation to P56 while preserving P65's guided-finder identity and behavior.",
+      "focused_tests": [
+        "tests/test_prompt_kit_discovery.py",
+        "tests/test_prompt_quality_history.py"
+      ]
+    }
+  ]
 }
