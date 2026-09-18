@@ -80,13 +80,17 @@ class PromptLanguageCompilerTests(unittest.TestCase):
         self.assertEqual(receipt["schema_version"], "prompt-build-receipt/v1")
         self.assertRegex(receipt["effective_prompt_sha256"], r"^[a-f0-9]{64}$")
 
-    def test_p07_effective_prompt_requires_repository_local_proof_continuity(self) -> None:
+    def test_p07_effective_prompt_requires_local_proof_and_boundary_continuation(self) -> None:
         p07 = compiler.load_json(P07_SEMANTICS)
         result = compiler.render(p07, self.profile, self.context, policy=self.policy)
         prompt = result["effective_prompt"]
         self.assertEqual(
             result["receipt"]["activated_obligations"],
-            ["parallel_dispatch", "repository_local_proof_continuity"],
+            [
+                "parallel_dispatch",
+                "repository_local_proof_continuity",
+                "boundary_to_sprint_continuation",
+            ],
         )
         for phrase in (
             "MUST establish or reuse a repository-native local proof path before hosted CI becomes a single point of failure",
@@ -94,6 +98,11 @@ class PromptLanguageCompilerTests(unittest.TestCase):
             "MUST keep genuinely hosted-only gates typed as BLOCKED rather than promoting local PASS",
             "typed failure disposition LOCAL_PROOF_GAP",
             "repository_action_receipt_or_typed_hosted_only_gate",
+            "MUST treat every material non-terminal execution boundary as a transition into the next safe progress-bearing sprint, not as a completion checkpoint",
+            "MUST continue through branch, PR, review, check, phase, owner, provider, tool, context, and first-green boundaries whenever an authorized executable transition remains",
+            "MUST require operator input only when the next required transition genuinely depends on a user-only decision, unavailable credential or permission, unsafe action, or external event",
+            "typed failure disposition PREMATURE_TERMINATION_GAP",
+            "boundary_transition_receipt_or_typed_terminal_gate",
         ):
             self.assertIn(phrase, prompt)
 
@@ -103,8 +112,14 @@ class PromptLanguageCompilerTests(unittest.TestCase):
         serial_result = compiler.render(p07, self.profile, width_one, policy=self.policy)
         self.assertEqual(
             serial_result["receipt"]["activated_obligations"],
-            ["repository_local_proof_continuity"],
+            [
+                "repository_local_proof_continuity",
+                "boundary_to_sprint_continuation",
+            ],
         )
+        serial_prompt = serial_result["effective_prompt"]
+        self.assertIn("next safe progress-bearing sprint", serial_prompt)
+        self.assertIn("PREMATURE_TERMINATION_GAP", serial_prompt)
 
     def test_rejects_weakening_constructs_for_must_obligation(self) -> None:
         weak = (
