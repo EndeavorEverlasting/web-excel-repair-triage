@@ -69,7 +69,47 @@
       "git diff --cached --check",
       "git diff --check {base_sha}...{head_sha}"
     ],
-    "rule": "Patch hygiene is an early local gate, not a late hosted-CI cleanup step. A recurring whitespace failure must strengthen prevention and regression coverage rather than only strip the latest whitespace."
+    "rule": "Patch hygiene is an early local gate, not a late hosted-CI cleanup step. A recurring whitespace failure must strengthen prevention and regression coverage rather than only strip the latest whitespace.",
+    "line_ending_policy": {
+      "owner": ".gitattributes",
+      "text_default": "* text=auto",
+      "lf_patterns": [
+        ".gitattributes",
+        "*.py",
+        "*.json",
+        "*.md",
+        "*.yml",
+        "*.yaml",
+        "*.toml",
+        "*.ini",
+        "*.cfg",
+        "*.js",
+        "*.css",
+        "*.html",
+        "*.sh",
+        "*.ps1"
+      ],
+      "crlf_patterns": [
+        "*.cmd",
+        "*.bat"
+      ],
+      "binary_patterns": [
+        "*.xlsx",
+        "*.xlsm",
+        "*.xlsb",
+        "*.xls",
+        "*.docx",
+        "*.pptx",
+        "*.pdf",
+        "*.zip",
+        "*.png",
+        "*.jpg",
+        "*.jpeg",
+        "*.gif",
+        "*.webp"
+      ],
+      "rule": "Repository line-ending behavior is declared in .gitattributes. Source/config/docs use LF, Windows command launchers use CRLF, and binary artifacts opt out of text normalization. Do not mass-renormalize unrelated tracked files merely to introduce this policy."
+    }
   },
   "matrix_boundary": "The prompt retrospective matrix is one intake source, not the defect universe. A defect family may be created from local gates, CI, review, runtime, operator feedback, or commit history even when no prompt-use matrix row captures it.",
   "systemic_repair_requirements": [
