@@ -61,16 +61,17 @@ class ObservatoryError(ValueError):
 
 
 def load_or_create_local_secret(path: Path) -> bytes:
-    if path.exists():
-        secret = path.read_bytes()
-        if len(secret) != 32:
-            raise ObservatoryError("local correlation secret must be exactly 32 bytes")
-        return secret
     path.parent.mkdir(parents=True, exist_ok=True)
-    secret = secrets.token_bytes(32)
-    tmp = path.with_suffix(path.suffix + ".tmp")
-    tmp.write_bytes(secret)
-    os.replace(tmp, path)
+    try:
+        fd = os.open(path, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o600)
+    except FileExistsError:
+        pass
+    else:
+        with os.fdopen(fd, "wb") as handle:
+            handle.write(secrets.token_bytes(32))
+    secret = path.read_bytes()
+    if len(secret) != 32:
+        raise ObservatoryError("local correlation secret must be exactly 32 bytes")
     return secret
 
 
@@ -308,7 +309,7 @@ def load_state(path: Path) -> dict[str, Any]:
 
 def save_state(path: Path, state: dict[str, Any]) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
-    tmp = path.with_suffix(path.suffix + ".tmp")
+    tmp = path.with_name(f"{path.name}.tmp.{os.getpid()}.{secrets.token_hex(4)}")
     tmp.write_text(
         json.dumps(state, sort_keys=True, separators=(",", ":")) + "\n",
         encoding="utf-8",
