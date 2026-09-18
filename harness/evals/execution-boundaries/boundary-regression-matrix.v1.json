@@ -1,0 +1,4570 @@
+{
+  "schema_version": "execution-boundary-regression-matrix/v1",
+  "contract_id": "execution-boundary-regression-matrix",
+  "architecture_owner": "harness/contracts/execution-boundary-enforcement.v1.json",
+  "taxonomy_owner": "harness/contracts/execution-boundary-taxonomy.v1.json",
+  "case_contract": {
+    "required_fields": [
+      "case_id",
+      "title",
+      "classification",
+      "stimulus",
+      "expected_materiality",
+      "expected_recovery",
+      "positive_assertions",
+      "negative_assertions",
+      "proof_surfaces",
+      "proof_ceiling",
+      "input_event",
+      "expected_output",
+      "forbidden_outputs"
+    ],
+    "minimum_cases": 59,
+    "required_case_ids": [
+      "EBR-003",
+      "EBR-004",
+      "EBR-005",
+      "EBR-011",
+      "EBR-013",
+      "EBR-015",
+      "EBR-017",
+      "EBR-020",
+      "EBR-058",
+      "EBR-059"
+    ],
+    "executable_oracle": "scripts/execution_boundary_engine.py",
+    "execution_rule": "Every retained case must execute through the deterministic boundary engine and exactly match expected_output; forbidden_outputs are explicit negative controls."
+  },
+  "coverage_policy": {
+    "required_families": [
+      "EXECUTION_CONTROL",
+      "CAPABILITY_RUNTIME",
+      "PROVIDER_SERVICE",
+      "ACCESS_AUTHORITY",
+      "SAFETY_PRIVACY_POLICY",
+      "INPUT_IDENTITY_STATE",
+      "MUTATION_TRANSACTION",
+      "VALIDATION_PROOF",
+      "CONCURRENCY_INTEGRATION",
+      "ORCHESTRATION_RESOURCE",
+      "DEPENDENCY_EXTERNAL",
+      "USER_CONTROL",
+      "HARD_TERMINATION",
+      "UNKNOWN_EVOLUTION"
+    ],
+    "rule": "Every canonical class and every top-level family must have at least one positive/negative case; critical cross-cutting invariants also have named bespoke cases.",
+    "required_classes": "ALL_CANONICAL_CLASSES"
+  },
+  "cases": [
+    {
+      "case_id": "EBR-001",
+      "title": "Explicit tool failure becomes public transition",
+      "classification": "CR_TOOL_UNAVAILABLE",
+      "stimulus": "A required tool is unavailable while another evidenced adapter exists.",
+      "expected_materiality": "MATERIAL",
+      "expected_recovery": "FALLBACK_ADAPTER",
+      "positive_assertions": [
+        "Classify capability loss",
+        "Checkpoint current proof",
+        "Publish BOUNDARY/IMPACT/PROVED/RECOVERY/NEXT",
+        "Use fallback adapter and continue"
+      ],
+      "negative_assertions": [
+        "Do not silently omit the tool failure",
+        "Do not stop merely because the first adapter is unavailable"
+      ],
+      "proof_surfaces": [
+        "boundary_event",
+        "public_transition"
+      ],
+      "proof_ceiling": "Contract/regression semantics only; downstream model obedience and host-runtime execution remain unproven.",
+      "input_event": {
+        "observed_classification": "CR_TOOL_UNAVAILABLE",
+        "process_alive": true,
+        "repository_available": true,
+        "repository_relevant": true,
+        "side_effect_state": "NONE",
+        "raw_detail_sensitive": false
+      },
+      "expected_output": {
+        "classification": "CR_TOOL_UNAVAILABLE",
+        "materiality": "MATERIAL",
+        "recovery_disposition": "FALLBACK_ADAPTER",
+        "execution_path": [
+          "BOUNDARY_OBSERVED",
+          "BOUNDARY_CLASSIFIED",
+          "CHECKPOINTED",
+          "PUBLIC_TRANSITION_EMITTED",
+          "RECOVERY_SELECTED",
+          "RECOVERING"
+        ],
+        "checkpoint_required": true,
+        "journal_required": true,
+        "outbox_required": true,
+        "public_transition_required": true,
+        "repository_persistence_required": true,
+        "readback_required": false,
+        "redaction_required": false,
+        "supervisor_synthesized": false,
+        "taxonomy_evolution_required": false,
+        "success_terminal": false
+      },
+      "forbidden_outputs": [
+        {
+          "field": "success_terminal",
+          "value": true
+        },
+        {
+          "field": "public_transition_required",
+          "value": false
+        },
+        {
+          "field": "checkpoint_required",
+          "value": false
+        },
+        {
+          "field": "journal_required",
+          "value": false
+        },
+        {
+          "field": "outbox_required",
+          "value": false
+        }
+      ]
+    },
+    {
+      "case_id": "EBR-002",
+      "title": "Recovered provider quota is still disclosed",
+      "classification": "PS_QUOTA_OR_BILLING_LIMIT",
+      "stimulus": "Hosted provider quota blocks CI but exact-head repository-local proof is available.",
+      "expected_materiality": "MATERIAL",
+      "expected_recovery": "LOCAL_PROOF_SUBSTITUTE",
+      "positive_assertions": [
+        "Publish the provider degradation",
+        "Run the local proof substitute",
+        "Retain the boundary in run history",
+        "Continue integration when merge gates allow"
+      ],
+      "negative_assertions": [
+        "Do not call quota a hard blocker when local proof exists",
+        "Do not erase the event because recovery succeeds"
+      ],
+      "proof_surfaces": [
+        "boundary_event",
+        "public_transition"
+      ],
+      "proof_ceiling": "Contract/regression semantics only; downstream model obedience and host-runtime execution remain unproven.",
+      "input_event": {
+        "observed_classification": "PS_QUOTA_OR_BILLING_LIMIT",
+        "process_alive": true,
+        "repository_available": true,
+        "repository_relevant": true,
+        "side_effect_state": "NONE",
+        "raw_detail_sensitive": false
+      },
+      "expected_output": {
+        "classification": "PS_QUOTA_OR_BILLING_LIMIT",
+        "materiality": "MATERIAL",
+        "recovery_disposition": "LOCAL_PROOF_SUBSTITUTE",
+        "execution_path": [
+          "BOUNDARY_OBSERVED",
+          "BOUNDARY_CLASSIFIED",
+          "CHECKPOINTED",
+          "PUBLIC_TRANSITION_EMITTED",
+          "RECOVERY_SELECTED",
+          "RECOVERING"
+        ],
+        "checkpoint_required": true,
+        "journal_required": true,
+        "outbox_required": true,
+        "public_transition_required": true,
+        "repository_persistence_required": true,
+        "readback_required": false,
+        "redaction_required": false,
+        "supervisor_synthesized": false,
+        "taxonomy_evolution_required": false,
+        "success_terminal": false
+      },
+      "forbidden_outputs": [
+        {
+          "field": "success_terminal",
+          "value": true
+        },
+        {
+          "field": "public_transition_required",
+          "value": false
+        },
+        {
+          "field": "checkpoint_required",
+          "value": false
+        },
+        {
+          "field": "journal_required",
+          "value": false
+        },
+        {
+          "field": "outbox_required",
+          "value": false
+        }
+      ]
+    },
+    {
+      "case_id": "EBR-003",
+      "title": "Partial write reconciles before retry",
+      "classification": "MT_PARTIAL_SIDE_EFFECT_POSSIBLE",
+      "stimulus": "A bundled write errors after some child operations may have applied.",
+      "expected_materiality": "CRITICAL",
+      "expected_recovery": "READ_AFTER_WRITE_RECONCILE",
+      "positive_assertions": [
+        "Checkpoint attempted operations",
+        "Read back actual state before retry",
+        "Publish possible partial side effects",
+        "Retry only unapplied operations"
+      ],
+      "negative_assertions": [
+        "Do not replay the whole batch blindly",
+        "Do not claim no mutation occurred"
+      ],
+      "proof_surfaces": [
+        "boundary_event",
+        "public_transition"
+      ],
+      "proof_ceiling": "Contract/regression semantics only; downstream model obedience and host-runtime execution remain unproven.",
+      "input_event": {
+        "observed_classification": "MT_PARTIAL_SIDE_EFFECT_POSSIBLE",
+        "process_alive": true,
+        "repository_available": true,
+        "repository_relevant": true,
+        "side_effect_state": "PARTIAL_POSSIBLE",
+        "raw_detail_sensitive": false
+      },
+      "expected_output": {
+        "classification": "MT_PARTIAL_SIDE_EFFECT_POSSIBLE",
+        "materiality": "CRITICAL",
+        "recovery_disposition": "READ_AFTER_WRITE_RECONCILE",
+        "execution_path": [
+          "BOUNDARY_OBSERVED",
+          "BOUNDARY_CLASSIFIED",
+          "CHECKPOINTED",
+          "PUBLIC_TRANSITION_EMITTED",
+          "RECOVERY_SELECTED",
+          "RECOVERING"
+        ],
+        "checkpoint_required": true,
+        "journal_required": true,
+        "outbox_required": true,
+        "public_transition_required": true,
+        "repository_persistence_required": true,
+        "readback_required": true,
+        "redaction_required": false,
+        "supervisor_synthesized": false,
+        "taxonomy_evolution_required": false,
+        "success_terminal": false
+      },
+      "forbidden_outputs": [
+        {
+          "field": "success_terminal",
+          "value": true
+        },
+        {
+          "field": "public_transition_required",
+          "value": false
+        },
+        {
+          "field": "checkpoint_required",
+          "value": false
+        },
+        {
+          "field": "journal_required",
+          "value": false
+        },
+        {
+          "field": "outbox_required",
+          "value": false
+        },
+        {
+          "field": "readback_required",
+          "value": false
+        }
+      ]
+    },
+    {
+      "case_id": "EBR-004",
+      "title": "Safety classifier is reported safely",
+      "classification": "SP_SAFETY_CLASSIFIER_GATE",
+      "stimulus": "A write is blocked by a platform safety classifier whose raw internal details must not be exposed.",
+      "expected_materiality": "MATERIAL",
+      "expected_recovery": "REDACT_AND_DISCLOSE",
+      "positive_assertions": [
+        "Publish a safe operational abstraction of the boundary",
+        "Explain impact and recovery without secret/policy leakage",
+        "Continue via allowed path when available"
+      ],
+      "negative_assertions": [
+        "Do not expose hidden policy or secret raw payloads",
+        "Do not hide that a classifier changed the path"
+      ],
+      "proof_surfaces": [
+        "boundary_event",
+        "public_transition"
+      ],
+      "proof_ceiling": "Contract/regression semantics only; downstream model obedience and host-runtime execution remain unproven.",
+      "input_event": {
+        "observed_classification": "SP_SAFETY_CLASSIFIER_GATE",
+        "process_alive": true,
+        "repository_available": true,
+        "repository_relevant": true,
+        "side_effect_state": "NONE",
+        "raw_detail_sensitive": true
+      },
+      "expected_output": {
+        "classification": "SP_SAFETY_CLASSIFIER_GATE",
+        "materiality": "MATERIAL",
+        "recovery_disposition": "REDACT_AND_DISCLOSE",
+        "execution_path": [
+          "BOUNDARY_OBSERVED",
+          "BOUNDARY_CLASSIFIED",
+          "CHECKPOINTED",
+          "PUBLIC_TRANSITION_EMITTED",
+          "RECOVERY_SELECTED",
+          "RECOVERING"
+        ],
+        "checkpoint_required": true,
+        "journal_required": true,
+        "outbox_required": true,
+        "public_transition_required": true,
+        "repository_persistence_required": true,
+        "readback_required": false,
+        "redaction_required": true,
+        "supervisor_synthesized": false,
+        "taxonomy_evolution_required": false,
+        "success_terminal": false
+      },
+      "forbidden_outputs": [
+        {
+          "field": "success_terminal",
+          "value": true
+        },
+        {
+          "field": "public_transition_required",
+          "value": false
+        },
+        {
+          "field": "checkpoint_required",
+          "value": false
+        },
+        {
+          "field": "journal_required",
+          "value": false
+        },
+        {
+          "field": "outbox_required",
+          "value": false
+        }
+      ]
+    },
+    {
+      "case_id": "EBR-005",
+      "title": "Fanout ceiling serializes instead of quitting",
+      "classification": "OR_FANOUT_OR_TOOLCALL_CEILING",
+      "stimulus": "An orchestration batch exceeds the maximum allowed nested tool calls.",
+      "expected_materiality": "MATERIAL",
+      "expected_recovery": "SERIALIZE_AND_CONTINUE",
+      "positive_assertions": [
+        "Publish the orchestration ceiling",
+        "Preserve completed child results",
+        "Reduce fanout or serialize remaining work",
+        "Continue from checkpoint"
+      ],
+      "negative_assertions": [
+        "Do not restart already-proven child operations",
+        "Do not terminate the objective because batching failed"
+      ],
+      "proof_surfaces": [
+        "boundary_event",
+        "public_transition"
+      ],
+      "proof_ceiling": "Contract/regression semantics only; downstream model obedience and host-runtime execution remain unproven.",
+      "input_event": {
+        "observed_classification": "OR_FANOUT_OR_TOOLCALL_CEILING",
+        "process_alive": true,
+        "repository_available": true,
+        "repository_relevant": true,
+        "side_effect_state": "NONE",
+        "raw_detail_sensitive": false
+      },
+      "expected_output": {
+        "classification": "OR_FANOUT_OR_TOOLCALL_CEILING",
+        "materiality": "MATERIAL",
+        "recovery_disposition": "SERIALIZE_AND_CONTINUE",
+        "execution_path": [
+          "BOUNDARY_OBSERVED",
+          "BOUNDARY_CLASSIFIED",
+          "CHECKPOINTED",
+          "PUBLIC_TRANSITION_EMITTED",
+          "RECOVERY_SELECTED",
+          "RECOVERING"
+        ],
+        "checkpoint_required": true,
+        "journal_required": true,
+        "outbox_required": true,
+        "public_transition_required": true,
+        "repository_persistence_required": true,
+        "readback_required": false,
+        "redaction_required": false,
+        "supervisor_synthesized": false,
+        "taxonomy_evolution_required": false,
+        "success_terminal": false
+      },
+      "forbidden_outputs": [
+        {
+          "field": "success_terminal",
+          "value": true
+        },
+        {
+          "field": "public_transition_required",
+          "value": false
+        },
+        {
+          "field": "checkpoint_required",
+          "value": false
+        },
+        {
+          "field": "journal_required",
+          "value": false
+        },
+        {
+          "field": "outbox_required",
+          "value": false
+        }
+      ]
+    },
+    {
+      "case_id": "EBR-006",
+      "title": "Validation failure cannot become completion",
+      "classification": "VP_VALIDATOR_OR_TEST_FAILURE",
+      "stimulus": "Required focused regression fails on the candidate head.",
+      "expected_materiality": "MATERIAL",
+      "expected_recovery": "REPAIR_AND_RERUN",
+      "positive_assertions": [
+        "Publish failed proof transition",
+        "Diagnose and repair within scope",
+        "Rerun the owning validator",
+        "Keep completion false until green"
+      ],
+      "negative_assertions": [
+        "Do not relabel failure as skipped",
+        "Do not claim integration-ready from implementation alone"
+      ],
+      "proof_surfaces": [
+        "boundary_event",
+        "public_transition"
+      ],
+      "proof_ceiling": "Contract/regression semantics only; downstream model obedience and host-runtime execution remain unproven.",
+      "input_event": {
+        "observed_classification": "VP_VALIDATOR_OR_TEST_FAILURE",
+        "process_alive": true,
+        "repository_available": true,
+        "repository_relevant": true,
+        "side_effect_state": "NONE",
+        "raw_detail_sensitive": false
+      },
+      "expected_output": {
+        "classification": "VP_VALIDATOR_OR_TEST_FAILURE",
+        "materiality": "MATERIAL",
+        "recovery_disposition": "REPAIR_AND_RERUN",
+        "execution_path": [
+          "BOUNDARY_OBSERVED",
+          "BOUNDARY_CLASSIFIED",
+          "CHECKPOINTED",
+          "PUBLIC_TRANSITION_EMITTED",
+          "RECOVERY_SELECTED",
+          "RECOVERING"
+        ],
+        "checkpoint_required": true,
+        "journal_required": true,
+        "outbox_required": true,
+        "public_transition_required": true,
+        "repository_persistence_required": true,
+        "readback_required": false,
+        "redaction_required": false,
+        "supervisor_synthesized": false,
+        "taxonomy_evolution_required": false,
+        "success_terminal": false
+      },
+      "forbidden_outputs": [
+        {
+          "field": "success_terminal",
+          "value": true
+        },
+        {
+          "field": "public_transition_required",
+          "value": false
+        },
+        {
+          "field": "checkpoint_required",
+          "value": false
+        },
+        {
+          "field": "journal_required",
+          "value": false
+        },
+        {
+          "field": "outbox_required",
+          "value": false
+        }
+      ]
+    },
+    {
+      "case_id": "EBR-007",
+      "title": "Head movement forces proof reconciliation",
+      "classification": "CI_HEAD_OR_BASE_MOVED",
+      "stimulus": "Default branch advances after proof and proof relevance is not yet established.",
+      "expected_materiality": "MATERIAL",
+      "expected_recovery": "REFRESH_AND_RECONCILE",
+      "positive_assertions": [
+        "Publish stale proof boundary",
+        "Refresh and compare proof-relevant inputs",
+        "Rerun only affected proof",
+        "Continue on reconciled state"
+      ],
+      "negative_assertions": [
+        "Do not rely on remembered SHA",
+        "Do not discard valid unaffected proof without analysis"
+      ],
+      "proof_surfaces": [
+        "boundary_event",
+        "public_transition"
+      ],
+      "proof_ceiling": "Contract/regression semantics only; downstream model obedience and host-runtime execution remain unproven.",
+      "input_event": {
+        "observed_classification": "CI_HEAD_OR_BASE_MOVED",
+        "process_alive": true,
+        "repository_available": true,
+        "repository_relevant": true,
+        "side_effect_state": "NONE",
+        "raw_detail_sensitive": false
+      },
+      "expected_output": {
+        "classification": "CI_HEAD_OR_BASE_MOVED",
+        "materiality": "MATERIAL",
+        "recovery_disposition": "REFRESH_AND_RECONCILE",
+        "execution_path": [
+          "BOUNDARY_OBSERVED",
+          "BOUNDARY_CLASSIFIED",
+          "CHECKPOINTED",
+          "PUBLIC_TRANSITION_EMITTED",
+          "RECOVERY_SELECTED",
+          "RECOVERING"
+        ],
+        "checkpoint_required": true,
+        "journal_required": true,
+        "outbox_required": true,
+        "public_transition_required": true,
+        "repository_persistence_required": true,
+        "readback_required": false,
+        "redaction_required": false,
+        "supervisor_synthesized": false,
+        "taxonomy_evolution_required": false,
+        "success_terminal": false
+      },
+      "forbidden_outputs": [
+        {
+          "field": "success_terminal",
+          "value": true
+        },
+        {
+          "field": "public_transition_required",
+          "value": false
+        },
+        {
+          "field": "checkpoint_required",
+          "value": false
+        },
+        {
+          "field": "journal_required",
+          "value": false
+        },
+        {
+          "field": "outbox_required",
+          "value": false
+        }
+      ]
+    },
+    {
+      "case_id": "EBR-008",
+      "title": "Permission gate creates explicit external blocker",
+      "classification": "AA_PERMISSION_DENIED",
+      "stimulus": "Mutation requires permission the current actor does not possess.",
+      "expected_materiality": "MATERIAL",
+      "expected_recovery": "REQUEST_REQUIRED_AUTHORIZATION",
+      "positive_assertions": [
+        "Publish exact missing authority and impact",
+        "Checkpoint safe completed work",
+        "Preserve the first action that would advance the gate"
+      ],
+      "negative_assertions": [
+        "Do not fabricate access",
+        "Do not silently reduce requested outcome to read-only"
+      ],
+      "proof_surfaces": [
+        "boundary_event",
+        "public_transition"
+      ],
+      "proof_ceiling": "Contract/regression semantics only; downstream model obedience and host-runtime execution remain unproven.",
+      "input_event": {
+        "observed_classification": "AA_PERMISSION_DENIED",
+        "process_alive": true,
+        "repository_available": true,
+        "repository_relevant": true,
+        "side_effect_state": "NONE",
+        "raw_detail_sensitive": false
+      },
+      "expected_output": {
+        "classification": "AA_PERMISSION_DENIED",
+        "materiality": "MATERIAL",
+        "recovery_disposition": "REQUEST_REQUIRED_AUTHORIZATION",
+        "execution_path": [
+          "BOUNDARY_OBSERVED",
+          "BOUNDARY_CLASSIFIED",
+          "CHECKPOINTED",
+          "PUBLIC_TRANSITION_EMITTED",
+          "RECOVERY_SELECTED",
+          "QUIESCENT_BLOCKED"
+        ],
+        "checkpoint_required": true,
+        "journal_required": true,
+        "outbox_required": true,
+        "public_transition_required": true,
+        "repository_persistence_required": true,
+        "readback_required": false,
+        "redaction_required": false,
+        "supervisor_synthesized": false,
+        "taxonomy_evolution_required": false,
+        "success_terminal": false
+      },
+      "forbidden_outputs": [
+        {
+          "field": "success_terminal",
+          "value": true
+        },
+        {
+          "field": "public_transition_required",
+          "value": false
+        },
+        {
+          "field": "checkpoint_required",
+          "value": false
+        },
+        {
+          "field": "journal_required",
+          "value": false
+        },
+        {
+          "field": "outbox_required",
+          "value": false
+        }
+      ]
+    },
+    {
+      "case_id": "EBR-009",
+      "title": "Private raw details are redacted, not the event",
+      "classification": "SP_SECRET_OR_PRIVATE_EXPOSURE_RISK",
+      "stimulus": "Boundary evidence contains credentials or private content.",
+      "expected_materiality": "CRITICAL",
+      "expected_recovery": "REDACT_AND_DISCLOSE",
+      "positive_assertions": [
+        "Redact raw details",
+        "Publish safe event existence/impact/checkpoint/recovery",
+        "Persist only policy-safe evidence"
+      ],
+      "negative_assertions": [
+        "Do not publish secrets",
+        "Do not suppress the boundary entirely"
+      ],
+      "proof_surfaces": [
+        "boundary_event",
+        "public_transition"
+      ],
+      "proof_ceiling": "Contract/regression semantics only; downstream model obedience and host-runtime execution remain unproven.",
+      "input_event": {
+        "observed_classification": "SP_SECRET_OR_PRIVATE_EXPOSURE_RISK",
+        "process_alive": true,
+        "repository_available": true,
+        "repository_relevant": true,
+        "side_effect_state": "NONE",
+        "raw_detail_sensitive": true
+      },
+      "expected_output": {
+        "classification": "SP_SECRET_OR_PRIVATE_EXPOSURE_RISK",
+        "materiality": "CRITICAL",
+        "recovery_disposition": "REDACT_AND_DISCLOSE",
+        "execution_path": [
+          "BOUNDARY_OBSERVED",
+          "BOUNDARY_CLASSIFIED",
+          "CHECKPOINTED",
+          "PUBLIC_TRANSITION_EMITTED",
+          "RECOVERY_SELECTED",
+          "RECOVERING"
+        ],
+        "checkpoint_required": true,
+        "journal_required": true,
+        "outbox_required": true,
+        "public_transition_required": true,
+        "repository_persistence_required": true,
+        "readback_required": false,
+        "redaction_required": true,
+        "supervisor_synthesized": false,
+        "taxonomy_evolution_required": false,
+        "success_terminal": false
+      },
+      "forbidden_outputs": [
+        {
+          "field": "success_terminal",
+          "value": true
+        },
+        {
+          "field": "public_transition_required",
+          "value": false
+        },
+        {
+          "field": "checkpoint_required",
+          "value": false
+        },
+        {
+          "field": "journal_required",
+          "value": false
+        },
+        {
+          "field": "outbox_required",
+          "value": false
+        }
+      ]
+    },
+    {
+      "case_id": "EBR-010",
+      "title": "Repeated unchanged blocker quiesces without churn",
+      "classification": "OR_RETRY_BUDGET_EXHAUSTED",
+      "stimulus": "The same external blocker recurs with unchanged proof-relevance fingerprint and no new hypothesis.",
+      "expected_materiality": "MATERIAL",
+      "expected_recovery": "QUIESCE_UNCHANGED_BLOCKER",
+      "positive_assertions": [
+        "Publish durable blocked state once",
+        "Quiesce retries",
+        "Preserve resumption trigger/next action"
+      ],
+      "negative_assertions": [
+        "Do not create endless ledger-only commits",
+        "Do not keep retrying unchanged inputs"
+      ],
+      "proof_surfaces": [
+        "boundary_event",
+        "public_transition"
+      ],
+      "proof_ceiling": "Contract/regression semantics only; downstream model obedience and host-runtime execution remain unproven.",
+      "input_event": {
+        "observed_classification": "OR_RETRY_BUDGET_EXHAUSTED",
+        "process_alive": true,
+        "repository_available": true,
+        "repository_relevant": true,
+        "side_effect_state": "NONE",
+        "raw_detail_sensitive": false
+      },
+      "expected_output": {
+        "classification": "OR_RETRY_BUDGET_EXHAUSTED",
+        "materiality": "MATERIAL",
+        "recovery_disposition": "QUIESCE_UNCHANGED_BLOCKER",
+        "execution_path": [
+          "BOUNDARY_OBSERVED",
+          "BOUNDARY_CLASSIFIED",
+          "CHECKPOINTED",
+          "PUBLIC_TRANSITION_EMITTED",
+          "RECOVERY_SELECTED",
+          "QUIESCENT_BLOCKED"
+        ],
+        "checkpoint_required": true,
+        "journal_required": true,
+        "outbox_required": true,
+        "public_transition_required": true,
+        "repository_persistence_required": true,
+        "readback_required": false,
+        "redaction_required": false,
+        "supervisor_synthesized": false,
+        "taxonomy_evolution_required": false,
+        "success_terminal": false
+      },
+      "forbidden_outputs": [
+        {
+          "field": "success_terminal",
+          "value": true
+        },
+        {
+          "field": "public_transition_required",
+          "value": false
+        },
+        {
+          "field": "checkpoint_required",
+          "value": false
+        },
+        {
+          "field": "journal_required",
+          "value": false
+        },
+        {
+          "field": "outbox_required",
+          "value": false
+        }
+      ]
+    },
+    {
+      "case_id": "EBR-011",
+      "title": "Semantic abandonment is detected without exception",
+      "classification": "EC_SEMANTIC_ABANDONMENT",
+      "stimulus": "Agent stops after inspecting status even though safe progress-bearing implementation remains.",
+      "expected_materiality": "MATERIAL",
+      "expected_recovery": "RESUME_FROM_CHECKPOINT",
+      "positive_assertions": [
+        "Liveness/finalization gate rejects the stop",
+        "Publish that required progress remained",
+        "Resume from last checkpoint"
+      ],
+      "negative_assertions": [
+        "Do not require an exception to recognize the defect",
+        "Do not call status inspection completion"
+      ],
+      "proof_surfaces": [
+        "boundary_event",
+        "public_transition"
+      ],
+      "proof_ceiling": "Contract/regression semantics only; downstream model obedience and host-runtime execution remain unproven.",
+      "input_event": {
+        "observed_classification": "EC_SEMANTIC_ABANDONMENT",
+        "process_alive": true,
+        "repository_available": true,
+        "repository_relevant": true,
+        "side_effect_state": "NONE",
+        "raw_detail_sensitive": false
+      },
+      "expected_output": {
+        "classification": "EC_SEMANTIC_ABANDONMENT",
+        "materiality": "MATERIAL",
+        "recovery_disposition": "RESUME_FROM_CHECKPOINT",
+        "execution_path": [
+          "BOUNDARY_OBSERVED",
+          "BOUNDARY_CLASSIFIED",
+          "CHECKPOINTED",
+          "PUBLIC_TRANSITION_EMITTED",
+          "RECOVERY_SELECTED",
+          "RECOVERING"
+        ],
+        "checkpoint_required": true,
+        "journal_required": true,
+        "outbox_required": true,
+        "public_transition_required": true,
+        "repository_persistence_required": true,
+        "readback_required": false,
+        "redaction_required": false,
+        "supervisor_synthesized": false,
+        "taxonomy_evolution_required": false,
+        "success_terminal": false
+      },
+      "forbidden_outputs": [
+        {
+          "field": "success_terminal",
+          "value": true
+        },
+        {
+          "field": "public_transition_required",
+          "value": false
+        },
+        {
+          "field": "checkpoint_required",
+          "value": false
+        },
+        {
+          "field": "journal_required",
+          "value": false
+        },
+        {
+          "field": "outbox_required",
+          "value": false
+        }
+      ]
+    },
+    {
+      "case_id": "EBR-012",
+      "title": "Premature completion is blocked",
+      "classification": "EC_PREMATURE_COMPLETION",
+      "stimulus": "An open green PR is treated as done while authorized merge remains safe and required.",
+      "expected_materiality": "MATERIAL",
+      "expected_recovery": "RESUME_FROM_CHECKPOINT",
+      "positive_assertions": [
+        "Finalization reconstructs requested outcome",
+        "Keep integration unproven",
+        "Advance merge or classify the real gate"
+      ],
+      "negative_assertions": [
+        "Do not equate PR-open/green with integrated",
+        "Do not emit COMPLETE early"
+      ],
+      "proof_surfaces": [
+        "boundary_event",
+        "public_transition"
+      ],
+      "proof_ceiling": "Contract/regression semantics only; downstream model obedience and host-runtime execution remain unproven.",
+      "input_event": {
+        "observed_classification": "EC_PREMATURE_COMPLETION",
+        "process_alive": true,
+        "repository_available": true,
+        "repository_relevant": true,
+        "side_effect_state": "NONE",
+        "raw_detail_sensitive": false
+      },
+      "expected_output": {
+        "classification": "EC_PREMATURE_COMPLETION",
+        "materiality": "MATERIAL",
+        "recovery_disposition": "RESUME_FROM_CHECKPOINT",
+        "execution_path": [
+          "BOUNDARY_OBSERVED",
+          "BOUNDARY_CLASSIFIED",
+          "CHECKPOINTED",
+          "PUBLIC_TRANSITION_EMITTED",
+          "RECOVERY_SELECTED",
+          "RECOVERING"
+        ],
+        "checkpoint_required": true,
+        "journal_required": true,
+        "outbox_required": true,
+        "public_transition_required": true,
+        "repository_persistence_required": true,
+        "readback_required": false,
+        "redaction_required": false,
+        "supervisor_synthesized": false,
+        "taxonomy_evolution_required": false,
+        "success_terminal": false
+      },
+      "forbidden_outputs": [
+        {
+          "field": "success_terminal",
+          "value": true
+        },
+        {
+          "field": "public_transition_required",
+          "value": false
+        },
+        {
+          "field": "checkpoint_required",
+          "value": false
+        },
+        {
+          "field": "journal_required",
+          "value": false
+        },
+        {
+          "field": "outbox_required",
+          "value": false
+        }
+      ]
+    },
+    {
+      "case_id": "EBR-013",
+      "title": "Successful recovery does not erase history",
+      "classification": "EC_RECOVERY_NOT_DISCLOSED",
+      "stimulus": "A transient provider failure is recovered by fallback before closeout.",
+      "expected_materiality": "MATERIAL",
+      "expected_recovery": "CONTINUE_UNCHANGED",
+      "positive_assertions": [
+        "Material path change is still published",
+        "Recovered event remains in journal",
+        "Final proof names the recovered path"
+      ],
+      "negative_assertions": [
+        "Do not omit the boundary because outcome eventually succeeds",
+        "Do not rewrite history as uninterrupted execution"
+      ],
+      "proof_surfaces": [
+        "boundary_event",
+        "public_transition"
+      ],
+      "proof_ceiling": "Contract/regression semantics only; downstream model obedience and host-runtime execution remain unproven.",
+      "input_event": {
+        "observed_classification": "EC_RECOVERY_NOT_DISCLOSED",
+        "process_alive": true,
+        "repository_available": true,
+        "repository_relevant": true,
+        "side_effect_state": "NONE",
+        "raw_detail_sensitive": false
+      },
+      "expected_output": {
+        "classification": "EC_RECOVERY_NOT_DISCLOSED",
+        "materiality": "MATERIAL",
+        "recovery_disposition": "CONTINUE_UNCHANGED",
+        "execution_path": [
+          "BOUNDARY_OBSERVED",
+          "BOUNDARY_CLASSIFIED",
+          "CHECKPOINTED",
+          "PUBLIC_TRANSITION_EMITTED",
+          "RECOVERY_SELECTED",
+          "RECOVERING"
+        ],
+        "checkpoint_required": true,
+        "journal_required": true,
+        "outbox_required": true,
+        "public_transition_required": true,
+        "repository_persistence_required": true,
+        "readback_required": false,
+        "redaction_required": false,
+        "supervisor_synthesized": false,
+        "taxonomy_evolution_required": false,
+        "success_terminal": false
+      },
+      "forbidden_outputs": [
+        {
+          "field": "success_terminal",
+          "value": true
+        },
+        {
+          "field": "public_transition_required",
+          "value": false
+        },
+        {
+          "field": "checkpoint_required",
+          "value": false
+        },
+        {
+          "field": "journal_required",
+          "value": false
+        },
+        {
+          "field": "outbox_required",
+          "value": false
+        }
+      ]
+    },
+    {
+      "case_id": "EBR-014",
+      "title": "User interruption checkpoints active work",
+      "classification": "UC_USER_INTERRUPT",
+      "stimulus": "User steers the run while the current objective is mid-flight.",
+      "expected_materiality": "MATERIAL",
+      "expected_recovery": "RESUME_FROM_CHECKPOINT",
+      "positive_assertions": [
+        "Checkpoint current state",
+        "Acknowledge steering",
+        "Replan/resume without losing proven work"
+      ],
+      "negative_assertions": [
+        "Do not discard completed mutations",
+        "Do not treat interruption as completion"
+      ],
+      "proof_surfaces": [
+        "boundary_event",
+        "public_transition"
+      ],
+      "proof_ceiling": "Contract/regression semantics only; downstream model obedience and host-runtime execution remain unproven.",
+      "input_event": {
+        "observed_classification": "UC_USER_INTERRUPT",
+        "process_alive": true,
+        "repository_available": true,
+        "repository_relevant": true,
+        "side_effect_state": "NONE",
+        "raw_detail_sensitive": false
+      },
+      "expected_output": {
+        "classification": "UC_USER_INTERRUPT",
+        "materiality": "MATERIAL",
+        "recovery_disposition": "RESUME_FROM_CHECKPOINT",
+        "execution_path": [
+          "BOUNDARY_OBSERVED",
+          "BOUNDARY_CLASSIFIED",
+          "CHECKPOINTED",
+          "PUBLIC_TRANSITION_EMITTED",
+          "RECOVERY_SELECTED",
+          "RECOVERING"
+        ],
+        "checkpoint_required": true,
+        "journal_required": true,
+        "outbox_required": true,
+        "public_transition_required": true,
+        "repository_persistence_required": true,
+        "readback_required": false,
+        "redaction_required": false,
+        "supervisor_synthesized": false,
+        "taxonomy_evolution_required": false,
+        "success_terminal": false
+      },
+      "forbidden_outputs": [
+        {
+          "field": "success_terminal",
+          "value": true
+        },
+        {
+          "field": "public_transition_required",
+          "value": false
+        },
+        {
+          "field": "checkpoint_required",
+          "value": false
+        },
+        {
+          "field": "journal_required",
+          "value": false
+        },
+        {
+          "field": "outbox_required",
+          "value": false
+        }
+      ]
+    },
+    {
+      "case_id": "EBR-015",
+      "title": "Hard termination is synthesized externally",
+      "classification": "HT_HOST_FORCED_TERMINATION",
+      "stimulus": "Host kills the acting process after a checkpoint but before a terminal event.",
+      "expected_materiality": "CRITICAL",
+      "expected_recovery": "SYNTHESIZE_TERMINATION",
+      "positive_assertions": [
+        "External supervisor emits HARD_TERMINATED_SYNTHETIC",
+        "Expose last proven checkpoint",
+        "Provide resumable continuation"
+      ],
+      "negative_assertions": [
+        "Do not require the dead process to self-report",
+        "Do not synthesize COMPLETE"
+      ],
+      "proof_surfaces": [
+        "supervisor_event",
+        "checkpoint"
+      ],
+      "proof_ceiling": "Contract/regression semantics only; downstream model obedience and host-runtime execution remain unproven.",
+      "input_event": {
+        "observed_classification": "HT_HOST_FORCED_TERMINATION",
+        "process_alive": false,
+        "repository_available": true,
+        "repository_relevant": true,
+        "side_effect_state": "NONE",
+        "raw_detail_sensitive": false
+      },
+      "expected_output": {
+        "classification": "HT_HOST_FORCED_TERMINATION",
+        "materiality": "CRITICAL",
+        "recovery_disposition": "SYNTHESIZE_TERMINATION",
+        "execution_path": [
+          "HARD_TERMINATED_SYNTHETIC"
+        ],
+        "checkpoint_required": true,
+        "journal_required": true,
+        "outbox_required": true,
+        "public_transition_required": true,
+        "repository_persistence_required": true,
+        "readback_required": false,
+        "redaction_required": false,
+        "supervisor_synthesized": true,
+        "taxonomy_evolution_required": false,
+        "success_terminal": false
+      },
+      "forbidden_outputs": [
+        {
+          "field": "success_terminal",
+          "value": true
+        },
+        {
+          "field": "public_transition_required",
+          "value": false
+        },
+        {
+          "field": "checkpoint_required",
+          "value": false
+        },
+        {
+          "field": "journal_required",
+          "value": false
+        },
+        {
+          "field": "outbox_required",
+          "value": false
+        },
+        {
+          "field": "supervisor_synthesized",
+          "value": false
+        }
+      ]
+    },
+    {
+      "case_id": "EBR-016",
+      "title": "Unknown write outcome requires readback",
+      "classification": "MT_WRITE_OUTCOME_UNKNOWN",
+      "stimulus": "A provider timeout occurs during a mutation and commit status is unknown.",
+      "expected_materiality": "CRITICAL",
+      "expected_recovery": "READ_AFTER_WRITE_RECONCILE",
+      "positive_assertions": [
+        "Treat side effect as unknown",
+        "Read authoritative state before retry",
+        "Publish duplicate/replay risk"
+      ],
+      "negative_assertions": [
+        "Do not retry blindly",
+        "Do not claim rollback without proof"
+      ],
+      "proof_surfaces": [
+        "boundary_event",
+        "public_transition"
+      ],
+      "proof_ceiling": "Contract/regression semantics only; downstream model obedience and host-runtime execution remain unproven.",
+      "input_event": {
+        "observed_classification": "MT_WRITE_OUTCOME_UNKNOWN",
+        "process_alive": true,
+        "repository_available": true,
+        "repository_relevant": true,
+        "side_effect_state": "UNKNOWN",
+        "raw_detail_sensitive": false
+      },
+      "expected_output": {
+        "classification": "MT_WRITE_OUTCOME_UNKNOWN",
+        "materiality": "CRITICAL",
+        "recovery_disposition": "READ_AFTER_WRITE_RECONCILE",
+        "execution_path": [
+          "BOUNDARY_OBSERVED",
+          "BOUNDARY_CLASSIFIED",
+          "CHECKPOINTED",
+          "PUBLIC_TRANSITION_EMITTED",
+          "RECOVERY_SELECTED",
+          "RECOVERING"
+        ],
+        "checkpoint_required": true,
+        "journal_required": true,
+        "outbox_required": true,
+        "public_transition_required": true,
+        "repository_persistence_required": true,
+        "readback_required": true,
+        "redaction_required": false,
+        "supervisor_synthesized": false,
+        "taxonomy_evolution_required": false,
+        "success_terminal": false
+      },
+      "forbidden_outputs": [
+        {
+          "field": "success_terminal",
+          "value": true
+        },
+        {
+          "field": "public_transition_required",
+          "value": false
+        },
+        {
+          "field": "checkpoint_required",
+          "value": false
+        },
+        {
+          "field": "journal_required",
+          "value": false
+        },
+        {
+          "field": "outbox_required",
+          "value": false
+        },
+        {
+          "field": "readback_required",
+          "value": false
+        }
+      ]
+    },
+    {
+      "case_id": "EBR-017",
+      "title": "Proof ceiling becomes successor work, not fake completion",
+      "classification": "VP_PROOF_CEILING_REACHED",
+      "stimulus": "Repository tests pass but protected production observation cannot be performed in this environment.",
+      "expected_materiality": "MATERIAL",
+      "expected_recovery": "HANDOFF_REQUIRED_SUCCESSOR",
+      "positive_assertions": [
+        "Publish strongest proven state",
+        "Name exact higher-state gate",
+        "Preserve required successor work and first action"
+      ],
+      "negative_assertions": [
+        "Do not promote validated to observed",
+        "Do not call the whole outcome complete"
+      ],
+      "proof_surfaces": [
+        "boundary_event",
+        "public_transition"
+      ],
+      "proof_ceiling": "Contract/regression semantics only; downstream model obedience and host-runtime execution remain unproven.",
+      "input_event": {
+        "observed_classification": "VP_PROOF_CEILING_REACHED",
+        "process_alive": true,
+        "repository_available": true,
+        "repository_relevant": true,
+        "side_effect_state": "NONE",
+        "raw_detail_sensitive": false
+      },
+      "expected_output": {
+        "classification": "VP_PROOF_CEILING_REACHED",
+        "materiality": "MATERIAL",
+        "recovery_disposition": "HANDOFF_REQUIRED_SUCCESSOR",
+        "execution_path": [
+          "BOUNDARY_OBSERVED",
+          "BOUNDARY_CLASSIFIED",
+          "CHECKPOINTED",
+          "PUBLIC_TRANSITION_EMITTED",
+          "RECOVERY_SELECTED",
+          "QUIESCENT_BLOCKED"
+        ],
+        "checkpoint_required": true,
+        "journal_required": true,
+        "outbox_required": true,
+        "public_transition_required": true,
+        "repository_persistence_required": true,
+        "readback_required": false,
+        "redaction_required": false,
+        "supervisor_synthesized": false,
+        "taxonomy_evolution_required": false,
+        "success_terminal": false
+      },
+      "forbidden_outputs": [
+        {
+          "field": "success_terminal",
+          "value": true
+        },
+        {
+          "field": "public_transition_required",
+          "value": false
+        },
+        {
+          "field": "checkpoint_required",
+          "value": false
+        },
+        {
+          "field": "journal_required",
+          "value": false
+        },
+        {
+          "field": "outbox_required",
+          "value": false
+        }
+      ]
+    },
+    {
+      "case_id": "EBR-018",
+      "title": "Writer collision serializes shared mutation",
+      "classification": "CI_WRITER_COLLISION",
+      "stimulus": "Two agents attempt overlapping writes to the same canonical file.",
+      "expected_materiality": "MATERIAL",
+      "expected_recovery": "SERIALIZE_AND_CONTINUE",
+      "positive_assertions": [
+        "Publish collision",
+        "Preserve both lanes",
+        "Serialize or reassign ownership",
+        "Reconcile before integration"
+      ],
+      "negative_assertions": [
+        "Do not allow concurrent blind overwrite",
+        "Do not discard sibling work"
+      ],
+      "proof_surfaces": [
+        "boundary_event",
+        "public_transition"
+      ],
+      "proof_ceiling": "Contract/regression semantics only; downstream model obedience and host-runtime execution remain unproven.",
+      "input_event": {
+        "observed_classification": "CI_WRITER_COLLISION",
+        "process_alive": true,
+        "repository_available": true,
+        "repository_relevant": true,
+        "side_effect_state": "NONE",
+        "raw_detail_sensitive": false
+      },
+      "expected_output": {
+        "classification": "CI_WRITER_COLLISION",
+        "materiality": "MATERIAL",
+        "recovery_disposition": "SERIALIZE_AND_CONTINUE",
+        "execution_path": [
+          "BOUNDARY_OBSERVED",
+          "BOUNDARY_CLASSIFIED",
+          "CHECKPOINTED",
+          "PUBLIC_TRANSITION_EMITTED",
+          "RECOVERY_SELECTED",
+          "RECOVERING"
+        ],
+        "checkpoint_required": true,
+        "journal_required": true,
+        "outbox_required": true,
+        "public_transition_required": true,
+        "repository_persistence_required": true,
+        "readback_required": false,
+        "redaction_required": false,
+        "supervisor_synthesized": false,
+        "taxonomy_evolution_required": false,
+        "success_terminal": false
+      },
+      "forbidden_outputs": [
+        {
+          "field": "success_terminal",
+          "value": true
+        },
+        {
+          "field": "public_transition_required",
+          "value": false
+        },
+        {
+          "field": "checkpoint_required",
+          "value": false
+        },
+        {
+          "field": "journal_required",
+          "value": false
+        },
+        {
+          "field": "outbox_required",
+          "value": false
+        }
+      ]
+    },
+    {
+      "case_id": "EBR-019",
+      "title": "Schema drift invalidates remembered commands",
+      "classification": "IS_SCHEMA_OR_VERSION_DRIFT",
+      "stimulus": "Provider or repository schema changed since the prior known-good command.",
+      "expected_materiality": "MATERIAL",
+      "expected_recovery": "REPLAN_WITHIN_SCOPE",
+      "positive_assertions": [
+        "Publish drift",
+        "Refresh authoritative schema/owner",
+        "Replan command against current contract"
+      ],
+      "negative_assertions": [
+        "Do not execute stale remembered syntax",
+        "Do not conceal compatibility uncertainty"
+      ],
+      "proof_surfaces": [
+        "boundary_event",
+        "public_transition"
+      ],
+      "proof_ceiling": "Contract/regression semantics only; downstream model obedience and host-runtime execution remain unproven.",
+      "input_event": {
+        "observed_classification": "IS_SCHEMA_OR_VERSION_DRIFT",
+        "process_alive": true,
+        "repository_available": true,
+        "repository_relevant": true,
+        "side_effect_state": "NONE",
+        "raw_detail_sensitive": false
+      },
+      "expected_output": {
+        "classification": "IS_SCHEMA_OR_VERSION_DRIFT",
+        "materiality": "MATERIAL",
+        "recovery_disposition": "REPLAN_WITHIN_SCOPE",
+        "execution_path": [
+          "BOUNDARY_OBSERVED",
+          "BOUNDARY_CLASSIFIED",
+          "CHECKPOINTED",
+          "PUBLIC_TRANSITION_EMITTED",
+          "RECOVERY_SELECTED",
+          "RECOVERING"
+        ],
+        "checkpoint_required": true,
+        "journal_required": true,
+        "outbox_required": true,
+        "public_transition_required": true,
+        "repository_persistence_required": true,
+        "readback_required": false,
+        "redaction_required": false,
+        "supervisor_synthesized": false,
+        "taxonomy_evolution_required": false,
+        "success_terminal": false
+      },
+      "forbidden_outputs": [
+        {
+          "field": "success_terminal",
+          "value": true
+        },
+        {
+          "field": "public_transition_required",
+          "value": false
+        },
+        {
+          "field": "checkpoint_required",
+          "value": false
+        },
+        {
+          "field": "journal_required",
+          "value": false
+        },
+        {
+          "field": "outbox_required",
+          "value": false
+        }
+      ]
+    },
+    {
+      "case_id": "EBR-020",
+      "title": "No repository does not suppress user disclosure",
+      "classification": "CR_ENVIRONMENT_MISSING",
+      "stimulus": "No writable repository/evidence store exists for a material runtime boundary.",
+      "expected_materiality": "MATERIAL",
+      "expected_recovery": "FALLBACK_ADAPTER",
+      "positive_assertions": [
+        "Still publish user-visible transition",
+        "Preserve bounded handoff in available run state",
+        "State repository persistence is unavailable"
+      ],
+      "negative_assertions": [
+        "Do not invent a repository",
+        "Do not suppress disclosure because durable remote persistence is unavailable"
+      ],
+      "proof_surfaces": [
+        "boundary_event",
+        "public_transition"
+      ],
+      "proof_ceiling": "Contract/regression semantics only; downstream model obedience and host-runtime execution remain unproven.",
+      "input_event": {
+        "observed_classification": "CR_ENVIRONMENT_MISSING",
+        "process_alive": true,
+        "repository_available": false,
+        "repository_relevant": true,
+        "side_effect_state": "NONE",
+        "raw_detail_sensitive": false
+      },
+      "expected_output": {
+        "classification": "CR_ENVIRONMENT_MISSING",
+        "materiality": "MATERIAL",
+        "recovery_disposition": "FALLBACK_ADAPTER",
+        "execution_path": [
+          "BOUNDARY_OBSERVED",
+          "BOUNDARY_CLASSIFIED",
+          "CHECKPOINTED",
+          "PUBLIC_TRANSITION_EMITTED",
+          "RECOVERY_SELECTED",
+          "RECOVERING"
+        ],
+        "checkpoint_required": true,
+        "journal_required": true,
+        "outbox_required": true,
+        "public_transition_required": true,
+        "repository_persistence_required": false,
+        "readback_required": false,
+        "redaction_required": false,
+        "supervisor_synthesized": false,
+        "taxonomy_evolution_required": false,
+        "success_terminal": false
+      },
+      "forbidden_outputs": [
+        {
+          "field": "success_terminal",
+          "value": true
+        },
+        {
+          "field": "public_transition_required",
+          "value": false
+        },
+        {
+          "field": "checkpoint_required",
+          "value": false
+        },
+        {
+          "field": "journal_required",
+          "value": false
+        },
+        {
+          "field": "outbox_required",
+          "value": false
+        }
+      ]
+    },
+    {
+      "case_id": "EBR-021",
+      "title": "Class coverage: EC_SILENT_SCOPE_REDUCTION",
+      "classification": "EC_SILENT_SCOPE_REDUCTION",
+      "stimulus": "A runtime reports EC_SILENT_SCOPE_REDUCTION: Owned/requested scope was silently narrowed after friction or uncertainty.",
+      "expected_materiality": "MATERIAL",
+      "expected_recovery": "REPLAN_WITHIN_SCOPE",
+      "positive_assertions": [
+        "Classify the event as EC_SILENT_SCOPE_REDUCTION within family EXECUTION_CONTROL",
+        "Apply the architecture materiality rule and checkpoint before unsafe retry",
+        "Emit the public transition when material",
+        "Route recovery through REPLAN_WITHIN_SCOPE unless stronger current evidence justifies another allowed disposition"
+      ],
+      "negative_assertions": [
+        "Do not leave a material event as unclassified internal operational information",
+        "Do not claim completion merely because the original execution path became unavailable"
+      ],
+      "proof_surfaces": [
+        "boundary_event",
+        "public_transition",
+        "recovery_disposition"
+      ],
+      "proof_ceiling": "Taxonomy-class regression semantics only; downstream model obedience and external runtime execution remain unproven.",
+      "input_event": {
+        "observed_classification": "EC_SILENT_SCOPE_REDUCTION",
+        "process_alive": true,
+        "repository_available": true,
+        "repository_relevant": true,
+        "side_effect_state": "NONE",
+        "raw_detail_sensitive": false
+      },
+      "expected_output": {
+        "classification": "EC_SILENT_SCOPE_REDUCTION",
+        "materiality": "MATERIAL",
+        "recovery_disposition": "REPLAN_WITHIN_SCOPE",
+        "execution_path": [
+          "BOUNDARY_OBSERVED",
+          "BOUNDARY_CLASSIFIED",
+          "CHECKPOINTED",
+          "PUBLIC_TRANSITION_EMITTED",
+          "RECOVERY_SELECTED",
+          "RECOVERING"
+        ],
+        "checkpoint_required": true,
+        "journal_required": true,
+        "outbox_required": true,
+        "public_transition_required": true,
+        "repository_persistence_required": true,
+        "readback_required": false,
+        "redaction_required": false,
+        "supervisor_synthesized": false,
+        "taxonomy_evolution_required": false,
+        "success_terminal": false
+      },
+      "forbidden_outputs": [
+        {
+          "field": "success_terminal",
+          "value": true
+        },
+        {
+          "field": "public_transition_required",
+          "value": false
+        },
+        {
+          "field": "checkpoint_required",
+          "value": false
+        },
+        {
+          "field": "journal_required",
+          "value": false
+        },
+        {
+          "field": "outbox_required",
+          "value": false
+        }
+      ]
+    },
+    {
+      "case_id": "EBR-022",
+      "title": "Class coverage: EC_NON_PROGRESS_LOOP",
+      "classification": "EC_NON_PROGRESS_LOOP",
+      "stimulus": "A runtime reports EC_NON_PROGRESS_LOOP: The run repeats status, inspection, retry, or bookkeeping without reducing an unproven requirement.",
+      "expected_materiality": "MATERIAL",
+      "expected_recovery": "QUIESCE_UNCHANGED_BLOCKER",
+      "positive_assertions": [
+        "Classify the event as EC_NON_PROGRESS_LOOP within family EXECUTION_CONTROL",
+        "Apply the architecture materiality rule and checkpoint before unsafe retry",
+        "Emit the public transition when material",
+        "Route recovery through QUIESCE_UNCHANGED_BLOCKER unless stronger current evidence justifies another allowed disposition"
+      ],
+      "negative_assertions": [
+        "Do not leave a material event as unclassified internal operational information",
+        "Do not claim completion merely because the original execution path became unavailable"
+      ],
+      "proof_surfaces": [
+        "boundary_event",
+        "public_transition",
+        "recovery_disposition"
+      ],
+      "proof_ceiling": "Taxonomy-class regression semantics only; downstream model obedience and external runtime execution remain unproven.",
+      "input_event": {
+        "observed_classification": "EC_NON_PROGRESS_LOOP",
+        "process_alive": true,
+        "repository_available": true,
+        "repository_relevant": true,
+        "side_effect_state": "NONE",
+        "raw_detail_sensitive": false
+      },
+      "expected_output": {
+        "classification": "EC_NON_PROGRESS_LOOP",
+        "materiality": "MATERIAL",
+        "recovery_disposition": "QUIESCE_UNCHANGED_BLOCKER",
+        "execution_path": [
+          "BOUNDARY_OBSERVED",
+          "BOUNDARY_CLASSIFIED",
+          "CHECKPOINTED",
+          "PUBLIC_TRANSITION_EMITTED",
+          "RECOVERY_SELECTED",
+          "QUIESCENT_BLOCKED"
+        ],
+        "checkpoint_required": true,
+        "journal_required": true,
+        "outbox_required": true,
+        "public_transition_required": true,
+        "repository_persistence_required": true,
+        "readback_required": false,
+        "redaction_required": false,
+        "supervisor_synthesized": false,
+        "taxonomy_evolution_required": false,
+        "success_terminal": false
+      },
+      "forbidden_outputs": [
+        {
+          "field": "success_terminal",
+          "value": true
+        },
+        {
+          "field": "public_transition_required",
+          "value": false
+        },
+        {
+          "field": "checkpoint_required",
+          "value": false
+        },
+        {
+          "field": "journal_required",
+          "value": false
+        },
+        {
+          "field": "outbox_required",
+          "value": false
+        }
+      ]
+    },
+    {
+      "case_id": "EBR-023",
+      "title": "Class coverage: CR_OPERATION_UNSUPPORTED",
+      "classification": "CR_OPERATION_UNSUPPORTED",
+      "stimulus": "A runtime reports CR_OPERATION_UNSUPPORTED: The available interface cannot perform the required operation.",
+      "expected_materiality": "MATERIAL",
+      "expected_recovery": "HANDOFF_REQUIRED_SUCCESSOR",
+      "positive_assertions": [
+        "Classify the event as CR_OPERATION_UNSUPPORTED within family CAPABILITY_RUNTIME",
+        "Apply the architecture materiality rule and checkpoint before unsafe retry",
+        "Emit the public transition when material",
+        "Route recovery through HANDOFF_REQUIRED_SUCCESSOR unless stronger current evidence justifies another allowed disposition"
+      ],
+      "negative_assertions": [
+        "Do not leave a material event as unclassified internal operational information",
+        "Do not claim completion merely because the original execution path became unavailable"
+      ],
+      "proof_surfaces": [
+        "boundary_event",
+        "public_transition",
+        "recovery_disposition"
+      ],
+      "proof_ceiling": "Taxonomy-class regression semantics only; downstream model obedience and external runtime execution remain unproven.",
+      "input_event": {
+        "observed_classification": "CR_OPERATION_UNSUPPORTED",
+        "process_alive": true,
+        "repository_available": true,
+        "repository_relevant": true,
+        "side_effect_state": "NONE",
+        "raw_detail_sensitive": false
+      },
+      "expected_output": {
+        "classification": "CR_OPERATION_UNSUPPORTED",
+        "materiality": "MATERIAL",
+        "recovery_disposition": "HANDOFF_REQUIRED_SUCCESSOR",
+        "execution_path": [
+          "BOUNDARY_OBSERVED",
+          "BOUNDARY_CLASSIFIED",
+          "CHECKPOINTED",
+          "PUBLIC_TRANSITION_EMITTED",
+          "RECOVERY_SELECTED",
+          "QUIESCENT_BLOCKED"
+        ],
+        "checkpoint_required": true,
+        "journal_required": true,
+        "outbox_required": true,
+        "public_transition_required": true,
+        "repository_persistence_required": true,
+        "readback_required": false,
+        "redaction_required": false,
+        "supervisor_synthesized": false,
+        "taxonomy_evolution_required": false,
+        "success_terminal": false
+      },
+      "forbidden_outputs": [
+        {
+          "field": "success_terminal",
+          "value": true
+        },
+        {
+          "field": "public_transition_required",
+          "value": false
+        },
+        {
+          "field": "checkpoint_required",
+          "value": false
+        },
+        {
+          "field": "journal_required",
+          "value": false
+        },
+        {
+          "field": "outbox_required",
+          "value": false
+        }
+      ]
+    },
+    {
+      "case_id": "EBR-024",
+      "title": "Class coverage: CR_ADAPTER_LADDER_EXHAUSTED",
+      "classification": "CR_ADAPTER_LADDER_EXHAUSTED",
+      "stimulus": "A runtime reports CR_ADAPTER_LADDER_EXHAUSTED: Every evidenced execution adapter has been tried or ruled out.",
+      "expected_materiality": "MATERIAL",
+      "expected_recovery": "HANDOFF_REQUIRED_SUCCESSOR",
+      "positive_assertions": [
+        "Classify the event as CR_ADAPTER_LADDER_EXHAUSTED within family CAPABILITY_RUNTIME",
+        "Apply the architecture materiality rule and checkpoint before unsafe retry",
+        "Emit the public transition when material",
+        "Route recovery through HANDOFF_REQUIRED_SUCCESSOR unless stronger current evidence justifies another allowed disposition"
+      ],
+      "negative_assertions": [
+        "Do not leave a material event as unclassified internal operational information",
+        "Do not claim completion merely because the original execution path became unavailable"
+      ],
+      "proof_surfaces": [
+        "boundary_event",
+        "public_transition",
+        "recovery_disposition"
+      ],
+      "proof_ceiling": "Taxonomy-class regression semantics only; downstream model obedience and external runtime execution remain unproven.",
+      "input_event": {
+        "observed_classification": "CR_ADAPTER_LADDER_EXHAUSTED",
+        "process_alive": true,
+        "repository_available": true,
+        "repository_relevant": true,
+        "side_effect_state": "NONE",
+        "raw_detail_sensitive": false
+      },
+      "expected_output": {
+        "classification": "CR_ADAPTER_LADDER_EXHAUSTED",
+        "materiality": "MATERIAL",
+        "recovery_disposition": "HANDOFF_REQUIRED_SUCCESSOR",
+        "execution_path": [
+          "BOUNDARY_OBSERVED",
+          "BOUNDARY_CLASSIFIED",
+          "CHECKPOINTED",
+          "PUBLIC_TRANSITION_EMITTED",
+          "RECOVERY_SELECTED",
+          "QUIESCENT_BLOCKED"
+        ],
+        "checkpoint_required": true,
+        "journal_required": true,
+        "outbox_required": true,
+        "public_transition_required": true,
+        "repository_persistence_required": true,
+        "readback_required": false,
+        "redaction_required": false,
+        "supervisor_synthesized": false,
+        "taxonomy_evolution_required": false,
+        "success_terminal": false
+      },
+      "forbidden_outputs": [
+        {
+          "field": "success_terminal",
+          "value": true
+        },
+        {
+          "field": "public_transition_required",
+          "value": false
+        },
+        {
+          "field": "checkpoint_required",
+          "value": false
+        },
+        {
+          "field": "journal_required",
+          "value": false
+        },
+        {
+          "field": "outbox_required",
+          "value": false
+        }
+      ]
+    },
+    {
+      "case_id": "EBR-025",
+      "title": "Class coverage: PS_RATE_LIMIT",
+      "classification": "PS_RATE_LIMIT",
+      "stimulus": "A runtime reports PS_RATE_LIMIT: Provider throttling temporarily denies calls.",
+      "expected_materiality": "MATERIAL",
+      "expected_recovery": "RETRY_BOUNDED",
+      "positive_assertions": [
+        "Classify the event as PS_RATE_LIMIT within family PROVIDER_SERVICE",
+        "Apply the architecture materiality rule and checkpoint before unsafe retry",
+        "Emit the public transition when material",
+        "Route recovery through RETRY_BOUNDED unless stronger current evidence justifies another allowed disposition"
+      ],
+      "negative_assertions": [
+        "Do not leave a material event as unclassified internal operational information",
+        "Do not claim completion merely because the original execution path became unavailable"
+      ],
+      "proof_surfaces": [
+        "boundary_event",
+        "public_transition",
+        "recovery_disposition"
+      ],
+      "proof_ceiling": "Taxonomy-class regression semantics only; downstream model obedience and external runtime execution remain unproven.",
+      "input_event": {
+        "observed_classification": "PS_RATE_LIMIT",
+        "process_alive": true,
+        "repository_available": true,
+        "repository_relevant": true,
+        "side_effect_state": "NONE",
+        "raw_detail_sensitive": false
+      },
+      "expected_output": {
+        "classification": "PS_RATE_LIMIT",
+        "materiality": "MATERIAL",
+        "recovery_disposition": "RETRY_BOUNDED",
+        "execution_path": [
+          "BOUNDARY_OBSERVED",
+          "BOUNDARY_CLASSIFIED",
+          "CHECKPOINTED",
+          "PUBLIC_TRANSITION_EMITTED",
+          "RECOVERY_SELECTED",
+          "RECOVERING"
+        ],
+        "checkpoint_required": true,
+        "journal_required": true,
+        "outbox_required": true,
+        "public_transition_required": true,
+        "repository_persistence_required": true,
+        "readback_required": false,
+        "redaction_required": false,
+        "supervisor_synthesized": false,
+        "taxonomy_evolution_required": false,
+        "success_terminal": false
+      },
+      "forbidden_outputs": [
+        {
+          "field": "success_terminal",
+          "value": true
+        },
+        {
+          "field": "public_transition_required",
+          "value": false
+        },
+        {
+          "field": "checkpoint_required",
+          "value": false
+        },
+        {
+          "field": "journal_required",
+          "value": false
+        },
+        {
+          "field": "outbox_required",
+          "value": false
+        }
+      ]
+    },
+    {
+      "case_id": "EBR-026",
+      "title": "Class coverage: PS_OUTAGE_OR_TRANSPORT_FAILURE",
+      "classification": "PS_OUTAGE_OR_TRANSPORT_FAILURE",
+      "stimulus": "A runtime reports PS_OUTAGE_OR_TRANSPORT_FAILURE: Provider/network/transport is unavailable or fails before a trustworthy result.",
+      "expected_materiality": "MATERIAL",
+      "expected_recovery": "FALLBACK_ADAPTER",
+      "positive_assertions": [
+        "Classify the event as PS_OUTAGE_OR_TRANSPORT_FAILURE within family PROVIDER_SERVICE",
+        "Apply the architecture materiality rule and checkpoint before unsafe retry",
+        "Emit the public transition when material",
+        "Route recovery through FALLBACK_ADAPTER unless stronger current evidence justifies another allowed disposition"
+      ],
+      "negative_assertions": [
+        "Do not leave a material event as unclassified internal operational information",
+        "Do not claim completion merely because the original execution path became unavailable"
+      ],
+      "proof_surfaces": [
+        "boundary_event",
+        "public_transition",
+        "recovery_disposition"
+      ],
+      "proof_ceiling": "Taxonomy-class regression semantics only; downstream model obedience and external runtime execution remain unproven.",
+      "input_event": {
+        "observed_classification": "PS_OUTAGE_OR_TRANSPORT_FAILURE",
+        "process_alive": true,
+        "repository_available": true,
+        "repository_relevant": true,
+        "side_effect_state": "NONE",
+        "raw_detail_sensitive": false
+      },
+      "expected_output": {
+        "classification": "PS_OUTAGE_OR_TRANSPORT_FAILURE",
+        "materiality": "MATERIAL",
+        "recovery_disposition": "FALLBACK_ADAPTER",
+        "execution_path": [
+          "BOUNDARY_OBSERVED",
+          "BOUNDARY_CLASSIFIED",
+          "CHECKPOINTED",
+          "PUBLIC_TRANSITION_EMITTED",
+          "RECOVERY_SELECTED",
+          "RECOVERING"
+        ],
+        "checkpoint_required": true,
+        "journal_required": true,
+        "outbox_required": true,
+        "public_transition_required": true,
+        "repository_persistence_required": true,
+        "readback_required": false,
+        "redaction_required": false,
+        "supervisor_synthesized": false,
+        "taxonomy_evolution_required": false,
+        "success_terminal": false
+      },
+      "forbidden_outputs": [
+        {
+          "field": "success_terminal",
+          "value": true
+        },
+        {
+          "field": "public_transition_required",
+          "value": false
+        },
+        {
+          "field": "checkpoint_required",
+          "value": false
+        },
+        {
+          "field": "journal_required",
+          "value": false
+        },
+        {
+          "field": "outbox_required",
+          "value": false
+        }
+      ]
+    },
+    {
+      "case_id": "EBR-027",
+      "title": "Class coverage: PS_TIMEOUT",
+      "classification": "PS_TIMEOUT",
+      "stimulus": "A runtime reports PS_TIMEOUT: Operation timed out and side-effect state may require reconciliation.",
+      "expected_materiality": "MATERIAL",
+      "expected_recovery": "READ_AFTER_WRITE_RECONCILE",
+      "positive_assertions": [
+        "Classify the event as PS_TIMEOUT within family PROVIDER_SERVICE",
+        "Apply the architecture materiality rule and checkpoint before unsafe retry",
+        "Emit the public transition when material",
+        "Route recovery through READ_AFTER_WRITE_RECONCILE unless stronger current evidence justifies another allowed disposition"
+      ],
+      "negative_assertions": [
+        "Do not leave a material event as unclassified internal operational information",
+        "Do not claim completion merely because the original execution path became unavailable"
+      ],
+      "proof_surfaces": [
+        "boundary_event",
+        "public_transition",
+        "recovery_disposition"
+      ],
+      "proof_ceiling": "Taxonomy-class regression semantics only; downstream model obedience and external runtime execution remain unproven.",
+      "input_event": {
+        "observed_classification": "PS_TIMEOUT",
+        "process_alive": true,
+        "repository_available": true,
+        "repository_relevant": true,
+        "side_effect_state": "NONE",
+        "raw_detail_sensitive": false
+      },
+      "expected_output": {
+        "classification": "PS_TIMEOUT",
+        "materiality": "MATERIAL",
+        "recovery_disposition": "READ_AFTER_WRITE_RECONCILE",
+        "execution_path": [
+          "BOUNDARY_OBSERVED",
+          "BOUNDARY_CLASSIFIED",
+          "CHECKPOINTED",
+          "PUBLIC_TRANSITION_EMITTED",
+          "RECOVERY_SELECTED",
+          "RECOVERING"
+        ],
+        "checkpoint_required": true,
+        "journal_required": true,
+        "outbox_required": true,
+        "public_transition_required": true,
+        "repository_persistence_required": true,
+        "readback_required": true,
+        "redaction_required": false,
+        "supervisor_synthesized": false,
+        "taxonomy_evolution_required": false,
+        "success_terminal": false
+      },
+      "forbidden_outputs": [
+        {
+          "field": "success_terminal",
+          "value": true
+        },
+        {
+          "field": "public_transition_required",
+          "value": false
+        },
+        {
+          "field": "checkpoint_required",
+          "value": false
+        },
+        {
+          "field": "journal_required",
+          "value": false
+        },
+        {
+          "field": "outbox_required",
+          "value": false
+        },
+        {
+          "field": "readback_required",
+          "value": false
+        }
+      ]
+    },
+    {
+      "case_id": "EBR-028",
+      "title": "Class coverage: PS_CANCELLED_OR_NEVER_STARTED",
+      "classification": "PS_CANCELLED_OR_NEVER_STARTED",
+      "stimulus": "A runtime reports PS_CANCELLED_OR_NEVER_STARTED: Scheduled/provider execution was cancelled or never began.",
+      "expected_materiality": "MATERIAL",
+      "expected_recovery": "LOCAL_PROOF_SUBSTITUTE",
+      "positive_assertions": [
+        "Classify the event as PS_CANCELLED_OR_NEVER_STARTED within family PROVIDER_SERVICE",
+        "Apply the architecture materiality rule and checkpoint before unsafe retry",
+        "Emit the public transition when material",
+        "Route recovery through LOCAL_PROOF_SUBSTITUTE unless stronger current evidence justifies another allowed disposition"
+      ],
+      "negative_assertions": [
+        "Do not leave a material event as unclassified internal operational information",
+        "Do not claim completion merely because the original execution path became unavailable"
+      ],
+      "proof_surfaces": [
+        "boundary_event",
+        "public_transition",
+        "recovery_disposition"
+      ],
+      "proof_ceiling": "Taxonomy-class regression semantics only; downstream model obedience and external runtime execution remain unproven.",
+      "input_event": {
+        "observed_classification": "PS_CANCELLED_OR_NEVER_STARTED",
+        "process_alive": true,
+        "repository_available": true,
+        "repository_relevant": true,
+        "side_effect_state": "NONE",
+        "raw_detail_sensitive": false
+      },
+      "expected_output": {
+        "classification": "PS_CANCELLED_OR_NEVER_STARTED",
+        "materiality": "MATERIAL",
+        "recovery_disposition": "LOCAL_PROOF_SUBSTITUTE",
+        "execution_path": [
+          "BOUNDARY_OBSERVED",
+          "BOUNDARY_CLASSIFIED",
+          "CHECKPOINTED",
+          "PUBLIC_TRANSITION_EMITTED",
+          "RECOVERY_SELECTED",
+          "RECOVERING"
+        ],
+        "checkpoint_required": true,
+        "journal_required": true,
+        "outbox_required": true,
+        "public_transition_required": true,
+        "repository_persistence_required": true,
+        "readback_required": false,
+        "redaction_required": false,
+        "supervisor_synthesized": false,
+        "taxonomy_evolution_required": false,
+        "success_terminal": false
+      },
+      "forbidden_outputs": [
+        {
+          "field": "success_terminal",
+          "value": true
+        },
+        {
+          "field": "public_transition_required",
+          "value": false
+        },
+        {
+          "field": "checkpoint_required",
+          "value": false
+        },
+        {
+          "field": "journal_required",
+          "value": false
+        },
+        {
+          "field": "outbox_required",
+          "value": false
+        }
+      ]
+    },
+    {
+      "case_id": "EBR-029",
+      "title": "Class coverage: PS_MALFORMED_OR_UNTRUSTWORTHY_RESPONSE",
+      "classification": "PS_MALFORMED_OR_UNTRUSTWORTHY_RESPONSE",
+      "stimulus": "A runtime reports PS_MALFORMED_OR_UNTRUSTWORTHY_RESPONSE: Response cannot safely prove requested state.",
+      "expected_materiality": "MATERIAL",
+      "expected_recovery": "RETRY_BOUNDED",
+      "positive_assertions": [
+        "Classify the event as PS_MALFORMED_OR_UNTRUSTWORTHY_RESPONSE within family PROVIDER_SERVICE",
+        "Apply the architecture materiality rule and checkpoint before unsafe retry",
+        "Emit the public transition when material",
+        "Route recovery through RETRY_BOUNDED unless stronger current evidence justifies another allowed disposition"
+      ],
+      "negative_assertions": [
+        "Do not leave a material event as unclassified internal operational information",
+        "Do not claim completion merely because the original execution path became unavailable"
+      ],
+      "proof_surfaces": [
+        "boundary_event",
+        "public_transition",
+        "recovery_disposition"
+      ],
+      "proof_ceiling": "Taxonomy-class regression semantics only; downstream model obedience and external runtime execution remain unproven.",
+      "input_event": {
+        "observed_classification": "PS_MALFORMED_OR_UNTRUSTWORTHY_RESPONSE",
+        "process_alive": true,
+        "repository_available": true,
+        "repository_relevant": true,
+        "side_effect_state": "NONE",
+        "raw_detail_sensitive": false
+      },
+      "expected_output": {
+        "classification": "PS_MALFORMED_OR_UNTRUSTWORTHY_RESPONSE",
+        "materiality": "MATERIAL",
+        "recovery_disposition": "RETRY_BOUNDED",
+        "execution_path": [
+          "BOUNDARY_OBSERVED",
+          "BOUNDARY_CLASSIFIED",
+          "CHECKPOINTED",
+          "PUBLIC_TRANSITION_EMITTED",
+          "RECOVERY_SELECTED",
+          "RECOVERING"
+        ],
+        "checkpoint_required": true,
+        "journal_required": true,
+        "outbox_required": true,
+        "public_transition_required": true,
+        "repository_persistence_required": true,
+        "readback_required": false,
+        "redaction_required": false,
+        "supervisor_synthesized": false,
+        "taxonomy_evolution_required": false,
+        "success_terminal": false
+      },
+      "forbidden_outputs": [
+        {
+          "field": "success_terminal",
+          "value": true
+        },
+        {
+          "field": "public_transition_required",
+          "value": false
+        },
+        {
+          "field": "checkpoint_required",
+          "value": false
+        },
+        {
+          "field": "journal_required",
+          "value": false
+        },
+        {
+          "field": "outbox_required",
+          "value": false
+        }
+      ]
+    },
+    {
+      "case_id": "EBR-030",
+      "title": "Class coverage: AA_AUTHENTICATION_REQUIRED",
+      "classification": "AA_AUTHENTICATION_REQUIRED",
+      "stimulus": "A runtime reports AA_AUTHENTICATION_REQUIRED: Authentication/connection is required before continuing.",
+      "expected_materiality": "MATERIAL",
+      "expected_recovery": "REQUEST_REQUIRED_AUTHORIZATION",
+      "positive_assertions": [
+        "Classify the event as AA_AUTHENTICATION_REQUIRED within family ACCESS_AUTHORITY",
+        "Apply the architecture materiality rule and checkpoint before unsafe retry",
+        "Emit the public transition when material",
+        "Route recovery through REQUEST_REQUIRED_AUTHORIZATION unless stronger current evidence justifies another allowed disposition"
+      ],
+      "negative_assertions": [
+        "Do not leave a material event as unclassified internal operational information",
+        "Do not claim completion merely because the original execution path became unavailable"
+      ],
+      "proof_surfaces": [
+        "boundary_event",
+        "public_transition",
+        "recovery_disposition"
+      ],
+      "proof_ceiling": "Taxonomy-class regression semantics only; downstream model obedience and external runtime execution remain unproven.",
+      "input_event": {
+        "observed_classification": "AA_AUTHENTICATION_REQUIRED",
+        "process_alive": true,
+        "repository_available": true,
+        "repository_relevant": true,
+        "side_effect_state": "NONE",
+        "raw_detail_sensitive": false
+      },
+      "expected_output": {
+        "classification": "AA_AUTHENTICATION_REQUIRED",
+        "materiality": "MATERIAL",
+        "recovery_disposition": "REQUEST_REQUIRED_AUTHORIZATION",
+        "execution_path": [
+          "BOUNDARY_OBSERVED",
+          "BOUNDARY_CLASSIFIED",
+          "CHECKPOINTED",
+          "PUBLIC_TRANSITION_EMITTED",
+          "RECOVERY_SELECTED",
+          "QUIESCENT_BLOCKED"
+        ],
+        "checkpoint_required": true,
+        "journal_required": true,
+        "outbox_required": true,
+        "public_transition_required": true,
+        "repository_persistence_required": true,
+        "readback_required": false,
+        "redaction_required": false,
+        "supervisor_synthesized": false,
+        "taxonomy_evolution_required": false,
+        "success_terminal": false
+      },
+      "forbidden_outputs": [
+        {
+          "field": "success_terminal",
+          "value": true
+        },
+        {
+          "field": "public_transition_required",
+          "value": false
+        },
+        {
+          "field": "checkpoint_required",
+          "value": false
+        },
+        {
+          "field": "journal_required",
+          "value": false
+        },
+        {
+          "field": "outbox_required",
+          "value": false
+        }
+      ]
+    },
+    {
+      "case_id": "EBR-031",
+      "title": "Class coverage: AA_AUTHENTICATION_EXPIRED",
+      "classification": "AA_AUTHENTICATION_EXPIRED",
+      "stimulus": "A runtime reports AA_AUTHENTICATION_EXPIRED: Previously valid authentication no longer authorizes the action.",
+      "expected_materiality": "MATERIAL",
+      "expected_recovery": "REQUEST_REQUIRED_AUTHORIZATION",
+      "positive_assertions": [
+        "Classify the event as AA_AUTHENTICATION_EXPIRED within family ACCESS_AUTHORITY",
+        "Apply the architecture materiality rule and checkpoint before unsafe retry",
+        "Emit the public transition when material",
+        "Route recovery through REQUEST_REQUIRED_AUTHORIZATION unless stronger current evidence justifies another allowed disposition"
+      ],
+      "negative_assertions": [
+        "Do not leave a material event as unclassified internal operational information",
+        "Do not claim completion merely because the original execution path became unavailable"
+      ],
+      "proof_surfaces": [
+        "boundary_event",
+        "public_transition",
+        "recovery_disposition"
+      ],
+      "proof_ceiling": "Taxonomy-class regression semantics only; downstream model obedience and external runtime execution remain unproven.",
+      "input_event": {
+        "observed_classification": "AA_AUTHENTICATION_EXPIRED",
+        "process_alive": true,
+        "repository_available": true,
+        "repository_relevant": true,
+        "side_effect_state": "NONE",
+        "raw_detail_sensitive": false
+      },
+      "expected_output": {
+        "classification": "AA_AUTHENTICATION_EXPIRED",
+        "materiality": "MATERIAL",
+        "recovery_disposition": "REQUEST_REQUIRED_AUTHORIZATION",
+        "execution_path": [
+          "BOUNDARY_OBSERVED",
+          "BOUNDARY_CLASSIFIED",
+          "CHECKPOINTED",
+          "PUBLIC_TRANSITION_EMITTED",
+          "RECOVERY_SELECTED",
+          "QUIESCENT_BLOCKED"
+        ],
+        "checkpoint_required": true,
+        "journal_required": true,
+        "outbox_required": true,
+        "public_transition_required": true,
+        "repository_persistence_required": true,
+        "readback_required": false,
+        "redaction_required": false,
+        "supervisor_synthesized": false,
+        "taxonomy_evolution_required": false,
+        "success_terminal": false
+      },
+      "forbidden_outputs": [
+        {
+          "field": "success_terminal",
+          "value": true
+        },
+        {
+          "field": "public_transition_required",
+          "value": false
+        },
+        {
+          "field": "checkpoint_required",
+          "value": false
+        },
+        {
+          "field": "journal_required",
+          "value": false
+        },
+        {
+          "field": "outbox_required",
+          "value": false
+        }
+      ]
+    },
+    {
+      "case_id": "EBR-032",
+      "title": "Class coverage: AA_APPROVAL_GATE",
+      "classification": "AA_APPROVAL_GATE",
+      "stimulus": "A runtime reports AA_APPROVAL_GATE: A required human, branch-protection, change-control, or other approval has not been satisfied.",
+      "expected_materiality": "MATERIAL",
+      "expected_recovery": "WAIT_ON_EXTERNAL_GATE_WITH_DURABLE_HANDOFF",
+      "positive_assertions": [
+        "Classify the event as AA_APPROVAL_GATE within family ACCESS_AUTHORITY",
+        "Apply the architecture materiality rule and checkpoint before unsafe retry",
+        "Emit the public transition when material",
+        "Route recovery through WAIT_ON_EXTERNAL_GATE_WITH_DURABLE_HANDOFF unless stronger current evidence justifies another allowed disposition"
+      ],
+      "negative_assertions": [
+        "Do not leave a material event as unclassified internal operational information",
+        "Do not claim completion merely because the original execution path became unavailable"
+      ],
+      "proof_surfaces": [
+        "boundary_event",
+        "public_transition",
+        "recovery_disposition"
+      ],
+      "proof_ceiling": "Taxonomy-class regression semantics only; downstream model obedience and external runtime execution remain unproven.",
+      "input_event": {
+        "observed_classification": "AA_APPROVAL_GATE",
+        "process_alive": true,
+        "repository_available": true,
+        "repository_relevant": true,
+        "side_effect_state": "NONE",
+        "raw_detail_sensitive": false
+      },
+      "expected_output": {
+        "classification": "AA_APPROVAL_GATE",
+        "materiality": "MATERIAL",
+        "recovery_disposition": "WAIT_ON_EXTERNAL_GATE_WITH_DURABLE_HANDOFF",
+        "execution_path": [
+          "BOUNDARY_OBSERVED",
+          "BOUNDARY_CLASSIFIED",
+          "CHECKPOINTED",
+          "PUBLIC_TRANSITION_EMITTED",
+          "RECOVERY_SELECTED",
+          "QUIESCENT_BLOCKED"
+        ],
+        "checkpoint_required": true,
+        "journal_required": true,
+        "outbox_required": true,
+        "public_transition_required": true,
+        "repository_persistence_required": true,
+        "readback_required": false,
+        "redaction_required": false,
+        "supervisor_synthesized": false,
+        "taxonomy_evolution_required": false,
+        "success_terminal": false
+      },
+      "forbidden_outputs": [
+        {
+          "field": "success_terminal",
+          "value": true
+        },
+        {
+          "field": "public_transition_required",
+          "value": false
+        },
+        {
+          "field": "checkpoint_required",
+          "value": false
+        },
+        {
+          "field": "journal_required",
+          "value": false
+        },
+        {
+          "field": "outbox_required",
+          "value": false
+        }
+      ]
+    },
+    {
+      "case_id": "EBR-033",
+      "title": "Class coverage: AA_OWNERSHIP_OR_IDENTITY_AMBIGUOUS",
+      "classification": "AA_OWNERSHIP_OR_IDENTITY_AMBIGUOUS",
+      "stimulus": "A runtime reports AA_OWNERSHIP_OR_IDENTITY_AMBIGUOUS: Stable identity/authority for a mutable resource cannot be established safely.",
+      "expected_materiality": "MATERIAL",
+      "expected_recovery": "REFRESH_AND_RECONCILE",
+      "positive_assertions": [
+        "Classify the event as AA_OWNERSHIP_OR_IDENTITY_AMBIGUOUS within family ACCESS_AUTHORITY",
+        "Apply the architecture materiality rule and checkpoint before unsafe retry",
+        "Emit the public transition when material",
+        "Route recovery through REFRESH_AND_RECONCILE unless stronger current evidence justifies another allowed disposition"
+      ],
+      "negative_assertions": [
+        "Do not leave a material event as unclassified internal operational information",
+        "Do not claim completion merely because the original execution path became unavailable"
+      ],
+      "proof_surfaces": [
+        "boundary_event",
+        "public_transition",
+        "recovery_disposition"
+      ],
+      "proof_ceiling": "Taxonomy-class regression semantics only; downstream model obedience and external runtime execution remain unproven.",
+      "input_event": {
+        "observed_classification": "AA_OWNERSHIP_OR_IDENTITY_AMBIGUOUS",
+        "process_alive": true,
+        "repository_available": true,
+        "repository_relevant": true,
+        "side_effect_state": "NONE",
+        "raw_detail_sensitive": false
+      },
+      "expected_output": {
+        "classification": "AA_OWNERSHIP_OR_IDENTITY_AMBIGUOUS",
+        "materiality": "MATERIAL",
+        "recovery_disposition": "REFRESH_AND_RECONCILE",
+        "execution_path": [
+          "BOUNDARY_OBSERVED",
+          "BOUNDARY_CLASSIFIED",
+          "CHECKPOINTED",
+          "PUBLIC_TRANSITION_EMITTED",
+          "RECOVERY_SELECTED",
+          "RECOVERING"
+        ],
+        "checkpoint_required": true,
+        "journal_required": true,
+        "outbox_required": true,
+        "public_transition_required": true,
+        "repository_persistence_required": true,
+        "readback_required": false,
+        "redaction_required": false,
+        "supervisor_synthesized": false,
+        "taxonomy_evolution_required": false,
+        "success_terminal": false
+      },
+      "forbidden_outputs": [
+        {
+          "field": "success_terminal",
+          "value": true
+        },
+        {
+          "field": "public_transition_required",
+          "value": false
+        },
+        {
+          "field": "checkpoint_required",
+          "value": false
+        },
+        {
+          "field": "journal_required",
+          "value": false
+        },
+        {
+          "field": "outbox_required",
+          "value": false
+        }
+      ]
+    },
+    {
+      "case_id": "EBR-034",
+      "title": "Class coverage: SP_DESTRUCTIVE_MUTATION_HAZARD",
+      "classification": "SP_DESTRUCTIVE_MUTATION_HAZARD",
+      "stimulus": "A runtime reports SP_DESTRUCTIVE_MUTATION_HAZARD: The proposed write risks destructive overwrite, deletion, identity loss, or irreversible scope damage.",
+      "expected_materiality": "CRITICAL",
+      "expected_recovery": "ABORT_UNSAFE_MUTATION",
+      "positive_assertions": [
+        "Classify the event as SP_DESTRUCTIVE_MUTATION_HAZARD within family SAFETY_PRIVACY_POLICY",
+        "Apply the architecture materiality rule and checkpoint before unsafe retry",
+        "Emit the public transition when material",
+        "Route recovery through ABORT_UNSAFE_MUTATION unless stronger current evidence justifies another allowed disposition"
+      ],
+      "negative_assertions": [
+        "Do not leave a material event as unclassified internal operational information",
+        "Do not claim completion merely because the original execution path became unavailable"
+      ],
+      "proof_surfaces": [
+        "boundary_event",
+        "public_transition",
+        "recovery_disposition"
+      ],
+      "proof_ceiling": "Taxonomy-class regression semantics only; downstream model obedience and external runtime execution remain unproven.",
+      "input_event": {
+        "observed_classification": "SP_DESTRUCTIVE_MUTATION_HAZARD",
+        "process_alive": true,
+        "repository_available": true,
+        "repository_relevant": true,
+        "side_effect_state": "NONE",
+        "raw_detail_sensitive": false
+      },
+      "expected_output": {
+        "classification": "SP_DESTRUCTIVE_MUTATION_HAZARD",
+        "materiality": "CRITICAL",
+        "recovery_disposition": "ABORT_UNSAFE_MUTATION",
+        "execution_path": [
+          "BOUNDARY_OBSERVED",
+          "BOUNDARY_CLASSIFIED",
+          "CHECKPOINTED",
+          "PUBLIC_TRANSITION_EMITTED",
+          "RECOVERY_SELECTED",
+          "QUIESCENT_BLOCKED"
+        ],
+        "checkpoint_required": true,
+        "journal_required": true,
+        "outbox_required": true,
+        "public_transition_required": true,
+        "repository_persistence_required": true,
+        "readback_required": false,
+        "redaction_required": false,
+        "supervisor_synthesized": false,
+        "taxonomy_evolution_required": false,
+        "success_terminal": false
+      },
+      "forbidden_outputs": [
+        {
+          "field": "success_terminal",
+          "value": true
+        },
+        {
+          "field": "public_transition_required",
+          "value": false
+        },
+        {
+          "field": "checkpoint_required",
+          "value": false
+        },
+        {
+          "field": "journal_required",
+          "value": false
+        },
+        {
+          "field": "outbox_required",
+          "value": false
+        }
+      ]
+    },
+    {
+      "case_id": "EBR-035",
+      "title": "Class coverage: SP_GOVERNING_POLICY_CONFLICT",
+      "classification": "SP_GOVERNING_POLICY_CONFLICT",
+      "stimulus": "A runtime reports SP_GOVERNING_POLICY_CONFLICT: A higher-precedence contract forbids or constrains the requested path.",
+      "expected_materiality": "MATERIAL",
+      "expected_recovery": "HANDOFF_REQUIRED_SUCCESSOR",
+      "positive_assertions": [
+        "Classify the event as SP_GOVERNING_POLICY_CONFLICT within family SAFETY_PRIVACY_POLICY",
+        "Apply the architecture materiality rule and checkpoint before unsafe retry",
+        "Emit the public transition when material",
+        "Route recovery through HANDOFF_REQUIRED_SUCCESSOR unless stronger current evidence justifies another allowed disposition"
+      ],
+      "negative_assertions": [
+        "Do not leave a material event as unclassified internal operational information",
+        "Do not claim completion merely because the original execution path became unavailable"
+      ],
+      "proof_surfaces": [
+        "boundary_event",
+        "public_transition",
+        "recovery_disposition"
+      ],
+      "proof_ceiling": "Taxonomy-class regression semantics only; downstream model obedience and external runtime execution remain unproven.",
+      "input_event": {
+        "observed_classification": "SP_GOVERNING_POLICY_CONFLICT",
+        "process_alive": true,
+        "repository_available": true,
+        "repository_relevant": true,
+        "side_effect_state": "NONE",
+        "raw_detail_sensitive": false
+      },
+      "expected_output": {
+        "classification": "SP_GOVERNING_POLICY_CONFLICT",
+        "materiality": "MATERIAL",
+        "recovery_disposition": "HANDOFF_REQUIRED_SUCCESSOR",
+        "execution_path": [
+          "BOUNDARY_OBSERVED",
+          "BOUNDARY_CLASSIFIED",
+          "CHECKPOINTED",
+          "PUBLIC_TRANSITION_EMITTED",
+          "RECOVERY_SELECTED",
+          "QUIESCENT_BLOCKED"
+        ],
+        "checkpoint_required": true,
+        "journal_required": true,
+        "outbox_required": true,
+        "public_transition_required": true,
+        "repository_persistence_required": true,
+        "readback_required": false,
+        "redaction_required": false,
+        "supervisor_synthesized": false,
+        "taxonomy_evolution_required": false,
+        "success_terminal": false
+      },
+      "forbidden_outputs": [
+        {
+          "field": "success_terminal",
+          "value": true
+        },
+        {
+          "field": "public_transition_required",
+          "value": false
+        },
+        {
+          "field": "checkpoint_required",
+          "value": false
+        },
+        {
+          "field": "journal_required",
+          "value": false
+        },
+        {
+          "field": "outbox_required",
+          "value": false
+        }
+      ]
+    },
+    {
+      "case_id": "EBR-036",
+      "title": "Class coverage: IS_ESSENTIAL_INPUT_MISSING",
+      "classification": "IS_ESSENTIAL_INPUT_MISSING",
+      "stimulus": "A runtime reports IS_ESSENTIAL_INPUT_MISSING: A truly essential value cannot be recovered or inferred safely.",
+      "expected_materiality": "MATERIAL",
+      "expected_recovery": "REQUEST_REQUIRED_AUTHORIZATION",
+      "positive_assertions": [
+        "Classify the event as IS_ESSENTIAL_INPUT_MISSING within family INPUT_IDENTITY_STATE",
+        "Apply the architecture materiality rule and checkpoint before unsafe retry",
+        "Emit the public transition when material",
+        "Route recovery through REQUEST_REQUIRED_AUTHORIZATION unless stronger current evidence justifies another allowed disposition"
+      ],
+      "negative_assertions": [
+        "Do not leave a material event as unclassified internal operational information",
+        "Do not claim completion merely because the original execution path became unavailable"
+      ],
+      "proof_surfaces": [
+        "boundary_event",
+        "public_transition",
+        "recovery_disposition"
+      ],
+      "proof_ceiling": "Taxonomy-class regression semantics only; downstream model obedience and external runtime execution remain unproven.",
+      "input_event": {
+        "observed_classification": "IS_ESSENTIAL_INPUT_MISSING",
+        "process_alive": true,
+        "repository_available": true,
+        "repository_relevant": true,
+        "side_effect_state": "NONE",
+        "raw_detail_sensitive": false
+      },
+      "expected_output": {
+        "classification": "IS_ESSENTIAL_INPUT_MISSING",
+        "materiality": "MATERIAL",
+        "recovery_disposition": "REQUEST_REQUIRED_AUTHORIZATION",
+        "execution_path": [
+          "BOUNDARY_OBSERVED",
+          "BOUNDARY_CLASSIFIED",
+          "CHECKPOINTED",
+          "PUBLIC_TRANSITION_EMITTED",
+          "RECOVERY_SELECTED",
+          "QUIESCENT_BLOCKED"
+        ],
+        "checkpoint_required": true,
+        "journal_required": true,
+        "outbox_required": true,
+        "public_transition_required": true,
+        "repository_persistence_required": true,
+        "readback_required": false,
+        "redaction_required": false,
+        "supervisor_synthesized": false,
+        "taxonomy_evolution_required": false,
+        "success_terminal": false
+      },
+      "forbidden_outputs": [
+        {
+          "field": "success_terminal",
+          "value": true
+        },
+        {
+          "field": "public_transition_required",
+          "value": false
+        },
+        {
+          "field": "checkpoint_required",
+          "value": false
+        },
+        {
+          "field": "journal_required",
+          "value": false
+        },
+        {
+          "field": "outbox_required",
+          "value": false
+        }
+      ]
+    },
+    {
+      "case_id": "EBR-037",
+      "title": "Class coverage: IS_RESOURCE_NOT_FOUND",
+      "classification": "IS_RESOURCE_NOT_FOUND",
+      "stimulus": "A runtime reports IS_RESOURCE_NOT_FOUND: Expected file/object/branch/artifact/resource cannot be resolved.",
+      "expected_materiality": "MATERIAL",
+      "expected_recovery": "REFRESH_AND_RECONCILE",
+      "positive_assertions": [
+        "Classify the event as IS_RESOURCE_NOT_FOUND within family INPUT_IDENTITY_STATE",
+        "Apply the architecture materiality rule and checkpoint before unsafe retry",
+        "Emit the public transition when material",
+        "Route recovery through REFRESH_AND_RECONCILE unless stronger current evidence justifies another allowed disposition"
+      ],
+      "negative_assertions": [
+        "Do not leave a material event as unclassified internal operational information",
+        "Do not claim completion merely because the original execution path became unavailable"
+      ],
+      "proof_surfaces": [
+        "boundary_event",
+        "public_transition",
+        "recovery_disposition"
+      ],
+      "proof_ceiling": "Taxonomy-class regression semantics only; downstream model obedience and external runtime execution remain unproven.",
+      "input_event": {
+        "observed_classification": "IS_RESOURCE_NOT_FOUND",
+        "process_alive": true,
+        "repository_available": true,
+        "repository_relevant": true,
+        "side_effect_state": "NONE",
+        "raw_detail_sensitive": false
+      },
+      "expected_output": {
+        "classification": "IS_RESOURCE_NOT_FOUND",
+        "materiality": "MATERIAL",
+        "recovery_disposition": "REFRESH_AND_RECONCILE",
+        "execution_path": [
+          "BOUNDARY_OBSERVED",
+          "BOUNDARY_CLASSIFIED",
+          "CHECKPOINTED",
+          "PUBLIC_TRANSITION_EMITTED",
+          "RECOVERY_SELECTED",
+          "RECOVERING"
+        ],
+        "checkpoint_required": true,
+        "journal_required": true,
+        "outbox_required": true,
+        "public_transition_required": true,
+        "repository_persistence_required": true,
+        "readback_required": false,
+        "redaction_required": false,
+        "supervisor_synthesized": false,
+        "taxonomy_evolution_required": false,
+        "success_terminal": false
+      },
+      "forbidden_outputs": [
+        {
+          "field": "success_terminal",
+          "value": true
+        },
+        {
+          "field": "public_transition_required",
+          "value": false
+        },
+        {
+          "field": "checkpoint_required",
+          "value": false
+        },
+        {
+          "field": "journal_required",
+          "value": false
+        },
+        {
+          "field": "outbox_required",
+          "value": false
+        }
+      ]
+    },
+    {
+      "case_id": "EBR-038",
+      "title": "Class coverage: IS_EVIDENCE_STALE_OR_CONTRADICTORY",
+      "classification": "IS_EVIDENCE_STALE_OR_CONTRADICTORY",
+      "stimulus": "A runtime reports IS_EVIDENCE_STALE_OR_CONTRADICTORY: Evidence no longer supports a branch-sensitive or state-sensitive conclusion.",
+      "expected_materiality": "MATERIAL",
+      "expected_recovery": "REFRESH_AND_RECONCILE",
+      "positive_assertions": [
+        "Classify the event as IS_EVIDENCE_STALE_OR_CONTRADICTORY within family INPUT_IDENTITY_STATE",
+        "Apply the architecture materiality rule and checkpoint before unsafe retry",
+        "Emit the public transition when material",
+        "Route recovery through REFRESH_AND_RECONCILE unless stronger current evidence justifies another allowed disposition"
+      ],
+      "negative_assertions": [
+        "Do not leave a material event as unclassified internal operational information",
+        "Do not claim completion merely because the original execution path became unavailable"
+      ],
+      "proof_surfaces": [
+        "boundary_event",
+        "public_transition",
+        "recovery_disposition"
+      ],
+      "proof_ceiling": "Taxonomy-class regression semantics only; downstream model obedience and external runtime execution remain unproven.",
+      "input_event": {
+        "observed_classification": "IS_EVIDENCE_STALE_OR_CONTRADICTORY",
+        "process_alive": true,
+        "repository_available": true,
+        "repository_relevant": true,
+        "side_effect_state": "NONE",
+        "raw_detail_sensitive": false
+      },
+      "expected_output": {
+        "classification": "IS_EVIDENCE_STALE_OR_CONTRADICTORY",
+        "materiality": "MATERIAL",
+        "recovery_disposition": "REFRESH_AND_RECONCILE",
+        "execution_path": [
+          "BOUNDARY_OBSERVED",
+          "BOUNDARY_CLASSIFIED",
+          "CHECKPOINTED",
+          "PUBLIC_TRANSITION_EMITTED",
+          "RECOVERY_SELECTED",
+          "RECOVERING"
+        ],
+        "checkpoint_required": true,
+        "journal_required": true,
+        "outbox_required": true,
+        "public_transition_required": true,
+        "repository_persistence_required": true,
+        "readback_required": false,
+        "redaction_required": false,
+        "supervisor_synthesized": false,
+        "taxonomy_evolution_required": false,
+        "success_terminal": false
+      },
+      "forbidden_outputs": [
+        {
+          "field": "success_terminal",
+          "value": true
+        },
+        {
+          "field": "public_transition_required",
+          "value": false
+        },
+        {
+          "field": "checkpoint_required",
+          "value": false
+        },
+        {
+          "field": "journal_required",
+          "value": false
+        },
+        {
+          "field": "outbox_required",
+          "value": false
+        }
+      ]
+    },
+    {
+      "case_id": "EBR-039",
+      "title": "Class coverage: IS_DATA_INTEGRITY_FAILURE",
+      "classification": "IS_DATA_INTEGRITY_FAILURE",
+      "stimulus": "A runtime reports IS_DATA_INTEGRITY_FAILURE: Input or tracked state appears corrupt, internally inconsistent, or cannot be trusted for mutation.",
+      "expected_materiality": "CRITICAL",
+      "expected_recovery": "ABORT_UNSAFE_MUTATION",
+      "positive_assertions": [
+        "Classify the event as IS_DATA_INTEGRITY_FAILURE within family INPUT_IDENTITY_STATE",
+        "Apply the architecture materiality rule and checkpoint before unsafe retry",
+        "Emit the public transition when material",
+        "Route recovery through ABORT_UNSAFE_MUTATION unless stronger current evidence justifies another allowed disposition"
+      ],
+      "negative_assertions": [
+        "Do not leave a material event as unclassified internal operational information",
+        "Do not claim completion merely because the original execution path became unavailable"
+      ],
+      "proof_surfaces": [
+        "boundary_event",
+        "public_transition",
+        "recovery_disposition"
+      ],
+      "proof_ceiling": "Taxonomy-class regression semantics only; downstream model obedience and external runtime execution remain unproven.",
+      "input_event": {
+        "observed_classification": "IS_DATA_INTEGRITY_FAILURE",
+        "process_alive": true,
+        "repository_available": true,
+        "repository_relevant": true,
+        "side_effect_state": "NONE",
+        "raw_detail_sensitive": false
+      },
+      "expected_output": {
+        "classification": "IS_DATA_INTEGRITY_FAILURE",
+        "materiality": "CRITICAL",
+        "recovery_disposition": "ABORT_UNSAFE_MUTATION",
+        "execution_path": [
+          "BOUNDARY_OBSERVED",
+          "BOUNDARY_CLASSIFIED",
+          "CHECKPOINTED",
+          "PUBLIC_TRANSITION_EMITTED",
+          "RECOVERY_SELECTED",
+          "QUIESCENT_BLOCKED"
+        ],
+        "checkpoint_required": true,
+        "journal_required": true,
+        "outbox_required": true,
+        "public_transition_required": true,
+        "repository_persistence_required": true,
+        "readback_required": false,
+        "redaction_required": false,
+        "supervisor_synthesized": false,
+        "taxonomy_evolution_required": false,
+        "success_terminal": false
+      },
+      "forbidden_outputs": [
+        {
+          "field": "success_terminal",
+          "value": true
+        },
+        {
+          "field": "public_transition_required",
+          "value": false
+        },
+        {
+          "field": "checkpoint_required",
+          "value": false
+        },
+        {
+          "field": "journal_required",
+          "value": false
+        },
+        {
+          "field": "outbox_required",
+          "value": false
+        }
+      ]
+    },
+    {
+      "case_id": "EBR-040",
+      "title": "Class coverage: MT_OPTIMISTIC_LOCK_OR_VERSION_CONFLICT",
+      "classification": "MT_OPTIMISTIC_LOCK_OR_VERSION_CONFLICT",
+      "stimulus": "A runtime reports MT_OPTIMISTIC_LOCK_OR_VERSION_CONFLICT: ETag/SHA/revision/head changed since the write basis was read.",
+      "expected_materiality": "MATERIAL",
+      "expected_recovery": "REFRESH_AND_RECONCILE",
+      "positive_assertions": [
+        "Classify the event as MT_OPTIMISTIC_LOCK_OR_VERSION_CONFLICT within family MUTATION_TRANSACTION",
+        "Apply the architecture materiality rule and checkpoint before unsafe retry",
+        "Emit the public transition when material",
+        "Route recovery through REFRESH_AND_RECONCILE unless stronger current evidence justifies another allowed disposition"
+      ],
+      "negative_assertions": [
+        "Do not leave a material event as unclassified internal operational information",
+        "Do not claim completion merely because the original execution path became unavailable"
+      ],
+      "proof_surfaces": [
+        "boundary_event",
+        "public_transition",
+        "recovery_disposition"
+      ],
+      "proof_ceiling": "Taxonomy-class regression semantics only; downstream model obedience and external runtime execution remain unproven.",
+      "input_event": {
+        "observed_classification": "MT_OPTIMISTIC_LOCK_OR_VERSION_CONFLICT",
+        "process_alive": true,
+        "repository_available": true,
+        "repository_relevant": true,
+        "side_effect_state": "NONE",
+        "raw_detail_sensitive": false
+      },
+      "expected_output": {
+        "classification": "MT_OPTIMISTIC_LOCK_OR_VERSION_CONFLICT",
+        "materiality": "MATERIAL",
+        "recovery_disposition": "REFRESH_AND_RECONCILE",
+        "execution_path": [
+          "BOUNDARY_OBSERVED",
+          "BOUNDARY_CLASSIFIED",
+          "CHECKPOINTED",
+          "PUBLIC_TRANSITION_EMITTED",
+          "RECOVERY_SELECTED",
+          "RECOVERING"
+        ],
+        "checkpoint_required": true,
+        "journal_required": true,
+        "outbox_required": true,
+        "public_transition_required": true,
+        "repository_persistence_required": true,
+        "readback_required": false,
+        "redaction_required": false,
+        "supervisor_synthesized": false,
+        "taxonomy_evolution_required": false,
+        "success_terminal": false
+      },
+      "forbidden_outputs": [
+        {
+          "field": "success_terminal",
+          "value": true
+        },
+        {
+          "field": "public_transition_required",
+          "value": false
+        },
+        {
+          "field": "checkpoint_required",
+          "value": false
+        },
+        {
+          "field": "journal_required",
+          "value": false
+        },
+        {
+          "field": "outbox_required",
+          "value": false
+        }
+      ]
+    },
+    {
+      "case_id": "EBR-041",
+      "title": "Class coverage: MT_DUPLICATE_OR_REPLAY_RISK",
+      "classification": "MT_DUPLICATE_OR_REPLAY_RISK",
+      "stimulus": "A runtime reports MT_DUPLICATE_OR_REPLAY_RISK: Blind retry could duplicate a mutation, message, payment-like action, record, or artifact.",
+      "expected_materiality": "CRITICAL",
+      "expected_recovery": "READ_AFTER_WRITE_RECONCILE",
+      "positive_assertions": [
+        "Classify the event as MT_DUPLICATE_OR_REPLAY_RISK within family MUTATION_TRANSACTION",
+        "Apply the architecture materiality rule and checkpoint before unsafe retry",
+        "Emit the public transition when material",
+        "Route recovery through READ_AFTER_WRITE_RECONCILE unless stronger current evidence justifies another allowed disposition"
+      ],
+      "negative_assertions": [
+        "Do not leave a material event as unclassified internal operational information",
+        "Do not claim completion merely because the original execution path became unavailable"
+      ],
+      "proof_surfaces": [
+        "boundary_event",
+        "public_transition",
+        "recovery_disposition"
+      ],
+      "proof_ceiling": "Taxonomy-class regression semantics only; downstream model obedience and external runtime execution remain unproven.",
+      "input_event": {
+        "observed_classification": "MT_DUPLICATE_OR_REPLAY_RISK",
+        "process_alive": true,
+        "repository_available": true,
+        "repository_relevant": true,
+        "side_effect_state": "UNKNOWN",
+        "raw_detail_sensitive": false
+      },
+      "expected_output": {
+        "classification": "MT_DUPLICATE_OR_REPLAY_RISK",
+        "materiality": "CRITICAL",
+        "recovery_disposition": "READ_AFTER_WRITE_RECONCILE",
+        "execution_path": [
+          "BOUNDARY_OBSERVED",
+          "BOUNDARY_CLASSIFIED",
+          "CHECKPOINTED",
+          "PUBLIC_TRANSITION_EMITTED",
+          "RECOVERY_SELECTED",
+          "RECOVERING"
+        ],
+        "checkpoint_required": true,
+        "journal_required": true,
+        "outbox_required": true,
+        "public_transition_required": true,
+        "repository_persistence_required": true,
+        "readback_required": true,
+        "redaction_required": false,
+        "supervisor_synthesized": false,
+        "taxonomy_evolution_required": false,
+        "success_terminal": false
+      },
+      "forbidden_outputs": [
+        {
+          "field": "success_terminal",
+          "value": true
+        },
+        {
+          "field": "public_transition_required",
+          "value": false
+        },
+        {
+          "field": "checkpoint_required",
+          "value": false
+        },
+        {
+          "field": "journal_required",
+          "value": false
+        },
+        {
+          "field": "outbox_required",
+          "value": false
+        },
+        {
+          "field": "readback_required",
+          "value": false
+        }
+      ]
+    },
+    {
+      "case_id": "EBR-042",
+      "title": "Class coverage: MT_ROLLBACK_REQUIRED",
+      "classification": "MT_ROLLBACK_REQUIRED",
+      "stimulus": "A runtime reports MT_ROLLBACK_REQUIRED: A failed mutation left state requiring explicit safe rollback/reconciliation.",
+      "expected_materiality": "CRITICAL",
+      "expected_recovery": "ABORT_UNSAFE_MUTATION",
+      "positive_assertions": [
+        "Classify the event as MT_ROLLBACK_REQUIRED within family MUTATION_TRANSACTION",
+        "Apply the architecture materiality rule and checkpoint before unsafe retry",
+        "Emit the public transition when material",
+        "Route recovery through ABORT_UNSAFE_MUTATION unless stronger current evidence justifies another allowed disposition"
+      ],
+      "negative_assertions": [
+        "Do not leave a material event as unclassified internal operational information",
+        "Do not claim completion merely because the original execution path became unavailable"
+      ],
+      "proof_surfaces": [
+        "boundary_event",
+        "public_transition",
+        "recovery_disposition"
+      ],
+      "proof_ceiling": "Taxonomy-class regression semantics only; downstream model obedience and external runtime execution remain unproven.",
+      "input_event": {
+        "observed_classification": "MT_ROLLBACK_REQUIRED",
+        "process_alive": true,
+        "repository_available": true,
+        "repository_relevant": true,
+        "side_effect_state": "NONE",
+        "raw_detail_sensitive": false
+      },
+      "expected_output": {
+        "classification": "MT_ROLLBACK_REQUIRED",
+        "materiality": "CRITICAL",
+        "recovery_disposition": "ABORT_UNSAFE_MUTATION",
+        "execution_path": [
+          "BOUNDARY_OBSERVED",
+          "BOUNDARY_CLASSIFIED",
+          "CHECKPOINTED",
+          "PUBLIC_TRANSITION_EMITTED",
+          "RECOVERY_SELECTED",
+          "QUIESCENT_BLOCKED"
+        ],
+        "checkpoint_required": true,
+        "journal_required": true,
+        "outbox_required": true,
+        "public_transition_required": true,
+        "repository_persistence_required": true,
+        "readback_required": false,
+        "redaction_required": false,
+        "supervisor_synthesized": false,
+        "taxonomy_evolution_required": false,
+        "success_terminal": false
+      },
+      "forbidden_outputs": [
+        {
+          "field": "success_terminal",
+          "value": true
+        },
+        {
+          "field": "public_transition_required",
+          "value": false
+        },
+        {
+          "field": "checkpoint_required",
+          "value": false
+        },
+        {
+          "field": "journal_required",
+          "value": false
+        },
+        {
+          "field": "outbox_required",
+          "value": false
+        }
+      ]
+    },
+    {
+      "case_id": "EBR-043",
+      "title": "Class coverage: VP_REQUIRED_PROOF_UNAVAILABLE",
+      "classification": "VP_REQUIRED_PROOF_UNAVAILABLE",
+      "stimulus": "A runtime reports VP_REQUIRED_PROOF_UNAVAILABLE: The environment cannot produce a required proof surface and no valid substitute exists.",
+      "expected_materiality": "MATERIAL",
+      "expected_recovery": "HANDOFF_REQUIRED_SUCCESSOR",
+      "positive_assertions": [
+        "Classify the event as VP_REQUIRED_PROOF_UNAVAILABLE within family VALIDATION_PROOF",
+        "Apply the architecture materiality rule and checkpoint before unsafe retry",
+        "Emit the public transition when material",
+        "Route recovery through HANDOFF_REQUIRED_SUCCESSOR unless stronger current evidence justifies another allowed disposition"
+      ],
+      "negative_assertions": [
+        "Do not leave a material event as unclassified internal operational information",
+        "Do not claim completion merely because the original execution path became unavailable"
+      ],
+      "proof_surfaces": [
+        "boundary_event",
+        "public_transition",
+        "recovery_disposition"
+      ],
+      "proof_ceiling": "Taxonomy-class regression semantics only; downstream model obedience and external runtime execution remain unproven.",
+      "input_event": {
+        "observed_classification": "VP_REQUIRED_PROOF_UNAVAILABLE",
+        "process_alive": true,
+        "repository_available": true,
+        "repository_relevant": true,
+        "side_effect_state": "NONE",
+        "raw_detail_sensitive": false
+      },
+      "expected_output": {
+        "classification": "VP_REQUIRED_PROOF_UNAVAILABLE",
+        "materiality": "MATERIAL",
+        "recovery_disposition": "HANDOFF_REQUIRED_SUCCESSOR",
+        "execution_path": [
+          "BOUNDARY_OBSERVED",
+          "BOUNDARY_CLASSIFIED",
+          "CHECKPOINTED",
+          "PUBLIC_TRANSITION_EMITTED",
+          "RECOVERY_SELECTED",
+          "QUIESCENT_BLOCKED"
+        ],
+        "checkpoint_required": true,
+        "journal_required": true,
+        "outbox_required": true,
+        "public_transition_required": true,
+        "repository_persistence_required": true,
+        "readback_required": false,
+        "redaction_required": false,
+        "supervisor_synthesized": false,
+        "taxonomy_evolution_required": false,
+        "success_terminal": false
+      },
+      "forbidden_outputs": [
+        {
+          "field": "success_terminal",
+          "value": true
+        },
+        {
+          "field": "public_transition_required",
+          "value": false
+        },
+        {
+          "field": "checkpoint_required",
+          "value": false
+        },
+        {
+          "field": "journal_required",
+          "value": false
+        },
+        {
+          "field": "outbox_required",
+          "value": false
+        }
+      ]
+    },
+    {
+      "case_id": "EBR-044",
+      "title": "Class coverage: VP_PROOF_RELEVANCE_CHANGED",
+      "classification": "VP_PROOF_RELEVANCE_CHANGED",
+      "stimulus": "A runtime reports VP_PROOF_RELEVANCE_CHANGED: A proof-relevant input changed, invalidating prior evidence.",
+      "expected_materiality": "MATERIAL",
+      "expected_recovery": "REFRESH_AND_RECONCILE",
+      "positive_assertions": [
+        "Classify the event as VP_PROOF_RELEVANCE_CHANGED within family VALIDATION_PROOF",
+        "Apply the architecture materiality rule and checkpoint before unsafe retry",
+        "Emit the public transition when material",
+        "Route recovery through REFRESH_AND_RECONCILE unless stronger current evidence justifies another allowed disposition"
+      ],
+      "negative_assertions": [
+        "Do not leave a material event as unclassified internal operational information",
+        "Do not claim completion merely because the original execution path became unavailable"
+      ],
+      "proof_surfaces": [
+        "boundary_event",
+        "public_transition",
+        "recovery_disposition"
+      ],
+      "proof_ceiling": "Taxonomy-class regression semantics only; downstream model obedience and external runtime execution remain unproven.",
+      "input_event": {
+        "observed_classification": "VP_PROOF_RELEVANCE_CHANGED",
+        "process_alive": true,
+        "repository_available": true,
+        "repository_relevant": true,
+        "side_effect_state": "NONE",
+        "raw_detail_sensitive": false
+      },
+      "expected_output": {
+        "classification": "VP_PROOF_RELEVANCE_CHANGED",
+        "materiality": "MATERIAL",
+        "recovery_disposition": "REFRESH_AND_RECONCILE",
+        "execution_path": [
+          "BOUNDARY_OBSERVED",
+          "BOUNDARY_CLASSIFIED",
+          "CHECKPOINTED",
+          "PUBLIC_TRANSITION_EMITTED",
+          "RECOVERY_SELECTED",
+          "RECOVERING"
+        ],
+        "checkpoint_required": true,
+        "journal_required": true,
+        "outbox_required": true,
+        "public_transition_required": true,
+        "repository_persistence_required": true,
+        "readback_required": false,
+        "redaction_required": false,
+        "supervisor_synthesized": false,
+        "taxonomy_evolution_required": false,
+        "success_terminal": false
+      },
+      "forbidden_outputs": [
+        {
+          "field": "success_terminal",
+          "value": true
+        },
+        {
+          "field": "public_transition_required",
+          "value": false
+        },
+        {
+          "field": "checkpoint_required",
+          "value": false
+        },
+        {
+          "field": "journal_required",
+          "value": false
+        },
+        {
+          "field": "outbox_required",
+          "value": false
+        }
+      ]
+    },
+    {
+      "case_id": "EBR-045",
+      "title": "Class coverage: VP_EVIDENCE_STATE_PROMOTION_ATTEMPT",
+      "classification": "VP_EVIDENCE_STATE_PROMOTION_ATTEMPT",
+      "stimulus": "A runtime reports VP_EVIDENCE_STATE_PROMOTION_ATTEMPT: A weaker state such as planned/implemented/PR-open is being treated as validated/integrated/deployed/observed.",
+      "expected_materiality": "MATERIAL",
+      "expected_recovery": "RESUME_FROM_CHECKPOINT",
+      "positive_assertions": [
+        "Classify the event as VP_EVIDENCE_STATE_PROMOTION_ATTEMPT within family VALIDATION_PROOF",
+        "Apply the architecture materiality rule and checkpoint before unsafe retry",
+        "Emit the public transition when material",
+        "Route recovery through RESUME_FROM_CHECKPOINT unless stronger current evidence justifies another allowed disposition"
+      ],
+      "negative_assertions": [
+        "Do not leave a material event as unclassified internal operational information",
+        "Do not claim completion merely because the original execution path became unavailable"
+      ],
+      "proof_surfaces": [
+        "boundary_event",
+        "public_transition",
+        "recovery_disposition"
+      ],
+      "proof_ceiling": "Taxonomy-class regression semantics only; downstream model obedience and external runtime execution remain unproven.",
+      "input_event": {
+        "observed_classification": "VP_EVIDENCE_STATE_PROMOTION_ATTEMPT",
+        "process_alive": true,
+        "repository_available": true,
+        "repository_relevant": true,
+        "side_effect_state": "NONE",
+        "raw_detail_sensitive": false
+      },
+      "expected_output": {
+        "classification": "VP_EVIDENCE_STATE_PROMOTION_ATTEMPT",
+        "materiality": "MATERIAL",
+        "recovery_disposition": "RESUME_FROM_CHECKPOINT",
+        "execution_path": [
+          "BOUNDARY_OBSERVED",
+          "BOUNDARY_CLASSIFIED",
+          "CHECKPOINTED",
+          "PUBLIC_TRANSITION_EMITTED",
+          "RECOVERY_SELECTED",
+          "RECOVERING"
+        ],
+        "checkpoint_required": true,
+        "journal_required": true,
+        "outbox_required": true,
+        "public_transition_required": true,
+        "repository_persistence_required": true,
+        "readback_required": false,
+        "redaction_required": false,
+        "supervisor_synthesized": false,
+        "taxonomy_evolution_required": false,
+        "success_terminal": false
+      },
+      "forbidden_outputs": [
+        {
+          "field": "success_terminal",
+          "value": true
+        },
+        {
+          "field": "public_transition_required",
+          "value": false
+        },
+        {
+          "field": "checkpoint_required",
+          "value": false
+        },
+        {
+          "field": "journal_required",
+          "value": false
+        },
+        {
+          "field": "outbox_required",
+          "value": false
+        }
+      ]
+    },
+    {
+      "case_id": "EBR-046",
+      "title": "Class coverage: CI_MERGE_CONFLICT",
+      "classification": "CI_MERGE_CONFLICT",
+      "stimulus": "A runtime reports CI_MERGE_CONFLICT: Owned changes cannot integrate automatically with current target state.",
+      "expected_materiality": "MATERIAL",
+      "expected_recovery": "REFRESH_AND_RECONCILE",
+      "positive_assertions": [
+        "Classify the event as CI_MERGE_CONFLICT within family CONCURRENCY_INTEGRATION",
+        "Apply the architecture materiality rule and checkpoint before unsafe retry",
+        "Emit the public transition when material",
+        "Route recovery through REFRESH_AND_RECONCILE unless stronger current evidence justifies another allowed disposition"
+      ],
+      "negative_assertions": [
+        "Do not leave a material event as unclassified internal operational information",
+        "Do not claim completion merely because the original execution path became unavailable"
+      ],
+      "proof_surfaces": [
+        "boundary_event",
+        "public_transition",
+        "recovery_disposition"
+      ],
+      "proof_ceiling": "Taxonomy-class regression semantics only; downstream model obedience and external runtime execution remain unproven.",
+      "input_event": {
+        "observed_classification": "CI_MERGE_CONFLICT",
+        "process_alive": true,
+        "repository_available": true,
+        "repository_relevant": true,
+        "side_effect_state": "NONE",
+        "raw_detail_sensitive": false
+      },
+      "expected_output": {
+        "classification": "CI_MERGE_CONFLICT",
+        "materiality": "MATERIAL",
+        "recovery_disposition": "REFRESH_AND_RECONCILE",
+        "execution_path": [
+          "BOUNDARY_OBSERVED",
+          "BOUNDARY_CLASSIFIED",
+          "CHECKPOINTED",
+          "PUBLIC_TRANSITION_EMITTED",
+          "RECOVERY_SELECTED",
+          "RECOVERING"
+        ],
+        "checkpoint_required": true,
+        "journal_required": true,
+        "outbox_required": true,
+        "public_transition_required": true,
+        "repository_persistence_required": true,
+        "readback_required": false,
+        "redaction_required": false,
+        "supervisor_synthesized": false,
+        "taxonomy_evolution_required": false,
+        "success_terminal": false
+      },
+      "forbidden_outputs": [
+        {
+          "field": "success_terminal",
+          "value": true
+        },
+        {
+          "field": "public_transition_required",
+          "value": false
+        },
+        {
+          "field": "checkpoint_required",
+          "value": false
+        },
+        {
+          "field": "journal_required",
+          "value": false
+        },
+        {
+          "field": "outbox_required",
+          "value": false
+        }
+      ]
+    },
+    {
+      "case_id": "EBR-047",
+      "title": "Class coverage: CI_SHARED_RESOURCE_CONTENTION",
+      "classification": "CI_SHARED_RESOURCE_CONTENTION",
+      "stimulus": "A runtime reports CI_SHARED_RESOURCE_CONTENTION: Non-Git shared mutable resource cannot be safely written concurrently.",
+      "expected_materiality": "MATERIAL",
+      "expected_recovery": "SERIALIZE_AND_CONTINUE",
+      "positive_assertions": [
+        "Classify the event as CI_SHARED_RESOURCE_CONTENTION within family CONCURRENCY_INTEGRATION",
+        "Apply the architecture materiality rule and checkpoint before unsafe retry",
+        "Emit the public transition when material",
+        "Route recovery through SERIALIZE_AND_CONTINUE unless stronger current evidence justifies another allowed disposition"
+      ],
+      "negative_assertions": [
+        "Do not leave a material event as unclassified internal operational information",
+        "Do not claim completion merely because the original execution path became unavailable"
+      ],
+      "proof_surfaces": [
+        "boundary_event",
+        "public_transition",
+        "recovery_disposition"
+      ],
+      "proof_ceiling": "Taxonomy-class regression semantics only; downstream model obedience and external runtime execution remain unproven.",
+      "input_event": {
+        "observed_classification": "CI_SHARED_RESOURCE_CONTENTION",
+        "process_alive": true,
+        "repository_available": true,
+        "repository_relevant": true,
+        "side_effect_state": "NONE",
+        "raw_detail_sensitive": false
+      },
+      "expected_output": {
+        "classification": "CI_SHARED_RESOURCE_CONTENTION",
+        "materiality": "MATERIAL",
+        "recovery_disposition": "SERIALIZE_AND_CONTINUE",
+        "execution_path": [
+          "BOUNDARY_OBSERVED",
+          "BOUNDARY_CLASSIFIED",
+          "CHECKPOINTED",
+          "PUBLIC_TRANSITION_EMITTED",
+          "RECOVERY_SELECTED",
+          "RECOVERING"
+        ],
+        "checkpoint_required": true,
+        "journal_required": true,
+        "outbox_required": true,
+        "public_transition_required": true,
+        "repository_persistence_required": true,
+        "readback_required": false,
+        "redaction_required": false,
+        "supervisor_synthesized": false,
+        "taxonomy_evolution_required": false,
+        "success_terminal": false
+      },
+      "forbidden_outputs": [
+        {
+          "field": "success_terminal",
+          "value": true
+        },
+        {
+          "field": "public_transition_required",
+          "value": false
+        },
+        {
+          "field": "checkpoint_required",
+          "value": false
+        },
+        {
+          "field": "journal_required",
+          "value": false
+        },
+        {
+          "field": "outbox_required",
+          "value": false
+        }
+      ]
+    },
+    {
+      "case_id": "EBR-048",
+      "title": "Class coverage: CI_DEPENDENCY_NOT_INTEGRATED",
+      "classification": "CI_DEPENDENCY_NOT_INTEGRATED",
+      "stimulus": "A runtime reports CI_DEPENDENCY_NOT_INTEGRATED: Required upstream branch/PR/artifact has not reached the state the current lane depends on.",
+      "expected_materiality": "MATERIAL",
+      "expected_recovery": "WAIT_ON_EXTERNAL_GATE_WITH_DURABLE_HANDOFF",
+      "positive_assertions": [
+        "Classify the event as CI_DEPENDENCY_NOT_INTEGRATED within family CONCURRENCY_INTEGRATION",
+        "Apply the architecture materiality rule and checkpoint before unsafe retry",
+        "Emit the public transition when material",
+        "Route recovery through WAIT_ON_EXTERNAL_GATE_WITH_DURABLE_HANDOFF unless stronger current evidence justifies another allowed disposition"
+      ],
+      "negative_assertions": [
+        "Do not leave a material event as unclassified internal operational information",
+        "Do not claim completion merely because the original execution path became unavailable"
+      ],
+      "proof_surfaces": [
+        "boundary_event",
+        "public_transition",
+        "recovery_disposition"
+      ],
+      "proof_ceiling": "Taxonomy-class regression semantics only; downstream model obedience and external runtime execution remain unproven.",
+      "input_event": {
+        "observed_classification": "CI_DEPENDENCY_NOT_INTEGRATED",
+        "process_alive": true,
+        "repository_available": true,
+        "repository_relevant": true,
+        "side_effect_state": "NONE",
+        "raw_detail_sensitive": false
+      },
+      "expected_output": {
+        "classification": "CI_DEPENDENCY_NOT_INTEGRATED",
+        "materiality": "MATERIAL",
+        "recovery_disposition": "WAIT_ON_EXTERNAL_GATE_WITH_DURABLE_HANDOFF",
+        "execution_path": [
+          "BOUNDARY_OBSERVED",
+          "BOUNDARY_CLASSIFIED",
+          "CHECKPOINTED",
+          "PUBLIC_TRANSITION_EMITTED",
+          "RECOVERY_SELECTED",
+          "QUIESCENT_BLOCKED"
+        ],
+        "checkpoint_required": true,
+        "journal_required": true,
+        "outbox_required": true,
+        "public_transition_required": true,
+        "repository_persistence_required": true,
+        "readback_required": false,
+        "redaction_required": false,
+        "supervisor_synthesized": false,
+        "taxonomy_evolution_required": false,
+        "success_terminal": false
+      },
+      "forbidden_outputs": [
+        {
+          "field": "success_terminal",
+          "value": true
+        },
+        {
+          "field": "public_transition_required",
+          "value": false
+        },
+        {
+          "field": "checkpoint_required",
+          "value": false
+        },
+        {
+          "field": "journal_required",
+          "value": false
+        },
+        {
+          "field": "outbox_required",
+          "value": false
+        }
+      ]
+    },
+    {
+      "case_id": "EBR-049",
+      "title": "Class coverage: OR_CONTEXT_OR_MEMORY_CEILING",
+      "classification": "OR_CONTEXT_OR_MEMORY_CEILING",
+      "stimulus": "A runtime reports OR_CONTEXT_OR_MEMORY_CEILING: Context/memory/working-set ceiling threatens continuity or drops required state.",
+      "expected_materiality": "MATERIAL",
+      "expected_recovery": "RESUME_FROM_CHECKPOINT",
+      "positive_assertions": [
+        "Classify the event as OR_CONTEXT_OR_MEMORY_CEILING within family ORCHESTRATION_RESOURCE",
+        "Apply the architecture materiality rule and checkpoint before unsafe retry",
+        "Emit the public transition when material",
+        "Route recovery through RESUME_FROM_CHECKPOINT unless stronger current evidence justifies another allowed disposition"
+      ],
+      "negative_assertions": [
+        "Do not leave a material event as unclassified internal operational information",
+        "Do not claim completion merely because the original execution path became unavailable"
+      ],
+      "proof_surfaces": [
+        "boundary_event",
+        "public_transition",
+        "recovery_disposition"
+      ],
+      "proof_ceiling": "Taxonomy-class regression semantics only; downstream model obedience and external runtime execution remain unproven.",
+      "input_event": {
+        "observed_classification": "OR_CONTEXT_OR_MEMORY_CEILING",
+        "process_alive": true,
+        "repository_available": true,
+        "repository_relevant": true,
+        "side_effect_state": "NONE",
+        "raw_detail_sensitive": false
+      },
+      "expected_output": {
+        "classification": "OR_CONTEXT_OR_MEMORY_CEILING",
+        "materiality": "MATERIAL",
+        "recovery_disposition": "RESUME_FROM_CHECKPOINT",
+        "execution_path": [
+          "BOUNDARY_OBSERVED",
+          "BOUNDARY_CLASSIFIED",
+          "CHECKPOINTED",
+          "PUBLIC_TRANSITION_EMITTED",
+          "RECOVERY_SELECTED",
+          "RECOVERING"
+        ],
+        "checkpoint_required": true,
+        "journal_required": true,
+        "outbox_required": true,
+        "public_transition_required": true,
+        "repository_persistence_required": true,
+        "readback_required": false,
+        "redaction_required": false,
+        "supervisor_synthesized": false,
+        "taxonomy_evolution_required": false,
+        "success_terminal": false
+      },
+      "forbidden_outputs": [
+        {
+          "field": "success_terminal",
+          "value": true
+        },
+        {
+          "field": "public_transition_required",
+          "value": false
+        },
+        {
+          "field": "checkpoint_required",
+          "value": false
+        },
+        {
+          "field": "journal_required",
+          "value": false
+        },
+        {
+          "field": "outbox_required",
+          "value": false
+        }
+      ]
+    },
+    {
+      "case_id": "EBR-050",
+      "title": "Class coverage: OR_PROCESS_OR_WORKER_CEILING",
+      "classification": "OR_PROCESS_OR_WORKER_CEILING",
+      "stimulus": "A runtime reports OR_PROCESS_OR_WORKER_CEILING: Parallel worker/process capacity is unavailable or exhausted.",
+      "expected_materiality": "MATERIAL",
+      "expected_recovery": "SERIALIZE_AND_CONTINUE",
+      "positive_assertions": [
+        "Classify the event as OR_PROCESS_OR_WORKER_CEILING within family ORCHESTRATION_RESOURCE",
+        "Apply the architecture materiality rule and checkpoint before unsafe retry",
+        "Emit the public transition when material",
+        "Route recovery through SERIALIZE_AND_CONTINUE unless stronger current evidence justifies another allowed disposition"
+      ],
+      "negative_assertions": [
+        "Do not leave a material event as unclassified internal operational information",
+        "Do not claim completion merely because the original execution path became unavailable"
+      ],
+      "proof_surfaces": [
+        "boundary_event",
+        "public_transition",
+        "recovery_disposition"
+      ],
+      "proof_ceiling": "Taxonomy-class regression semantics only; downstream model obedience and external runtime execution remain unproven.",
+      "input_event": {
+        "observed_classification": "OR_PROCESS_OR_WORKER_CEILING",
+        "process_alive": true,
+        "repository_available": true,
+        "repository_relevant": true,
+        "side_effect_state": "NONE",
+        "raw_detail_sensitive": false
+      },
+      "expected_output": {
+        "classification": "OR_PROCESS_OR_WORKER_CEILING",
+        "materiality": "MATERIAL",
+        "recovery_disposition": "SERIALIZE_AND_CONTINUE",
+        "execution_path": [
+          "BOUNDARY_OBSERVED",
+          "BOUNDARY_CLASSIFIED",
+          "CHECKPOINTED",
+          "PUBLIC_TRANSITION_EMITTED",
+          "RECOVERY_SELECTED",
+          "RECOVERING"
+        ],
+        "checkpoint_required": true,
+        "journal_required": true,
+        "outbox_required": true,
+        "public_transition_required": true,
+        "repository_persistence_required": true,
+        "readback_required": false,
+        "redaction_required": false,
+        "supervisor_synthesized": false,
+        "taxonomy_evolution_required": false,
+        "success_terminal": false
+      },
+      "forbidden_outputs": [
+        {
+          "field": "success_terminal",
+          "value": true
+        },
+        {
+          "field": "public_transition_required",
+          "value": false
+        },
+        {
+          "field": "checkpoint_required",
+          "value": false
+        },
+        {
+          "field": "journal_required",
+          "value": false
+        },
+        {
+          "field": "outbox_required",
+          "value": false
+        }
+      ]
+    },
+    {
+      "case_id": "EBR-051",
+      "title": "Class coverage: DE_REQUIRED_ARTIFACT_OR_SERVICE_MISSING",
+      "classification": "DE_REQUIRED_ARTIFACT_OR_SERVICE_MISSING",
+      "stimulus": "A runtime reports DE_REQUIRED_ARTIFACT_OR_SERVICE_MISSING: Required upstream artifact/service/runtime is missing and cannot be generated within current authority.",
+      "expected_materiality": "MATERIAL",
+      "expected_recovery": "HANDOFF_REQUIRED_SUCCESSOR",
+      "positive_assertions": [
+        "Classify the event as DE_REQUIRED_ARTIFACT_OR_SERVICE_MISSING within family DEPENDENCY_EXTERNAL",
+        "Apply the architecture materiality rule and checkpoint before unsafe retry",
+        "Emit the public transition when material",
+        "Route recovery through HANDOFF_REQUIRED_SUCCESSOR unless stronger current evidence justifies another allowed disposition"
+      ],
+      "negative_assertions": [
+        "Do not leave a material event as unclassified internal operational information",
+        "Do not claim completion merely because the original execution path became unavailable"
+      ],
+      "proof_surfaces": [
+        "boundary_event",
+        "public_transition",
+        "recovery_disposition"
+      ],
+      "proof_ceiling": "Taxonomy-class regression semantics only; downstream model obedience and external runtime execution remain unproven.",
+      "input_event": {
+        "observed_classification": "DE_REQUIRED_ARTIFACT_OR_SERVICE_MISSING",
+        "process_alive": true,
+        "repository_available": true,
+        "repository_relevant": true,
+        "side_effect_state": "NONE",
+        "raw_detail_sensitive": false
+      },
+      "expected_output": {
+        "classification": "DE_REQUIRED_ARTIFACT_OR_SERVICE_MISSING",
+        "materiality": "MATERIAL",
+        "recovery_disposition": "HANDOFF_REQUIRED_SUCCESSOR",
+        "execution_path": [
+          "BOUNDARY_OBSERVED",
+          "BOUNDARY_CLASSIFIED",
+          "CHECKPOINTED",
+          "PUBLIC_TRANSITION_EMITTED",
+          "RECOVERY_SELECTED",
+          "QUIESCENT_BLOCKED"
+        ],
+        "checkpoint_required": true,
+        "journal_required": true,
+        "outbox_required": true,
+        "public_transition_required": true,
+        "repository_persistence_required": true,
+        "readback_required": false,
+        "redaction_required": false,
+        "supervisor_synthesized": false,
+        "taxonomy_evolution_required": false,
+        "success_terminal": false
+      },
+      "forbidden_outputs": [
+        {
+          "field": "success_terminal",
+          "value": true
+        },
+        {
+          "field": "public_transition_required",
+          "value": false
+        },
+        {
+          "field": "checkpoint_required",
+          "value": false
+        },
+        {
+          "field": "journal_required",
+          "value": false
+        },
+        {
+          "field": "outbox_required",
+          "value": false
+        }
+      ]
+    },
+    {
+      "case_id": "EBR-052",
+      "title": "Class coverage: DE_EXTERNAL_HUMAN_ACTION_REQUIRED",
+      "classification": "DE_EXTERNAL_HUMAN_ACTION_REQUIRED",
+      "stimulus": "A runtime reports DE_EXTERNAL_HUMAN_ACTION_REQUIRED: A person other than the acting agent must perform an action before progression.",
+      "expected_materiality": "MATERIAL",
+      "expected_recovery": "WAIT_ON_EXTERNAL_GATE_WITH_DURABLE_HANDOFF",
+      "positive_assertions": [
+        "Classify the event as DE_EXTERNAL_HUMAN_ACTION_REQUIRED within family DEPENDENCY_EXTERNAL",
+        "Apply the architecture materiality rule and checkpoint before unsafe retry",
+        "Emit the public transition when material",
+        "Route recovery through WAIT_ON_EXTERNAL_GATE_WITH_DURABLE_HANDOFF unless stronger current evidence justifies another allowed disposition"
+      ],
+      "negative_assertions": [
+        "Do not leave a material event as unclassified internal operational information",
+        "Do not claim completion merely because the original execution path became unavailable"
+      ],
+      "proof_surfaces": [
+        "boundary_event",
+        "public_transition",
+        "recovery_disposition"
+      ],
+      "proof_ceiling": "Taxonomy-class regression semantics only; downstream model obedience and external runtime execution remain unproven.",
+      "input_event": {
+        "observed_classification": "DE_EXTERNAL_HUMAN_ACTION_REQUIRED",
+        "process_alive": true,
+        "repository_available": true,
+        "repository_relevant": true,
+        "side_effect_state": "NONE",
+        "raw_detail_sensitive": false
+      },
+      "expected_output": {
+        "classification": "DE_EXTERNAL_HUMAN_ACTION_REQUIRED",
+        "materiality": "MATERIAL",
+        "recovery_disposition": "WAIT_ON_EXTERNAL_GATE_WITH_DURABLE_HANDOFF",
+        "execution_path": [
+          "BOUNDARY_OBSERVED",
+          "BOUNDARY_CLASSIFIED",
+          "CHECKPOINTED",
+          "PUBLIC_TRANSITION_EMITTED",
+          "RECOVERY_SELECTED",
+          "QUIESCENT_BLOCKED"
+        ],
+        "checkpoint_required": true,
+        "journal_required": true,
+        "outbox_required": true,
+        "public_transition_required": true,
+        "repository_persistence_required": true,
+        "readback_required": false,
+        "redaction_required": false,
+        "supervisor_synthesized": false,
+        "taxonomy_evolution_required": false,
+        "success_terminal": false
+      },
+      "forbidden_outputs": [
+        {
+          "field": "success_terminal",
+          "value": true
+        },
+        {
+          "field": "public_transition_required",
+          "value": false
+        },
+        {
+          "field": "checkpoint_required",
+          "value": false
+        },
+        {
+          "field": "journal_required",
+          "value": false
+        },
+        {
+          "field": "outbox_required",
+          "value": false
+        }
+      ]
+    },
+    {
+      "case_id": "EBR-053",
+      "title": "Class coverage: DE_EXTERNAL_SYSTEM_NOT_READY",
+      "classification": "DE_EXTERNAL_SYSTEM_NOT_READY",
+      "stimulus": "A runtime reports DE_EXTERNAL_SYSTEM_NOT_READY: A required system is not yet in the state needed for safe continuation.",
+      "expected_materiality": "MATERIAL",
+      "expected_recovery": "WAIT_ON_EXTERNAL_GATE_WITH_DURABLE_HANDOFF",
+      "positive_assertions": [
+        "Classify the event as DE_EXTERNAL_SYSTEM_NOT_READY within family DEPENDENCY_EXTERNAL",
+        "Apply the architecture materiality rule and checkpoint before unsafe retry",
+        "Emit the public transition when material",
+        "Route recovery through WAIT_ON_EXTERNAL_GATE_WITH_DURABLE_HANDOFF unless stronger current evidence justifies another allowed disposition"
+      ],
+      "negative_assertions": [
+        "Do not leave a material event as unclassified internal operational information",
+        "Do not claim completion merely because the original execution path became unavailable"
+      ],
+      "proof_surfaces": [
+        "boundary_event",
+        "public_transition",
+        "recovery_disposition"
+      ],
+      "proof_ceiling": "Taxonomy-class regression semantics only; downstream model obedience and external runtime execution remain unproven.",
+      "input_event": {
+        "observed_classification": "DE_EXTERNAL_SYSTEM_NOT_READY",
+        "process_alive": true,
+        "repository_available": true,
+        "repository_relevant": true,
+        "side_effect_state": "NONE",
+        "raw_detail_sensitive": false
+      },
+      "expected_output": {
+        "classification": "DE_EXTERNAL_SYSTEM_NOT_READY",
+        "materiality": "MATERIAL",
+        "recovery_disposition": "WAIT_ON_EXTERNAL_GATE_WITH_DURABLE_HANDOFF",
+        "execution_path": [
+          "BOUNDARY_OBSERVED",
+          "BOUNDARY_CLASSIFIED",
+          "CHECKPOINTED",
+          "PUBLIC_TRANSITION_EMITTED",
+          "RECOVERY_SELECTED",
+          "QUIESCENT_BLOCKED"
+        ],
+        "checkpoint_required": true,
+        "journal_required": true,
+        "outbox_required": true,
+        "public_transition_required": true,
+        "repository_persistence_required": true,
+        "readback_required": false,
+        "redaction_required": false,
+        "supervisor_synthesized": false,
+        "taxonomy_evolution_required": false,
+        "success_terminal": false
+      },
+      "forbidden_outputs": [
+        {
+          "field": "success_terminal",
+          "value": true
+        },
+        {
+          "field": "public_transition_required",
+          "value": false
+        },
+        {
+          "field": "checkpoint_required",
+          "value": false
+        },
+        {
+          "field": "journal_required",
+          "value": false
+        },
+        {
+          "field": "outbox_required",
+          "value": false
+        }
+      ]
+    },
+    {
+      "case_id": "EBR-054",
+      "title": "Class coverage: UC_SCOPE_CHANGED",
+      "classification": "UC_SCOPE_CHANGED",
+      "stimulus": "A runtime reports UC_SCOPE_CHANGED: User changes requested scope/constraints/target state.",
+      "expected_materiality": "MATERIAL",
+      "expected_recovery": "REPLAN_WITHIN_SCOPE",
+      "positive_assertions": [
+        "Classify the event as UC_SCOPE_CHANGED within family USER_CONTROL",
+        "Apply the architecture materiality rule and checkpoint before unsafe retry",
+        "Emit the public transition when material",
+        "Route recovery through REPLAN_WITHIN_SCOPE unless stronger current evidence justifies another allowed disposition"
+      ],
+      "negative_assertions": [
+        "Do not leave a material event as unclassified internal operational information",
+        "Do not claim completion merely because the original execution path became unavailable"
+      ],
+      "proof_surfaces": [
+        "boundary_event",
+        "public_transition",
+        "recovery_disposition"
+      ],
+      "proof_ceiling": "Taxonomy-class regression semantics only; downstream model obedience and external runtime execution remain unproven.",
+      "input_event": {
+        "observed_classification": "UC_SCOPE_CHANGED",
+        "process_alive": true,
+        "repository_available": true,
+        "repository_relevant": true,
+        "side_effect_state": "NONE",
+        "raw_detail_sensitive": false
+      },
+      "expected_output": {
+        "classification": "UC_SCOPE_CHANGED",
+        "materiality": "MATERIAL",
+        "recovery_disposition": "REPLAN_WITHIN_SCOPE",
+        "execution_path": [
+          "BOUNDARY_OBSERVED",
+          "BOUNDARY_CLASSIFIED",
+          "CHECKPOINTED",
+          "PUBLIC_TRANSITION_EMITTED",
+          "RECOVERY_SELECTED",
+          "RECOVERING"
+        ],
+        "checkpoint_required": true,
+        "journal_required": true,
+        "outbox_required": true,
+        "public_transition_required": true,
+        "repository_persistence_required": true,
+        "readback_required": false,
+        "redaction_required": false,
+        "supervisor_synthesized": false,
+        "taxonomy_evolution_required": false,
+        "success_terminal": false
+      },
+      "forbidden_outputs": [
+        {
+          "field": "success_terminal",
+          "value": true
+        },
+        {
+          "field": "public_transition_required",
+          "value": false
+        },
+        {
+          "field": "checkpoint_required",
+          "value": false
+        },
+        {
+          "field": "journal_required",
+          "value": false
+        },
+        {
+          "field": "outbox_required",
+          "value": false
+        }
+      ]
+    },
+    {
+      "case_id": "EBR-055",
+      "title": "Class coverage: UC_CANCELLED",
+      "classification": "UC_CANCELLED",
+      "stimulus": "A runtime reports UC_CANCELLED: User explicitly cancels the objective; checkpoint and stop without pretending completion.",
+      "expected_materiality": "MATERIAL",
+      "expected_recovery": "QUIESCE_UNCHANGED_BLOCKER",
+      "positive_assertions": [
+        "Classify the event as UC_CANCELLED within family USER_CONTROL",
+        "Apply the architecture materiality rule and checkpoint before unsafe retry",
+        "Emit the public transition when material",
+        "Route recovery through CONTINUE_UNCHANGED unless stronger current evidence justifies another allowed disposition"
+      ],
+      "negative_assertions": [
+        "Do not leave a material event as unclassified internal operational information",
+        "Do not claim completion merely because the original execution path became unavailable"
+      ],
+      "proof_surfaces": [
+        "boundary_event",
+        "public_transition",
+        "recovery_disposition"
+      ],
+      "proof_ceiling": "Taxonomy-class regression semantics only; downstream model obedience and external runtime execution remain unproven.",
+      "input_event": {
+        "observed_classification": "UC_CANCELLED",
+        "process_alive": true,
+        "repository_available": true,
+        "repository_relevant": true,
+        "side_effect_state": "NONE",
+        "raw_detail_sensitive": false
+      },
+      "expected_output": {
+        "classification": "UC_CANCELLED",
+        "materiality": "MATERIAL",
+        "recovery_disposition": "QUIESCE_UNCHANGED_BLOCKER",
+        "execution_path": [
+          "BOUNDARY_OBSERVED",
+          "BOUNDARY_CLASSIFIED",
+          "CHECKPOINTED",
+          "PUBLIC_TRANSITION_EMITTED",
+          "RECOVERY_SELECTED",
+          "QUIESCENT_BLOCKED"
+        ],
+        "checkpoint_required": true,
+        "journal_required": true,
+        "outbox_required": true,
+        "public_transition_required": true,
+        "repository_persistence_required": true,
+        "readback_required": false,
+        "redaction_required": false,
+        "supervisor_synthesized": false,
+        "taxonomy_evolution_required": false,
+        "success_terminal": false
+      },
+      "forbidden_outputs": [
+        {
+          "field": "success_terminal",
+          "value": true
+        },
+        {
+          "field": "public_transition_required",
+          "value": false
+        },
+        {
+          "field": "checkpoint_required",
+          "value": false
+        },
+        {
+          "field": "journal_required",
+          "value": false
+        },
+        {
+          "field": "outbox_required",
+          "value": false
+        }
+      ]
+    },
+    {
+      "case_id": "EBR-056",
+      "title": "Class coverage: HT_PROCESS_CRASH",
+      "classification": "HT_PROCESS_CRASH",
+      "stimulus": "A runtime reports HT_PROCESS_CRASH: Acting process crashes before a valid terminal event.",
+      "expected_materiality": "CRITICAL",
+      "expected_recovery": "SYNTHESIZE_TERMINATION",
+      "positive_assertions": [
+        "Classify the event as HT_PROCESS_CRASH within family HARD_TERMINATION",
+        "Apply the architecture materiality rule and checkpoint before unsafe retry",
+        "Emit the public transition when material",
+        "Route recovery through SYNTHESIZE_TERMINATION unless stronger current evidence justifies another allowed disposition"
+      ],
+      "negative_assertions": [
+        "Do not leave a material event as unclassified internal operational information",
+        "Do not claim completion merely because the original execution path became unavailable"
+      ],
+      "proof_surfaces": [
+        "boundary_event",
+        "public_transition",
+        "recovery_disposition"
+      ],
+      "proof_ceiling": "Taxonomy-class regression semantics only; downstream model obedience and external runtime execution remain unproven.",
+      "input_event": {
+        "observed_classification": "HT_PROCESS_CRASH",
+        "process_alive": false,
+        "repository_available": true,
+        "repository_relevant": true,
+        "side_effect_state": "NONE",
+        "raw_detail_sensitive": false
+      },
+      "expected_output": {
+        "classification": "HT_PROCESS_CRASH",
+        "materiality": "CRITICAL",
+        "recovery_disposition": "SYNTHESIZE_TERMINATION",
+        "execution_path": [
+          "HARD_TERMINATED_SYNTHETIC"
+        ],
+        "checkpoint_required": true,
+        "journal_required": true,
+        "outbox_required": true,
+        "public_transition_required": true,
+        "repository_persistence_required": true,
+        "readback_required": false,
+        "redaction_required": false,
+        "supervisor_synthesized": true,
+        "taxonomy_evolution_required": false,
+        "success_terminal": false
+      },
+      "forbidden_outputs": [
+        {
+          "field": "success_terminal",
+          "value": true
+        },
+        {
+          "field": "public_transition_required",
+          "value": false
+        },
+        {
+          "field": "checkpoint_required",
+          "value": false
+        },
+        {
+          "field": "journal_required",
+          "value": false
+        },
+        {
+          "field": "outbox_required",
+          "value": false
+        },
+        {
+          "field": "supervisor_synthesized",
+          "value": false
+        }
+      ]
+    },
+    {
+      "case_id": "EBR-057",
+      "title": "Class coverage: HT_LOST_EXECUTION_LEASE",
+      "classification": "HT_LOST_EXECUTION_LEASE",
+      "stimulus": "A runtime reports HT_LOST_EXECUTION_LEASE: Execution lease/session disappears and the acting process cannot reliably resume/report.",
+      "expected_materiality": "CRITICAL",
+      "expected_recovery": "SYNTHESIZE_TERMINATION",
+      "positive_assertions": [
+        "Classify the event as HT_LOST_EXECUTION_LEASE within family HARD_TERMINATION",
+        "Apply the architecture materiality rule and checkpoint before unsafe retry",
+        "Emit the public transition when material",
+        "Route recovery through SYNTHESIZE_TERMINATION unless stronger current evidence justifies another allowed disposition"
+      ],
+      "negative_assertions": [
+        "Do not leave a material event as unclassified internal operational information",
+        "Do not claim completion merely because the original execution path became unavailable"
+      ],
+      "proof_surfaces": [
+        "boundary_event",
+        "public_transition",
+        "recovery_disposition"
+      ],
+      "proof_ceiling": "Taxonomy-class regression semantics only; downstream model obedience and external runtime execution remain unproven.",
+      "input_event": {
+        "observed_classification": "HT_LOST_EXECUTION_LEASE",
+        "process_alive": false,
+        "repository_available": true,
+        "repository_relevant": true,
+        "side_effect_state": "NONE",
+        "raw_detail_sensitive": false
+      },
+      "expected_output": {
+        "classification": "HT_LOST_EXECUTION_LEASE",
+        "materiality": "CRITICAL",
+        "recovery_disposition": "SYNTHESIZE_TERMINATION",
+        "execution_path": [
+          "HARD_TERMINATED_SYNTHETIC"
+        ],
+        "checkpoint_required": true,
+        "journal_required": true,
+        "outbox_required": true,
+        "public_transition_required": true,
+        "repository_persistence_required": true,
+        "readback_required": false,
+        "redaction_required": false,
+        "supervisor_synthesized": true,
+        "taxonomy_evolution_required": false,
+        "success_terminal": false
+      },
+      "forbidden_outputs": [
+        {
+          "field": "success_terminal",
+          "value": true
+        },
+        {
+          "field": "public_transition_required",
+          "value": false
+        },
+        {
+          "field": "checkpoint_required",
+          "value": false
+        },
+        {
+          "field": "journal_required",
+          "value": false
+        },
+        {
+          "field": "outbox_required",
+          "value": false
+        },
+        {
+          "field": "supervisor_synthesized",
+          "value": false
+        }
+      ]
+    },
+    {
+      "case_id": "EBR-058",
+      "title": "Unknown material boundary fails safe into taxonomy evolution",
+      "classification": "UE_UNCLASSIFIED_MATERIAL_BOUNDARY",
+      "stimulus": "A material path/proof/mutation transition is observed, but none of the existing canonical classes can be applied without guessing.",
+      "expected_materiality": "MATERIAL",
+      "expected_recovery": "REPLAN_WITHIN_SCOPE",
+      "positive_assertions": [
+        "Capture and checkpoint the event under UE_UNCLASSIFIED_MATERIAL_BOUNDARY",
+        "Publish BOUNDARY/IMPACT/PROVED/RECOVERY/NEXT despite classification uncertainty",
+        "Open a taxonomy/prevention evolution candidate while continuing primary recovery when safe"
+      ],
+      "negative_assertions": [
+        "Do not suppress the event because the taxonomy lacks a perfect class",
+        "Do not invent a specific class unsupported by evidence",
+        "Do not downgrade a material event to INFO merely to avoid taxonomy evolution"
+      ],
+      "proof_surfaces": [
+        "boundary_event",
+        "public_transition",
+        "taxonomy_evolution_candidate"
+      ],
+      "proof_ceiling": "Fallback classification and retained-regression semantics only; downstream model obedience and host-runtime execution remain unproven.",
+      "input_event": {
+        "observed_classification": "FUTURE_UNCLASSIFIED_SIGNAL",
+        "process_alive": true,
+        "repository_available": true,
+        "repository_relevant": true,
+        "side_effect_state": "NONE",
+        "raw_detail_sensitive": false
+      },
+      "expected_output": {
+        "classification": "UE_UNCLASSIFIED_MATERIAL_BOUNDARY",
+        "materiality": "MATERIAL",
+        "recovery_disposition": "REPLAN_WITHIN_SCOPE",
+        "execution_path": [
+          "BOUNDARY_OBSERVED",
+          "BOUNDARY_CLASSIFIED",
+          "CHECKPOINTED",
+          "PUBLIC_TRANSITION_EMITTED",
+          "RECOVERY_SELECTED",
+          "RECOVERING"
+        ],
+        "checkpoint_required": true,
+        "journal_required": true,
+        "outbox_required": true,
+        "public_transition_required": true,
+        "repository_persistence_required": true,
+        "readback_required": false,
+        "redaction_required": false,
+        "supervisor_synthesized": false,
+        "taxonomy_evolution_required": true,
+        "success_terminal": false
+      },
+      "forbidden_outputs": [
+        {
+          "field": "success_terminal",
+          "value": true
+        },
+        {
+          "field": "public_transition_required",
+          "value": false
+        },
+        {
+          "field": "checkpoint_required",
+          "value": false
+        },
+        {
+          "field": "journal_required",
+          "value": false
+        },
+        {
+          "field": "outbox_required",
+          "value": false
+        },
+        {
+          "field": "taxonomy_evolution_required",
+          "value": false
+        }
+      ]
+    },
+    {
+      "case_id": "EBR-059",
+      "title": "Dead process normalizes non-termination signal into hard termination",
+      "classification": "HT_HOST_FORCED_TERMINATION",
+      "stimulus": "The host process disappears after a non-HT signal was last observed.",
+      "expected_materiality": "CRITICAL",
+      "expected_recovery": "SYNTHESIZE_TERMINATION",
+      "positive_assertions": [
+        "Normalize the dead process to HT_HOST_FORCED_TERMINATION before selecting recovery",
+        "Use SYNTHESIZE_TERMINATION from the hard-termination family",
+        "Preserve external-supervisor attribution"
+      ],
+      "negative_assertions": [
+        "Do not return HARD_TERMINATED_SYNTHETIC with a non-HT recovery",
+        "Do not keep the prior nonterminal classification merely because it was observed first"
+      ],
+      "proof_surfaces": [
+        "boundary_event",
+        "supervisor_event",
+        "execution_path"
+      ],
+      "proof_ceiling": "Deterministic engine normalization only; host-process observation still requires an external sentinel.",
+      "input_event": {
+        "observed_classification": "PS_TIMEOUT",
+        "process_alive": false,
+        "repository_available": true,
+        "repository_relevant": true,
+        "side_effect_state": "NONE",
+        "raw_detail_sensitive": false
+      },
+      "expected_output": {
+        "classification": "HT_HOST_FORCED_TERMINATION",
+        "materiality": "CRITICAL",
+        "recovery_disposition": "SYNTHESIZE_TERMINATION",
+        "execution_path": [
+          "HARD_TERMINATED_SYNTHETIC"
+        ],
+        "checkpoint_required": true,
+        "journal_required": true,
+        "outbox_required": true,
+        "public_transition_required": true,
+        "repository_persistence_required": true,
+        "readback_required": false,
+        "redaction_required": false,
+        "supervisor_synthesized": true,
+        "taxonomy_evolution_required": false,
+        "success_terminal": false
+      },
+      "forbidden_outputs": [
+        {
+          "field": "success_terminal",
+          "value": true
+        },
+        {
+          "field": "supervisor_synthesized",
+          "value": false
+        }
+      ]
+    }
+  ],
+  "proof_ceiling": "Static contract/mutation floor for architecture, taxonomy, inheritance, and expected transitions. It does not itself execute downstream agents or an external host supervisor."
+}
