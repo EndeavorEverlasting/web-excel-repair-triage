@@ -10,6 +10,17 @@ class BoundaryEngineError(ValueError):
 
 
 FALLBACK_CLASS = "UE_UNCLASSIFIED_MATERIAL_BOUNDARY"
+PRIMARY_RECOVERY_SPRINT_STATE = "PRIMARY_RECOVERY_SPRINT_OPENED"
+PRIMARY_RECOVERY_SPRINT_FIELDS = (
+    "trigger_event_id",
+    "parent_objective_id",
+    "preserved_outcome",
+    "bounded_owned_scope",
+    "first_executable_action",
+    "completion_gate",
+    "return_condition",
+)
+SPRINT_EXEMPT_CLASSES = {"UC_CANCELLED"}
 NORMAL_PATH_PREFIX = [
     "BOUNDARY_OBSERVED",
     "BOUNDARY_CLASSIFIED",
@@ -59,6 +70,48 @@ def _assert_path_supported(path: list[str], architecture: dict[str, Any]) -> Non
             )
 
 
+def _primary_recovery_sprint(
+    input_event: dict[str, Any],
+    architecture: dict[str, Any],
+    classification: str,
+    recovery: str,
+    *,
+    material: bool,
+    hard_termination: bool,
+) -> dict[str, str] | None:
+    if not material or hard_termination or classification in SPRINT_EXEMPT_CLASSES:
+        return None
+
+    contract = architecture.get("boundary_sprint_contract")
+    if not isinstance(contract, dict):
+        raise BoundaryEngineError("universal boundary sprint contract missing")
+    if contract.get("state_transition") != PRIMARY_RECOVERY_SPRINT_STATE:
+        raise BoundaryEngineError("boundary sprint state transition drifted")
+    required_fields = contract.get("required_fields")
+    if not isinstance(required_fields, list) or set(required_fields) != set(PRIMARY_RECOVERY_SPRINT_FIELDS):
+        raise BoundaryEngineError("boundary sprint required fields drifted")
+
+    event_id = input_event.get("event_id")
+    if not isinstance(event_id, str) or not event_id.strip():
+        event_id = f"BOUNDARY:{classification}"
+    event_id = event_id.strip()
+    if len(event_id) > 128:
+        raise BoundaryEngineError("boundary event id exceeds bounded sprint identity")
+
+    sprint = {
+        "trigger_event_id": event_id,
+        "parent_objective_id": "ACTIVE_OBJECTIVE",
+        "preserved_outcome": "PRESERVE_PARENT_OBJECTIVE",
+        "bounded_owned_scope": "BOUNDARY_RECOVERY_ONLY",
+        "first_executable_action": recovery,
+        "completion_gate": "RECOVERY_APPLIED_OR_EXACT_BLOCKER_PROVEN",
+        "return_condition": "PARENT_OBJECTIVE_RESUMED_OR_EXACT_GATE_RETAINED",
+    }
+    if set(sprint) != set(PRIMARY_RECOVERY_SPRINT_FIELDS):
+        raise BoundaryEngineError("primary recovery sprint shape drifted")
+    return sprint
+
+
 def evaluate_boundary(
     input_event: dict[str, Any],
     architecture: dict[str, Any],
@@ -81,6 +134,14 @@ def evaluate_boundary(
 
     material = materiality in {"MATERIAL", "CRITICAL"}
     hard_termination = classification.startswith("HT_") or input_event.get("process_alive") is False
+    primary_sprint = _primary_recovery_sprint(
+        input_event,
+        architecture,
+        classification,
+        recovery,
+        material=material,
+        hard_termination=hard_termination,
+    )
     layers = _layer_ids(architecture)
 
     if hard_termination:
@@ -93,7 +154,10 @@ def evaluate_boundary(
             if recovery in BLOCKED_RECOVERIES
             else "RECOVERING"
         )
-        path = [*NORMAL_PATH_PREFIX, final_state]
+        path = [*NORMAL_PATH_PREFIX]
+        if primary_sprint is not None:
+            path.append(PRIMARY_RECOVERY_SPRINT_STATE)
+        path.append(final_state)
         _assert_path_supported(path, architecture)
         supervisor_synthesized = False
 
@@ -107,6 +171,7 @@ def evaluate_boundary(
 
     repository_available = bool(input_event.get("repository_available", True))
     repository_relevant = bool(input_event.get("repository_relevant", True))
+    primary_sprint_required = primary_sprint is not None
 
     return {
         "classification": classification,
@@ -125,6 +190,9 @@ def evaluate_boundary(
         },
         "supervisor_synthesized": hard_termination and supervisor_synthesized,
         "taxonomy_evolution_required": classification == FALLBACK_CLASS,
+        "primary_recovery_sprint_required": primary_sprint_required,
+        "first_action_execution_required": primary_sprint_required,
+        "primary_recovery_sprint": primary_sprint,
         "success_terminal": False,
     }
 

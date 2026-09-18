@@ -1,0 +1,70 @@
+name: TEMP P07 canonical local-proof adapter
+
+on:
+  push:
+    branches:
+      - fix/local-proof-continuity-20260917
+
+permissions:
+  contents: write
+
+jobs:
+  proof-and-regenerate:
+    if: ${{ !contains(github.event.head_commit.message, '[generated]') }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          ref: ${{ github.ref_name }}
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97
+        with:
+          python-version: "3.11"
+      - name: Install pinned repository test dependencies
+        shell: bash
+        run: |
+          set -euo pipefail
+          python -m pip install --upgrade pip
+          python -m pip install -r requirements-test-floor.txt
+      - id: proof
+        name: Run canonical Prompt Kit build proof
+        shell: bash
+        run: |
+          set -euo pipefail
+          python scripts/run_repository_action.py \
+            --action prompt-kit-build-proof \
+            --base-ref origin/main \
+            --report Outputs/repository-actions/prompt-kit-build-proof.json
+          git diff --check
+          status="$(git status --porcelain=v1)"
+          printf '%s\n' "$status"
+          unexpected="$(printf '%s\n' "$status" | grep -vE '^ M web/prompt-kit/index\.html$' || true)"
+          test -z "$unexpected"
+          if git diff --quiet -- web/prompt-kit/index.html; then
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+          fi
+      - name: Upload canonical proof receipt
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: p07-prompt-kit-build-proof-${{ github.sha }}
+          path: Outputs/repository-actions/prompt-kit-build-proof.json
+          if-no-files-found: error
+      - name: Commit generated projection only
+        if: steps.proof.outputs.changed == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          gh auth setup-git
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add web/prompt-kit/index.html
+          git diff --cached --check
+          git commit -m "build(prompt-kit): refresh generated site [generated]"
+          git push origin "HEAD:${{ github.ref_name }}"
