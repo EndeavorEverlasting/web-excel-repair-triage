@@ -140,4 +140,3 @@ The first five-scenario pilot must explicitly exercise at least:
 - PRCR.PROOF.FINGERPRINT.REQUIRED
 - PRCR.COMPLIANCE.PASS
 - PRCR.COMPLIANCE.FAIL
-
