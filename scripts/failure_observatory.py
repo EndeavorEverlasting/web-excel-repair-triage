@@ -11,7 +11,10 @@ import secrets
 from pathlib import Path
 from typing import Any
 
-from scripts.execution_boundary_engine import evaluate_boundary
+try:
+    from scripts.execution_boundary_engine import evaluate_boundary
+except ModuleNotFoundError:
+    from execution_boundary_engine import evaluate_boundary
 
 STATE_SCHEMA = "failure-observatory-state/v1"
 CAPSULE_SCHEMA = "failure-contribution-capsule/v1"
