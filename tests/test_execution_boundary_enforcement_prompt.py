@@ -23,6 +23,7 @@ ARCHITECTURE = ROOT / "harness/contracts/execution-boundary-enforcement.v1.json"
 TAXONOMY = ROOT / "harness/contracts/execution-boundary-taxonomy.v1.json"
 MATRIX = ROOT / "harness/evals/execution-boundaries/boundary-regression-matrix.v1.json"
 SHARED_POLICY = ROOT / "registry/prompts/actionable-next-step-policy.v1.json"
+VALIDATORS = ROOT / "harness/validators.v1.json"
 
 
 class ExecutionBoundaryEnforcementTests(unittest.TestCase):
@@ -31,6 +32,7 @@ class ExecutionBoundaryEnforcementTests(unittest.TestCase):
         self.taxonomy = json.loads(TAXONOMY.read_text(encoding="utf-8"))
         self.matrix = json.loads(MATRIX.read_text(encoding="utf-8"))
         self.policy = json.loads(SHARED_POLICY.read_text(encoding="utf-8"))
+        self.validators = json.loads(VALIDATORS.read_text(encoding="utf-8"))
 
     def validate(self, *, architecture=None, taxonomy=None, matrix=None, policy=None):
         return validate_documents(
@@ -59,6 +61,22 @@ class ExecutionBoundaryEnforcementTests(unittest.TestCase):
         self.assertIn("EXECUTION BOUNDARY ENFORCEMENT: PASS", completed.stdout)
         self.assertIn("classes=58", completed.stdout)
         self.assertIn("cases=59", completed.stdout)
+
+
+    def test_boundary_checks_are_blocking_in_normal_local_profiles(self) -> None:
+        required = {
+            "execution-boundary-enforcement-audit",
+            "execution-boundary-enforcement-tests",
+            "privacy-failure-observatory-audit",
+            "privacy-failure-observatory-tests",
+        }
+        definitions = {item["id"]: item for item in self.validators["validators"]}
+        self.assertTrue(required.issubset(definitions))
+        for validator_id in required:
+            self.assertIs(definitions[validator_id]["blocking"], True)
+        for profile in ("required_checks", "harness", "pre_push"):
+            with self.subTest(profile=profile):
+                self.assertTrue(required.issubset(set(self.validators["profiles"][profile])))
 
     def test_duplicate_taxonomy_class_fails_closed(self) -> None:
         mutated = copy.deepcopy(self.taxonomy)

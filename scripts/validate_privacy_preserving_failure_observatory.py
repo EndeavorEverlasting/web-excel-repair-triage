@@ -5,6 +5,7 @@ from __future__ import annotations
 import ast
 import json
 from pathlib import Path
+from typing import Any
 
 try:
     from scripts.failure_observatory import CAPSULE_KEYS, CLAUSE_BY_BOUNDARY, CONTENT_BEARING_HOOKS, SUPPORTED_CURSOR_HOOKS
@@ -28,10 +29,6 @@ def _imports(path: Path) -> set[str]:
         elif isinstance(node, ast.ImportFrom) and node.module:
             found.add(node.module.split(".")[0])
     return found
-
-
-
-
 
 def validate_hook_configuration(hooks: Any) -> dict[str, list[dict[str, Any]]]:
     if not isinstance(hooks, dict):

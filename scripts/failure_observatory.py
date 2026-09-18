@@ -146,10 +146,6 @@ def new_state() -> dict[str, Any]:
         "outcome": "ACTIVE",
     }
 
-
-
-
-
 def _validate_prompt_provenance(prompt_id: Any, prompt_release: Any) -> None:
     if not isinstance(prompt_id, str) or not isinstance(prompt_release, str):
         raise ObservatoryError("prompt provenance must be strings")
