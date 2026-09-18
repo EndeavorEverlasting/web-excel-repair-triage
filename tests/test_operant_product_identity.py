@@ -254,8 +254,10 @@ class OperantProductIdentityTests(unittest.TestCase):
             'staging_branch="automation/operant-release-staging-v${next_version}"',
             workflow,
         )
-        self.assertIn('target_head="$existing_branch"', workflow)
+        self.assertIn('target_head="${existing_branch:-$pending_branch}"', workflow)
         self.assertIn('candidate_branch="$staging_branch"', workflow)
+        self.assertEqual(workflow.count("gh pr list --state open --base main"), 1)
+        self.assertNotIn('candidate_branch="$pending_branch"', workflow)
         self.assertNotIn("Refreshing open Operant release PR branch in place", workflow)
         self.assertNotIn('git checkout -B "$existing_branch"', workflow)
         self.assertNotIn('gh pr edit "$existing_url"', workflow)
