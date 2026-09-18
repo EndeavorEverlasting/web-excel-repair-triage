@@ -697,4 +697,3 @@ Completion gate:
 - a different valid active dispatch manifest can validate without mutating the historical seed;
 - patch hygiene passes;
 - exact green candidate integrates into current default branch.
-
