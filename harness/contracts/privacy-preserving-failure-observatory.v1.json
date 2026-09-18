@@ -14,7 +14,8 @@
     "Local-only observability must remain useful when networking is permanently disabled.",
     "Hard-stop detection belongs outside the acting agent; finalization receipts improve precision but are never the sole detector.",
     "Public prompt provenance is limited to a bounded prompt id and public release bucket.",
-    "Repository learning is a future projection over approved aggregate phenotypes, never raw individual forensic evidence."
+    "Repository learning is a future projection over approved aggregate phenotypes, never raw individual forensic evidence.",
+    "Raw host generation/conversation/session identifiers may be used only transiently to derive a device-local HMAC run key for local state isolation; neither raw nor derived identifiers may enter a contribution capsule."
   ],
   "deployment_operating_model": {
     "selected": "LOCAL_PROCESS",
@@ -182,5 +183,12 @@
       "gate": "Repository consumes only approved aggregate phenotypes."
     }
   ],
-  "proof_ceiling": "P0 proves local adapter/sentinel/compiler behavior and forbidden-data non-reachability under deterministic fixtures. It does not prove Cursor installation, arbitrary hostile runtimes, anonymous transport, differential privacy, or repository aggregation."
+  "proof_ceiling": "P0 proves local adapter/sentinel/compiler behavior and forbidden-data non-reachability under deterministic fixtures. It does not prove Cursor installation, arbitrary hostile runtimes, anonymous transport, differential privacy, or repository aggregation.",
+  "local_correlation": {
+    "input": "Cursor generation_id (local-only host metadata)",
+    "derivation": "HMAC-SHA256(device_local_32_byte_secret, generation_id) truncated to 24 hex characters",
+    "persistence": "Only the derived run key appears in local filenames; raw generation_id/conversation_id/session_id are never written to state or capsules.",
+    "export": "FORBIDDEN — the derived run key is local addressing metadata and is not a contribution-capsule field.",
+    "concurrency_invariant": "Independent Cursor generations resolve to isolated state files under .afk-observatory/runs/."
+  }
 }
