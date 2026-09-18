@@ -120,6 +120,12 @@ class OperantVersioningWorkflowTests(unittest.TestCase):
                     "automation/operant-release-v0.6.1",
                     "--base",
                     "main",
+                    "--candidate-branch",
+                    "automation/operant-release-v0.6.1",
+                    "--candidate-sha",
+                    "candidate-create-sha",
+                    "--candidate-tree-sha",
+                    "candidate-create-tree",
                     "--output",
                     str(request_path),
                     "--body-output",
@@ -132,11 +138,16 @@ class OperantVersioningWorkflowTests(unittest.TestCase):
             )
             self.assertEqual(result.returncode, 0, result.stderr)
             payload = json.loads(request_path.read_text(encoding="utf-8"))
-            self.assertEqual(payload["schema_version"], "operant-release-pr-request/v1")
+            self.assertEqual(payload["schema_version"], "operant-release-pr-request/v2")
+            self.assertEqual(payload["publication_owner"], "external-provider")
             self.assertEqual(payload["publication_mode"], "external-create")
             self.assertTrue(payload["requires_external_pr_creation"])
+            self.assertFalse(payload["requires_external_pr_refresh"])
             self.assertEqual(payload["base"], "main")
             self.assertEqual(payload["head"], "automation/operant-release-v0.6.1")
+            self.assertEqual(payload["candidate_branch"], "automation/operant-release-v0.6.1")
+            self.assertEqual(payload["candidate_sha"], "candidate-create-sha")
+            self.assertEqual(payload["candidate_tree_sha"], "candidate-create-tree")
             self.assertEqual(payload["title"], "chore(operant): release v0.6.1")
             self.assertIn("external provider/agent", body_path.read_text(encoding="utf-8"))
 
@@ -168,15 +179,20 @@ class OperantVersioningWorkflowTests(unittest.TestCase):
             "operant-versioning-${{ github.event_name }}-${{ github.ref }}",
             workflow,
         )
-        self.assertIn('git push origin HEAD:"$branch"', workflow)
+        self.assertIn('git push origin HEAD:"$candidate_branch"', workflow)
         self.assertNotIn("git push --force", workflow)
         self.assertNotIn("git push -f", workflow)
 
-    def test_existing_release_pr_refresh_remains_actions_owned(self) -> None:
+    def test_existing_release_pr_refresh_is_staged_for_external_publication(self) -> None:
         workflow = WORKFLOW.read_text(encoding="utf-8")
-        self.assertIn('gh pr edit "$existing_url"', workflow)
-        existing_pr_url = "https://github.example.invalid/org/repo/pull/999"
+        self.assertNotIn('gh pr edit "$existing_url"', workflow)
+        self.assertNotIn('git checkout -B "$existing_branch"', workflow)
+        self.assertIn('staging_branch="automation/operant-release-staging-v${next_version}"', workflow)
+        self.assertIn('target_head="$existing_branch"', workflow)
+        self.assertIn('candidate_branch="$staging_branch"', workflow)
+        self.assertIn('git push origin HEAD:"$candidate_branch"', workflow)
 
+        existing_pr_url = "https://github.example.invalid/org/repo/pull/999"
         with tempfile.TemporaryDirectory() as temp_dir:
             root = Path(temp_dir)
             request_path = root / "request.json"
@@ -191,6 +207,14 @@ class OperantVersioningWorkflowTests(unittest.TestCase):
                     "abc123",
                     "--head",
                     "automation/operant-release-v0.6.1",
+                    "--base",
+                    "main",
+                    "--candidate-branch",
+                    "automation/operant-release-staging-v0.6.1",
+                    "--candidate-sha",
+                    "candidate-refresh-sha",
+                    "--candidate-tree-sha",
+                    "candidate-refresh-tree",
                     "--existing-pr-url",
                     existing_pr_url,
                     "--output",
@@ -205,9 +229,26 @@ class OperantVersioningWorkflowTests(unittest.TestCase):
             )
             self.assertEqual(result.returncode, 0, result.stderr)
             payload = json.loads(request_path.read_text(encoding="utf-8"))
-            self.assertEqual(payload["publication_mode"], "refresh-existing-pr")
+            self.assertEqual(payload["schema_version"], "operant-release-pr-request/v2")
+            self.assertEqual(payload["publication_owner"], "external-provider")
+            self.assertEqual(payload["publication_mode"], "external-refresh-existing-pr")
             self.assertFalse(payload["requires_external_pr_creation"])
+            self.assertTrue(payload["requires_external_pr_refresh"])
             self.assertEqual(payload["existing_pr_url"], existing_pr_url)
+            self.assertEqual(payload["head"], "automation/operant-release-v0.6.1")
+            self.assertEqual(
+                payload["candidate_branch"],
+                "automation/operant-release-staging-v0.6.1",
+            )
+            self.assertEqual(payload["candidate_sha"], "candidate-refresh-sha")
+            self.assertEqual(payload["candidate_tree_sha"], "candidate-refresh-tree")
+            self.assertEqual(
+                payload["refresh_strategy"],
+                "create-two-parent-candidate-tree-commit-and-fast-forward-target-head",
+            )
+            body = body_path.read_text(encoding="utf-8")
+            self.assertIn("external provider/agent owns both first-PR publication", body)
+            self.assertIn("existing-PR head refresh", body)
 
 
 if __name__ == "__main__":
