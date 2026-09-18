@@ -10,6 +10,7 @@ ROOT = Path(__file__).resolve().parents[1]
 ARCH = ROOT / "harness" / "prompt-compilation" / "PROMPT_COMPILATION_ARCHITECTURE.md"
 SPRINT = ROOT / "harness" / "prompt-compilation" / "PROMPT_COMPILATION_SPRINT_MAP.md"
 FIXTURE = ROOT / "harness" / "prompt-compilation" / "fixtures" / "TC06-parallelism-modality"
+P07_SEMANTICS = ROOT / "harness" / "prompt-compilation" / "semantics" / "P07.json"
 EXAMPLE_CANDIDATE = (
     ROOT / "harness" / "prompt-compilation" / "examples" / "improvement-candidate.example.json"
 )
@@ -78,6 +79,32 @@ class PromptLanguageCompilerTests(unittest.TestCase):
         self.assertEqual(receipt["execution_profile"], "exhaustive")
         self.assertEqual(receipt["schema_version"], "prompt-build-receipt/v1")
         self.assertRegex(receipt["effective_prompt_sha256"], r"^[a-f0-9]{64}$")
+
+    def test_p07_effective_prompt_requires_repository_local_proof_continuity(self) -> None:
+        p07 = compiler.load_json(P07_SEMANTICS)
+        result = compiler.render(p07, self.profile, self.context, policy=self.policy)
+        prompt = result["effective_prompt"]
+        self.assertEqual(
+            result["receipt"]["activated_obligations"],
+            ["parallel_dispatch", "repository_local_proof_continuity"],
+        )
+        for phrase in (
+            "MUST establish or reuse a repository-native local proof path before hosted CI becomes a single point of failure",
+            "MUST continue every honestly provable local gate when hosted provider execution is unavailable or non-transiently limited",
+            "MUST keep genuinely hosted-only gates typed as BLOCKED rather than promoting local PASS",
+            "typed failure disposition LOCAL_PROOF_GAP",
+            "repository_action_receipt_or_typed_hosted_only_gate",
+        ):
+            self.assertIn(phrase, prompt)
+
+        width_one = json.loads(json.dumps(self.context))
+        width_one["execution"]["dependency_ready_width"] = 1
+        width_one["execution"]["safe_capacity"] = 1
+        serial_result = compiler.render(p07, self.profile, width_one, policy=self.policy)
+        self.assertEqual(
+            serial_result["receipt"]["activated_obligations"],
+            ["repository_local_proof_continuity"],
+        )
 
     def test_rejects_weakening_constructs_for_must_obligation(self) -> None:
         weak = (

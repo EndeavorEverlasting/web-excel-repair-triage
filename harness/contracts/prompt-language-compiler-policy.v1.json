@@ -1,6 +1,6 @@
 {
   "schema_version": "prompt-language-compiler-policy/v1",
-  "language_engine_revision": "prompt-language-compiler/v1.0.0",
+  "language_engine_revision": "prompt-language-compiler/v1.1.0",
   "title": "Prompt Language Compiler Policy",
   "description": "Deterministic Language Engine rules for compiling semantic IR + execution profile + context into effective prompt text with non-weakening validation.",
   "forbidden_event_ownership": true,
@@ -29,6 +29,15 @@
       ],
       "failure_state_required": true,
       "proof_required": true
+    },
+    "establish_repository_local_proof_path": {
+      "imperative_required_phrases": [
+        "MUST establish or reuse a repository-native local proof path before hosted CI becomes a single point of failure",
+        "MUST continue every honestly provable local gate when hosted provider execution is unavailable or non-transiently limited",
+        "MUST keep genuinely hosted-only gates typed as BLOCKED rather than promoting local PASS"
+      ],
+      "failure_state_required": true,
+      "proof_required": true
     }
   },
   "when_predicates": {
@@ -37,6 +46,9 @@
         "min_dependency_ready_width": 2,
         "min_safe_capacity": 2
       }
+    },
+    "always": {
+      "requires": {}
     }
   },
   "profile_precedence": [

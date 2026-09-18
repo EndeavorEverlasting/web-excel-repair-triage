@@ -10,6 +10,14 @@
       "action": "dispatch_independent_lanes",
       "proof": "observed_parallel_dispatch_receipt",
       "failure_state": "AUTONOMY_GAP"
+    },
+    {
+      "id": "repository_local_proof_continuity",
+      "when": "always",
+      "modality": "MUST",
+      "action": "establish_repository_local_proof_path",
+      "proof": "repository_action_receipt_or_typed_hosted_only_gate",
+      "failure_state": "LOCAL_PROOF_GAP"
     }
   ],
   "invariants": [

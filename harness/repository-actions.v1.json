@@ -27,15 +27,92 @@
         "harness/evals/prompt-regression/defect-families.v1.json",
         "harness/test-floor.v1.json",
         "tests/test_repository_actions.py",
-        "tests/test_repository_local_proof_continuity_prompt.py"
+        "tests/test_repository_local_proof_continuity_prompt.py",
+        "harness/prompt-compilation/semantics/P07.json",
+        "harness/contracts/prompt-language-compiler-policy.v1.json",
+        "scripts/prompt_language_compiler.py",
+        "tests/test_prompt_compilation.py"
       ],
       "steps": [
-        {"id": "build", "argv": ["{python}", "scripts/build_prompt_kit_registry.py", "--output", "web/prompt-kit/index.html"], "timeout_seconds": 180, "proof_ceiling": "Deterministic canonical Prompt Kit generation."},
-        {"id": "local-action-regressions", "argv": ["{python}", "-m", "unittest", "tests.test_repository_actions", "tests.test_repository_local_proof_continuity_prompt", "-v"], "timeout_seconds": 180, "proof_ceiling": "Executable repository-local action and continuity regression."},
-        {"id": "regression-safety", "argv": ["{python}", "scripts/validate_prompt_regression_safety.py", "--summary"], "timeout_seconds": 180, "proof_ceiling": "Static systemic-defect and local-first-proof contract validation."},
-        {"id": "language-audit", "argv": ["{python}", "scripts/evaluate_prompt_language.py", "--summary"], "timeout_seconds": 180, "proof_ceiling": "Static complete prompt-language coverage."},
-        {"id": "parity", "argv": ["{python}", "scripts/build_prompt_kit_registry.py", "--output", "web/prompt-kit/index.html", "--check"], "timeout_seconds": 180, "proof_ceiling": "Canonical source-to-generated-site parity."},
-        {"id": "exact-candidate-patch-hygiene", "argv": ["git", "diff", "--check", "{base_sha}...{head_sha}"], "timeout_seconds": 60, "proof_ceiling": "Whitespace and conflict-marker proof for the exact committed candidate."}
+        {
+          "id": "build",
+          "argv": [
+            "{python}",
+            "scripts/build_prompt_kit_registry.py",
+            "--output",
+            "web/prompt-kit/index.html"
+          ],
+          "timeout_seconds": 180,
+          "proof_ceiling": "Deterministic canonical Prompt Kit generation."
+        },
+        {
+          "id": "local-action-regressions",
+          "argv": [
+            "{python}",
+            "-m",
+            "unittest",
+            "tests.test_repository_actions",
+            "tests.test_repository_local_proof_continuity_prompt",
+            "-v"
+          ],
+          "timeout_seconds": 180,
+          "proof_ceiling": "Executable repository-local action and continuity regression."
+        },
+        {
+          "id": "effective-p07-local-proof-continuity",
+          "argv": [
+            "{python}",
+            "-m",
+            "unittest",
+            "tests.test_prompt_compilation.PromptLanguageCompilerTests.test_p07_effective_prompt_requires_repository_local_proof_continuity",
+            "-v"
+          ],
+          "timeout_seconds": 180,
+          "proof_ceiling": "Effective P07 compiler semantics require repository-local proof continuity independently of parallel width."
+        },
+        {
+          "id": "regression-safety",
+          "argv": [
+            "{python}",
+            "scripts/validate_prompt_regression_safety.py",
+            "--summary"
+          ],
+          "timeout_seconds": 180,
+          "proof_ceiling": "Static systemic-defect and local-first-proof contract validation."
+        },
+        {
+          "id": "language-audit",
+          "argv": [
+            "{python}",
+            "scripts/evaluate_prompt_language.py",
+            "--summary"
+          ],
+          "timeout_seconds": 180,
+          "proof_ceiling": "Static complete prompt-language coverage."
+        },
+        {
+          "id": "parity",
+          "argv": [
+            "{python}",
+            "scripts/build_prompt_kit_registry.py",
+            "--output",
+            "web/prompt-kit/index.html",
+            "--check"
+          ],
+          "timeout_seconds": 180,
+          "proof_ceiling": "Canonical source-to-generated-site parity."
+        },
+        {
+          "id": "exact-candidate-patch-hygiene",
+          "argv": [
+            "git",
+            "diff",
+            "--check",
+            "{base_sha}...{head_sha}"
+          ],
+          "timeout_seconds": 60,
+          "proof_ceiling": "Whitespace and conflict-marker proof for the exact committed candidate."
+        }
       ]
     },
     {
@@ -52,14 +129,81 @@
         "harness/evals/prompt-regression/defect-families.v1.json",
         "harness/test-floor.v1.json",
         "tests/test_repository_actions.py",
-        "tests/test_repository_local_proof_continuity_prompt.py"
+        "tests/test_repository_local_proof_continuity_prompt.py",
+        "harness/prompt-compilation/semantics/P07.json",
+        "harness/contracts/prompt-language-compiler-policy.v1.json",
+        "scripts/prompt_language_compiler.py",
+        "tests/test_prompt_compilation.py"
       ],
       "steps": [
-        {"id": "local-action-regressions", "argv": ["{python}", "-m", "unittest", "tests.test_repository_actions", "tests.test_repository_local_proof_continuity_prompt", "-v"], "timeout_seconds": 180, "proof_ceiling": "Executable repository-local action and continuity regression."},
-        {"id": "regression-safety", "argv": ["{python}", "scripts/validate_prompt_regression_safety.py", "--summary"], "timeout_seconds": 180, "proof_ceiling": "Static systemic-defect and local-first-proof contract validation."},
-        {"id": "language-audit", "argv": ["{python}", "scripts/evaluate_prompt_language.py", "--summary"], "timeout_seconds": 180, "proof_ceiling": "Static complete prompt-language coverage."},
-        {"id": "parity", "argv": ["{python}", "scripts/build_prompt_kit_registry.py", "--output", "web/prompt-kit/index.html", "--check"], "timeout_seconds": 180, "proof_ceiling": "Canonical source-to-generated-site parity."},
-        {"id": "exact-candidate-patch-hygiene", "argv": ["git", "diff", "--check", "{base_sha}...{head_sha}"], "timeout_seconds": 60, "proof_ceiling": "Whitespace and conflict-marker proof for the exact committed candidate."}
+        {
+          "id": "local-action-regressions",
+          "argv": [
+            "{python}",
+            "-m",
+            "unittest",
+            "tests.test_repository_actions",
+            "tests.test_repository_local_proof_continuity_prompt",
+            "-v"
+          ],
+          "timeout_seconds": 180,
+          "proof_ceiling": "Executable repository-local action and continuity regression."
+        },
+        {
+          "id": "effective-p07-local-proof-continuity",
+          "argv": [
+            "{python}",
+            "-m",
+            "unittest",
+            "tests.test_prompt_compilation.PromptLanguageCompilerTests.test_p07_effective_prompt_requires_repository_local_proof_continuity",
+            "-v"
+          ],
+          "timeout_seconds": 180,
+          "proof_ceiling": "Effective P07 compiler semantics require repository-local proof continuity independently of parallel width."
+        },
+        {
+          "id": "regression-safety",
+          "argv": [
+            "{python}",
+            "scripts/validate_prompt_regression_safety.py",
+            "--summary"
+          ],
+          "timeout_seconds": 180,
+          "proof_ceiling": "Static systemic-defect and local-first-proof contract validation."
+        },
+        {
+          "id": "language-audit",
+          "argv": [
+            "{python}",
+            "scripts/evaluate_prompt_language.py",
+            "--summary"
+          ],
+          "timeout_seconds": 180,
+          "proof_ceiling": "Static complete prompt-language coverage."
+        },
+        {
+          "id": "parity",
+          "argv": [
+            "{python}",
+            "scripts/build_prompt_kit_registry.py",
+            "--output",
+            "web/prompt-kit/index.html",
+            "--check"
+          ],
+          "timeout_seconds": 180,
+          "proof_ceiling": "Canonical source-to-generated-site parity."
+        },
+        {
+          "id": "exact-candidate-patch-hygiene",
+          "argv": [
+            "git",
+            "diff",
+            "--check",
+            "{base_sha}...{head_sha}"
+          ],
+          "timeout_seconds": 60,
+          "proof_ceiling": "Whitespace and conflict-marker proof for the exact committed candidate."
+        }
       ]
     },
     {
@@ -74,8 +218,29 @@
         "harness/promotion/required-checks.v1.json"
       ],
       "steps": [
-        {"id": "required-checks", "argv": ["{python}", "scripts/run_local_required_checks.py", "--report", "Outputs/repository-actions/local-required-checks.json", "--summary"], "timeout_seconds": 1200, "proof_ceiling": "Repository-owned local equivalents of required governance and operational-harness checks."},
-        {"id": "exact-candidate-patch-hygiene", "argv": ["git", "diff", "--check", "{base_sha}...{head_sha}"], "timeout_seconds": 60, "proof_ceiling": "Whitespace and conflict-marker proof for the exact committed candidate."}
+        {
+          "id": "required-checks",
+          "argv": [
+            "{python}",
+            "scripts/run_local_required_checks.py",
+            "--report",
+            "Outputs/repository-actions/local-required-checks.json",
+            "--summary"
+          ],
+          "timeout_seconds": 1200,
+          "proof_ceiling": "Repository-owned local equivalents of required governance and operational-harness checks."
+        },
+        {
+          "id": "exact-candidate-patch-hygiene",
+          "argv": [
+            "git",
+            "diff",
+            "--check",
+            "{base_sha}...{head_sha}"
+          ],
+          "timeout_seconds": 60,
+          "proof_ceiling": "Whitespace and conflict-marker proof for the exact committed candidate."
+        }
       ]
     },
     {
@@ -88,8 +253,30 @@
         "harness/validators.v1.json"
       ],
       "steps": [
-        {"id": "validator-profile", "argv": ["{python}", "scripts/run_validator_profile.py", "--profile", "pre_push", "--report", "Outputs/repository-actions/pre-push-validator-profile.json"], "timeout_seconds": 1200, "proof_ceiling": "Repository-defined pre-push validation profile on the observed checkout."},
-        {"id": "exact-candidate-patch-hygiene", "argv": ["git", "diff", "--check", "{base_sha}...{head_sha}"], "timeout_seconds": 60, "proof_ceiling": "Whitespace and conflict-marker proof for the exact committed candidate."}
+        {
+          "id": "validator-profile",
+          "argv": [
+            "{python}",
+            "scripts/run_validator_profile.py",
+            "--profile",
+            "pre_push",
+            "--report",
+            "Outputs/repository-actions/pre-push-validator-profile.json"
+          ],
+          "timeout_seconds": 1200,
+          "proof_ceiling": "Repository-defined pre-push validation profile on the observed checkout."
+        },
+        {
+          "id": "exact-candidate-patch-hygiene",
+          "argv": [
+            "git",
+            "diff",
+            "--check",
+            "{base_sha}...{head_sha}"
+          ],
+          "timeout_seconds": 60,
+          "proof_ceiling": "Whitespace and conflict-marker proof for the exact committed candidate."
+        }
       ]
     },
     {
@@ -105,9 +292,42 @@
         "tests/test_repo_native_update.py"
       ],
       "steps": [
-        {"id": "generator-parity", "argv": ["{python}", "scripts/run_repo_native_update.py", "generate", "--surface", "canary-constants", "--check"], "timeout_seconds": 120, "proof_ceiling": "Declared repo-native generated-surface parity."},
-        {"id": "generator-tests", "argv": ["{python}", "-m", "unittest", "tests.test_repo_native_update", "-v"], "timeout_seconds": 180, "proof_ceiling": "Executable repo-native update fail-closed and idempotency regression."},
-        {"id": "exact-candidate-patch-hygiene", "argv": ["git", "diff", "--check", "{base_sha}...{head_sha}"], "timeout_seconds": 60, "proof_ceiling": "Whitespace and conflict-marker proof for the exact committed candidate."}
+        {
+          "id": "generator-parity",
+          "argv": [
+            "{python}",
+            "scripts/run_repo_native_update.py",
+            "generate",
+            "--surface",
+            "canary-constants",
+            "--check"
+          ],
+          "timeout_seconds": 120,
+          "proof_ceiling": "Declared repo-native generated-surface parity."
+        },
+        {
+          "id": "generator-tests",
+          "argv": [
+            "{python}",
+            "-m",
+            "unittest",
+            "tests.test_repo_native_update",
+            "-v"
+          ],
+          "timeout_seconds": 180,
+          "proof_ceiling": "Executable repo-native update fail-closed and idempotency regression."
+        },
+        {
+          "id": "exact-candidate-patch-hygiene",
+          "argv": [
+            "git",
+            "diff",
+            "--check",
+            "{base_sha}...{head_sha}"
+          ],
+          "timeout_seconds": 60,
+          "proof_ceiling": "Whitespace and conflict-marker proof for the exact committed candidate."
+        }
       ]
     }
   ]
