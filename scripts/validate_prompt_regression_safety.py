@@ -319,6 +319,19 @@ def validate_register(register: dict[str, Any], contract: dict[str, Any]) -> dic
             if family.get("recurring_across_repositories") is not True:
                 raise RegressionSafetyError("whitespace evidence must preserve cross-repository recurrence")
 
+    line_ending_family = next(
+        (family for family in families if family.get("id") == "LINE_ENDING_DRIFT"),
+        None,
+    )
+    if line_ending_family is None:
+        raise RegressionSafetyError("defect register must retain LINE_ENDING_DRIFT systemic family")
+    if line_ending_family.get("classification") != "PATCH_HYGIENE":
+        raise RegressionSafetyError("LINE_ENDING_DRIFT must remain PATCH_HYGIENE")
+    if line_ending_family.get("matrix_capture_required") is not False:
+        raise RegressionSafetyError("LINE_ENDING_DRIFT must not depend on retrospective matrix capture")
+    if ".gitattributes" not in line_ending_family.get("prevention_surfaces", []):
+        raise RegressionSafetyError("LINE_ENDING_DRIFT must retain .gitattributes prevention owner")
+
     return {
         "families": len(families),
         "occurrences": occurrence_count,
