@@ -2,7 +2,7 @@
 
 Human-facing Operant releases. Git commit/artifact identity remains the forensic freshness proof.
 
-## 0.9.0 - 2026-09-17
+## 0.9.0 - 2026-09-18
 
 ### Features / breaking pre-1.0 changes
 
@@ -33,6 +33,7 @@ Human-facing Operant releases. Git commit/artifact identity remains the forensic
 - fix(prompt-kit): keep prompt headers visible when snapping (`d660c056`)
 - fix(prompt): preserve required successor obligations (`7e93b4fa`)
 - fix(prompt): harden raw verifier successor semantics (`72f55265`)
+- fix(prompt-kit): restore canonical prompt copy identity (`2e82c646`)
 
 ## 0.8.1 - 2026-09-14
 
