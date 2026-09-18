@@ -15,6 +15,8 @@ Human-facing Operant releases. Git commit/artifact identity remains the forensic
 - feat(prompt-kit): register Michael Shimeles skill donor (`028ac5d8`)
 - feat(prompt-kit): add quota-resilient repository local actions (`48dc2bd0`)
 - feat(prompt-kit): compile recurring-defect safety into operational prompts (`4d40758c`)
+- feat(prompt-kit): make execution boundaries public state (`3ffd70be`)
+- feat(harness): close execution boundary delivery gaps (`dc019578`)
 
 ### Fixes / performance
 
@@ -34,6 +36,7 @@ Human-facing Operant releases. Git commit/artifact identity remains the forensic
 - fix(prompt): preserve required successor obligations (`7e93b4fa`)
 - fix(prompt): harden raw verifier successor semantics (`72f55265`)
 - fix(prompt-kit): restore canonical prompt copy identity (`2e82c646`)
+- fix(prompt-kit): bind boundary marker to shared suffix (`c94eb060`)
 
 ## 0.8.1 - 2026-09-14
 
