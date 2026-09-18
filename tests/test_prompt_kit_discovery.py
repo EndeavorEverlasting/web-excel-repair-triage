@@ -408,15 +408,21 @@ process.stdout.write(JSON.stringify(groups.map(function(g){return {name:g.name,i
 
     def test_guided_finder_routes_context_artifacts_to_p56(self) -> None:
         payload = json.loads(TUTORIAL_PROMPTS.read_text(encoding="utf-8"))
-        p65 = next(item for item in payload["prompts"] if item["id"] == "P65")
-        content = p65["copyContent"]
-        self.assertIn(
-            "- P56 Context-to-Artifact Generator: recover the relevant conversation/source/repository context",
-            content,
+        raw_p65 = next(item for item in payload["prompts"] if item["id"] == "P65")
+        effective_p65 = next(
+            item for item in build_prompt_kit_registry.load_prompt_kit_registry()
+            if item["id"] == "P65"
         )
-        self.assertIn("create-vs-update intent", content)
-        self.assertIn("route to P56 rather than generic P07", p65["expectedOutput"])
-        self.assertIn("context to artifact", p65["keywords"])
+        route = "- P56 Context-to-Artifact Generator: recover the relevant conversation/source/repository context"
+        for p65 in (raw_p65, effective_p65):
+            with self.subTest(surface=p65 is effective_p65 and "effective" or "raw"):
+                self.assertIn(route, p65["copyContent"])
+                self.assertIn("create-vs-update intent", p65["copyContent"])
+                self.assertIn("route to P56 rather than generic P07", p65["expectedOutput"])
+                self.assertIn("context to artifact", p65["keywords"])
+        deployed = DEPLOYED.read_text(encoding="utf-8")
+        self.assertIn(route, deployed)
+        self.assertIn('"id": "P56"', deployed)
 
     def test_repo_front_door_exposes_browser_phone_zip_cmd_and_clone(self) -> None:
         readme = README.read_text(encoding="utf-8")
