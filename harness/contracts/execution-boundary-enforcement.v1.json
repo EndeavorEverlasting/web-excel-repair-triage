@@ -1,7 +1,7 @@
 {
   "schema_version": "execution-boundary-enforcement/v1",
   "contract_id": "execution-boundary-enforcement",
-  "status": "ARCHITECTURE_SPECIFIED_TAXONOMY_PENDING",
+  "status": "TRACKED_VALIDATING",
   "purpose": "Make every material loss or change of forward execution a first-class, observable state transition that is checkpointed, disclosed to the operator, recovered when possible, durably published to repository-native evidence when applicable, and externally detectable when the acting agent cannot report for itself.",
   "theorem": "A workflow cannot guarantee the absence of unexplained stops unless every material non-normal execution transition is observable, classifiable, checkpointed, publicly reportable, recoverable or explicitly terminal, durably attributable, and externally supervised when the acting process can terminate before self-reporting.",
   "core_invariants": [
@@ -11,7 +11,10 @@
     "If disclosure of raw operational detail is unsafe or private, redact the detail but still publish the existence, impact, proven checkpoint, recovery disposition, and next action.",
     "A material boundary is an opportunity for immediate primary-task recovery and, when repository-relevant or systemic, for durable harness improvement; system improvement must not replace the user's primary outcome.",
     "No agent-local prompt can guarantee reporting after hard termination; an out-of-process supervisor must synthesize a terminal boundary event from the last durable checkpoint.",
-    "No completion claim may bypass the finalization gate or promote weaker evidence into a stronger execution state."
+    "No completion claim may bypass the finalization gate or promote weaker evidence into a stronger execution state.",
+    "Liveness is explicit: while an objective remains unfinished, the run must be actively progressing, explicitly recovering, or durably quiescent on a named blocker with a resumption trigger; disappearance is a contract violation.",
+    "Boundary delivery is crash-safe and idempotent: checkpoint plus pending publication intent must become durable before user-visible publication, and retries reuse a stable event identity rather than duplicating the event.",
+    "Every material boundary opens two possible lanes: recover the primary objective first, and independently retain systemic learning when the event is novel, recurrent, or reveals a missing prevention invariant."
   ],
   "materiality_rule": {
     "public_when_any": [
@@ -69,7 +72,11 @@
       "recovery_disposition",
       "next_action",
       "persistence_disposition",
-      "proof_ceiling"
+      "proof_ceiling",
+      "event_sequence",
+      "dedupe_key",
+      "causation_event_id",
+      "publication_ack_state"
     ],
     "deferred_to_taxonomy_phase": [
       "classification_id vocabulary",
@@ -100,6 +107,11 @@
       "id": "append_only_journal",
       "responsibility": "Record checkpoint, attempted operation, confirmed/possible side effects, proof obtained, uncertainty, and recovery attempts.",
       "failure_prevented": "Retries that duplicate mutations or invent state after partial execution."
+    },
+    {
+      "id": "durable_transition_outbox",
+      "responsibility": "Persist each material boundary event and pending publication intent durably before user/repository publication; acknowledge delivery idempotently so an external supervisor can drain unacknowledged transitions after process loss.",
+      "failure_prevented": "A crash between checkpoint and disclosure recreating a silent boundary, or retries duplicating public/repository incident records."
     },
     {
       "id": "public_transition_publisher",
@@ -183,10 +195,110 @@
   },
   "phase_dependencies": {
     "phase_1": "This contract and human-readable architecture spec define enforcement topology and invariants.",
-    "phase_2": "Define canonical boundary taxonomy and recovery-disposition vocabulary without weakening this architecture.",
-    "phase_3": "Implement negative and positive test floor across capture, disclosure, recovery, persistence, finalization, and supervisor-synthetic cases.",
+    "phase_2": "Canonical boundary taxonomy is defined in harness/contracts/execution-boundary-taxonomy.v1.json, including an unclassified-material fallback.",
+    "phase_3": "Positive/negative regression coverage is registered for every canonical class plus architecture mutation tests; runtime-agent and host-supervisor obedience remain separate proof surfaces.",
     "phase_4": "Strengthen the canonical shared prompt policy plus P07/P13/P94 composition and generated Prompt Kit surfaces.",
     "phase_5": "Prove repository/provider integration and retain regression coverage."
   },
-  "proof_ceiling": "This architecture specifies repository-enforceable state, publication, recovery, persistence, and supervision contracts. It does not yet define the canonical boundary taxonomy, execute downstream runtime supervision, prove model obedience, or prove every Prompt Kit representation has inherited the contract; those are explicit successor phases."
+  "proof_ceiling": "This architecture, taxonomy, shared Prompt Kit inheritance seam, and deterministic regression contract are tracked and validating. They can prove repository structure and retained semantic constraints after their registered checks pass. They do not by themselves prove downstream model obedience or an implemented out-of-process host supervisor; those require observed runtime/provider evidence.",
+  "delivery_contract": {
+    "invariant": "Checkpoint state and a pending publication record form one durable boundary observation before best-effort delivery begins.",
+    "publication_ack_states": [
+      "PENDING",
+      "USER_VISIBLE",
+      "USER_VISIBLE_REPOSITORY_NOT_APPLICABLE",
+      "USER_AND_REPOSITORY"
+    ],
+    "rules": [
+      "event_id plus dedupe_key is stable across retries of the same observed boundary; retries do not mint a new incident merely because delivery failed",
+      "event_sequence is monotonic within one objective/run so later recovery cannot reorder earlier boundary history",
+      "user-visible publication is mandatory for every MATERIAL or CRITICAL event unless the acting process is already unable to publish, in which case the external supervisor drains the pending event",
+      "repository publication is separately acknowledged only when repository_publication_contract says it applies and a writable canonical destination exists",
+      "failure of repository persistence cannot suppress the required user-visible transition; it becomes its own boundary if material",
+      "raw unsafe/private data is replaced by a safe abstraction before entering public or public-repository delivery surfaces"
+    ]
+  },
+  "dual_lane_policy": {
+    "primary_lane": "Recover the user's requested outcome with the first safe progress-bearing action.",
+    "systemic_lane": "When the boundary is unclassified, recurrent/systemic, or exposes a missing invariant/canonical prevention owner, open a bounded prevention sprint through the existing repository authority and regression loop.",
+    "ordering_rules": [
+      "Systemic learning never replaces primary-task recovery when recovery can continue safely.",
+      "Run the systemic lane concurrently when mutation surfaces do not collide; otherwise checkpoint it as required successor work and continue the primary lane.",
+      "A novel unclassified material boundary is sufficient to open taxonomy/prevention review even before recurrence threshold; recurrence threshold governs promotion of repeated known families to systemic defect status.",
+      "Publish the systemic artifact to a writable relevant remote repository when policy permits; otherwise preserve the exact persistence gate without inventing a repository."
+    ]
+  },
+  "state_machine": {
+    "initial_state": "OBJECTIVE_ACTIVE",
+    "success_state": "COMPLETE",
+    "stable_stop_states": [
+      "COMPLETE",
+      "QUIESCENT_BLOCKED",
+      "HARD_TERMINATED_SYNTHETIC"
+    ],
+    "allowed_transitions": {
+      "OBJECTIVE_ACTIVE": [
+        "BOUNDARY_OBSERVED",
+        "FINALIZING"
+      ],
+      "BOUNDARY_OBSERVED": [
+        "BOUNDARY_CLASSIFIED"
+      ],
+      "BOUNDARY_CLASSIFIED": [
+        "CHECKPOINTED"
+      ],
+      "CHECKPOINTED": [
+        "PUBLIC_TRANSITION_EMITTED"
+      ],
+      "PUBLIC_TRANSITION_EMITTED": [
+        "RECOVERY_SELECTED"
+      ],
+      "RECOVERY_SELECTED": [
+        "RECOVERING",
+        "QUIESCENT_BLOCKED",
+        "FINALIZING"
+      ],
+      "RECOVERING": [
+        "OBJECTIVE_ACTIVE_RESUMED",
+        "BOUNDARY_OBSERVED",
+        "QUIESCENT_BLOCKED",
+        "FINALIZING"
+      ],
+      "OBJECTIVE_ACTIVE_RESUMED": [
+        "OBJECTIVE_ACTIVE",
+        "BOUNDARY_OBSERVED",
+        "FINALIZING"
+      ],
+      "QUIESCENT_BLOCKED": [
+        "OBJECTIVE_ACTIVE",
+        "BOUNDARY_OBSERVED"
+      ],
+      "FINALIZING": [
+        "COMPLETE",
+        "BOUNDARY_OBSERVED",
+        "QUIESCENT_BLOCKED"
+      ],
+      "COMPLETE": [],
+      "HARD_TERMINATED_SYNTHETIC": []
+    },
+    "external_only_transitions": [
+      "Any nonterminal state -> HARD_TERMINATED_SYNTHETIC when the acting process loses its execution lease or dies without a valid terminal event."
+    ]
+  },
+  "external_supervisor_contract": {
+    "required_observations": [
+      "objective_started",
+      "last_durable_checkpoint",
+      "pending_boundary_outbox",
+      "last_publication_ack",
+      "valid_terminal_event_or_absence"
+    ],
+    "rules": [
+      "The supervisor must be outside the acting process whose death it detects.",
+      "Host-specific heartbeat/lease timing is implementation-defined, but a lost lease cannot be converted into COMPLETE.",
+      "Pending unacknowledged material boundary events are emitted or summarized before/with HARD_TERMINATED_SYNTHETIC.",
+      "Synthetic termination records the last proven checkpoint and a resumable continuation token or equivalent stable checkpoint identity when available.",
+      "Restart/resume creates an attributable continuation and does not erase the termination event."
+    ]
+  }
 }

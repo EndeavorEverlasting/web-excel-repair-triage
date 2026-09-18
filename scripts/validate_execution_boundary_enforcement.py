@@ -18,6 +18,7 @@ REQUIRED_LAYERS = {
     "boundary_capture",
     "normalizer_classifier",
     "append_only_journal",
+    "durable_transition_outbox",
     "public_transition_publisher",
     "recovery_router",
     "repository_publisher",
@@ -124,6 +125,10 @@ def validate_documents(
         "next_action",
         "persistence_disposition",
         "proof_ceiling",
+        "event_sequence",
+        "dedupe_key",
+        "causation_event_id",
+        "publication_ack_state",
     }
     if not isinstance(required_fields, list) or set(required_fields) != expected_fields:
         raise ExecutionBoundaryContractError("boundary event envelope required fields drifted")
@@ -134,6 +139,30 @@ def validate_documents(
     layer_ids = [item.get("id") for item in layers if isinstance(item, dict)]
     if len(layer_ids) != len(set(layer_ids)) or set(layer_ids) != REQUIRED_LAYERS:
         raise ExecutionBoundaryContractError("architecture layer coverage drifted")
+
+
+    machine = architecture.get("state_machine")
+    if not isinstance(machine, dict):
+        raise ExecutionBoundaryContractError("machine-readable state machine missing")
+    allowed = machine.get("allowed_transitions")
+    if not isinstance(allowed, dict) or set(allowed) != set(states):
+        raise ExecutionBoundaryContractError("state-machine transition coverage drifted")
+    if "COMPLETE" in allowed.get("OBJECTIVE_ACTIVE", []):
+        raise ExecutionBoundaryContractError("state machine allows direct active-to-complete transition")
+    if machine.get("success_state") != "COMPLETE":
+        raise ExecutionBoundaryContractError("COMPLETE must remain the only success state")
+
+    delivery = architecture.get("delivery_contract")
+    if not isinstance(delivery, dict) or not _string_list(delivery.get("rules")):
+        raise ExecutionBoundaryContractError("durable delivery/outbox contract missing")
+    delivery_text = " ".join(delivery["rules"]).lower()
+    for phrase in ("dedupe", "user-visible publication", "repository publication"):
+        if phrase not in delivery_text:
+            raise ExecutionBoundaryContractError(f"delivery contract missing semantic: {phrase}")
+
+    dual_lane = architecture.get("dual_lane_policy")
+    if not isinstance(dual_lane, dict) or not _string_list(dual_lane.get("ordering_rules")):
+        raise ExecutionBoundaryContractError("dual-lane recovery/systemic sprint policy missing")
 
     public = architecture.get("public_transition_contract")
     if not isinstance(public, dict) or public.get("required_fields") != REQUIRED_PUBLIC_FIELDS:
@@ -209,6 +238,7 @@ def validate_documents(
         "SP_SAFETY_CLASSIFIER_GATE",
         "VP_PROOF_CEILING_REACHED",
         "HT_HOST_FORCED_TERMINATION",
+        "UE_UNCLASSIFIED_MATERIAL_BOUNDARY",
     ):
         if required_class not in class_ids:
             raise ExecutionBoundaryContractError(f"required boundary class missing: {required_class}")
@@ -297,6 +327,8 @@ def validate_documents(
         "read back authoritative state",
         "silence is never a terminal state",
         "external supervisor",
+        "ue_unclassified_material_boundary",
+        "dual-lane sprint",
     ):
         if phrase not in appendix_lower:
             raise ExecutionBoundaryContractError(f"shared prompt policy missing required boundary semantic: {phrase}")

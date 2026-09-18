@@ -16,7 +16,7 @@
       "proof_surfaces",
       "proof_ceiling"
     ],
-    "minimum_cases": 57,
+    "minimum_cases": 58,
     "required_case_ids": [
       "EBR-003",
       "EBR-004",
@@ -25,7 +25,8 @@
       "EBR-013",
       "EBR-015",
       "EBR-017",
-      "EBR-020"
+      "EBR-020",
+      "EBR-058"
     ]
   },
   "coverage_policy": {
@@ -42,7 +43,8 @@
       "ORCHESTRATION_RESOURCE",
       "DEPENDENCY_EXTERNAL",
       "USER_CONTROL",
-      "HARD_TERMINATION"
+      "HARD_TERMINATION",
+      "UNKNOWN_EVOLUTION"
     ],
     "rule": "Every canonical class and every top-level family must have at least one positive/negative case; critical cross-cutting invariants also have named bespoke cases.",
     "required_classes": "ALL_CANONICAL_CLASSES"
@@ -1382,6 +1384,30 @@
         "recovery_disposition"
       ],
       "proof_ceiling": "Taxonomy-class regression semantics only; downstream model obedience and external runtime execution remain unproven."
+    },
+    {
+      "case_id": "EBR-058",
+      "title": "Unknown material boundary fails safe into taxonomy evolution",
+      "classification": "UE_UNCLASSIFIED_MATERIAL_BOUNDARY",
+      "stimulus": "A material path/proof/mutation transition is observed, but none of the existing canonical classes can be applied without guessing.",
+      "expected_materiality": "MATERIAL",
+      "expected_recovery": "REPLAN_WITHIN_SCOPE",
+      "positive_assertions": [
+        "Capture and checkpoint the event under UE_UNCLASSIFIED_MATERIAL_BOUNDARY",
+        "Publish BOUNDARY/IMPACT/PROVED/RECOVERY/NEXT despite classification uncertainty",
+        "Open a taxonomy/prevention evolution candidate while continuing primary recovery when safe"
+      ],
+      "negative_assertions": [
+        "Do not suppress the event because the taxonomy lacks a perfect class",
+        "Do not invent a specific class unsupported by evidence",
+        "Do not downgrade a material event to INFO merely to avoid taxonomy evolution"
+      ],
+      "proof_surfaces": [
+        "boundary_event",
+        "public_transition",
+        "taxonomy_evolution_candidate"
+      ],
+      "proof_ceiling": "Fallback classification and retained-regression semantics only; downstream model obedience and host-runtime execution remain unproven."
     }
   ],
   "proof_ceiling": "Static contract/mutation floor for architecture, taxonomy, inheritance, and expected transitions. It does not itself execute downstream agents or an external host supervisor."

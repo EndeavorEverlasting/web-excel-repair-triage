@@ -37,10 +37,10 @@ class ExecutionBoundaryEnforcementTests(unittest.TestCase):
 
     def test_current_documents_validate(self) -> None:
         summary = validate_paths()
-        self.assertEqual(summary["layers"], 10)
-        self.assertEqual(summary["families"], 13)
-        self.assertEqual(summary["classes"], 57)
-        self.assertEqual(summary["cases"], 57)
+        self.assertEqual(summary["layers"], 11)
+        self.assertEqual(summary["families"], 14)
+        self.assertEqual(summary["classes"], 58)
+        self.assertEqual(summary["cases"], 58)
 
     def test_validator_cli_passes_with_summary(self) -> None:
         completed = subprocess.run(
@@ -52,8 +52,8 @@ class ExecutionBoundaryEnforcementTests(unittest.TestCase):
         )
         self.assertEqual(completed.returncode, 0, completed.stderr or completed.stdout)
         self.assertIn("EXECUTION BOUNDARY ENFORCEMENT: PASS", completed.stdout)
-        self.assertIn("classes=57", completed.stdout)
-        self.assertIn("cases=57", completed.stdout)
+        self.assertIn("classes=58", completed.stdout)
+        self.assertIn("cases=58", completed.stdout)
 
     def test_duplicate_taxonomy_class_fails_closed(self) -> None:
         mutated = copy.deepcopy(self.taxonomy)
@@ -152,6 +152,42 @@ class ExecutionBoundaryEnforcementTests(unittest.TestCase):
         )
         with self.assertRaisesRegex(ExecutionBoundaryContractError, "silence is never"):
             self.validate(policy=mutated)
+
+
+    def test_unknown_material_boundary_fallback_is_mandatory(self) -> None:
+        mutated = copy.deepcopy(self.taxonomy)
+        mutated["families"] = [
+            family for family in mutated["families"] if family["id"] != "UNKNOWN_EVOLUTION"
+        ]
+        with self.assertRaisesRegex(ExecutionBoundaryContractError, "required boundary class missing"):
+            self.validate(taxonomy=mutated)
+
+    def test_durable_outbox_layer_is_mandatory(self) -> None:
+        mutated = copy.deepcopy(self.architecture)
+        mutated["architecture_layers"] = [
+            layer for layer in mutated["architecture_layers"]
+            if layer["id"] != "durable_transition_outbox"
+        ]
+        with self.assertRaisesRegex(ExecutionBoundaryContractError, "architecture layer coverage drifted"):
+            self.validate(architecture=mutated)
+
+    def test_boundary_event_requires_idempotent_delivery_identity(self) -> None:
+        mutated = copy.deepcopy(self.architecture)
+        mutated["boundary_event_envelope"]["required_fields"].remove("dedupe_key")
+        with self.assertRaisesRegex(ExecutionBoundaryContractError, "boundary event envelope required fields drifted"):
+            self.validate(architecture=mutated)
+
+    def test_state_machine_cannot_bypass_finalization(self) -> None:
+        mutated = copy.deepcopy(self.architecture)
+        mutated["state_machine"]["allowed_transitions"]["OBJECTIVE_ACTIVE"].append("COMPLETE")
+        with self.assertRaisesRegex(ExecutionBoundaryContractError, "direct active-to-complete"):
+            self.validate(architecture=mutated)
+
+    def test_dual_lane_systemic_sprint_policy_is_mandatory(self) -> None:
+        mutated = copy.deepcopy(self.architecture)
+        del mutated["dual_lane_policy"]
+        with self.assertRaisesRegex(ExecutionBoundaryContractError, "dual-lane"):
+            self.validate(architecture=mutated)
 
 
 if __name__ == "__main__":

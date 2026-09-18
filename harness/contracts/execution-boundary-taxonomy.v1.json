@@ -465,6 +465,18 @@
           "description": "Execution lease/session disappears and the acting process cannot reliably resume/report."
         }
       ]
+    },
+    {
+      "id": "UNKNOWN_EVOLUTION",
+      "description": "A material execution-path change is observed but no existing canonical class safely fits; capture and disclose it first, then evolve the taxonomy rather than losing the event.",
+      "classes": [
+        {
+          "id": "UE_UNCLASSIFIED_MATERIAL_BOUNDARY",
+          "default_materiality": "MATERIAL",
+          "default_recovery": "REPLAN_WITHIN_SCOPE",
+          "description": "Material boundary cannot yet be classified without guessing; preserve the event under a fail-safe class and open taxonomy/prevention review."
+        }
+      ]
     }
   ],
   "cross_cutting_rules": [
@@ -474,7 +486,18 @@
     "A recovered event remains material history when it changed the viable path or proof state.",
     "Repeated identical blockers with unchanged proof-relevance inputs quiesce; changed inputs or hypotheses create a new event/recovery attempt.",
     "Semantic abandonment is a class even when every tool call technically succeeded.",
-    "Hard termination is only authoritative when synthesized by an observer outside the terminated process."
+    "Hard termination is only authoritative when synthesized by an observer outside the terminated process.",
+    "No material event may fall through taxonomy coverage: use UE_UNCLASSIFIED_MATERIAL_BOUNDARY when no specific class fits, then evolve the taxonomy from evidence."
   ],
-  "proof_ceiling": "Defines canonical repository taxonomy and default recovery semantics. It does not prove runtime detectors, downstream agent obedience, or external supervisor implementation; those require the registered enforcement tests and runtime/provider evidence."
+  "proof_ceiling": "Defines canonical repository taxonomy and default recovery semantics. It does not prove runtime detectors, downstream agent obedience, or external supervisor implementation; those require the registered enforcement tests and runtime/provider evidence.",
+  "classification_algorithm": {
+    "steps": [
+      "Determine materiality from execution impact before trying to force a named class.",
+      "Select the most specific supported primary class and attach orthogonal side-effect, proof, recovery, and terminal dispositions.",
+      "Attach secondary tags when other mechanisms contributed; do not duplicate the incident solely to encode multiple impacts.",
+      "If no class fits a MATERIAL or CRITICAL event without guessing, use UE_UNCLASSIFIED_MATERIAL_BOUNDARY immediately.",
+      "An unclassified material event must still be checkpointed and publicly disclosed, and it opens a taxonomy/prevention evolution candidate."
+    ],
+    "forbidden": "Dropping, downgrading to INFO, or keeping a material event private merely because the taxonomy lacks a perfect class."
+  }
 }
