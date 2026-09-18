@@ -108,18 +108,33 @@ class ExecutionBoundaryEnforcementTests(unittest.TestCase):
             self.validate(matrix=mutated)
 
     def test_partial_write_requires_readback_reconciliation(self) -> None:
-        mutated = copy.deepcopy(self.matrix)
-        case = next(case for case in mutated["cases"] if case["case_id"] == "EBR-003")
+        mutated_matrix = copy.deepcopy(self.matrix)
+        mutated_taxonomy = copy.deepcopy(self.taxonomy)
+        case = next(case for case in mutated_matrix["cases"] if case["case_id"] == "EBR-003")
+        item = next(
+            item for family in mutated_taxonomy["families"] for item in family["classes"]
+            if item["id"] == "MT_PARTIAL_SIDE_EFFECT_POSSIBLE"
+        )
+        item["default_recovery"] = "RETRY_BOUNDED"
         case["expected_recovery"] = "RETRY_BOUNDED"
+        case["expected_output"]["recovery_disposition"] = "RETRY_BOUNDED"
+        case["expected_output"]["readback_required"] = False
         with self.assertRaisesRegex(ExecutionBoundaryContractError, "partial-write case must reconcile"):
-            self.validate(matrix=mutated)
+            self.validate(matrix=mutated_matrix, taxonomy=mutated_taxonomy)
 
     def test_hard_termination_requires_external_synthesis(self) -> None:
-        mutated = copy.deepcopy(self.matrix)
-        case = next(case for case in mutated["cases"] if case["case_id"] == "EBR-015")
+        mutated_matrix = copy.deepcopy(self.matrix)
+        mutated_taxonomy = copy.deepcopy(self.taxonomy)
+        case = next(case for case in mutated_matrix["cases"] if case["case_id"] == "EBR-015")
+        item = next(
+            item for family in mutated_taxonomy["families"] for item in family["classes"]
+            if item["id"] == "HT_HOST_FORCED_TERMINATION"
+        )
+        item["default_recovery"] = "RESUME_FROM_CHECKPOINT"
         case["expected_recovery"] = "RESUME_FROM_CHECKPOINT"
+        case["expected_output"]["recovery_disposition"] = "RESUME_FROM_CHECKPOINT"
         with self.assertRaisesRegex(ExecutionBoundaryContractError, "hard-termination case must be supervisor-synthesized"):
-            self.validate(matrix=mutated)
+            self.validate(matrix=mutated_matrix, taxonomy=mutated_taxonomy)
 
     def test_direct_active_to_complete_path_is_forbidden(self) -> None:
         mutated = copy.deepcopy(self.architecture)
@@ -257,6 +272,19 @@ class ExecutionBoundaryEnforcementTests(unittest.TestCase):
         actual = evaluate_boundary(case["input_event"], self.architecture, self.taxonomy)
         self.assertEqual(actual["classification"], "UE_UNCLASSIFIED_MATERIAL_BOUNDARY")
         self.assertTrue(actual["taxonomy_evolution_required"])
+
+    def test_user_cancellation_reaches_stable_stop(self) -> None:
+        case = next(case for case in self.matrix["cases"] if case["classification"] == "UC_CANCELLED")
+        actual = evaluate_boundary(case["input_event"], self.architecture, self.taxonomy)
+        self.assertEqual(actual["recovery_disposition"], "QUIESCE_UNCHANGED_BLOCKER")
+        self.assertEqual(actual["execution_path"][-1], "QUIESCENT_BLOCKED")
+
+    def test_dead_non_ht_signal_normalizes_to_hard_termination(self) -> None:
+        case = next(case for case in self.matrix["cases"] if case["case_id"] == "EBR-059")
+        actual = evaluate_boundary(case["input_event"], self.architecture, self.taxonomy)
+        self.assertEqual(actual["classification"], "HT_HOST_FORCED_TERMINATION")
+        self.assertEqual(actual["recovery_disposition"], "SYNTHESIZE_TERMINATION")
+        self.assertEqual(actual["execution_path"], ["HARD_TERMINATED_SYNTHETIC"])
 
 
 if __name__ == "__main__":
