@@ -19,10 +19,12 @@ This directory owns the durable semantic and execution-continuity artifacts for 
 python scripts/validate_prompt_strength.py --summary
 python -m unittest tests.test_prompt_strength_contract_prompt -v
 python scripts/prompt_parallel_dispatch.py validate --manifest Outputs/prompt-parallel-dispatch/manifest.json
+python -m unittest tests.test_gitignore_hygiene -v
+python -m triage.gitignore_hygiene
 ```
 
-The primary manifest and seed are intentionally byte-identical. Generated Prompt Kit HTML is never semantic authority and is updated only through the canonical builder/repository action.
+The manifest and seed are byte-identical. The current graph width is 1, so the durable dispatch disposition is `NOT_APPLICABLE`; this is serial correctness, not degraded autonomy.
 
-## Current proof boundary
+Only the dispatch **manifest** is tracked under `Outputs/` as control-plane state. Runtime receipts remain generated evidence and are rejected by artifact hygiene.
 
-The active execution wave uses isolated GitHub-provider branches for #543 and #537. Provider commits/CI/review plus the #543 canonical repository-action artifact establish provider proof. Local workstation execution and downstream model behavior remain separate proof surfaces.
+Generated Prompt Kit HTML is never semantic authority and is updated only through the canonical builder/repository action.

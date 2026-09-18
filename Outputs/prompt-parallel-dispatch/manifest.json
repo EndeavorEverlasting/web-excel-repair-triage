@@ -1,63 +1,18 @@
 {
   "schema_version": "prompt-parallel-dispatch/v1",
-  "run_id": "prompt-strength-provider-convergence-20260918",
-  "graph_width": 2,
-  "parallel_disposition": "REQUIRED",
+  "run_id": "prompt-strength-final-convergence-20260918",
+  "graph_width": 1,
+  "parallel_disposition": "NOT_APPLICABLE",
   "autonomy_gap": null,
   "lanes": [
     {
-      "lane_id": "lane-p543-local-proof",
-      "mission": "Reconcile PR #543 to current main, execute the canonical Prompt Kit build-proof action through a branch-scoped provider adapter, regenerate only the canonical Prompt Kit output, remove the temporary adapter, revalidate, and integrate when gates pass.",
-      "dependencies": [],
-      "owned_mutation_surfaces": [
-        "harness/contracts/prompt-language-compiler-policy.v1.json",
-        "harness/prompt-compilation/semantics/P07.json",
-        "harness/repository-actions.v1.json",
-        "tests/test_prompt_compilation.py",
-        "web/prompt-kit/index.html",
-        ".github/workflows/tmp-p07-local-proof-regenerate.yml"
-      ],
-      "forbidden_surfaces": [
-        "PR #537 prompt-strength semantic files",
-        "manual edits to web/prompt-kit/index.html",
-        "unrelated release/versioning files",
-        "default-branch history rewrites"
-      ],
-      "adapter": {
-        "kind": "connected_provider",
-        "rung": 3
-      },
-      "launch": {
-        "mode": "runtime_tool",
-        "tool": "GitHub provider connector",
-        "operation": "isolated_branch_mutation_and_ci",
-        "arguments": {
-          "pull_request": 543,
-          "branch": "fix/local-proof-continuity-20260917",
-          "base_sha": "84a47c1495ac6d6fcfde1835d0ea503ef3d98c87",
-          "merge_when_green": true
-        }
-      },
-      "expected_artifacts": [
-        "prompt-kit-build-proof provider artifact receipt",
-        "canonical regenerated web/prompt-kit/index.html",
-        "review-clean exact-head PR #543",
-        "mainline containment proof"
-      ],
-      "validation": [
-        "python scripts/run_repository_action.py --action prompt-kit-build-proof --base-ref origin/main --report Outputs/repository-actions/prompt-kit-build-proof.json",
-        "python -m unittest tests.test_prompt_compilation -v",
-        "python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html --check",
-        "git diff --check"
-      ],
-      "convergence_owner": "mainline-integration",
-      "status": "DISPATCHED"
-    },
-    {
       "lane_id": "lane-p537-prompt-strength",
-      "mission": "Rebuild PR #537 from current main using only the prompt-strength semantic floor, current dependency snapshots, deterministic-test-floor registration, and durable current plan/dispatch artifacts; drop stale shared-owner snapshots and retired lane files.",
+      "mission": "Converge the prompt-strength semantic floor onto current main after #543 integration, prove the focused semantic/adversarial contract and repository hygiene, and merge the exact validated candidate.",
       "dependencies": [],
       "owned_mutation_surfaces": [
+        ".gitignore",
+        "triage/artifact_hygiene_policy.py",
+        "tests/test_gitignore_hygiene.py",
         "harness/contracts/prompt-strength.v1.json",
         "harness/evals/PROMPT_STRENGTH_RECOVERY_SPRINT_PLAN.md",
         "harness/evals/prompt-strength/README.md",
@@ -70,11 +25,11 @@
         "tests/test_prompt_strength_contract_prompt.py"
       ],
       "forbidden_surfaces": [
-        "harness/contracts/prompt-quality-history.v1.json",
         "registry/prompts/actionable-next-step-policy.v1.json",
-        "PR #543 source/generated files",
-        "unrelated release/versioning files",
-        "retired lane playbooks from superseded pre-integration state"
+        "harness/contracts/prompt-quality-history.v1.json",
+        "PR #543 compiler/repository-action/generated-site files now integrated on main",
+        "OPERANT_VERSION and release candidate files",
+        "default-branch history rewrites"
       ],
       "adapter": {
         "kind": "connected_provider",
@@ -87,20 +42,22 @@
         "arguments": {
           "pull_request": 537,
           "branch": "feat/prompt-strength-contract-matrix-20260917",
-          "base_sha": "84a47c1495ac6d6fcfde1835d0ea503ef3d98c87",
+          "base_sha": "378f855cb05f540e65f2c964a3b9e9e1e1c3faf7",
           "merge_when_green": true
         }
       },
       "expected_artifacts": [
-        "current-main-reconciled prompt-strength contract/matrix",
+        "prompt-strength contract and 31-case adversarial matrix on current main floor",
         "deterministic-test-floor registration",
-        "current durable closeout plan and dispatch manifest",
+        "tracked control-plane dispatch manifest with runtime receipts still forbidden",
         "exact-head provider validation and mainline containment proof"
       ],
       "validation": [
         "python scripts/validate_prompt_strength.py --summary",
         "python -m unittest tests.test_prompt_strength_contract_prompt -v",
         "python scripts/prompt_parallel_dispatch.py validate --manifest Outputs/prompt-parallel-dispatch/manifest.json",
+        "python -m unittest tests.test_gitignore_hygiene -v",
+        "python -m triage.gitignore_hygiene",
         "git diff --check"
       ],
       "convergence_owner": "mainline-integration",

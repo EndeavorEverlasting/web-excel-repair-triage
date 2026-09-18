@@ -27,11 +27,19 @@
         "harness/evals/prompt-regression/defect-families.v1.json",
         "harness/test-floor.v1.json",
         "tests/test_repository_actions.py",
-        "tests/test_repository_local_proof_continuity_prompt.py"
+        "tests/test_repository_local_proof_continuity_prompt.py",
+        "harness/prompt-compilation/semantics/P07.json",
+        "harness/contracts/prompt-language-compiler-policy.v1.json",
+        "scripts/prompt_language_compiler.py",
+        "tests/test_prompt_compilation.py",
+        "harness/prompt-compilation/fixtures/TC06-parallelism-modality/semantics.json",
+        "harness/prompt-compilation/fixtures/TC06-parallelism-modality/profile.json",
+        "harness/prompt-compilation/fixtures/TC06-parallelism-modality/context.json"
       ],
       "steps": [
         {"id": "build", "argv": ["{python}", "scripts/build_prompt_kit_registry.py", "--output", "web/prompt-kit/index.html"], "timeout_seconds": 180, "proof_ceiling": "Deterministic canonical Prompt Kit generation."},
         {"id": "local-action-regressions", "argv": ["{python}", "-m", "unittest", "tests.test_repository_actions", "tests.test_repository_local_proof_continuity_prompt", "-v"], "timeout_seconds": 180, "proof_ceiling": "Executable repository-local action and continuity regression."},
+        {"id": "effective-p07-runtime-liveness", "argv": ["{python}", "-m", "unittest", "tests.test_prompt_compilation.PromptLanguageCompilerTests.test_p07_effective_prompt_requires_local_proof_and_boundary_continuation", "-v"], "timeout_seconds": 180, "proof_ceiling": "Effective P07 compiler semantics require repository-local proof continuity and non-terminal boundary continuation independently of parallel width."},
         {"id": "regression-safety", "argv": ["{python}", "scripts/validate_prompt_regression_safety.py", "--summary"], "timeout_seconds": 180, "proof_ceiling": "Static systemic-defect and local-first-proof contract validation."},
         {"id": "language-audit", "argv": ["{python}", "scripts/evaluate_prompt_language.py", "--summary"], "timeout_seconds": 180, "proof_ceiling": "Static complete prompt-language coverage."},
         {"id": "parity", "argv": ["{python}", "scripts/build_prompt_kit_registry.py", "--output", "web/prompt-kit/index.html", "--check"], "timeout_seconds": 180, "proof_ceiling": "Canonical source-to-generated-site parity."},
@@ -52,10 +60,18 @@
         "harness/evals/prompt-regression/defect-families.v1.json",
         "harness/test-floor.v1.json",
         "tests/test_repository_actions.py",
-        "tests/test_repository_local_proof_continuity_prompt.py"
+        "tests/test_repository_local_proof_continuity_prompt.py",
+        "harness/prompt-compilation/semantics/P07.json",
+        "harness/contracts/prompt-language-compiler-policy.v1.json",
+        "scripts/prompt_language_compiler.py",
+        "tests/test_prompt_compilation.py",
+        "harness/prompt-compilation/fixtures/TC06-parallelism-modality/semantics.json",
+        "harness/prompt-compilation/fixtures/TC06-parallelism-modality/profile.json",
+        "harness/prompt-compilation/fixtures/TC06-parallelism-modality/context.json"
       ],
       "steps": [
         {"id": "local-action-regressions", "argv": ["{python}", "-m", "unittest", "tests.test_repository_actions", "tests.test_repository_local_proof_continuity_prompt", "-v"], "timeout_seconds": 180, "proof_ceiling": "Executable repository-local action and continuity regression."},
+        {"id": "effective-p07-runtime-liveness", "argv": ["{python}", "-m", "unittest", "tests.test_prompt_compilation.PromptLanguageCompilerTests.test_p07_effective_prompt_requires_local_proof_and_boundary_continuation", "-v"], "timeout_seconds": 180, "proof_ceiling": "Effective P07 compiler semantics require repository-local proof continuity and non-terminal boundary continuation independently of parallel width."},
         {"id": "regression-safety", "argv": ["{python}", "scripts/validate_prompt_regression_safety.py", "--summary"], "timeout_seconds": 180, "proof_ceiling": "Static systemic-defect and local-first-proof contract validation."},
         {"id": "language-audit", "argv": ["{python}", "scripts/evaluate_prompt_language.py", "--summary"], "timeout_seconds": 180, "proof_ceiling": "Static complete prompt-language coverage."},
         {"id": "parity", "argv": ["{python}", "scripts/build_prompt_kit_registry.py", "--output", "web/prompt-kit/index.html", "--check"], "timeout_seconds": 180, "proof_ceiling": "Canonical source-to-generated-site parity."},

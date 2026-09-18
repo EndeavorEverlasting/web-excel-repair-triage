@@ -3,65 +3,56 @@
 ## Current floor
 
 - Repository: `EndeavorEverlasting/web-excel-repair-triage`
-- Reconciled default branch: `main@84a47c1495ac6d6fcfde1835d0ea503ef3d98c87`
-- Integrated prerequisites: #533 (`fc5fca0d...`), #535 (`f3126a3a...`), #536 (`80ead456...`), #542 (`ae09d616...`), #548 (`e4c2fe12...`).
-- Current main contains the execution-boundary/release-publication strengthening through #545 and the universal boundary-to-sprint continuation propagation through #551.
+- Reconciled default branch: `main@378f855cb05f540e65f2c964a3b9e9e1e1c3faf7`
+- Integrated prerequisites: #533, #535, #536, #542, #548, #551, #552, and #543.
+- #543 local-proof continuity is integrated at `378f855cb05f540e65f2c964a3b9e9e1e1c3faf7`; its canonical `prompt-kit-build-proof` provider receipt was artifact `10560468267` from proof head `bde013a5...`, followed by builder-generated projection and exact-head green integration.
 - Provider-only execution is active in this runtime; no mounted local checkout is available.
 
-## Active Wave — graph width 2
+## Active phase — PR #537 prompt-strength convergence
 
-### Lane A — PR #543 local-proof continuity
+**PARALLEL EXECUTION: NOT_APPLICABLE — dependency graph width is 1.**
 
-Owned source: compiler policy, P07 semantics, repository action registry, prompt-compilation regression, generated Prompt Kit projection.
-
-Execution:
-1. Reconcile the branch to the refreshed main floor.
-2. Use a branch-scoped provider adapter that delegates to canonical `prompt-kit-build-proof`; the adapter is temporary, pinned, credential-isolated, and must be deleted before integration.
-3. Preserve the uploaded repository-action receipt as provider proof.
-4. Regenerate `web/prompt-kit/index.html` only through the canonical repository action/builder.
-5. Resolve review, rerun exact-head checks, merge when all gates pass, then verify main containment.
-
-### Lane B — PR #537 prompt-strength semantic floor
-
-Owned source: prompt-strength contract/matrix/validator/focused test, deterministic-test-floor registration, and current durable plan/dispatch artifacts.
+Owned source:
+- prompt-strength semantic contract;
+- 31-case adversarial matrix;
+- prompt-strength validator and focused regression;
+- deterministic-test-floor registration;
+- exact control-plane exception for the tracked dispatch manifest;
+- current program plan, factoring ledger, README, and dispatch manifest/seed.
 
 Convergence law:
-- rebuild from current main rather than merging stale whole-file snapshots;
-- retain the 21-dimension / 31-case semantic floor and PSA-031 silent-stop regression;
-- retain PSA-029 without false `fixed_point_continuation` credit;
-- refresh #535 from stale OPEN state to integrated head `22d5560e...` / merge `f3126a3a...`;
-- drop the stale branch copy of `harness/contracts/prompt-quality-history.v1.json`;
-- drop retired per-lane playbooks/templates that describe already-integrated #542/#548 work;
-- register the focused test in current `harness/test-floor.v1.json`;
-- validate and merge from the exact current head.
+1. preserve the 21-dimension semantic floor and PSA-031 silent-stop regression;
+2. preserve PSA-029 without false `fixed_point_continuation` credit;
+3. consume current main shared policy/history rather than restoring stale branch snapshots;
+4. allow only `Outputs/prompt-parallel-dispatch/manifest.json` as tracked control-plane state; runtime receipts remain forbidden;
+5. require byte-identical manifest/seed and repository dispatcher validation;
+6. run exact-head provider checks, resolve review, merge, then verify main containment.
 
-## Durable parallel execution
+## Completed parallel wave evidence
 
-The primary manifest and its regression seed are byte-identical:
-- `Outputs/prompt-parallel-dispatch/manifest.json`
-- `harness/evals/prompt-strength/parallel-dispatch-manifest.seed.v1.json`
-
-The active adapter is the connected GitHub provider (rung 3). The two isolated PR branches are independent mutation surfaces and are dispatched concurrently. Runtime-tool evidence is preserved through provider commits, review state, CI runs, and the #543 repository-action artifact. No manual operator scheduling is required.
+The preceding width-2 wave used the connected GitHub provider on isolated #543/#537 branches. Both branch mutations were launched concurrently and rejoined by this coordinator. #543 additionally used a temporary pinned provider adapter to execute canonical `prompt-kit-build-proof`; the adapter was removed before integration. The current manifest intentionally describes the **current** width-1 execution state rather than fossilizing the completed wave as an active dependency graph.
 
 ## Successor phase — publication / release
 
-After both active PRs are integrated:
+After #537 integrates:
 
-1. Refresh current main and verify canonical Prompt Kit builder parity plus Pages.
-2. Recompute the existing Operant release carrier #538 through the canonical release workflow/external publication seam introduced by #545. Do not manually patch version/changelog/generated HTML and do not create a duplicate release PR.
-3. Validate the refreshed exact candidate, merge when gates pass, and verify tag/GitHub Release identity.
+1. refresh final main and verify Prompt Kit builder parity plus successful Pages publication;
+2. consume the canonical Operant staging branch/publication request for existing PR #538;
+3. external provider creates a non-force two-parent convergence commit whose tree equals the validated staged candidate tree and whose parents preserve both current review-head and source-main ancestry;
+4. advance existing #538 head, validate exact pull-request checks, merge when green, then verify `operant-v0.9.0` and GitHub Release identity on the exact merged commit.
+
+Do not manually edit `OPERANT_VERSION`, changelog, product-identity mirrors, or generated Prompt Kit output.
 
 ## Successor phase — observed effectiveness
 
-After final publication/release freezes the treatment identity, route to the existing P67 compute-authority evaluation owner. Run the canonical paired external-agent pilot when its adapter/credentials are available. Repository/static/provider proof does not become downstream model-obedience proof.
+After release freezes treatment identity, route to the existing P67 compute-authority evaluation owner. Run the canonical paired external-agent pilot when its adapter/credentials are available. Repository/static/provider proof never becomes downstream model-obedience proof.
 
 ## Definition of done
 
-1. #543 integrated with canonical build-proof receipt and generated-site parity.
-2. #537 integrated with current-main semantic floor, deterministic-test registration, and no stale shared-owner snapshots.
-3. final main Prompt Kit publication verified.
-4. existing #538 refreshed, validated, integrated, and release/tag identity verified.
-5. P67 runtime effectiveness either OBSERVED through its canonical adapter or explicitly BLOCKED/UNPROVEN_RUNTIME at the exact external gate.
+1. #537 is integrated with the current semantic floor and regression-hardened dispatch artifact hygiene.
+2. final main Prompt Kit publication is observed green.
+3. #538 is refreshed through the canonical staged-candidate/external-publication seam, validated, integrated, tagged, and released.
+4. P67 is OBSERVED at its runtime proof surface or explicitly BLOCKED/UNPROVEN_RUNTIME at the exact external gate.
 
 ## Proof ceiling
 

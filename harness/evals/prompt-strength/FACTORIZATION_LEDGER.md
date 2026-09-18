@@ -7,24 +7,26 @@
 - #536 prompt-quality history — integrated.
 - #542 execution-boundary enforcement — integrated at `ae09d616...`.
 - #548 deterministic line-ending / LINE_ENDING_DRIFT prevention — integrated at `e4c2fe12...`.
-- Current refreshed main for this convergence: `84a47c1495ac6d6fcfde1835d0ea503ef3d98c87`.
+- #551 universal boundary-to-sprint continuation — integrated at `84a47c14...`.
+- #552 Operant release jq publication repair — integrated at `58a2785a...`.
+- #543 effective P07 local-proof continuity — integrated at `378f855cb05f540e65f2c964a3b9e9e1e1c3faf7`.
+- Current refreshed main for #537 convergence: `378f855cb05f540e65f2c964a3b9e9e1e1c3faf7`.
 
-## Active owners
+## Active owner
 
-- #543: effective P07 local-proof strengthening, canonical repository action, generated Prompt Kit projection.
-- #537: prompt-strength semantic contract/matrix/validator/test plus durable execution plan/dispatch state.
-- Shared-owner snapshots from older branch floors are not restored.
+- #537 exclusively owns prompt-strength semantic contract/matrix/validator/test, deterministic-floor registration, narrow dispatch-manifest hygiene exception, and durable closeout artifacts.
+- Shared actionable policy, prompt-quality history, #543 compiler/generated files, and release-version surfaces are consumed from main and are not rewritten.
 
-## Collision law
+## Execution state
 
-- #543 exclusively owns its compiler/repository-action/generated-site surfaces until integration.
-- #537 consumes current main shared policy/history and does not rewrite them.
-- Generated `web/prompt-kit/index.html` is builder-owned.
-- #538 release files remain untouched until both semantic lanes integrate.
+- Active graph width: 1.
+- Parallel disposition: `NOT_APPLICABLE`.
+- Adapter: connected GitHub provider for isolated #537 mutation/CI/integration.
+- Historical width-2 provider dispatch is completed and evidenced by provider commits/CI plus #543 repository-action artifact `10560468267`.
 
 ## Successor owners
 
-- Existing #538 + Operant versioning/external publication seam: final release.
+- Existing #538 + canonical Operant versioning staging/external-publication seam: final release.
 - P67 compute-authority evaluation: observed downstream effectiveness.
 
 ## Proof classes
