@@ -121,7 +121,7 @@ class OperantVersioningWorkflowTests(unittest.TestCase):
                     "--base",
                     "main",
                     "--candidate-branch",
-                    "automation/operant-release-v0.6.1",
+                    "automation/operant-release-staging-v0.6.1",
                     "--candidate-sha",
                     "candidate-create-sha",
                     "--candidate-tree-sha",
@@ -145,26 +145,36 @@ class OperantVersioningWorkflowTests(unittest.TestCase):
             self.assertFalse(payload["requires_external_pr_refresh"])
             self.assertEqual(payload["base"], "main")
             self.assertEqual(payload["head"], "automation/operant-release-v0.6.1")
-            self.assertEqual(payload["candidate_branch"], "automation/operant-release-v0.6.1")
+            self.assertEqual(
+                payload["candidate_branch"],
+                "automation/operant-release-staging-v0.6.1",
+            )
             self.assertEqual(payload["candidate_sha"], "candidate-create-sha")
             self.assertEqual(payload["candidate_tree_sha"], "candidate-create-tree")
             self.assertEqual(payload["title"], "chore(operant): release v0.6.1")
+            self.assertEqual(
+                payload["refresh_strategy"],
+                "create-target-head-from-staged-candidate-and-open-pr",
+            )
             self.assertIn("external provider/agent", body_path.read_text(encoding="utf-8"))
 
-    def test_unpublished_candidate_converges_on_one_stable_branch(self) -> None:
+    def test_all_release_candidates_stage_away_from_review_head(self) -> None:
         workflow = WORKFLOW.read_text(encoding="utf-8")
 
         self.assertIn('pending_branch="automation/operant-release-v${next_version}"', workflow)
+        self.assertIn('staging_branch="automation/operant-release-staging-v${next_version}"', workflow)
+        self.assertIn('target_head="${existing_branch:-$pending_branch}"', workflow)
+        self.assertIn('candidate_branch="$staging_branch"', workflow)
         self.assertIn(
+            'echo "Staging unpublished Operant release candidate for external publication: $target_head"',
+            workflow,
+        )
+        self.assertNotIn(
             'git ls-remote --exit-code --heads origin "refs/heads/${pending_branch}"',
             workflow,
         )
-        self.assertIn(
-            'echo "Refreshing unpublished Operant release candidate branch in place: $pending_branch"',
-            workflow,
-        )
-        self.assertIn('git fetch origin "$pending_branch"', workflow)
-        self.assertIn('git merge --no-edit origin/main', workflow)
+        self.assertNotIn('git checkout -B "$pending_branch"', workflow)
+        self.assertNotIn('candidate_branch="$pending_branch"', workflow)
         self.assertNotIn('branch="automation/operant-release-v${next_version}-${main_sha:0:8}"', workflow)
         self.assertNotIn("git push --force", workflow)
         self.assertNotIn("git push -f", workflow)
@@ -180,6 +190,8 @@ class OperantVersioningWorkflowTests(unittest.TestCase):
             workflow,
         )
         self.assertIn('git push origin HEAD:"$candidate_branch"', workflow)
+        self.assertIn('candidate_branch="$staging_branch"', workflow)
+        self.assertNotIn('git push origin HEAD:"$target_head"', workflow)
         self.assertNotIn("git push --force", workflow)
         self.assertNotIn("git push -f", workflow)
 
