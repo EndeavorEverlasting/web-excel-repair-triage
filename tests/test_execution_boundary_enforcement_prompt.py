@@ -137,6 +137,7 @@ class ExecutionBoundaryEnforcementTests(unittest.TestCase):
         item["default_recovery"] = "RETRY_BOUNDED"
         case["expected_recovery"] = "RETRY_BOUNDED"
         case["expected_output"]["recovery_disposition"] = "RETRY_BOUNDED"
+        case["expected_output"]["primary_recovery_sprint"]["first_executable_action"] = "RETRY_BOUNDED"
         case["expected_output"]["readback_required"] = False
         case["forbidden_outputs"] = [
             item for item in case["forbidden_outputs"] if item.get("field") != "readback_required"
