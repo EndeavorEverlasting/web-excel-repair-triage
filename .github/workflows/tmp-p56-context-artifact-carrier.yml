@@ -1,0 +1,52 @@
+name: Temporary P56 context artifact carrier
+
+on:
+  pull_request:
+    types: [synchronize]
+
+permissions:
+  contents: write
+
+concurrency:
+  group: p56-context-artifact-carrier-${{ github.event.pull_request.number }}
+  cancel-in-progress: false
+
+jobs:
+  execute:
+    if: github.event.pull_request.head.repo.full_name == github.repository && github.event.pull_request.head.ref == 'feat/p56-context-artifact-recovery-20260918'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: feat/p56-context-artifact-recovery-20260918
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Reconcile, regenerate, prove, and push canonical Prompt Kit
+        shell: bash
+        run: |
+          set -euo pipefail
+          export PYTHONPATH="$PWD${PYTHONPATH:+:$PYTHONPATH}"
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git fetch origin main feat/p56-context-artifact-recovery-20260918 --prune
+          git merge --no-edit origin/main
+          python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html
+          python scripts/prompt_registry_ops.py validate
+          python scripts/validate_prompt_quality_history.py --summary
+          python -m unittest tests.test_context_to_artifact_prompt tests.test_prompt_kit_discovery tests.test_prompt_quality_history -v
+          python scripts/validate_prompt_kit_discovery.py --summary
+          python scripts/evaluate_prompt_language.py --summary
+          python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html --check
+          git diff --check
+          if git diff --quiet -- web/prompt-kit/index.html; then
+            echo "expected generated Prompt Kit delta is missing" >&2
+            exit 1
+          fi
+          git add web/prompt-kit/index.html
+          git rm -f .github/workflows/tmp-p56-context-artifact-carrier.yml
+          git diff --cached --check
+          git commit -m 'build(prompt-kit): regenerate strengthened P56'
+          git push origin HEAD:feat/p56-context-artifact-recovery-20260918
