@@ -1,0 +1,77 @@
+{
+  "schema_version": "prompt-runtime-compliance-capture-mapping/v1",
+  "contract_id": "prompt-runtime-compliance-capture-mapping",
+  "title": "Prompt Runtime Compliance Capture Mapping",
+  "purpose": "Define and validate the lossless mapping from a provider-neutral runtime-compliance capture into prompt-runtime-compliance-receipt/v1 and only then into generic observed-behavior-proof/v1 references. The runtime-compliance capture is a separate typed source because the frozen compute-authority capture cannot represent boundary recovery without losing required information.",
+  "receipt_schema": "prompt-runtime-compliance-receipt/v1",
+  "receipt_schema_path": "harness/contracts/prompt-runtime-compliance-receipt.schema.v1.json",
+  "observed_behavior_proof_schema": "observed-behavior-proof/v1",
+  "source_capture_schema": "prompt-runtime-compliance-capture/v1",
+  "source_capture_owner": "Sprint 3A (harness/evals/runtime-compliance/runtime/capture-schema.v1.json)",
+  "mappings": [
+    {
+      "capture": "provider/model/config/runtime identity",
+      "compliance_receipt": "model_config + proof.fingerprint.model_config",
+      "observed_behavior_proof": "subject/runtime provenance where supported",
+      "required": true
+    },
+    {
+      "capture": "scenario/run/objective identity",
+      "compliance_receipt": "run + scenario",
+      "observed_behavior_proof": "subject/claim correlation",
+      "required": true
+    },
+    {
+      "capture": "boundary event, classification, checkpoint, publication ACK",
+      "compliance_receipt": "boundary_events[]",
+      "observed_behavior_proof": "observation references; rich event remains authoritative in the compliance receipt",
+      "required": true
+    },
+    {
+      "capture": "mutation/action, side-effect state, readback/retry linkage",
+      "compliance_receipt": "actions[]",
+      "observed_behavior_proof": "observation references; rich action remains authoritative in the compliance receipt",
+      "required": true
+    },
+    {
+      "capture": "termination state/reason/resume trigger",
+      "compliance_receipt": "terminal",
+      "observed_behavior_proof": "terminal observation/claim evidence",
+      "required": true
+    },
+    {
+      "capture": "validations and protected contracts",
+      "compliance_receipt": "proof.checks[]",
+      "observed_behavior_proof": "claims and required evidence class",
+      "required": true
+    },
+    {
+      "capture": "workspace/provider structural evidence",
+      "compliance_receipt": "evidence[]",
+      "observed_behavior_proof": "subject artifact/path/hash where applicable",
+      "required": true
+    },
+    {
+      "capture": "evaluator findings",
+      "compliance_receipt": "violations[]",
+      "observed_behavior_proof": "claim PASS/FAIL observation references",
+      "required": true
+    },
+    {
+      "capture": "P13/P94 linkage",
+      "compliance_receipt": "regression_linkage",
+      "observed_behavior_proof": "linked evidence only; no duplicated regression semantics",
+      "required": true
+    }
+  ],
+  "mapping_invariants": [
+    "Conversion is fail-closed when a required compliance field has no source mapping.",
+    "Rich boundary/action payloads remain authoritative in the compliance receipt and are referenced, not flattened away, by generic observed-proof artifacts.",
+    "An observed-behavior-proof/v1 claim may PASS only when the corresponding compliance receipt validates and the observed evidence class is strong enough.",
+    "target_runtime_observed is available only for a real external-agent execution, never a fake adapter.",
+    "The mapping preserves exact receipt ID, run/scenario identity, prompt/model/config fingerprint, and evidence references so P99/P13/P94 adapters can correlate without raw transcript persistence.",
+    "The compute-authority capture schema is not modified or treated as an interchangeable source schema.",
+    "Raw prompts, responses, transcripts, hidden reasoning, credentials, and secret-bearing payloads are never carried through the mapping."
+  ],
+  "proof_ceiling": "Defines the required lossless capture-to-receipt-to-observed-proof field mapping and its fail-closed invariants. It does not implement the runtime capture, runner, or adapter (Sprint 3A) and does not prove any real runtime observation."
+}

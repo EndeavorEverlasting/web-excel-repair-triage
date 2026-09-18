@@ -1,0 +1,271 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "prompt-runtime-compliance-receipt/v1",
+  "title": "Prompt Runtime Compliance Receipt",
+  "description": "Detailed, privacy-bounded trace authority for one runtime-compliance evaluation of Prompt Kit execution behavior. Records boundary events, actions, terminal disposition, compliance violations, strongest proof state, proof-relevance fingerprint, and regression linkage. Raw prompts, responses, transcripts, hidden reasoning, credentials, and secret-bearing payloads are forbidden persisted evidence.",
+  "schema_version": "prompt-runtime-compliance-receipt/v1",
+  "boundary_taxonomy": "execution-boundary-taxonomy/v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "receipt_id", "run", "model_config", "effective_prompt", "scenario", "boundary_events", "actions", "terminal", "violations", "proof", "regression_linkage", "evidence", "compliance_result", "occurred_at"],
+  "properties": {
+    "schema_version": {"const": "prompt-runtime-compliance-receipt/v1"},
+    "receipt_id": {"$ref": "#/$defs/id"},
+    "supersedes_receipt_id": {"oneOf": [{"$ref": "#/$defs/id"}, {"type": "null"}]},
+    "related_receipt_ids": {"type": "array", "uniqueItems": true, "maxItems": 64, "items": {"$ref": "#/$defs/id"}},
+    "run": {"$ref": "#/$defs/run"},
+    "model_config": {"$ref": "#/$defs/model_config"},
+    "effective_prompt": {"$ref": "#/$defs/effective_prompt"},
+    "scenario": {"$ref": "#/$defs/scenario"},
+    "boundary_events": {"type": "array", "maxItems": 256, "items": {"$ref": "#/$defs/boundary_event"}},
+    "actions": {"type": "array", "maxItems": 512, "items": {"$ref": "#/$defs/action"}},
+    "terminal": {"$ref": "#/$defs/terminal"},
+    "violations": {"type": "array", "maxItems": 256, "items": {"$ref": "#/$defs/violation"}},
+    "proof": {"$ref": "#/$defs/proof"},
+    "regression_linkage": {"$ref": "#/$defs/regression_linkage"},
+    "evidence": {"type": "array", "maxItems": 256, "items": {"$ref": "#/$defs/evidence"}},
+    "privacy": {"oneOf": [{"$ref": "#/$defs/privacy"}, {"type": "null"}]},
+    "compliance_result": {"$ref": "#/$defs/compliance_result"},
+    "occurred_at": {"type": "string", "format": "date-time"}
+  },
+  "$defs": {
+    "id": {"type": "string", "minLength": 1, "maxLength": 160, "pattern": "^[A-Za-z0-9._:/-]+$"},
+    "short_text": {"type": "string", "minLength": 1, "maxLength": 160, "pattern": "^[^\\r\\n]+$"},
+    "bounded_summary": {"type": "string", "minLength": 1, "maxLength": 320, "pattern": "^[^\\r\\n]+$"},
+    "evidence_ref": {"type": "string", "minLength": 1, "maxLength": 240, "pattern": "^[A-Za-z0-9][A-Za-z0-9._:/?#@&=+%~-]*$"},
+    "prompt_id": {"type": "string", "pattern": "^P[0-9]{2,4}$"},
+    "sequence": {"type": "integer", "minimum": 1, "maximum": 100000},
+    "evidence_state": {"type": "string", "enum": ["PLANNED_DESIGNED", "TRACKED", "IMPLEMENTED", "WIRED_REACHABLE", "VALIDATED", "INTEGRATED", "DEPLOYED", "OBSERVED"]},
+    "materiality": {"type": "string", "enum": ["INFO", "MATERIAL", "CRITICAL"]},
+    "side_effect_state": {"type": "string", "enum": ["NONE", "CONFIRMED", "PARTIAL", "UNKNOWN", "ROLLED_BACK_PROVEN"]},
+    "publication_ack": {"type": "string", "enum": ["NOT_REQUIRED", "PENDING", "USER_VISIBLE"]},
+    "compliance_result": {"type": "string", "enum": ["PASS", "FAIL", "BLOCKED", "INCONCLUSIVE"]},
+    "rule_result": {"type": "string", "enum": ["PASS", "FAIL", "NOT_APPLICABLE", "UNKNOWN"]},
+    "severity": {"type": "string", "enum": ["CRITICAL", "HIGH", "MEDIUM", "LOW"]},
+    "check_status": {"type": "string", "enum": ["PASS", "FAIL", "BLOCKED", "UNKNOWN"]},
+    "run": {
+      "type": "object", "additionalProperties": false,
+      "required": ["run_id", "objective_id", "started_at", "ended_at"],
+      "properties": {
+        "run_id": {"$ref": "#/$defs/id"},
+        "objective_id": {"$ref": "#/$defs/id"},
+        "started_at": {"type": "string", "format": "date-time"},
+        "ended_at": {"type": "string", "format": "date-time"},
+        "repository": {"oneOf": [{"$ref": "#/$defs/short_text"}, {"type": "null"}]},
+        "mission_id": {"oneOf": [{"$ref": "#/$defs/short_text"}, {"type": "null"}]}
+      }
+    },
+    "model_config": {
+      "type": "object", "additionalProperties": false,
+      "required": ["provider", "model", "model_revision", "configuration_id", "configuration_fingerprint", "host_surface"],
+      "properties": {
+        "provider": {"$ref": "#/$defs/short_text"},
+        "model": {"$ref": "#/$defs/short_text"},
+        "model_revision": {"oneOf": [{"$ref": "#/$defs/short_text"}, {"type": "null"}]},
+        "configuration_id": {"$ref": "#/$defs/short_text"},
+        "configuration_fingerprint": {"$ref": "#/$defs/short_text"},
+        "host_surface": {"$ref": "#/$defs/short_text"}
+      }
+    },
+    "effective_prompt": {
+      "type": "object", "additionalProperties": false,
+      "required": ["prompt_id", "prompt_revision"],
+      "properties": {
+        "prompt_id": {"$ref": "#/$defs/prompt_id"},
+        "prompt_revision": {"$ref": "#/$defs/short_text"},
+        "surface_id": {"oneOf": [{"$ref": "#/$defs/short_text"}, {"type": "null"}]}
+      }
+    },
+    "scenario": {
+      "type": "object", "additionalProperties": false,
+      "required": ["scenario_id", "kind", "protected_invariants"],
+      "properties": {
+        "scenario_id": {"$ref": "#/$defs/id"},
+        "kind": {"type": "string", "enum": ["synthetic", "replay", "observed"]},
+        "protected_invariants": {"type": "array", "minItems": 1, "maxItems": 64, "uniqueItems": true, "items": {"$ref": "#/$defs/short_text"}},
+        "fixture_path": {"oneOf": [{"$ref": "#/$defs/evidence_ref"}, {"type": "null"}]}
+      }
+    },
+    "checkpoint": {
+      "type": "object", "additionalProperties": false,
+      "required": ["ref", "summary"],
+      "properties": {
+        "ref": {"$ref": "#/$defs/evidence_ref"},
+        "summary": {"$ref": "#/$defs/bounded_summary"}
+      }
+    },
+    "recovery_sprint": {
+      "type": "object", "additionalProperties": false,
+      "required": ["required", "opened"],
+      "properties": {
+        "required": {"type": "boolean"},
+        "opened": {"type": "boolean"},
+        "sprint_id": {"oneOf": [{"$ref": "#/$defs/id"}, {"type": "null"}]},
+        "scope": {"oneOf": [{"$ref": "#/$defs/bounded_summary"}, {"type": "null"}]},
+        "outcome": {"oneOf": [{"$ref": "#/$defs/bounded_summary"}, {"type": "null"}]},
+        "first_executable_action_id": {"oneOf": [{"$ref": "#/$defs/id"}, {"type": "null"}]},
+        "completion_gate": {"oneOf": [{"$ref": "#/$defs/bounded_summary"}, {"type": "null"}]},
+        "return_condition": {"oneOf": [{"$ref": "#/$defs/bounded_summary"}, {"type": "null"}]},
+        "preserves_parent_outcome": {"oneOf": [{"type": "boolean"}, {"type": "null"}]}
+      }
+    },
+    "boundary_event": {
+      "type": "object", "additionalProperties": false,
+      "required": ["boundary_event_id", "sequence", "occurred_at", "classification_status", "materiality", "side_effect_state", "publication_ack", "last_proven_checkpoint", "recovery_sprint", "summary", "evidence_refs"],
+      "properties": {
+        "boundary_event_id": {"$ref": "#/$defs/id"},
+        "sequence": {"$ref": "#/$defs/sequence"},
+        "occurred_at": {"type": "string", "format": "date-time"},
+        "classification_status": {"type": "string", "enum": ["CANONICAL", "FALLBACK_UNCLASSIFIED"]},
+        "family_id": {"oneOf": [{"$ref": "#/$defs/short_text"}, {"type": "null"}]},
+        "class_id": {"oneOf": [{"$ref": "#/$defs/short_text"}, {"type": "null"}]},
+        "materiality": {"$ref": "#/$defs/materiality"},
+        "side_effect_state": {"$ref": "#/$defs/side_effect_state"},
+        "publication_ack": {"$ref": "#/$defs/publication_ack"},
+        "last_proven_checkpoint": {"oneOf": [{"$ref": "#/$defs/checkpoint"}, {"type": "null"}]},
+        "recovery_sprint": {"$ref": "#/$defs/recovery_sprint"},
+        "summary": {"$ref": "#/$defs/bounded_summary"},
+        "evidence_refs": {"type": "array", "maxItems": 32, "uniqueItems": true, "items": {"$ref": "#/$defs/id"}}
+      }
+    },
+    "action": {
+      "type": "object", "additionalProperties": false,
+      "required": ["action_id", "sequence", "boundary_event_id", "started_at", "completed_at", "status", "progress_bearing", "side_effect_state", "proof_before", "proof_after", "summary", "evidence_refs"],
+      "properties": {
+        "action_id": {"$ref": "#/$defs/id"},
+        "sequence": {"$ref": "#/$defs/sequence"},
+        "boundary_event_id": {"oneOf": [{"$ref": "#/$defs/id"}, {"type": "null"}]},
+        "started_at": {"type": "string", "format": "date-time"},
+        "completed_at": {"oneOf": [{"type": "string", "format": "date-time"}, {"type": "null"}]},
+        "status": {"type": "string", "enum": ["SUCCEEDED", "FAILED", "BLOCKED", "CANCELLED", "SKIPPED"]},
+        "progress_bearing": {"type": "boolean"},
+        "side_effect_state": {"$ref": "#/$defs/side_effect_state"},
+        "proof_before": {"oneOf": [{"$ref": "#/$defs/evidence_state"}, {"type": "null"}]},
+        "proof_after": {"oneOf": [{"$ref": "#/$defs/evidence_state"}, {"type": "null"}]},
+        "target_identity": {"oneOf": [{"$ref": "#/$defs/short_text"}, {"type": "null"}]},
+        "pre_state_fingerprint": {"oneOf": [{"$ref": "#/$defs/short_text"}, {"type": "null"}]},
+        "readback_of_action_id": {"oneOf": [{"$ref": "#/$defs/id"}, {"type": "null"}]},
+        "retry_of_action_id": {"oneOf": [{"$ref": "#/$defs/id"}, {"type": "null"}]},
+        "idempotency_key": {"oneOf": [{"$ref": "#/$defs/short_text"}, {"type": "null"}]},
+        "summary": {"$ref": "#/$defs/bounded_summary"},
+        "evidence_refs": {"type": "array", "maxItems": 32, "uniqueItems": true, "items": {"$ref": "#/$defs/id"}}
+      }
+    },
+    "next_transition": {
+      "type": "object", "additionalProperties": false,
+      "required": ["owner", "action", "completion_gate"],
+      "properties": {
+        "owner": {"$ref": "#/$defs/short_text"},
+        "action": {"$ref": "#/$defs/bounded_summary"},
+        "completion_gate": {"$ref": "#/$defs/bounded_summary"}
+      }
+    },
+    "terminal": {
+      "type": "object", "additionalProperties": false,
+      "required": ["state", "reason_code", "supervisor_synthesized", "last_proven_checkpoint", "resumption_trigger", "next_transition"],
+      "properties": {
+        "state": {"type": "string", "enum": ["COMPLETE", "QUIESCENT_BLOCKED", "HARD_TERMINATED_SYNTHETIC", "EXPLICIT_OPERATOR_CANCELLATION", "USER_ONLY_DECISION_REQUIRED"]},
+        "reason_code": {"type": "string", "enum": ["OBJECTIVE_COMPLETED", "UNAVAILABLE_DEPENDENCY", "NO_SAFE_PROGRESS_PATH", "HOST_FORCED_TERMINATION", "OPERATOR_CANCELLED", "USER_DECISION_REQUIRED"]},
+        "supervisor_synthesized": {"type": "boolean"},
+        "last_proven_checkpoint": {"oneOf": [{"$ref": "#/$defs/checkpoint"}, {"type": "null"}]},
+        "resumption_trigger": {"oneOf": [{"$ref": "#/$defs/bounded_summary"}, {"type": "null"}]},
+        "next_transition": {"oneOf": [{"$ref": "#/$defs/next_transition"}, {"type": "null"}]},
+        "summary": {"oneOf": [{"$ref": "#/$defs/bounded_summary"}, {"type": "null"}]}
+      }
+    },
+    "violation": {
+      "type": "object", "additionalProperties": false,
+      "required": ["violation_id", "rule_id", "severity", "result", "family", "status", "subject", "message", "regression_required", "regression_link_id", "evidence_refs"],
+      "properties": {
+        "violation_id": {"$ref": "#/$defs/id"},
+        "rule_id": {"type": "string", "minLength": 1, "maxLength": 80, "pattern": "^PRCR\\.[A-Z0-9_.]+$"},
+        "severity": {"$ref": "#/$defs/severity"},
+        "result": {"$ref": "#/$defs/rule_result"},
+        "family": {"type": "string", "enum": ["RUNTIME_BEHAVIOR", "PATCH_HYGIENE", "PROOF_INTEGRITY", "PRIVACY", "REGRESSION", "SCHEMA"]},
+        "status": {"type": "string", "enum": ["OPEN", "REPAIRED", "WAIVED_NOT_APPLICABLE", "INFORMATIONAL"]},
+        "subject": {"$ref": "#/$defs/short_text"},
+        "message": {"$ref": "#/$defs/bounded_summary"},
+        "regression_required": {"type": "boolean"},
+        "regression_link_id": {"oneOf": [{"$ref": "#/$defs/id"}, {"type": "null"}]},
+        "evidence_refs": {"type": "array", "maxItems": 32, "uniqueItems": true, "items": {"$ref": "#/$defs/id"}}
+      }
+    },
+    "proof_fingerprint": {
+      "type": "object", "additionalProperties": false,
+      "required": ["effective_prompt", "governing_contracts", "scenario_fixture", "evaluator", "model_config", "runtime_host"],
+      "properties": {
+        "effective_prompt": {"$ref": "#/$defs/short_text"},
+        "governing_contracts": {"type": "array", "minItems": 1, "maxItems": 64, "uniqueItems": true, "items": {"$ref": "#/$defs/short_text"}},
+        "scenario_fixture": {"$ref": "#/$defs/short_text"},
+        "evaluator": {"$ref": "#/$defs/short_text"},
+        "model_config": {"$ref": "#/$defs/short_text"},
+        "runtime_host": {"oneOf": [{"$ref": "#/$defs/short_text"}, {"type": "null"}]}
+      }
+    },
+    "proof_check": {
+      "type": "object", "additionalProperties": false,
+      "required": ["check_id", "name", "status", "evidence_refs"],
+      "properties": {
+        "check_id": {"$ref": "#/$defs/id"},
+        "name": {"$ref": "#/$defs/short_text"},
+        "status": {"$ref": "#/$defs/check_status"},
+        "evidence_refs": {"type": "array", "maxItems": 32, "uniqueItems": true, "items": {"$ref": "#/$defs/id"}}
+      }
+    },
+    "proof": {
+      "type": "object", "additionalProperties": false,
+      "required": ["strongest_state", "runtime_observed", "proof_ceiling", "fingerprint", "checks"],
+      "properties": {
+        "strongest_state": {"$ref": "#/$defs/evidence_state"},
+        "runtime_observed": {"type": "boolean"},
+        "proof_ceiling": {"$ref": "#/$defs/bounded_summary"},
+        "fingerprint": {"$ref": "#/$defs/proof_fingerprint"},
+        "checks": {"type": "array", "maxItems": 64, "items": {"$ref": "#/$defs/proof_check"}}
+      }
+    },
+    "regression_occurrence": {
+      "type": "object", "additionalProperties": false,
+      "required": ["occurrence_id", "evidence_ref"],
+      "properties": {
+        "occurrence_id": {"$ref": "#/$defs/id"},
+        "evidence_ref": {"$ref": "#/$defs/evidence_ref"}
+      }
+    },
+    "regression_linkage": {
+      "type": "object", "additionalProperties": false,
+      "required": ["status", "incident_source", "systemic_threshold_met", "canonical_owner", "occurrences", "regression_link_ids"],
+      "properties": {
+        "status": {"type": "string", "enum": ["NONE", "CANDIDATE", "SYSTEMIC", "REPAIRED", "RETAINED"]},
+        "incident_source": {"type": "string", "enum": ["none", "runtime_observation", "commit_history", "validator_finding", "operator_report", "provider_signal"]},
+        "systemic_threshold_met": {"type": "boolean"},
+        "canonical_owner": {"oneOf": [{"$ref": "#/$defs/short_text"}, {"type": "null"}]},
+        "occurrences": {"type": "array", "maxItems": 64, "uniqueItems": true, "items": {"$ref": "#/$defs/regression_occurrence"}},
+        "regression_link_ids": {"type": "array", "maxItems": 64, "uniqueItems": true, "items": {"$ref": "#/$defs/id"}},
+        "negative_fixture": {"oneOf": [{"$ref": "#/$defs/evidence_ref"}, {"type": "null"}]},
+        "positive_control": {"oneOf": [{"$ref": "#/$defs/evidence_ref"}, {"type": "null"}]},
+        "regression_test": {"oneOf": [{"$ref": "#/$defs/evidence_ref"}, {"type": "null"}]},
+        "integrated_commit": {"oneOf": [{"$ref": "#/$defs/short_text"}, {"type": "null"}]}
+      }
+    },
+    "evidence": {
+      "type": "object", "additionalProperties": false,
+      "required": ["evidence_id", "kind", "ref", "supports"],
+      "properties": {
+        "evidence_id": {"$ref": "#/$defs/id"},
+        "kind": {"type": "string", "enum": ["repository", "validator", "runtime", "provider", "artifact", "workspace", "other"]},
+        "ref": {"$ref": "#/$defs/evidence_ref"},
+        "supports": {"$ref": "#/$defs/bounded_summary"}
+      }
+    },
+    "privacy": {
+      "type": "object", "additionalProperties": false,
+      "required": ["raw_transcript_persisted", "secrets_persisted", "hidden_reasoning_persisted", "redaction_count"],
+      "properties": {
+        "raw_transcript_persisted": {"const": false},
+        "secrets_persisted": {"const": false},
+        "hidden_reasoning_persisted": {"const": false},
+        "redaction_count": {"type": "integer", "minimum": 0, "maximum": 100000}
+      }
+    }
+  }
+}
