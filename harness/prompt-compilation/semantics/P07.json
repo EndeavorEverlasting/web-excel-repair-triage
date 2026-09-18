@@ -18,11 +18,20 @@
       "action": "establish_repository_local_proof_path",
       "proof": "repository_action_receipt_or_typed_hosted_only_gate",
       "failure_state": "LOCAL_PROOF_GAP"
+    },
+    {
+      "id": "boundary_to_sprint_continuation",
+      "when": "always",
+      "modality": "MUST",
+      "action": "convert_nonterminal_boundaries_to_sprints",
+      "proof": "boundary_transition_receipt_or_typed_terminal_gate",
+      "failure_state": "PREMATURE_TERMINATION_GAP"
     }
   ],
   "invariants": [
     "scope_preservation",
     "evidence_honesty",
-    "mainline_convergence"
+    "mainline_convergence",
+    "nonterminal_boundary_liveness"
   ]
 }
