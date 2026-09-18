@@ -1,0 +1,38 @@
+# Canonical repository line-ending policy.
+# Git stores text normalized in the index; these rules make checkout behavior deterministic.
+* text=auto
+
+# Source, configuration, and documentation are LF across platforms.
+.gitattributes text eol=lf
+*.py text eol=lf
+*.json text eol=lf
+*.md text eol=lf
+*.yml text eol=lf
+*.yaml text eol=lf
+*.toml text eol=lf
+*.ini text eol=lf
+*.cfg text eol=lf
+*.js text eol=lf
+*.css text eol=lf
+*.html text eol=lf
+*.sh text eol=lf
+*.ps1 text eol=lf
+
+# Windows command-processor launchers retain native CRLF checkouts.
+*.cmd text eol=crlf
+*.bat text eol=crlf
+
+# Binary Office, archive, document, and media artifacts never receive text normalization.
+*.xlsx binary
+*.xlsm binary
+*.xlsb binary
+*.xls binary
+*.docx binary
+*.pptx binary
+*.pdf binary
+*.zip binary
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.webp binary
