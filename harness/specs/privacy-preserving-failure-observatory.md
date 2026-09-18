@@ -212,3 +212,20 @@ Broad implementation must preserve P0 interfaces and tests rather than bypassing
 ## Proof ceiling
 
 Repository proof establishes deterministic modeled behavior and forbidden-data non-reachability. It does not prove a real Cursor installation, OS compromise resistance, anonymous networking, differential-privacy guarantees, or repository aggregation.
+
+
+## Local concurrency without exportable identity
+
+Cursor supplies `generation_id` across agent hooks. P0 uses that value only inside the local adapter process to address concurrent runs safely:
+
+```text
+raw generation_id
+  + 32-byte device-local random secret
+  -> HMAC-SHA256
+  -> 24-hex local run key
+  -> .afk-observatory/runs/<run-key>.json
+```
+
+The raw host identifier is never written. The HMAC key is device-local and ignored by Git. The derived run key is **not a capsule field** and is never repository contribution data. Different local installations produce different run keys for the same host identifier, so the correlation primitive is useful for local concurrency without becoming a portable pseudonymous user identity.
+
+The finalization-receipt transport remains a P1 integration seam: an installable Cursor companion/MCP tool must receive the local run key without exposing the raw host identifier or requiring transcript parsing.
