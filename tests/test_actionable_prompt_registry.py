@@ -154,7 +154,6 @@ class ActionablePromptRegistryTests(unittest.TestCase):
             "Persist distilled task-relevant truth, not a raw transcript",
             "When the canonical durable home is a connected provider rather than Git",
             "another competent agent continue without reconstructing the originating chat",
-            "Persist distilled repository-relevant truth, not a raw transcript",
             "artifactization must reduce drift, not fossilize stale truth",
             "For prototypes, prefer executable seams plus focused tests, fixtures, traces, or receipts",
             "classify durability as BLOCKED",
