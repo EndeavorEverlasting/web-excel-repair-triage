@@ -143,6 +143,49 @@ class ActionablePromptRegistryTests(unittest.TestCase):
                 self.assertIn("NON-PROGRESS / QUIESCENCE CONTRACT", by_id[prompt_id]["copyContent"])
                 self.assertIn("progress-bearing", by_id[prompt_id]["nextStep"])
 
+    def test_conversation_artifact_continuity_is_global_and_reaches_prototyping(self) -> None:
+        marker = "CONVERSATION-TO-ARTIFACT CONTINUITY CONTRACT"
+        appendix = self.policy["copy_content_appendix"]
+        for phrase in (
+            marker,
+            "Materialize throughout the work at evidence-changing checkpoints",
+            "Reuse the smallest existing canonical owner",
+            "document, spreadsheet, database/provider record, or established workspace artifact",
+            "Persist distilled task-relevant truth, not a raw transcript",
+            "When the canonical durable home is a connected provider rather than Git",
+            "another competent agent continue without reconstructing the originating chat",
+            "artifactization must reduce drift, not fossilize stale truth",
+            "For prototypes, prefer executable seams plus focused tests, fixtures, traces, or receipts",
+            "classify durability as BLOCKED",
+            "Avoid artifact theater",
+            "A durable artifact must govern behavior, prove it, route continuation, or preserve a material decision",
+        ):
+            self.assertIn(phrase, appendix)
+
+        self.assertIn(
+            "materialize the distilled safe truth into the smallest existing canonical artifact",
+            self.policy["next_step_suffix"],
+        )
+
+        forbidden = "\n".join(self.policy["forbidden_solo_actions"])
+        for phrase in (
+            "leave accepted execution-relevant or reusable conversation state only in chat",
+            "copy raw chat transcripts, secrets, private content, hidden reasoning",
+            "create duplicate summaries, second sources of truth, or consumerless artifacts",
+        ):
+            self.assertIn(phrase, forbidden)
+
+        by_id = {prompt["id"]: prompt for prompt in self.prompts}
+        self.assertIn("P95", by_id)
+        for prompt_id, prompt in by_id.items():
+            with self.subTest(prompt=prompt_id):
+                self.assertIn(marker, prompt["copyContent"])
+        self.assertIn(marker, by_id["P95"]["copyContent"])
+        self.assertIn(
+            "For prototypes, prefer executable seams plus focused tests, fixtures, traces, or receipts",
+            by_id["P95"]["copyContent"],
+        )
+
     def test_existing_work_and_pr_reuse_is_global_policy(self) -> None:
         reuse = self.policy["existing_work_reuse"]
         self.assertIn(
