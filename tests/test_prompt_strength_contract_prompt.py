@@ -4,6 +4,7 @@ import copy
 import json
 import subprocess
 import sys
+import tempfile
 import unittest
 from pathlib import Path
 
@@ -40,24 +41,72 @@ class PromptStrengthContractTests(unittest.TestCase):
         self.assertIn("dimensions=21", completed.stdout)
         self.assertIn("cases=31", completed.stdout)
 
-    def test_dispatch_seed_and_primary_manifest_are_identical_and_valid(self) -> None:
+    def _validate_dispatch_manifest(self, manifest_path: Path) -> subprocess.CompletedProcess[str]:
+        return subprocess.run(
+            [
+                sys.executable,
+                "scripts/prompt_parallel_dispatch.py",
+                "validate",
+                "--manifest",
+                str(manifest_path),
+            ],
+            cwd=ROOT,
+            check=False,
+            capture_output=True,
+            text=True,
+        )
+
+    def test_historical_dispatch_seed_validates_independently(self) -> None:
+        self.assertTrue(DISPATCH_SEED.is_file(), "historical prompt-strength dispatch seed must be tracked")
+        completed = self._validate_dispatch_manifest(DISPATCH_SEED.relative_to(ROOT))
+        self.assertEqual(completed.returncode, 0, completed.stderr or completed.stdout)
+
+    def test_primary_manifest_is_tracked_and_validates_independently(self) -> None:
         self.assertTrue(DISPATCH_MANIFEST.is_file(), "primary dispatch manifest must be tracked")
-        self.assertEqual(DISPATCH_MANIFEST.read_bytes(), DISPATCH_SEED.read_bytes())
-        for path in (DISPATCH_SEED, DISPATCH_MANIFEST):
-            completed = subprocess.run(
-                [
-                    sys.executable,
-                    "scripts/prompt_parallel_dispatch.py",
-                    "validate",
-                    "--manifest",
-                    str(path.relative_to(ROOT)),
-                ],
-                cwd=ROOT,
-                check=False,
-                capture_output=True,
-                text=True,
+        completed = self._validate_dispatch_manifest(DISPATCH_MANIFEST.relative_to(ROOT))
+        self.assertEqual(completed.returncode, 0, completed.stderr or completed.stdout)
+
+    def test_active_manifest_may_rotate_without_mutating_historical_seed(self) -> None:
+        seed_before = DISPATCH_SEED.read_bytes()
+        rotated = json.loads(seed_before.decode("utf-8"))
+        rotated["run_id"] = "runtime-compliance-rotation-regression"
+        rotated["lanes"][0]["lane_id"] = "lane-runtime-compliance-rotation"
+        rotated["lanes"][0]["mission"] = (
+            "Prove the global active dispatch manifest can rotate to a different valid "
+            "orchestration without mutating the historical prompt-strength seed."
+        )
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp_dir = Path(tmp)
+            rotated_path = tmp_dir / "rotated-manifest.json"
+            rotated_path.write_text(json.dumps(rotated, indent=2) + "\n", encoding="utf-8")
+            self.assertNotEqual(
+                rotated_path.read_bytes(),
+                seed_before,
+                "rotation fixture must differ from the historical seed",
             )
-            self.assertEqual(completed.returncode, 0, completed.stderr or completed.stdout)
+            rotated_completed = self._validate_dispatch_manifest(rotated_path)
+            self.assertEqual(
+                rotated_completed.returncode,
+                0,
+                rotated_completed.stderr or rotated_completed.stdout,
+            )
+
+            malformed = copy.deepcopy(rotated)
+            del malformed["graph_width"]
+            malformed_path = tmp_dir / "malformed-manifest.json"
+            malformed_path.write_text(json.dumps(malformed, indent=2) + "\n", encoding="utf-8")
+            malformed_completed = self._validate_dispatch_manifest(malformed_path)
+            self.assertNotEqual(
+                malformed_completed.returncode,
+                0,
+                "malformed active manifest must fail validation",
+            )
+
+        self.assertEqual(
+            DISPATCH_SEED.read_bytes(),
+            seed_before,
+            "historical prompt-strength seed must remain unmutated after rotation",
+        )
 
     def test_efficient_profile_cannot_drop_immutable_dimension(self) -> None:
         mutated = copy.deepcopy(self.contract)

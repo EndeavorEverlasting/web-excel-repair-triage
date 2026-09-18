@@ -23,7 +23,7 @@ python -m unittest tests.test_gitignore_hygiene -v
 python -m triage.gitignore_hygiene
 ```
 
-The manifest and seed are byte-identical. The current graph width is 1, so the durable dispatch disposition is `NOT_APPLICABLE`; this is serial correctness, not degraded autonomy.
+The historical prompt-strength dispatch seed (`parallel-dispatch-manifest.seed.v1.json`) and the global active manifest (`Outputs/prompt-parallel-dispatch/manifest.json`) each validate independently against the parallel-dispatch contract. The active manifest is no longer required to remain byte-identical to the historical seed forever: it may rotate to a different valid orchestration run, while the historical seed is retained as independent regression evidence. The current graph width is 1, so the durable dispatch disposition is `NOT_APPLICABLE`; this is serial correctness, not degraded autonomy.
 
 Only the dispatch **manifest** is tracked under `Outputs/` as control-plane state. Runtime receipts remain generated evidence and are rejected by artifact hygiene.
 
