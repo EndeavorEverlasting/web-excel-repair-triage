@@ -1,0 +1,45 @@
+name: TEMP Prompt Kit projection refresh
+
+on:
+  push:
+    branches:
+      - feat/prompt-artifact-continuity-20260918
+
+permissions:
+  contents: write
+
+jobs:
+  rebuild:
+    if: ${{ !contains(github.event.head_commit.message, '[generated]') }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: ${{ github.ref_name }}
+          fetch-depth: 0
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.11"
+      - name: Regenerate canonical Prompt Kit projection
+        shell: bash
+        run: |
+          set -euo pipefail
+          python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html
+          python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html --check
+          git diff --check
+          status="$(git status --porcelain=v1)"
+          printf '%s\n' "$status"
+          test -n "$status"
+          unexpected="$(printf '%s\n' "$status" | grep -vE '^ M web/prompt-kit/index\.html$' || true)"
+          test -z "$unexpected"
+      - name: Commit generated projection only
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add web/prompt-kit/index.html
+          git diff --cached --check
+          git commit -m "build(prompt-kit): refresh generated site [generated]"
+          git push origin "HEAD:${{ github.ref_name }}"
