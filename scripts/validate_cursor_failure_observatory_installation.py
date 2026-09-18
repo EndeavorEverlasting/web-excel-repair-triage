@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import subprocess
 from pathlib import Path
 
 try:
@@ -15,6 +16,7 @@ HOOKS_PATH = ROOT / ".cursor" / "hooks.json"
 CONTRACT_PATH = ROOT / "harness" / "contracts" / "privacy-preserving-failure-observatory.v1.json"
 GITIGNORE_PATH = ROOT / ".gitignore"
 SENTINEL_PATH = ROOT / "scripts" / "cursor_failure_sentinel.py"
+STATE_IGNORE_PROBE = ".afk-observatory/privacy-canary.json"
 TIMEOUT_SECONDS = 10
 
 
@@ -26,6 +28,32 @@ def _expected_command(hook_name: str) -> str:
     return (
         "python scripts/cursor_failure_sentinel.py "
         f"--state-dir .afk-observatory hook {hook_name}"
+    )
+
+
+def _state_dir_is_ignored(root: Path) -> bool:
+    try:
+        completed = subprocess.run(
+            ["git", "check-ignore", "-q", "--", STATE_IGNORE_PROBE],
+            cwd=root,
+            stdin=subprocess.DEVNULL,
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.PIPE,
+            text=True,
+            check=False,
+            timeout=10,
+        )
+    except (OSError, subprocess.TimeoutExpired) as exc:
+        raise CursorObservatoryInstallError(
+            f"cannot prove device-local state ignore policy: {exc}"
+        ) from exc
+    if completed.returncode == 0:
+        return True
+    if completed.returncode == 1:
+        return False
+    detail = completed.stderr.strip() or f"git check-ignore exited {completed.returncode}"
+    raise CursorObservatoryInstallError(
+        f"cannot prove device-local state ignore policy: {detail}"
     )
 
 
@@ -62,9 +90,12 @@ def validate() -> dict[str, int | str]:
 
     if not SENTINEL_PATH.is_file():
         raise CursorObservatoryInstallError("Cursor failure sentinel is missing")
-    ignored = GITIGNORE_PATH.read_text(encoding="utf-8")
-    if ".afk-observatory/" not in ignored:
-        raise CursorObservatoryInstallError("device-local observatory state is not ignored")
+    if not GITIGNORE_PATH.is_file():
+        raise CursorObservatoryInstallError("repository .gitignore is missing")
+    if not _state_dir_is_ignored(ROOT):
+        raise CursorObservatoryInstallError(
+            "device-local observatory state is not effectively ignored by Git"
+        )
 
     phases = {
         item["phase"]: item
