@@ -6,10 +6,11 @@ import ast
 import json
 from pathlib import Path
 
-from scripts.failure_observatory import CAPSULE_KEYS, CONTENT_BEARING_HOOKS, SUPPORTED_CURSOR_HOOKS
+from scripts.failure_observatory import CAPSULE_KEYS, CLAUSE_BY_BOUNDARY, CONTENT_BEARING_HOOKS, SUPPORTED_CURSOR_HOOKS
 
 ROOT = Path(__file__).resolve().parents[1]
 CONTRACT_PATH = ROOT / "harness/contracts/privacy-preserving-failure-observatory.v1.json"
+ARCHITECTURE_PATH = ROOT / "harness/contracts/execution-boundary-enforcement.v1.json"
 HOOKS_PATH = ROOT / "harness/prototypes/failure-observatory/cursor-hooks.example.json"
 CORE_PATHS = [ROOT / "scripts/failure_observatory.py", ROOT / "scripts/cursor_failure_sentinel.py"]
 FORBIDDEN_NETWORK_IMPORTS = {"requests", "urllib", "httpx", "aiohttp", "socket", "websockets"}
@@ -28,6 +29,7 @@ def _imports(path: Path) -> set[str]:
 
 def validate() -> dict[str, int]:
     contract = json.loads(CONTRACT_PATH.read_text(encoding="utf-8"))
+    architecture = json.loads(ARCHITECTURE_PATH.read_text(encoding="utf-8"))
     hooks = json.loads(HOOKS_PATH.read_text(encoding="utf-8"))
     if contract.get("schema_version") != "privacy-preserving-failure-observatory/v1":
         raise ValueError("privacy observatory schema mismatch")
@@ -58,6 +60,10 @@ def validate() -> dict[str, int]:
         raise ValueError("local HMAC correlation contract missing")
     if "run_key" in contract.get("contribution_capsule_allowlist", []):
         raise ValueError("local run key must never be exportable")
+    clause_ids = set(architecture.get("observability_clause_ids", {}))
+    required_clauses = set(CLAUSE_BY_BOUNDARY.values())
+    if not required_clauses.issubset(clause_ids):
+        raise ValueError(f"observatory references unknown execution-boundary clauses: {sorted(required_clauses - clause_ids)}")
     phases = {item["phase"]: item["status"] for item in contract.get("phase_map", [])}
     if phases.get("P2_ANONYMOUS_CONTRIBUTION") != "BLOCKED_BY_PRIVACY_DESIGN_APPROVAL":
         raise ValueError("anonymous contribution must remain separately gated")
