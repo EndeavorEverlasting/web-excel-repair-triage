@@ -1,0 +1,40 @@
+{
+  "version": 1,
+  "hooks": {
+    "beforeSubmitPrompt": [
+      {
+        "command": "python scripts/cursor_failure_sentinel.py --state-dir .afk-observatory hook beforeSubmitPrompt",
+        "timeout": 10,
+        "failClosed": false
+      }
+    ],
+    "postToolUseFailure": [
+      {
+        "command": "python scripts/cursor_failure_sentinel.py --state-dir .afk-observatory hook postToolUseFailure",
+        "timeout": 10,
+        "failClosed": false
+      }
+    ],
+    "afterFileEdit": [
+      {
+        "command": "python scripts/cursor_failure_sentinel.py --state-dir .afk-observatory hook afterFileEdit",
+        "timeout": 10,
+        "failClosed": false
+      }
+    ],
+    "stop": [
+      {
+        "command": "python scripts/cursor_failure_sentinel.py --state-dir .afk-observatory hook stop",
+        "timeout": 10,
+        "failClosed": false
+      }
+    ],
+    "sessionEnd": [
+      {
+        "command": "python scripts/cursor_failure_sentinel.py --state-dir .afk-observatory hook sessionEnd",
+        "timeout": 10,
+        "failClosed": false
+      }
+    ]
+  }
+}
