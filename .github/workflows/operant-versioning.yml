@@ -160,7 +160,7 @@ jobs:
           main_sha="$(git rev-parse origin/main)"
           pending_branch="automation/operant-release-v${next_version}"
           staging_branch="automation/operant-release-staging-v${next_version}"
-          existing_pr="$(gh pr list --state open --base main --json headRefName,url,number --jq '[.[] | select(.headRefName | startswith(\"automation/operant-release-v\"))] | first // {}')"
+          existing_pr="$(gh pr list --state open --base main --json headRefName,url,number --jq '[.[] | select(.headRefName | startswith("automation/operant-release-v"))] | first // {}')"
           existing_branch="$(jq -r '.headRefName // empty' <<< "$existing_pr")"
           existing_url="$(jq -r '.url // empty' <<< "$existing_pr")"
 
