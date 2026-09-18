@@ -406,6 +406,18 @@ process.stdout.write(JSON.stringify(groups.map(function(g){return {name:g.name,i
         self.assertIn("desired prompt behavior", p65["proofGate"].lower())
         self.assertIn("grill me", p65["keywords"])
 
+    def test_guided_finder_routes_context_artifacts_to_p56(self) -> None:
+        payload = json.loads(TUTORIAL_PROMPTS.read_text(encoding="utf-8"))
+        p65 = next(item for item in payload["prompts"] if item["id"] == "P65")
+        content = p65["copyContent"]
+        self.assertIn(
+            "- P56 Context-to-Artifact Generator: recover the relevant conversation/source/repository context",
+            content,
+        )
+        self.assertIn("create-vs-update intent", content)
+        self.assertIn("route to P56 rather than generic P07", p65["expectedOutput"])
+        self.assertIn("context to artifact", p65["keywords"])
+
     def test_repo_front_door_exposes_browser_phone_zip_cmd_and_clone(self) -> None:
         readme = README.read_text(encoding="utf-8")
         access = ACCESS_GUIDE.read_text(encoding="utf-8")
