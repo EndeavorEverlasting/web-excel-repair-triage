@@ -618,7 +618,8 @@
         "repository_available": true,
         "repository_relevant": true,
         "side_effect_state": "NONE",
-        "raw_detail_sensitive": false
+        "raw_detail_sensitive": false,
+        "terminal_gate": true
       },
       "expected_output": {
         "classification": "AA_PERMISSION_DENIED",
@@ -768,7 +769,8 @@
         "repository_available": true,
         "repository_relevant": true,
         "side_effect_state": "NONE",
-        "raw_detail_sensitive": false
+        "raw_detail_sensitive": false,
+        "terminal_gate": true
       },
       "expected_output": {
         "classification": "OR_RETRY_BUDGET_EXHAUSTED",
@@ -1296,7 +1298,8 @@
         "repository_available": true,
         "repository_relevant": true,
         "side_effect_state": "NONE",
-        "raw_detail_sensitive": false
+        "raw_detail_sensitive": false,
+        "terminal_gate": true
       },
       "expected_output": {
         "classification": "VP_PROOF_CEILING_REACHED",
@@ -1676,7 +1679,8 @@
         "repository_available": true,
         "repository_relevant": true,
         "side_effect_state": "NONE",
-        "raw_detail_sensitive": false
+        "raw_detail_sensitive": false,
+        "terminal_gate": true
       },
       "expected_output": {
         "classification": "EC_NON_PROGRESS_LOOP",
@@ -1753,7 +1757,8 @@
         "repository_available": true,
         "repository_relevant": true,
         "side_effect_state": "NONE",
-        "raw_detail_sensitive": false
+        "raw_detail_sensitive": false,
+        "terminal_gate": true
       },
       "expected_output": {
         "classification": "CR_OPERATION_UNSUPPORTED",
@@ -1830,7 +1835,8 @@
         "repository_available": true,
         "repository_relevant": true,
         "side_effect_state": "NONE",
-        "raw_detail_sensitive": false
+        "raw_detail_sensitive": false,
+        "terminal_gate": true
       },
       "expected_output": {
         "classification": "CR_ADAPTER_LADDER_EXHAUSTED",
@@ -2296,7 +2302,8 @@
         "repository_available": true,
         "repository_relevant": true,
         "side_effect_state": "NONE",
-        "raw_detail_sensitive": false
+        "raw_detail_sensitive": false,
+        "terminal_gate": true
       },
       "expected_output": {
         "classification": "AA_AUTHENTICATION_REQUIRED",
@@ -2373,7 +2380,8 @@
         "repository_available": true,
         "repository_relevant": true,
         "side_effect_state": "NONE",
-        "raw_detail_sensitive": false
+        "raw_detail_sensitive": false,
+        "terminal_gate": true
       },
       "expected_output": {
         "classification": "AA_AUTHENTICATION_EXPIRED",
@@ -2450,7 +2458,8 @@
         "repository_available": true,
         "repository_relevant": true,
         "side_effect_state": "NONE",
-        "raw_detail_sensitive": false
+        "raw_detail_sensitive": false,
+        "terminal_gate": true
       },
       "expected_output": {
         "classification": "AA_APPROVAL_GATE",
@@ -2604,7 +2613,8 @@
         "repository_available": true,
         "repository_relevant": true,
         "side_effect_state": "NONE",
-        "raw_detail_sensitive": false
+        "raw_detail_sensitive": false,
+        "terminal_gate": true
       },
       "expected_output": {
         "classification": "SP_DESTRUCTIVE_MUTATION_HAZARD",
@@ -2681,7 +2691,8 @@
         "repository_available": true,
         "repository_relevant": true,
         "side_effect_state": "NONE",
-        "raw_detail_sensitive": false
+        "raw_detail_sensitive": false,
+        "terminal_gate": true
       },
       "expected_output": {
         "classification": "SP_GOVERNING_POLICY_CONFLICT",
@@ -2758,7 +2769,8 @@
         "repository_available": true,
         "repository_relevant": true,
         "side_effect_state": "NONE",
-        "raw_detail_sensitive": false
+        "raw_detail_sensitive": false,
+        "terminal_gate": true
       },
       "expected_output": {
         "classification": "IS_ESSENTIAL_INPUT_MISSING",
@@ -2989,7 +3001,8 @@
         "repository_available": true,
         "repository_relevant": true,
         "side_effect_state": "NONE",
-        "raw_detail_sensitive": false
+        "raw_detail_sensitive": false,
+        "terminal_gate": true
       },
       "expected_output": {
         "classification": "IS_DATA_INTEGRITY_FAILURE",
@@ -3224,7 +3237,8 @@
         "repository_available": true,
         "repository_relevant": true,
         "side_effect_state": "NONE",
-        "raw_detail_sensitive": false
+        "raw_detail_sensitive": false,
+        "terminal_gate": true
       },
       "expected_output": {
         "classification": "MT_ROLLBACK_REQUIRED",
@@ -3301,7 +3315,8 @@
         "repository_available": true,
         "repository_relevant": true,
         "side_effect_state": "NONE",
-        "raw_detail_sensitive": false
+        "raw_detail_sensitive": false,
+        "terminal_gate": true
       },
       "expected_output": {
         "classification": "VP_REQUIRED_PROOF_UNAVAILABLE",
@@ -3686,7 +3701,8 @@
         "repository_available": true,
         "repository_relevant": true,
         "side_effect_state": "NONE",
-        "raw_detail_sensitive": false
+        "raw_detail_sensitive": false,
+        "terminal_gate": true
       },
       "expected_output": {
         "classification": "CI_DEPENDENCY_NOT_INTEGRATED",
@@ -3917,7 +3933,8 @@
         "repository_available": true,
         "repository_relevant": true,
         "side_effect_state": "NONE",
-        "raw_detail_sensitive": false
+        "raw_detail_sensitive": false,
+        "terminal_gate": true
       },
       "expected_output": {
         "classification": "DE_REQUIRED_ARTIFACT_OR_SERVICE_MISSING",
@@ -3994,7 +4011,8 @@
         "repository_available": true,
         "repository_relevant": true,
         "side_effect_state": "NONE",
-        "raw_detail_sensitive": false
+        "raw_detail_sensitive": false,
+        "terminal_gate": true
       },
       "expected_output": {
         "classification": "DE_EXTERNAL_HUMAN_ACTION_REQUIRED",
@@ -4071,7 +4089,8 @@
         "repository_available": true,
         "repository_relevant": true,
         "side_effect_state": "NONE",
-        "raw_detail_sensitive": false
+        "raw_detail_sensitive": false,
+        "terminal_gate": true
       },
       "expected_output": {
         "classification": "DE_EXTERNAL_SYSTEM_NOT_READY",
@@ -4225,7 +4244,8 @@
         "repository_available": true,
         "repository_relevant": true,
         "side_effect_state": "NONE",
-        "raw_detail_sensitive": false
+        "raw_detail_sensitive": false,
+        "terminal_gate": true
       },
       "expected_output": {
         "classification": "UC_CANCELLED",
