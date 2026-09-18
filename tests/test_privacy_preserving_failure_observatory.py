@@ -15,6 +15,7 @@ from scripts.failure_observatory import (
     adapt_cursor_hook,
     apply_signal,
     compile_capsule,
+    derive_local_run_key,
     load_state,
     new_state,
     receipt_signal,
@@ -212,6 +213,26 @@ class PrivacyPreservingFailureObservatoryTests(unittest.TestCase):
                 elif isinstance(node, ast.ImportFrom) and node.module:
                     imports.add(node.module.split(".")[0])
             self.assertFalse(imports & forbidden, f"{rel} imports network module(s): {imports & forbidden}")
+
+    def test_local_hmac_correlation_is_nonportable_and_not_exported(self) -> None:
+        generation_id = "CURSOR-GENERATION-PRIVATE-123"
+        key_a = derive_local_run_key(generation_id, b"a" * 32)
+        key_b = derive_local_run_key(generation_id, b"b" * 32)
+        self.assertNotEqual(key_a, key_b)
+        self.assertEqual(len(key_a), 24)
+        self.assertNotIn(generation_id, key_a)
+        state = new_state()
+        state = self.apply(state, "beforeSubmitPrompt", {"prompt": "[[AFK_PROMPT:P07@2026.09]]"})
+        state = self.apply(state, "stop", {"status": "completed", "loop_count": 0})
+        capsule = compile_capsule(state)
+        self.assertNotIn("run_key", capsule)
+        self.assertNotIn(generation_id, json.dumps(capsule, sort_keys=True))
+
+    def test_independent_generations_resolve_to_distinct_local_keys(self) -> None:
+        secret = b"z" * 32
+        first = derive_local_run_key("generation-one", secret)
+        second = derive_local_run_key("generation-two", secret)
+        self.assertNotEqual(first, second)
 
     def test_zero_content_state_round_trip(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
