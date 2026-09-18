@@ -3,6 +3,8 @@ from __future__ import annotations
 import ast
 from concurrent.futures import ThreadPoolExecutor
 import json
+import subprocess
+import sys
 import tempfile
 import unittest
 from pathlib import Path
@@ -34,6 +36,27 @@ HOOKS = json.loads((ROOT / "harness/prototypes/failure-observatory/cursor-hooks.
 class PrivacyPreservingFailureObservatoryTests(unittest.TestCase):
     def apply(self, state, hook_name, raw):
         return apply_signal(state, adapt_cursor_hook(hook_name, raw), ARCHITECTURE, TAXONOMY)
+
+    def test_cli_entrypoint_is_reachable_by_file_path(self) -> None:
+        completed = subprocess.run(
+            [sys.executable, "scripts/cursor_failure_sentinel.py", "--help"],
+            cwd=ROOT,
+            check=False,
+            capture_output=True,
+            text=True,
+        )
+        self.assertEqual(completed.returncode, 0, completed.stderr or completed.stdout)
+
+    def test_validator_entrypoint_is_reachable_by_file_path(self) -> None:
+        completed = subprocess.run(
+            [sys.executable, "scripts/validate_privacy_preserving_failure_observatory.py"],
+            cwd=ROOT,
+            check=False,
+            capture_output=True,
+            text=True,
+        )
+        self.assertEqual(completed.returncode, 0, completed.stderr or completed.stdout)
+        self.assertIn("PRIVACY FAILURE OBSERVATORY: PASS", completed.stdout)
 
     def test_static_validator_passes(self) -> None:
         summary = validate_observatory()
