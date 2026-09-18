@@ -6,6 +6,8 @@ import tempfile
 import unittest
 from pathlib import Path
 
+from scripts.validate_privacy_preserving_failure_observatory import validate as validate_observatory
+
 from scripts.failure_observatory import (
     CAPSULE_KEYS,
     CONTENT_BEARING_HOOKS,
@@ -29,6 +31,11 @@ HOOKS = json.loads((ROOT / "harness/prototypes/failure-observatory/cursor-hooks.
 class PrivacyPreservingFailureObservatoryTests(unittest.TestCase):
     def apply(self, state, hook_name, raw):
         return apply_signal(state, adapt_cursor_hook(hook_name, raw), ARCHITECTURE, TAXONOMY)
+
+    def test_static_validator_passes(self) -> None:
+        summary = validate_observatory()
+        self.assertEqual(summary["hooks"], 5)
+        self.assertEqual(summary["capsule_fields"], len(CAPSULE_KEYS))
 
     def test_contract_defaults_local_only(self) -> None:
         self.assertEqual(CONTRACT["default_mode"], "LOCAL_ONLY")
