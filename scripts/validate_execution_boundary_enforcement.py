@@ -5,6 +5,11 @@ import json
 from pathlib import Path
 from typing import Any
 
+try:
+    from scripts.execution_boundary_engine import BoundaryEngineError, assert_case
+except ModuleNotFoundError:
+    from execution_boundary_engine import BoundaryEngineError, assert_case
+
 ROOT = Path(__file__).resolve().parents[1]
 ARCHITECTURE = ROOT / "harness/contracts/execution-boundary-enforcement.v1.json"
 TAXONOMY = ROOT / "harness/contracts/execution-boundary-taxonomy.v1.json"
@@ -35,6 +40,7 @@ REQUIRED_CASE_IDS = {
     "EBR-015",  # external hard termination
     "EBR-017",  # proof ceiling
     "EBR-020",  # no repository still discloses
+    "EBR-058",  # unclassified material boundary fails safe
 }
 
 
@@ -137,7 +143,18 @@ def validate_documents(
     layers = architecture.get("architecture_layers")
     if not isinstance(layers, list):
         raise ExecutionBoundaryContractError("architecture layers missing")
-    layer_ids = [item.get("id") for item in layers if isinstance(item, dict)]
+    layer_ids: list[str] = []
+    for item in layers:
+        if not isinstance(item, dict):
+            raise ExecutionBoundaryContractError("architecture layer must be object")
+        layer_id = item.get("id")
+        if not _nonempty(layer_id):
+            raise ExecutionBoundaryContractError("architecture layer id missing")
+        if not _nonempty(item.get("responsibility")):
+            raise ExecutionBoundaryContractError(f"architecture layer responsibility missing: {layer_id}")
+        if not _nonempty(item.get("failure_prevented")):
+            raise ExecutionBoundaryContractError(f"architecture layer failure_prevented missing: {layer_id}")
+        layer_ids.append(layer_id)
     if len(layer_ids) != len(set(layer_ids)) or set(layer_ids) != REQUIRED_LAYERS:
         raise ExecutionBoundaryContractError("architecture layer coverage drifted")
 
@@ -250,6 +267,12 @@ def validate_documents(
     required_case_fields = case_contract.get("required_fields")
     if not _string_list(required_case_fields):
         raise ExecutionBoundaryContractError("regression required fields missing")
+    contract_required_case_ids = case_contract.get("required_case_ids")
+    if not _string_list(contract_required_case_ids) or len(contract_required_case_ids) != len(set(contract_required_case_ids)):
+        raise ExecutionBoundaryContractError("regression required_case_ids malformed")
+    contract_required_case_id_set = set(contract_required_case_ids)
+    if not REQUIRED_CASE_IDS.issubset(contract_required_case_id_set):
+        raise ExecutionBoundaryContractError("matrix contract dropped a harness-mandatory regression id")
     cases = matrix.get("cases")
     if not isinstance(cases, list) or not cases:
         raise ExecutionBoundaryContractError("regression cases missing")
@@ -278,6 +301,37 @@ def validate_documents(
             raise ExecutionBoundaryContractError(f"invalid regression materiality: {case_id}")
         if case.get("expected_recovery") not in recoveries:
             raise ExecutionBoundaryContractError(f"invalid regression recovery: {case_id}")
+        default_materiality, default_recovery = class_defaults[classification]
+        if case.get("expected_materiality") != default_materiality:
+            raise ExecutionBoundaryContractError(
+                f"regression materiality disagrees with taxonomy default: {case_id}"
+            )
+        if case.get("expected_recovery") != default_recovery:
+            raise ExecutionBoundaryContractError(
+                f"regression recovery disagrees with taxonomy default: {case_id}"
+            )
+        input_event = case.get("input_event")
+        expected_output = case.get("expected_output")
+        forbidden_outputs = case.get("forbidden_outputs")
+        if not isinstance(input_event, dict) or not input_event:
+            raise ExecutionBoundaryContractError(f"executable input_event missing: {case_id}")
+        if not isinstance(expected_output, dict) or not expected_output:
+            raise ExecutionBoundaryContractError(f"executable expected_output missing: {case_id}")
+        if not isinstance(forbidden_outputs, list) or not forbidden_outputs:
+            raise ExecutionBoundaryContractError(f"executable forbidden_outputs missing: {case_id}")
+        for forbidden in forbidden_outputs:
+            if (
+                not isinstance(forbidden, dict)
+                or not _nonempty(forbidden.get("field"))
+                or "value" not in forbidden
+            ):
+                raise ExecutionBoundaryContractError(f"malformed forbidden output: {case_id}")
+        try:
+            assert_case(case, architecture, taxonomy)
+        except (BoundaryEngineError, KeyError, TypeError) as exc:
+            raise ExecutionBoundaryContractError(
+                f"executable boundary regression failed: {case_id}: {exc}"
+            ) from exc
         if not _string_list(case.get("positive_assertions")):
             raise ExecutionBoundaryContractError(f"positive control missing: {case_id}")
         if not _string_list(case.get("negative_assertions")):
@@ -293,8 +347,14 @@ def validate_documents(
         raise ExecutionBoundaryContractError(f"every canonical class requires regression coverage: missing={missing} extra={extra}")
     if covered_families != family_ids:
         raise ExecutionBoundaryContractError("every taxonomy family requires regression coverage")
+    if not contract_required_case_id_set.issubset(seen_case_ids):
+        raise ExecutionBoundaryContractError(
+            f"matrix-declared required regressions missing: {sorted(contract_required_case_id_set - seen_case_ids)}"
+        )
     if not REQUIRED_CASE_IDS.issubset(seen_case_ids):
-        raise ExecutionBoundaryContractError(f"critical bespoke regressions missing: {sorted(REQUIRED_CASE_IDS - seen_case_ids)}")
+        raise ExecutionBoundaryContractError(
+            f"critical bespoke regressions missing: {sorted(REQUIRED_CASE_IDS - seen_case_ids)}"
+        )
 
     # High-risk semantics must remain explicit rather than relying only on generated generic coverage.
     targeted = {case["case_id"]: case for case in cases}

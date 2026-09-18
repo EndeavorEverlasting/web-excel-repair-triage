@@ -14,7 +14,10 @@
       "positive_assertions",
       "negative_assertions",
       "proof_surfaces",
-      "proof_ceiling"
+      "proof_ceiling",
+      "input_event",
+      "expected_output",
+      "forbidden_outputs"
     ],
     "minimum_cases": 58,
     "required_case_ids": [
@@ -27,7 +30,9 @@
       "EBR-017",
       "EBR-020",
       "EBR-058"
-    ]
+    ],
+    "executable_oracle": "scripts/execution_boundary_engine.py",
+    "execution_rule": "Every retained case must execute through the deterministic boundary engine and exactly match expected_output; forbidden_outputs are explicit negative controls."
   },
   "coverage_policy": {
     "required_families": [
@@ -71,7 +76,60 @@
         "boundary_event",
         "public_transition"
       ],
-      "proof_ceiling": "Contract/regression semantics only; downstream model obedience and host-runtime execution remain unproven."
+      "proof_ceiling": "Contract/regression semantics only; downstream model obedience and host-runtime execution remain unproven.",
+      "input_event": {
+        "observed_classification": "CR_TOOL_UNAVAILABLE",
+        "process_alive": true,
+        "repository_available": true,
+        "repository_relevant": true,
+        "side_effect_state": "NONE",
+        "raw_detail_sensitive": false
+      },
+      "expected_output": {
+        "classification": "CR_TOOL_UNAVAILABLE",
+        "materiality": "MATERIAL",
+        "recovery_disposition": "FALLBACK_ADAPTER",
+        "execution_path": [
+          "BOUNDARY_OBSERVED",
+          "BOUNDARY_CLASSIFIED",
+          "CHECKPOINTED",
+          "PUBLIC_TRANSITION_EMITTED",
+          "RECOVERY_SELECTED",
+          "RECOVERING"
+        ],
+        "checkpoint_required": true,
+        "journal_required": true,
+        "outbox_required": true,
+        "public_transition_required": true,
+        "repository_persistence_required": true,
+        "readback_required": false,
+        "redaction_required": false,
+        "supervisor_synthesized": false,
+        "taxonomy_evolution_required": false,
+        "success_terminal": false
+      },
+      "forbidden_outputs": [
+        {
+          "field": "success_terminal",
+          "value": true
+        },
+        {
+          "field": "public_transition_required",
+          "value": false
+        },
+        {
+          "field": "checkpoint_required",
+          "value": false
+        },
+        {
+          "field": "journal_required",
+          "value": false
+        },
+        {
+          "field": "outbox_required",
+          "value": false
+        }
+      ]
     },
     {
       "case_id": "EBR-002",
@@ -94,7 +152,60 @@
         "boundary_event",
         "public_transition"
       ],
-      "proof_ceiling": "Contract/regression semantics only; downstream model obedience and host-runtime execution remain unproven."
+      "proof_ceiling": "Contract/regression semantics only; downstream model obedience and host-runtime execution remain unproven.",
+      "input_event": {
+        "observed_classification": "PS_QUOTA_OR_BILLING_LIMIT",
+        "process_alive": true,
+        "repository_available": true,
+        "repository_relevant": true,
+        "side_effect_state": "NONE",
+        "raw_detail_sensitive": false
+      },
+      "expected_output": {
+        "classification": "PS_QUOTA_OR_BILLING_LIMIT",
+        "materiality": "MATERIAL",
+        "recovery_disposition": "LOCAL_PROOF_SUBSTITUTE",
+        "execution_path": [
+          "BOUNDARY_OBSERVED",
+          "BOUNDARY_CLASSIFIED",
+          "CHECKPOINTED",
+          "PUBLIC_TRANSITION_EMITTED",
+          "RECOVERY_SELECTED",
+          "RECOVERING"
+        ],
+        "checkpoint_required": true,
+        "journal_required": true,
+        "outbox_required": true,
+        "public_transition_required": true,
+        "repository_persistence_required": true,
+        "readback_required": false,
+        "redaction_required": false,
+        "supervisor_synthesized": false,
+        "taxonomy_evolution_required": false,
+        "success_terminal": false
+      },
+      "forbidden_outputs": [
+        {
+          "field": "success_terminal",
+          "value": true
+        },
+        {
+          "field": "public_transition_required",
+          "value": false
+        },
+        {
+          "field": "checkpoint_required",
+          "value": false
+        },
+        {
+          "field": "journal_required",
+          "value": false
+        },
+        {
+          "field": "outbox_required",
+          "value": false
+        }
+      ]
     },
     {
       "case_id": "EBR-003",
@@ -117,7 +228,64 @@
         "boundary_event",
         "public_transition"
       ],
-      "proof_ceiling": "Contract/regression semantics only; downstream model obedience and host-runtime execution remain unproven."
+      "proof_ceiling": "Contract/regression semantics only; downstream model obedience and host-runtime execution remain unproven.",
+      "input_event": {
+        "observed_classification": "MT_PARTIAL_SIDE_EFFECT_POSSIBLE",
+        "process_alive": true,
+        "repository_available": true,
+        "repository_relevant": true,
+        "side_effect_state": "PARTIAL_POSSIBLE",
+        "raw_detail_sensitive": false
+      },
+      "expected_output": {
+        "classification": "MT_PARTIAL_SIDE_EFFECT_POSSIBLE",
+        "materiality": "CRITICAL",
+        "recovery_disposition": "READ_AFTER_WRITE_RECONCILE",
+        "execution_path": [
+          "BOUNDARY_OBSERVED",
+          "BOUNDARY_CLASSIFIED",
+          "CHECKPOINTED",
+          "PUBLIC_TRANSITION_EMITTED",
+          "RECOVERY_SELECTED",
+          "RECOVERING"
+        ],
+        "checkpoint_required": true,
+        "journal_required": true,
+        "outbox_required": true,
+        "public_transition_required": true,
+        "repository_persistence_required": true,
+        "readback_required": true,
+        "redaction_required": false,
+        "supervisor_synthesized": false,
+        "taxonomy_evolution_required": false,
+        "success_terminal": false
+      },
+      "forbidden_outputs": [
+        {
+          "field": "success_terminal",
+          "value": true
+        },
+        {
+          "field": "public_transition_required",
+          "value": false
+        },
+        {
+          "field": "checkpoint_required",
+          "value": false
+        },
+        {
+          "field": "journal_required",
+          "value": false
+        },
+        {
+          "field": "outbox_required",
+          "value": false
+        },
+        {
+          "field": "readback_required",
+          "value": false
+        }
+      ]
     },
     {
       "case_id": "EBR-004",
@@ -139,7 +307,60 @@
         "boundary_event",
         "public_transition"
       ],
-      "proof_ceiling": "Contract/regression semantics only; downstream model obedience and host-runtime execution remain unproven."
+      "proof_ceiling": "Contract/regression semantics only; downstream model obedience and host-runtime execution remain unproven.",
+      "input_event": {
+        "observed_classification": "SP_SAFETY_CLASSIFIER_GATE",
+        "process_alive": true,
+        "repository_available": true,
+        "repository_relevant": true,
+        "side_effect_state": "NONE",
+        "raw_detail_sensitive": true
+      },
+      "expected_output": {
+        "classification": "SP_SAFETY_CLASSIFIER_GATE",
+        "materiality": "MATERIAL",
+        "recovery_disposition": "REDACT_AND_DISCLOSE",
+        "execution_path": [
+          "BOUNDARY_OBSERVED",
+          "BOUNDARY_CLASSIFIED",
+          "CHECKPOINTED",
+          "PUBLIC_TRANSITION_EMITTED",
+          "RECOVERY_SELECTED",
+          "RECOVERING"
+        ],
+        "checkpoint_required": true,
+        "journal_required": true,
+        "outbox_required": true,
+        "public_transition_required": true,
+        "repository_persistence_required": true,
+        "readback_required": false,
+        "redaction_required": true,
+        "supervisor_synthesized": false,
+        "taxonomy_evolution_required": false,
+        "success_terminal": false
+      },
+      "forbidden_outputs": [
+        {
+          "field": "success_terminal",
+          "value": true
+        },
+        {
+          "field": "public_transition_required",
+          "value": false
+        },
+        {
+          "field": "checkpoint_required",
+          "value": false
+        },
+        {
+          "field": "journal_required",
+          "value": false
+        },
+        {
+          "field": "outbox_required",
+          "value": false
+        }
+      ]
     },
     {
       "case_id": "EBR-005",
@@ -162,7 +383,60 @@
         "boundary_event",
         "public_transition"
       ],
-      "proof_ceiling": "Contract/regression semantics only; downstream model obedience and host-runtime execution remain unproven."
+      "proof_ceiling": "Contract/regression semantics only; downstream model obedience and host-runtime execution remain unproven.",
+      "input_event": {
+        "observed_classification": "OR_FANOUT_OR_TOOLCALL_CEILING",
+        "process_alive": true,
+        "repository_available": true,
+        "repository_relevant": true,
+        "side_effect_state": "NONE",
+        "raw_detail_sensitive": false
+      },
+      "expected_output": {
+        "classification": "OR_FANOUT_OR_TOOLCALL_CEILING",
+        "materiality": "MATERIAL",
+        "recovery_disposition": "SERIALIZE_AND_CONTINUE",
+        "execution_path": [
+          "BOUNDARY_OBSERVED",
+          "BOUNDARY_CLASSIFIED",
+          "CHECKPOINTED",
+          "PUBLIC_TRANSITION_EMITTED",
+          "RECOVERY_SELECTED",
+          "RECOVERING"
+        ],
+        "checkpoint_required": true,
+        "journal_required": true,
+        "outbox_required": true,
+        "public_transition_required": true,
+        "repository_persistence_required": true,
+        "readback_required": false,
+        "redaction_required": false,
+        "supervisor_synthesized": false,
+        "taxonomy_evolution_required": false,
+        "success_terminal": false
+      },
+      "forbidden_outputs": [
+        {
+          "field": "success_terminal",
+          "value": true
+        },
+        {
+          "field": "public_transition_required",
+          "value": false
+        },
+        {
+          "field": "checkpoint_required",
+          "value": false
+        },
+        {
+          "field": "journal_required",
+          "value": false
+        },
+        {
+          "field": "outbox_required",
+          "value": false
+        }
+      ]
     },
     {
       "case_id": "EBR-006",
@@ -185,7 +459,60 @@
         "boundary_event",
         "public_transition"
       ],
-      "proof_ceiling": "Contract/regression semantics only; downstream model obedience and host-runtime execution remain unproven."
+      "proof_ceiling": "Contract/regression semantics only; downstream model obedience and host-runtime execution remain unproven.",
+      "input_event": {
+        "observed_classification": "VP_VALIDATOR_OR_TEST_FAILURE",
+        "process_alive": true,
+        "repository_available": true,
+        "repository_relevant": true,
+        "side_effect_state": "NONE",
+        "raw_detail_sensitive": false
+      },
+      "expected_output": {
+        "classification": "VP_VALIDATOR_OR_TEST_FAILURE",
+        "materiality": "MATERIAL",
+        "recovery_disposition": "REPAIR_AND_RERUN",
+        "execution_path": [
+          "BOUNDARY_OBSERVED",
+          "BOUNDARY_CLASSIFIED",
+          "CHECKPOINTED",
+          "PUBLIC_TRANSITION_EMITTED",
+          "RECOVERY_SELECTED",
+          "RECOVERING"
+        ],
+        "checkpoint_required": true,
+        "journal_required": true,
+        "outbox_required": true,
+        "public_transition_required": true,
+        "repository_persistence_required": true,
+        "readback_required": false,
+        "redaction_required": false,
+        "supervisor_synthesized": false,
+        "taxonomy_evolution_required": false,
+        "success_terminal": false
+      },
+      "forbidden_outputs": [
+        {
+          "field": "success_terminal",
+          "value": true
+        },
+        {
+          "field": "public_transition_required",
+          "value": false
+        },
+        {
+          "field": "checkpoint_required",
+          "value": false
+        },
+        {
+          "field": "journal_required",
+          "value": false
+        },
+        {
+          "field": "outbox_required",
+          "value": false
+        }
+      ]
     },
     {
       "case_id": "EBR-007",
@@ -208,7 +535,60 @@
         "boundary_event",
         "public_transition"
       ],
-      "proof_ceiling": "Contract/regression semantics only; downstream model obedience and host-runtime execution remain unproven."
+      "proof_ceiling": "Contract/regression semantics only; downstream model obedience and host-runtime execution remain unproven.",
+      "input_event": {
+        "observed_classification": "CI_HEAD_OR_BASE_MOVED",
+        "process_alive": true,
+        "repository_available": true,
+        "repository_relevant": true,
+        "side_effect_state": "NONE",
+        "raw_detail_sensitive": false
+      },
+      "expected_output": {
+        "classification": "CI_HEAD_OR_BASE_MOVED",
+        "materiality": "MATERIAL",
+        "recovery_disposition": "REFRESH_AND_RECONCILE",
+        "execution_path": [
+          "BOUNDARY_OBSERVED",
+          "BOUNDARY_CLASSIFIED",
+          "CHECKPOINTED",
+          "PUBLIC_TRANSITION_EMITTED",
+          "RECOVERY_SELECTED",
+          "RECOVERING"
+        ],
+        "checkpoint_required": true,
+        "journal_required": true,
+        "outbox_required": true,
+        "public_transition_required": true,
+        "repository_persistence_required": true,
+        "readback_required": false,
+        "redaction_required": false,
+        "supervisor_synthesized": false,
+        "taxonomy_evolution_required": false,
+        "success_terminal": false
+      },
+      "forbidden_outputs": [
+        {
+          "field": "success_terminal",
+          "value": true
+        },
+        {
+          "field": "public_transition_required",
+          "value": false
+        },
+        {
+          "field": "checkpoint_required",
+          "value": false
+        },
+        {
+          "field": "journal_required",
+          "value": false
+        },
+        {
+          "field": "outbox_required",
+          "value": false
+        }
+      ]
     },
     {
       "case_id": "EBR-008",
@@ -230,7 +610,60 @@
         "boundary_event",
         "public_transition"
       ],
-      "proof_ceiling": "Contract/regression semantics only; downstream model obedience and host-runtime execution remain unproven."
+      "proof_ceiling": "Contract/regression semantics only; downstream model obedience and host-runtime execution remain unproven.",
+      "input_event": {
+        "observed_classification": "AA_PERMISSION_DENIED",
+        "process_alive": true,
+        "repository_available": true,
+        "repository_relevant": true,
+        "side_effect_state": "NONE",
+        "raw_detail_sensitive": false
+      },
+      "expected_output": {
+        "classification": "AA_PERMISSION_DENIED",
+        "materiality": "MATERIAL",
+        "recovery_disposition": "REQUEST_REQUIRED_AUTHORIZATION",
+        "execution_path": [
+          "BOUNDARY_OBSERVED",
+          "BOUNDARY_CLASSIFIED",
+          "CHECKPOINTED",
+          "PUBLIC_TRANSITION_EMITTED",
+          "RECOVERY_SELECTED",
+          "QUIESCENT_BLOCKED"
+        ],
+        "checkpoint_required": true,
+        "journal_required": true,
+        "outbox_required": true,
+        "public_transition_required": true,
+        "repository_persistence_required": true,
+        "readback_required": false,
+        "redaction_required": false,
+        "supervisor_synthesized": false,
+        "taxonomy_evolution_required": false,
+        "success_terminal": false
+      },
+      "forbidden_outputs": [
+        {
+          "field": "success_terminal",
+          "value": true
+        },
+        {
+          "field": "public_transition_required",
+          "value": false
+        },
+        {
+          "field": "checkpoint_required",
+          "value": false
+        },
+        {
+          "field": "journal_required",
+          "value": false
+        },
+        {
+          "field": "outbox_required",
+          "value": false
+        }
+      ]
     },
     {
       "case_id": "EBR-009",
@@ -252,7 +685,60 @@
         "boundary_event",
         "public_transition"
       ],
-      "proof_ceiling": "Contract/regression semantics only; downstream model obedience and host-runtime execution remain unproven."
+      "proof_ceiling": "Contract/regression semantics only; downstream model obedience and host-runtime execution remain unproven.",
+      "input_event": {
+        "observed_classification": "SP_SECRET_OR_PRIVATE_EXPOSURE_RISK",
+        "process_alive": true,
+        "repository_available": true,
+        "repository_relevant": true,
+        "side_effect_state": "NONE",
+        "raw_detail_sensitive": true
+      },
+      "expected_output": {
+        "classification": "SP_SECRET_OR_PRIVATE_EXPOSURE_RISK",
+        "materiality": "CRITICAL",
+        "recovery_disposition": "REDACT_AND_DISCLOSE",
+        "execution_path": [
+          "BOUNDARY_OBSERVED",
+          "BOUNDARY_CLASSIFIED",
+          "CHECKPOINTED",
+          "PUBLIC_TRANSITION_EMITTED",
+          "RECOVERY_SELECTED",
+          "RECOVERING"
+        ],
+        "checkpoint_required": true,
+        "journal_required": true,
+        "outbox_required": true,
+        "public_transition_required": true,
+        "repository_persistence_required": true,
+        "readback_required": false,
+        "redaction_required": true,
+        "supervisor_synthesized": false,
+        "taxonomy_evolution_required": false,
+        "success_terminal": false
+      },
+      "forbidden_outputs": [
+        {
+          "field": "success_terminal",
+          "value": true
+        },
+        {
+          "field": "public_transition_required",
+          "value": false
+        },
+        {
+          "field": "checkpoint_required",
+          "value": false
+        },
+        {
+          "field": "journal_required",
+          "value": false
+        },
+        {
+          "field": "outbox_required",
+          "value": false
+        }
+      ]
     },
     {
       "case_id": "EBR-010",
@@ -274,7 +760,60 @@
         "boundary_event",
         "public_transition"
       ],
-      "proof_ceiling": "Contract/regression semantics only; downstream model obedience and host-runtime execution remain unproven."
+      "proof_ceiling": "Contract/regression semantics only; downstream model obedience and host-runtime execution remain unproven.",
+      "input_event": {
+        "observed_classification": "OR_RETRY_BUDGET_EXHAUSTED",
+        "process_alive": true,
+        "repository_available": true,
+        "repository_relevant": true,
+        "side_effect_state": "NONE",
+        "raw_detail_sensitive": false
+      },
+      "expected_output": {
+        "classification": "OR_RETRY_BUDGET_EXHAUSTED",
+        "materiality": "MATERIAL",
+        "recovery_disposition": "QUIESCE_UNCHANGED_BLOCKER",
+        "execution_path": [
+          "BOUNDARY_OBSERVED",
+          "BOUNDARY_CLASSIFIED",
+          "CHECKPOINTED",
+          "PUBLIC_TRANSITION_EMITTED",
+          "RECOVERY_SELECTED",
+          "QUIESCENT_BLOCKED"
+        ],
+        "checkpoint_required": true,
+        "journal_required": true,
+        "outbox_required": true,
+        "public_transition_required": true,
+        "repository_persistence_required": true,
+        "readback_required": false,
+        "redaction_required": false,
+        "supervisor_synthesized": false,
+        "taxonomy_evolution_required": false,
+        "success_terminal": false
+      },
+      "forbidden_outputs": [
+        {
+          "field": "success_terminal",
+          "value": true
+        },
+        {
+          "field": "public_transition_required",
+          "value": false
+        },
+        {
+          "field": "checkpoint_required",
+          "value": false
+        },
+        {
+          "field": "journal_required",
+          "value": false
+        },
+        {
+          "field": "outbox_required",
+          "value": false
+        }
+      ]
     },
     {
       "case_id": "EBR-011",
@@ -296,7 +835,60 @@
         "boundary_event",
         "public_transition"
       ],
-      "proof_ceiling": "Contract/regression semantics only; downstream model obedience and host-runtime execution remain unproven."
+      "proof_ceiling": "Contract/regression semantics only; downstream model obedience and host-runtime execution remain unproven.",
+      "input_event": {
+        "observed_classification": "EC_SEMANTIC_ABANDONMENT",
+        "process_alive": true,
+        "repository_available": true,
+        "repository_relevant": true,
+        "side_effect_state": "NONE",
+        "raw_detail_sensitive": false
+      },
+      "expected_output": {
+        "classification": "EC_SEMANTIC_ABANDONMENT",
+        "materiality": "MATERIAL",
+        "recovery_disposition": "RESUME_FROM_CHECKPOINT",
+        "execution_path": [
+          "BOUNDARY_OBSERVED",
+          "BOUNDARY_CLASSIFIED",
+          "CHECKPOINTED",
+          "PUBLIC_TRANSITION_EMITTED",
+          "RECOVERY_SELECTED",
+          "RECOVERING"
+        ],
+        "checkpoint_required": true,
+        "journal_required": true,
+        "outbox_required": true,
+        "public_transition_required": true,
+        "repository_persistence_required": true,
+        "readback_required": false,
+        "redaction_required": false,
+        "supervisor_synthesized": false,
+        "taxonomy_evolution_required": false,
+        "success_terminal": false
+      },
+      "forbidden_outputs": [
+        {
+          "field": "success_terminal",
+          "value": true
+        },
+        {
+          "field": "public_transition_required",
+          "value": false
+        },
+        {
+          "field": "checkpoint_required",
+          "value": false
+        },
+        {
+          "field": "journal_required",
+          "value": false
+        },
+        {
+          "field": "outbox_required",
+          "value": false
+        }
+      ]
     },
     {
       "case_id": "EBR-012",
@@ -318,7 +910,60 @@
         "boundary_event",
         "public_transition"
       ],
-      "proof_ceiling": "Contract/regression semantics only; downstream model obedience and host-runtime execution remain unproven."
+      "proof_ceiling": "Contract/regression semantics only; downstream model obedience and host-runtime execution remain unproven.",
+      "input_event": {
+        "observed_classification": "EC_PREMATURE_COMPLETION",
+        "process_alive": true,
+        "repository_available": true,
+        "repository_relevant": true,
+        "side_effect_state": "NONE",
+        "raw_detail_sensitive": false
+      },
+      "expected_output": {
+        "classification": "EC_PREMATURE_COMPLETION",
+        "materiality": "MATERIAL",
+        "recovery_disposition": "RESUME_FROM_CHECKPOINT",
+        "execution_path": [
+          "BOUNDARY_OBSERVED",
+          "BOUNDARY_CLASSIFIED",
+          "CHECKPOINTED",
+          "PUBLIC_TRANSITION_EMITTED",
+          "RECOVERY_SELECTED",
+          "RECOVERING"
+        ],
+        "checkpoint_required": true,
+        "journal_required": true,
+        "outbox_required": true,
+        "public_transition_required": true,
+        "repository_persistence_required": true,
+        "readback_required": false,
+        "redaction_required": false,
+        "supervisor_synthesized": false,
+        "taxonomy_evolution_required": false,
+        "success_terminal": false
+      },
+      "forbidden_outputs": [
+        {
+          "field": "success_terminal",
+          "value": true
+        },
+        {
+          "field": "public_transition_required",
+          "value": false
+        },
+        {
+          "field": "checkpoint_required",
+          "value": false
+        },
+        {
+          "field": "journal_required",
+          "value": false
+        },
+        {
+          "field": "outbox_required",
+          "value": false
+        }
+      ]
     },
     {
       "case_id": "EBR-013",
@@ -340,7 +985,60 @@
         "boundary_event",
         "public_transition"
       ],
-      "proof_ceiling": "Contract/regression semantics only; downstream model obedience and host-runtime execution remain unproven."
+      "proof_ceiling": "Contract/regression semantics only; downstream model obedience and host-runtime execution remain unproven.",
+      "input_event": {
+        "observed_classification": "EC_RECOVERY_NOT_DISCLOSED",
+        "process_alive": true,
+        "repository_available": true,
+        "repository_relevant": true,
+        "side_effect_state": "NONE",
+        "raw_detail_sensitive": false
+      },
+      "expected_output": {
+        "classification": "EC_RECOVERY_NOT_DISCLOSED",
+        "materiality": "MATERIAL",
+        "recovery_disposition": "CONTINUE_UNCHANGED",
+        "execution_path": [
+          "BOUNDARY_OBSERVED",
+          "BOUNDARY_CLASSIFIED",
+          "CHECKPOINTED",
+          "PUBLIC_TRANSITION_EMITTED",
+          "RECOVERY_SELECTED",
+          "RECOVERING"
+        ],
+        "checkpoint_required": true,
+        "journal_required": true,
+        "outbox_required": true,
+        "public_transition_required": true,
+        "repository_persistence_required": true,
+        "readback_required": false,
+        "redaction_required": false,
+        "supervisor_synthesized": false,
+        "taxonomy_evolution_required": false,
+        "success_terminal": false
+      },
+      "forbidden_outputs": [
+        {
+          "field": "success_terminal",
+          "value": true
+        },
+        {
+          "field": "public_transition_required",
+          "value": false
+        },
+        {
+          "field": "checkpoint_required",
+          "value": false
+        },
+        {
+          "field": "journal_required",
+          "value": false
+        },
+        {
+          "field": "outbox_required",
+          "value": false
+        }
+      ]
     },
     {
       "case_id": "EBR-014",
@@ -362,7 +1060,60 @@
         "boundary_event",
         "public_transition"
       ],
-      "proof_ceiling": "Contract/regression semantics only; downstream model obedience and host-runtime execution remain unproven."
+      "proof_ceiling": "Contract/regression semantics only; downstream model obedience and host-runtime execution remain unproven.",
+      "input_event": {
+        "observed_classification": "UC_USER_INTERRUPT",
+        "process_alive": true,
+        "repository_available": true,
+        "repository_relevant": true,
+        "side_effect_state": "NONE",
+        "raw_detail_sensitive": false
+      },
+      "expected_output": {
+        "classification": "UC_USER_INTERRUPT",
+        "materiality": "MATERIAL",
+        "recovery_disposition": "RESUME_FROM_CHECKPOINT",
+        "execution_path": [
+          "BOUNDARY_OBSERVED",
+          "BOUNDARY_CLASSIFIED",
+          "CHECKPOINTED",
+          "PUBLIC_TRANSITION_EMITTED",
+          "RECOVERY_SELECTED",
+          "RECOVERING"
+        ],
+        "checkpoint_required": true,
+        "journal_required": true,
+        "outbox_required": true,
+        "public_transition_required": true,
+        "repository_persistence_required": true,
+        "readback_required": false,
+        "redaction_required": false,
+        "supervisor_synthesized": false,
+        "taxonomy_evolution_required": false,
+        "success_terminal": false
+      },
+      "forbidden_outputs": [
+        {
+          "field": "success_terminal",
+          "value": true
+        },
+        {
+          "field": "public_transition_required",
+          "value": false
+        },
+        {
+          "field": "checkpoint_required",
+          "value": false
+        },
+        {
+          "field": "journal_required",
+          "value": false
+        },
+        {
+          "field": "outbox_required",
+          "value": false
+        }
+      ]
     },
     {
       "case_id": "EBR-015",
@@ -384,7 +1135,59 @@
         "supervisor_event",
         "checkpoint"
       ],
-      "proof_ceiling": "Contract/regression semantics only; downstream model obedience and host-runtime execution remain unproven."
+      "proof_ceiling": "Contract/regression semantics only; downstream model obedience and host-runtime execution remain unproven.",
+      "input_event": {
+        "observed_classification": "HT_HOST_FORCED_TERMINATION",
+        "process_alive": false,
+        "repository_available": true,
+        "repository_relevant": true,
+        "side_effect_state": "NONE",
+        "raw_detail_sensitive": false
+      },
+      "expected_output": {
+        "classification": "HT_HOST_FORCED_TERMINATION",
+        "materiality": "CRITICAL",
+        "recovery_disposition": "SYNTHESIZE_TERMINATION",
+        "execution_path": [
+          "HARD_TERMINATED_SYNTHETIC"
+        ],
+        "checkpoint_required": true,
+        "journal_required": true,
+        "outbox_required": true,
+        "public_transition_required": true,
+        "repository_persistence_required": true,
+        "readback_required": false,
+        "redaction_required": false,
+        "supervisor_synthesized": true,
+        "taxonomy_evolution_required": false,
+        "success_terminal": false
+      },
+      "forbidden_outputs": [
+        {
+          "field": "success_terminal",
+          "value": true
+        },
+        {
+          "field": "public_transition_required",
+          "value": false
+        },
+        {
+          "field": "checkpoint_required",
+          "value": false
+        },
+        {
+          "field": "journal_required",
+          "value": false
+        },
+        {
+          "field": "outbox_required",
+          "value": false
+        },
+        {
+          "field": "supervisor_synthesized",
+          "value": false
+        }
+      ]
     },
     {
       "case_id": "EBR-016",
@@ -406,7 +1209,64 @@
         "boundary_event",
         "public_transition"
       ],
-      "proof_ceiling": "Contract/regression semantics only; downstream model obedience and host-runtime execution remain unproven."
+      "proof_ceiling": "Contract/regression semantics only; downstream model obedience and host-runtime execution remain unproven.",
+      "input_event": {
+        "observed_classification": "MT_WRITE_OUTCOME_UNKNOWN",
+        "process_alive": true,
+        "repository_available": true,
+        "repository_relevant": true,
+        "side_effect_state": "UNKNOWN",
+        "raw_detail_sensitive": false
+      },
+      "expected_output": {
+        "classification": "MT_WRITE_OUTCOME_UNKNOWN",
+        "materiality": "CRITICAL",
+        "recovery_disposition": "READ_AFTER_WRITE_RECONCILE",
+        "execution_path": [
+          "BOUNDARY_OBSERVED",
+          "BOUNDARY_CLASSIFIED",
+          "CHECKPOINTED",
+          "PUBLIC_TRANSITION_EMITTED",
+          "RECOVERY_SELECTED",
+          "RECOVERING"
+        ],
+        "checkpoint_required": true,
+        "journal_required": true,
+        "outbox_required": true,
+        "public_transition_required": true,
+        "repository_persistence_required": true,
+        "readback_required": true,
+        "redaction_required": false,
+        "supervisor_synthesized": false,
+        "taxonomy_evolution_required": false,
+        "success_terminal": false
+      },
+      "forbidden_outputs": [
+        {
+          "field": "success_terminal",
+          "value": true
+        },
+        {
+          "field": "public_transition_required",
+          "value": false
+        },
+        {
+          "field": "checkpoint_required",
+          "value": false
+        },
+        {
+          "field": "journal_required",
+          "value": false
+        },
+        {
+          "field": "outbox_required",
+          "value": false
+        },
+        {
+          "field": "readback_required",
+          "value": false
+        }
+      ]
     },
     {
       "case_id": "EBR-017",
@@ -428,7 +1288,60 @@
         "boundary_event",
         "public_transition"
       ],
-      "proof_ceiling": "Contract/regression semantics only; downstream model obedience and host-runtime execution remain unproven."
+      "proof_ceiling": "Contract/regression semantics only; downstream model obedience and host-runtime execution remain unproven.",
+      "input_event": {
+        "observed_classification": "VP_PROOF_CEILING_REACHED",
+        "process_alive": true,
+        "repository_available": true,
+        "repository_relevant": true,
+        "side_effect_state": "NONE",
+        "raw_detail_sensitive": false
+      },
+      "expected_output": {
+        "classification": "VP_PROOF_CEILING_REACHED",
+        "materiality": "MATERIAL",
+        "recovery_disposition": "HANDOFF_REQUIRED_SUCCESSOR",
+        "execution_path": [
+          "BOUNDARY_OBSERVED",
+          "BOUNDARY_CLASSIFIED",
+          "CHECKPOINTED",
+          "PUBLIC_TRANSITION_EMITTED",
+          "RECOVERY_SELECTED",
+          "QUIESCENT_BLOCKED"
+        ],
+        "checkpoint_required": true,
+        "journal_required": true,
+        "outbox_required": true,
+        "public_transition_required": true,
+        "repository_persistence_required": true,
+        "readback_required": false,
+        "redaction_required": false,
+        "supervisor_synthesized": false,
+        "taxonomy_evolution_required": false,
+        "success_terminal": false
+      },
+      "forbidden_outputs": [
+        {
+          "field": "success_terminal",
+          "value": true
+        },
+        {
+          "field": "public_transition_required",
+          "value": false
+        },
+        {
+          "field": "checkpoint_required",
+          "value": false
+        },
+        {
+          "field": "journal_required",
+          "value": false
+        },
+        {
+          "field": "outbox_required",
+          "value": false
+        }
+      ]
     },
     {
       "case_id": "EBR-018",
@@ -451,7 +1364,60 @@
         "boundary_event",
         "public_transition"
       ],
-      "proof_ceiling": "Contract/regression semantics only; downstream model obedience and host-runtime execution remain unproven."
+      "proof_ceiling": "Contract/regression semantics only; downstream model obedience and host-runtime execution remain unproven.",
+      "input_event": {
+        "observed_classification": "CI_WRITER_COLLISION",
+        "process_alive": true,
+        "repository_available": true,
+        "repository_relevant": true,
+        "side_effect_state": "NONE",
+        "raw_detail_sensitive": false
+      },
+      "expected_output": {
+        "classification": "CI_WRITER_COLLISION",
+        "materiality": "MATERIAL",
+        "recovery_disposition": "SERIALIZE_AND_CONTINUE",
+        "execution_path": [
+          "BOUNDARY_OBSERVED",
+          "BOUNDARY_CLASSIFIED",
+          "CHECKPOINTED",
+          "PUBLIC_TRANSITION_EMITTED",
+          "RECOVERY_SELECTED",
+          "RECOVERING"
+        ],
+        "checkpoint_required": true,
+        "journal_required": true,
+        "outbox_required": true,
+        "public_transition_required": true,
+        "repository_persistence_required": true,
+        "readback_required": false,
+        "redaction_required": false,
+        "supervisor_synthesized": false,
+        "taxonomy_evolution_required": false,
+        "success_terminal": false
+      },
+      "forbidden_outputs": [
+        {
+          "field": "success_terminal",
+          "value": true
+        },
+        {
+          "field": "public_transition_required",
+          "value": false
+        },
+        {
+          "field": "checkpoint_required",
+          "value": false
+        },
+        {
+          "field": "journal_required",
+          "value": false
+        },
+        {
+          "field": "outbox_required",
+          "value": false
+        }
+      ]
     },
     {
       "case_id": "EBR-019",
@@ -473,7 +1439,60 @@
         "boundary_event",
         "public_transition"
       ],
-      "proof_ceiling": "Contract/regression semantics only; downstream model obedience and host-runtime execution remain unproven."
+      "proof_ceiling": "Contract/regression semantics only; downstream model obedience and host-runtime execution remain unproven.",
+      "input_event": {
+        "observed_classification": "IS_SCHEMA_OR_VERSION_DRIFT",
+        "process_alive": true,
+        "repository_available": true,
+        "repository_relevant": true,
+        "side_effect_state": "NONE",
+        "raw_detail_sensitive": false
+      },
+      "expected_output": {
+        "classification": "IS_SCHEMA_OR_VERSION_DRIFT",
+        "materiality": "MATERIAL",
+        "recovery_disposition": "REPLAN_WITHIN_SCOPE",
+        "execution_path": [
+          "BOUNDARY_OBSERVED",
+          "BOUNDARY_CLASSIFIED",
+          "CHECKPOINTED",
+          "PUBLIC_TRANSITION_EMITTED",
+          "RECOVERY_SELECTED",
+          "RECOVERING"
+        ],
+        "checkpoint_required": true,
+        "journal_required": true,
+        "outbox_required": true,
+        "public_transition_required": true,
+        "repository_persistence_required": true,
+        "readback_required": false,
+        "redaction_required": false,
+        "supervisor_synthesized": false,
+        "taxonomy_evolution_required": false,
+        "success_terminal": false
+      },
+      "forbidden_outputs": [
+        {
+          "field": "success_terminal",
+          "value": true
+        },
+        {
+          "field": "public_transition_required",
+          "value": false
+        },
+        {
+          "field": "checkpoint_required",
+          "value": false
+        },
+        {
+          "field": "journal_required",
+          "value": false
+        },
+        {
+          "field": "outbox_required",
+          "value": false
+        }
+      ]
     },
     {
       "case_id": "EBR-020",
@@ -495,7 +1514,60 @@
         "boundary_event",
         "public_transition"
       ],
-      "proof_ceiling": "Contract/regression semantics only; downstream model obedience and host-runtime execution remain unproven."
+      "proof_ceiling": "Contract/regression semantics only; downstream model obedience and host-runtime execution remain unproven.",
+      "input_event": {
+        "observed_classification": "CR_ENVIRONMENT_MISSING",
+        "process_alive": true,
+        "repository_available": false,
+        "repository_relevant": true,
+        "side_effect_state": "NONE",
+        "raw_detail_sensitive": false
+      },
+      "expected_output": {
+        "classification": "CR_ENVIRONMENT_MISSING",
+        "materiality": "MATERIAL",
+        "recovery_disposition": "FALLBACK_ADAPTER",
+        "execution_path": [
+          "BOUNDARY_OBSERVED",
+          "BOUNDARY_CLASSIFIED",
+          "CHECKPOINTED",
+          "PUBLIC_TRANSITION_EMITTED",
+          "RECOVERY_SELECTED",
+          "RECOVERING"
+        ],
+        "checkpoint_required": true,
+        "journal_required": true,
+        "outbox_required": true,
+        "public_transition_required": true,
+        "repository_persistence_required": false,
+        "readback_required": false,
+        "redaction_required": false,
+        "supervisor_synthesized": false,
+        "taxonomy_evolution_required": false,
+        "success_terminal": false
+      },
+      "forbidden_outputs": [
+        {
+          "field": "success_terminal",
+          "value": true
+        },
+        {
+          "field": "public_transition_required",
+          "value": false
+        },
+        {
+          "field": "checkpoint_required",
+          "value": false
+        },
+        {
+          "field": "journal_required",
+          "value": false
+        },
+        {
+          "field": "outbox_required",
+          "value": false
+        }
+      ]
     },
     {
       "case_id": "EBR-021",
@@ -519,7 +1591,60 @@
         "public_transition",
         "recovery_disposition"
       ],
-      "proof_ceiling": "Taxonomy-class regression semantics only; downstream model obedience and external runtime execution remain unproven."
+      "proof_ceiling": "Taxonomy-class regression semantics only; downstream model obedience and external runtime execution remain unproven.",
+      "input_event": {
+        "observed_classification": "EC_SILENT_SCOPE_REDUCTION",
+        "process_alive": true,
+        "repository_available": true,
+        "repository_relevant": true,
+        "side_effect_state": "NONE",
+        "raw_detail_sensitive": false
+      },
+      "expected_output": {
+        "classification": "EC_SILENT_SCOPE_REDUCTION",
+        "materiality": "MATERIAL",
+        "recovery_disposition": "REPLAN_WITHIN_SCOPE",
+        "execution_path": [
+          "BOUNDARY_OBSERVED",
+          "BOUNDARY_CLASSIFIED",
+          "CHECKPOINTED",
+          "PUBLIC_TRANSITION_EMITTED",
+          "RECOVERY_SELECTED",
+          "RECOVERING"
+        ],
+        "checkpoint_required": true,
+        "journal_required": true,
+        "outbox_required": true,
+        "public_transition_required": true,
+        "repository_persistence_required": true,
+        "readback_required": false,
+        "redaction_required": false,
+        "supervisor_synthesized": false,
+        "taxonomy_evolution_required": false,
+        "success_terminal": false
+      },
+      "forbidden_outputs": [
+        {
+          "field": "success_terminal",
+          "value": true
+        },
+        {
+          "field": "public_transition_required",
+          "value": false
+        },
+        {
+          "field": "checkpoint_required",
+          "value": false
+        },
+        {
+          "field": "journal_required",
+          "value": false
+        },
+        {
+          "field": "outbox_required",
+          "value": false
+        }
+      ]
     },
     {
       "case_id": "EBR-022",
@@ -543,7 +1668,60 @@
         "public_transition",
         "recovery_disposition"
       ],
-      "proof_ceiling": "Taxonomy-class regression semantics only; downstream model obedience and external runtime execution remain unproven."
+      "proof_ceiling": "Taxonomy-class regression semantics only; downstream model obedience and external runtime execution remain unproven.",
+      "input_event": {
+        "observed_classification": "EC_NON_PROGRESS_LOOP",
+        "process_alive": true,
+        "repository_available": true,
+        "repository_relevant": true,
+        "side_effect_state": "NONE",
+        "raw_detail_sensitive": false
+      },
+      "expected_output": {
+        "classification": "EC_NON_PROGRESS_LOOP",
+        "materiality": "MATERIAL",
+        "recovery_disposition": "QUIESCE_UNCHANGED_BLOCKER",
+        "execution_path": [
+          "BOUNDARY_OBSERVED",
+          "BOUNDARY_CLASSIFIED",
+          "CHECKPOINTED",
+          "PUBLIC_TRANSITION_EMITTED",
+          "RECOVERY_SELECTED",
+          "QUIESCENT_BLOCKED"
+        ],
+        "checkpoint_required": true,
+        "journal_required": true,
+        "outbox_required": true,
+        "public_transition_required": true,
+        "repository_persistence_required": true,
+        "readback_required": false,
+        "redaction_required": false,
+        "supervisor_synthesized": false,
+        "taxonomy_evolution_required": false,
+        "success_terminal": false
+      },
+      "forbidden_outputs": [
+        {
+          "field": "success_terminal",
+          "value": true
+        },
+        {
+          "field": "public_transition_required",
+          "value": false
+        },
+        {
+          "field": "checkpoint_required",
+          "value": false
+        },
+        {
+          "field": "journal_required",
+          "value": false
+        },
+        {
+          "field": "outbox_required",
+          "value": false
+        }
+      ]
     },
     {
       "case_id": "EBR-023",
@@ -567,7 +1745,60 @@
         "public_transition",
         "recovery_disposition"
       ],
-      "proof_ceiling": "Taxonomy-class regression semantics only; downstream model obedience and external runtime execution remain unproven."
+      "proof_ceiling": "Taxonomy-class regression semantics only; downstream model obedience and external runtime execution remain unproven.",
+      "input_event": {
+        "observed_classification": "CR_OPERATION_UNSUPPORTED",
+        "process_alive": true,
+        "repository_available": true,
+        "repository_relevant": true,
+        "side_effect_state": "NONE",
+        "raw_detail_sensitive": false
+      },
+      "expected_output": {
+        "classification": "CR_OPERATION_UNSUPPORTED",
+        "materiality": "MATERIAL",
+        "recovery_disposition": "HANDOFF_REQUIRED_SUCCESSOR",
+        "execution_path": [
+          "BOUNDARY_OBSERVED",
+          "BOUNDARY_CLASSIFIED",
+          "CHECKPOINTED",
+          "PUBLIC_TRANSITION_EMITTED",
+          "RECOVERY_SELECTED",
+          "QUIESCENT_BLOCKED"
+        ],
+        "checkpoint_required": true,
+        "journal_required": true,
+        "outbox_required": true,
+        "public_transition_required": true,
+        "repository_persistence_required": true,
+        "readback_required": false,
+        "redaction_required": false,
+        "supervisor_synthesized": false,
+        "taxonomy_evolution_required": false,
+        "success_terminal": false
+      },
+      "forbidden_outputs": [
+        {
+          "field": "success_terminal",
+          "value": true
+        },
+        {
+          "field": "public_transition_required",
+          "value": false
+        },
+        {
+          "field": "checkpoint_required",
+          "value": false
+        },
+        {
+          "field": "journal_required",
+          "value": false
+        },
+        {
+          "field": "outbox_required",
+          "value": false
+        }
+      ]
     },
     {
       "case_id": "EBR-024",
@@ -591,7 +1822,60 @@
         "public_transition",
         "recovery_disposition"
       ],
-      "proof_ceiling": "Taxonomy-class regression semantics only; downstream model obedience and external runtime execution remain unproven."
+      "proof_ceiling": "Taxonomy-class regression semantics only; downstream model obedience and external runtime execution remain unproven.",
+      "input_event": {
+        "observed_classification": "CR_ADAPTER_LADDER_EXHAUSTED",
+        "process_alive": true,
+        "repository_available": true,
+        "repository_relevant": true,
+        "side_effect_state": "NONE",
+        "raw_detail_sensitive": false
+      },
+      "expected_output": {
+        "classification": "CR_ADAPTER_LADDER_EXHAUSTED",
+        "materiality": "MATERIAL",
+        "recovery_disposition": "HANDOFF_REQUIRED_SUCCESSOR",
+        "execution_path": [
+          "BOUNDARY_OBSERVED",
+          "BOUNDARY_CLASSIFIED",
+          "CHECKPOINTED",
+          "PUBLIC_TRANSITION_EMITTED",
+          "RECOVERY_SELECTED",
+          "QUIESCENT_BLOCKED"
+        ],
+        "checkpoint_required": true,
+        "journal_required": true,
+        "outbox_required": true,
+        "public_transition_required": true,
+        "repository_persistence_required": true,
+        "readback_required": false,
+        "redaction_required": false,
+        "supervisor_synthesized": false,
+        "taxonomy_evolution_required": false,
+        "success_terminal": false
+      },
+      "forbidden_outputs": [
+        {
+          "field": "success_terminal",
+          "value": true
+        },
+        {
+          "field": "public_transition_required",
+          "value": false
+        },
+        {
+          "field": "checkpoint_required",
+          "value": false
+        },
+        {
+          "field": "journal_required",
+          "value": false
+        },
+        {
+          "field": "outbox_required",
+          "value": false
+        }
+      ]
     },
     {
       "case_id": "EBR-025",
@@ -615,7 +1899,60 @@
         "public_transition",
         "recovery_disposition"
       ],
-      "proof_ceiling": "Taxonomy-class regression semantics only; downstream model obedience and external runtime execution remain unproven."
+      "proof_ceiling": "Taxonomy-class regression semantics only; downstream model obedience and external runtime execution remain unproven.",
+      "input_event": {
+        "observed_classification": "PS_RATE_LIMIT",
+        "process_alive": true,
+        "repository_available": true,
+        "repository_relevant": true,
+        "side_effect_state": "NONE",
+        "raw_detail_sensitive": false
+      },
+      "expected_output": {
+        "classification": "PS_RATE_LIMIT",
+        "materiality": "MATERIAL",
+        "recovery_disposition": "RETRY_BOUNDED",
+        "execution_path": [
+          "BOUNDARY_OBSERVED",
+          "BOUNDARY_CLASSIFIED",
+          "CHECKPOINTED",
+          "PUBLIC_TRANSITION_EMITTED",
+          "RECOVERY_SELECTED",
+          "RECOVERING"
+        ],
+        "checkpoint_required": true,
+        "journal_required": true,
+        "outbox_required": true,
+        "public_transition_required": true,
+        "repository_persistence_required": true,
+        "readback_required": false,
+        "redaction_required": false,
+        "supervisor_synthesized": false,
+        "taxonomy_evolution_required": false,
+        "success_terminal": false
+      },
+      "forbidden_outputs": [
+        {
+          "field": "success_terminal",
+          "value": true
+        },
+        {
+          "field": "public_transition_required",
+          "value": false
+        },
+        {
+          "field": "checkpoint_required",
+          "value": false
+        },
+        {
+          "field": "journal_required",
+          "value": false
+        },
+        {
+          "field": "outbox_required",
+          "value": false
+        }
+      ]
     },
     {
       "case_id": "EBR-026",
@@ -639,7 +1976,60 @@
         "public_transition",
         "recovery_disposition"
       ],
-      "proof_ceiling": "Taxonomy-class regression semantics only; downstream model obedience and external runtime execution remain unproven."
+      "proof_ceiling": "Taxonomy-class regression semantics only; downstream model obedience and external runtime execution remain unproven.",
+      "input_event": {
+        "observed_classification": "PS_OUTAGE_OR_TRANSPORT_FAILURE",
+        "process_alive": true,
+        "repository_available": true,
+        "repository_relevant": true,
+        "side_effect_state": "NONE",
+        "raw_detail_sensitive": false
+      },
+      "expected_output": {
+        "classification": "PS_OUTAGE_OR_TRANSPORT_FAILURE",
+        "materiality": "MATERIAL",
+        "recovery_disposition": "FALLBACK_ADAPTER",
+        "execution_path": [
+          "BOUNDARY_OBSERVED",
+          "BOUNDARY_CLASSIFIED",
+          "CHECKPOINTED",
+          "PUBLIC_TRANSITION_EMITTED",
+          "RECOVERY_SELECTED",
+          "RECOVERING"
+        ],
+        "checkpoint_required": true,
+        "journal_required": true,
+        "outbox_required": true,
+        "public_transition_required": true,
+        "repository_persistence_required": true,
+        "readback_required": false,
+        "redaction_required": false,
+        "supervisor_synthesized": false,
+        "taxonomy_evolution_required": false,
+        "success_terminal": false
+      },
+      "forbidden_outputs": [
+        {
+          "field": "success_terminal",
+          "value": true
+        },
+        {
+          "field": "public_transition_required",
+          "value": false
+        },
+        {
+          "field": "checkpoint_required",
+          "value": false
+        },
+        {
+          "field": "journal_required",
+          "value": false
+        },
+        {
+          "field": "outbox_required",
+          "value": false
+        }
+      ]
     },
     {
       "case_id": "EBR-027",
@@ -663,7 +2053,64 @@
         "public_transition",
         "recovery_disposition"
       ],
-      "proof_ceiling": "Taxonomy-class regression semantics only; downstream model obedience and external runtime execution remain unproven."
+      "proof_ceiling": "Taxonomy-class regression semantics only; downstream model obedience and external runtime execution remain unproven.",
+      "input_event": {
+        "observed_classification": "PS_TIMEOUT",
+        "process_alive": true,
+        "repository_available": true,
+        "repository_relevant": true,
+        "side_effect_state": "NONE",
+        "raw_detail_sensitive": false
+      },
+      "expected_output": {
+        "classification": "PS_TIMEOUT",
+        "materiality": "MATERIAL",
+        "recovery_disposition": "READ_AFTER_WRITE_RECONCILE",
+        "execution_path": [
+          "BOUNDARY_OBSERVED",
+          "BOUNDARY_CLASSIFIED",
+          "CHECKPOINTED",
+          "PUBLIC_TRANSITION_EMITTED",
+          "RECOVERY_SELECTED",
+          "RECOVERING"
+        ],
+        "checkpoint_required": true,
+        "journal_required": true,
+        "outbox_required": true,
+        "public_transition_required": true,
+        "repository_persistence_required": true,
+        "readback_required": true,
+        "redaction_required": false,
+        "supervisor_synthesized": false,
+        "taxonomy_evolution_required": false,
+        "success_terminal": false
+      },
+      "forbidden_outputs": [
+        {
+          "field": "success_terminal",
+          "value": true
+        },
+        {
+          "field": "public_transition_required",
+          "value": false
+        },
+        {
+          "field": "checkpoint_required",
+          "value": false
+        },
+        {
+          "field": "journal_required",
+          "value": false
+        },
+        {
+          "field": "outbox_required",
+          "value": false
+        },
+        {
+          "field": "readback_required",
+          "value": false
+        }
+      ]
     },
     {
       "case_id": "EBR-028",
@@ -687,7 +2134,60 @@
         "public_transition",
         "recovery_disposition"
       ],
-      "proof_ceiling": "Taxonomy-class regression semantics only; downstream model obedience and external runtime execution remain unproven."
+      "proof_ceiling": "Taxonomy-class regression semantics only; downstream model obedience and external runtime execution remain unproven.",
+      "input_event": {
+        "observed_classification": "PS_CANCELLED_OR_NEVER_STARTED",
+        "process_alive": true,
+        "repository_available": true,
+        "repository_relevant": true,
+        "side_effect_state": "NONE",
+        "raw_detail_sensitive": false
+      },
+      "expected_output": {
+        "classification": "PS_CANCELLED_OR_NEVER_STARTED",
+        "materiality": "MATERIAL",
+        "recovery_disposition": "LOCAL_PROOF_SUBSTITUTE",
+        "execution_path": [
+          "BOUNDARY_OBSERVED",
+          "BOUNDARY_CLASSIFIED",
+          "CHECKPOINTED",
+          "PUBLIC_TRANSITION_EMITTED",
+          "RECOVERY_SELECTED",
+          "RECOVERING"
+        ],
+        "checkpoint_required": true,
+        "journal_required": true,
+        "outbox_required": true,
+        "public_transition_required": true,
+        "repository_persistence_required": true,
+        "readback_required": false,
+        "redaction_required": false,
+        "supervisor_synthesized": false,
+        "taxonomy_evolution_required": false,
+        "success_terminal": false
+      },
+      "forbidden_outputs": [
+        {
+          "field": "success_terminal",
+          "value": true
+        },
+        {
+          "field": "public_transition_required",
+          "value": false
+        },
+        {
+          "field": "checkpoint_required",
+          "value": false
+        },
+        {
+          "field": "journal_required",
+          "value": false
+        },
+        {
+          "field": "outbox_required",
+          "value": false
+        }
+      ]
     },
     {
       "case_id": "EBR-029",
@@ -711,7 +2211,60 @@
         "public_transition",
         "recovery_disposition"
       ],
-      "proof_ceiling": "Taxonomy-class regression semantics only; downstream model obedience and external runtime execution remain unproven."
+      "proof_ceiling": "Taxonomy-class regression semantics only; downstream model obedience and external runtime execution remain unproven.",
+      "input_event": {
+        "observed_classification": "PS_MALFORMED_OR_UNTRUSTWORTHY_RESPONSE",
+        "process_alive": true,
+        "repository_available": true,
+        "repository_relevant": true,
+        "side_effect_state": "NONE",
+        "raw_detail_sensitive": false
+      },
+      "expected_output": {
+        "classification": "PS_MALFORMED_OR_UNTRUSTWORTHY_RESPONSE",
+        "materiality": "MATERIAL",
+        "recovery_disposition": "RETRY_BOUNDED",
+        "execution_path": [
+          "BOUNDARY_OBSERVED",
+          "BOUNDARY_CLASSIFIED",
+          "CHECKPOINTED",
+          "PUBLIC_TRANSITION_EMITTED",
+          "RECOVERY_SELECTED",
+          "RECOVERING"
+        ],
+        "checkpoint_required": true,
+        "journal_required": true,
+        "outbox_required": true,
+        "public_transition_required": true,
+        "repository_persistence_required": true,
+        "readback_required": false,
+        "redaction_required": false,
+        "supervisor_synthesized": false,
+        "taxonomy_evolution_required": false,
+        "success_terminal": false
+      },
+      "forbidden_outputs": [
+        {
+          "field": "success_terminal",
+          "value": true
+        },
+        {
+          "field": "public_transition_required",
+          "value": false
+        },
+        {
+          "field": "checkpoint_required",
+          "value": false
+        },
+        {
+          "field": "journal_required",
+          "value": false
+        },
+        {
+          "field": "outbox_required",
+          "value": false
+        }
+      ]
     },
     {
       "case_id": "EBR-030",
@@ -735,7 +2288,60 @@
         "public_transition",
         "recovery_disposition"
       ],
-      "proof_ceiling": "Taxonomy-class regression semantics only; downstream model obedience and external runtime execution remain unproven."
+      "proof_ceiling": "Taxonomy-class regression semantics only; downstream model obedience and external runtime execution remain unproven.",
+      "input_event": {
+        "observed_classification": "AA_AUTHENTICATION_REQUIRED",
+        "process_alive": true,
+        "repository_available": true,
+        "repository_relevant": true,
+        "side_effect_state": "NONE",
+        "raw_detail_sensitive": false
+      },
+      "expected_output": {
+        "classification": "AA_AUTHENTICATION_REQUIRED",
+        "materiality": "MATERIAL",
+        "recovery_disposition": "REQUEST_REQUIRED_AUTHORIZATION",
+        "execution_path": [
+          "BOUNDARY_OBSERVED",
+          "BOUNDARY_CLASSIFIED",
+          "CHECKPOINTED",
+          "PUBLIC_TRANSITION_EMITTED",
+          "RECOVERY_SELECTED",
+          "QUIESCENT_BLOCKED"
+        ],
+        "checkpoint_required": true,
+        "journal_required": true,
+        "outbox_required": true,
+        "public_transition_required": true,
+        "repository_persistence_required": true,
+        "readback_required": false,
+        "redaction_required": false,
+        "supervisor_synthesized": false,
+        "taxonomy_evolution_required": false,
+        "success_terminal": false
+      },
+      "forbidden_outputs": [
+        {
+          "field": "success_terminal",
+          "value": true
+        },
+        {
+          "field": "public_transition_required",
+          "value": false
+        },
+        {
+          "field": "checkpoint_required",
+          "value": false
+        },
+        {
+          "field": "journal_required",
+          "value": false
+        },
+        {
+          "field": "outbox_required",
+          "value": false
+        }
+      ]
     },
     {
       "case_id": "EBR-031",
@@ -759,7 +2365,60 @@
         "public_transition",
         "recovery_disposition"
       ],
-      "proof_ceiling": "Taxonomy-class regression semantics only; downstream model obedience and external runtime execution remain unproven."
+      "proof_ceiling": "Taxonomy-class regression semantics only; downstream model obedience and external runtime execution remain unproven.",
+      "input_event": {
+        "observed_classification": "AA_AUTHENTICATION_EXPIRED",
+        "process_alive": true,
+        "repository_available": true,
+        "repository_relevant": true,
+        "side_effect_state": "NONE",
+        "raw_detail_sensitive": false
+      },
+      "expected_output": {
+        "classification": "AA_AUTHENTICATION_EXPIRED",
+        "materiality": "MATERIAL",
+        "recovery_disposition": "REQUEST_REQUIRED_AUTHORIZATION",
+        "execution_path": [
+          "BOUNDARY_OBSERVED",
+          "BOUNDARY_CLASSIFIED",
+          "CHECKPOINTED",
+          "PUBLIC_TRANSITION_EMITTED",
+          "RECOVERY_SELECTED",
+          "QUIESCENT_BLOCKED"
+        ],
+        "checkpoint_required": true,
+        "journal_required": true,
+        "outbox_required": true,
+        "public_transition_required": true,
+        "repository_persistence_required": true,
+        "readback_required": false,
+        "redaction_required": false,
+        "supervisor_synthesized": false,
+        "taxonomy_evolution_required": false,
+        "success_terminal": false
+      },
+      "forbidden_outputs": [
+        {
+          "field": "success_terminal",
+          "value": true
+        },
+        {
+          "field": "public_transition_required",
+          "value": false
+        },
+        {
+          "field": "checkpoint_required",
+          "value": false
+        },
+        {
+          "field": "journal_required",
+          "value": false
+        },
+        {
+          "field": "outbox_required",
+          "value": false
+        }
+      ]
     },
     {
       "case_id": "EBR-032",
@@ -783,7 +2442,60 @@
         "public_transition",
         "recovery_disposition"
       ],
-      "proof_ceiling": "Taxonomy-class regression semantics only; downstream model obedience and external runtime execution remain unproven."
+      "proof_ceiling": "Taxonomy-class regression semantics only; downstream model obedience and external runtime execution remain unproven.",
+      "input_event": {
+        "observed_classification": "AA_APPROVAL_GATE",
+        "process_alive": true,
+        "repository_available": true,
+        "repository_relevant": true,
+        "side_effect_state": "NONE",
+        "raw_detail_sensitive": false
+      },
+      "expected_output": {
+        "classification": "AA_APPROVAL_GATE",
+        "materiality": "MATERIAL",
+        "recovery_disposition": "WAIT_ON_EXTERNAL_GATE_WITH_DURABLE_HANDOFF",
+        "execution_path": [
+          "BOUNDARY_OBSERVED",
+          "BOUNDARY_CLASSIFIED",
+          "CHECKPOINTED",
+          "PUBLIC_TRANSITION_EMITTED",
+          "RECOVERY_SELECTED",
+          "QUIESCENT_BLOCKED"
+        ],
+        "checkpoint_required": true,
+        "journal_required": true,
+        "outbox_required": true,
+        "public_transition_required": true,
+        "repository_persistence_required": true,
+        "readback_required": false,
+        "redaction_required": false,
+        "supervisor_synthesized": false,
+        "taxonomy_evolution_required": false,
+        "success_terminal": false
+      },
+      "forbidden_outputs": [
+        {
+          "field": "success_terminal",
+          "value": true
+        },
+        {
+          "field": "public_transition_required",
+          "value": false
+        },
+        {
+          "field": "checkpoint_required",
+          "value": false
+        },
+        {
+          "field": "journal_required",
+          "value": false
+        },
+        {
+          "field": "outbox_required",
+          "value": false
+        }
+      ]
     },
     {
       "case_id": "EBR-033",
@@ -807,7 +2519,60 @@
         "public_transition",
         "recovery_disposition"
       ],
-      "proof_ceiling": "Taxonomy-class regression semantics only; downstream model obedience and external runtime execution remain unproven."
+      "proof_ceiling": "Taxonomy-class regression semantics only; downstream model obedience and external runtime execution remain unproven.",
+      "input_event": {
+        "observed_classification": "AA_OWNERSHIP_OR_IDENTITY_AMBIGUOUS",
+        "process_alive": true,
+        "repository_available": true,
+        "repository_relevant": true,
+        "side_effect_state": "NONE",
+        "raw_detail_sensitive": false
+      },
+      "expected_output": {
+        "classification": "AA_OWNERSHIP_OR_IDENTITY_AMBIGUOUS",
+        "materiality": "MATERIAL",
+        "recovery_disposition": "REFRESH_AND_RECONCILE",
+        "execution_path": [
+          "BOUNDARY_OBSERVED",
+          "BOUNDARY_CLASSIFIED",
+          "CHECKPOINTED",
+          "PUBLIC_TRANSITION_EMITTED",
+          "RECOVERY_SELECTED",
+          "RECOVERING"
+        ],
+        "checkpoint_required": true,
+        "journal_required": true,
+        "outbox_required": true,
+        "public_transition_required": true,
+        "repository_persistence_required": true,
+        "readback_required": false,
+        "redaction_required": false,
+        "supervisor_synthesized": false,
+        "taxonomy_evolution_required": false,
+        "success_terminal": false
+      },
+      "forbidden_outputs": [
+        {
+          "field": "success_terminal",
+          "value": true
+        },
+        {
+          "field": "public_transition_required",
+          "value": false
+        },
+        {
+          "field": "checkpoint_required",
+          "value": false
+        },
+        {
+          "field": "journal_required",
+          "value": false
+        },
+        {
+          "field": "outbox_required",
+          "value": false
+        }
+      ]
     },
     {
       "case_id": "EBR-034",
@@ -831,7 +2596,60 @@
         "public_transition",
         "recovery_disposition"
       ],
-      "proof_ceiling": "Taxonomy-class regression semantics only; downstream model obedience and external runtime execution remain unproven."
+      "proof_ceiling": "Taxonomy-class regression semantics only; downstream model obedience and external runtime execution remain unproven.",
+      "input_event": {
+        "observed_classification": "SP_DESTRUCTIVE_MUTATION_HAZARD",
+        "process_alive": true,
+        "repository_available": true,
+        "repository_relevant": true,
+        "side_effect_state": "NONE",
+        "raw_detail_sensitive": false
+      },
+      "expected_output": {
+        "classification": "SP_DESTRUCTIVE_MUTATION_HAZARD",
+        "materiality": "CRITICAL",
+        "recovery_disposition": "ABORT_UNSAFE_MUTATION",
+        "execution_path": [
+          "BOUNDARY_OBSERVED",
+          "BOUNDARY_CLASSIFIED",
+          "CHECKPOINTED",
+          "PUBLIC_TRANSITION_EMITTED",
+          "RECOVERY_SELECTED",
+          "QUIESCENT_BLOCKED"
+        ],
+        "checkpoint_required": true,
+        "journal_required": true,
+        "outbox_required": true,
+        "public_transition_required": true,
+        "repository_persistence_required": true,
+        "readback_required": false,
+        "redaction_required": false,
+        "supervisor_synthesized": false,
+        "taxonomy_evolution_required": false,
+        "success_terminal": false
+      },
+      "forbidden_outputs": [
+        {
+          "field": "success_terminal",
+          "value": true
+        },
+        {
+          "field": "public_transition_required",
+          "value": false
+        },
+        {
+          "field": "checkpoint_required",
+          "value": false
+        },
+        {
+          "field": "journal_required",
+          "value": false
+        },
+        {
+          "field": "outbox_required",
+          "value": false
+        }
+      ]
     },
     {
       "case_id": "EBR-035",
@@ -855,7 +2673,60 @@
         "public_transition",
         "recovery_disposition"
       ],
-      "proof_ceiling": "Taxonomy-class regression semantics only; downstream model obedience and external runtime execution remain unproven."
+      "proof_ceiling": "Taxonomy-class regression semantics only; downstream model obedience and external runtime execution remain unproven.",
+      "input_event": {
+        "observed_classification": "SP_GOVERNING_POLICY_CONFLICT",
+        "process_alive": true,
+        "repository_available": true,
+        "repository_relevant": true,
+        "side_effect_state": "NONE",
+        "raw_detail_sensitive": false
+      },
+      "expected_output": {
+        "classification": "SP_GOVERNING_POLICY_CONFLICT",
+        "materiality": "MATERIAL",
+        "recovery_disposition": "HANDOFF_REQUIRED_SUCCESSOR",
+        "execution_path": [
+          "BOUNDARY_OBSERVED",
+          "BOUNDARY_CLASSIFIED",
+          "CHECKPOINTED",
+          "PUBLIC_TRANSITION_EMITTED",
+          "RECOVERY_SELECTED",
+          "QUIESCENT_BLOCKED"
+        ],
+        "checkpoint_required": true,
+        "journal_required": true,
+        "outbox_required": true,
+        "public_transition_required": true,
+        "repository_persistence_required": true,
+        "readback_required": false,
+        "redaction_required": false,
+        "supervisor_synthesized": false,
+        "taxonomy_evolution_required": false,
+        "success_terminal": false
+      },
+      "forbidden_outputs": [
+        {
+          "field": "success_terminal",
+          "value": true
+        },
+        {
+          "field": "public_transition_required",
+          "value": false
+        },
+        {
+          "field": "checkpoint_required",
+          "value": false
+        },
+        {
+          "field": "journal_required",
+          "value": false
+        },
+        {
+          "field": "outbox_required",
+          "value": false
+        }
+      ]
     },
     {
       "case_id": "EBR-036",
@@ -879,7 +2750,60 @@
         "public_transition",
         "recovery_disposition"
       ],
-      "proof_ceiling": "Taxonomy-class regression semantics only; downstream model obedience and external runtime execution remain unproven."
+      "proof_ceiling": "Taxonomy-class regression semantics only; downstream model obedience and external runtime execution remain unproven.",
+      "input_event": {
+        "observed_classification": "IS_ESSENTIAL_INPUT_MISSING",
+        "process_alive": true,
+        "repository_available": true,
+        "repository_relevant": true,
+        "side_effect_state": "NONE",
+        "raw_detail_sensitive": false
+      },
+      "expected_output": {
+        "classification": "IS_ESSENTIAL_INPUT_MISSING",
+        "materiality": "MATERIAL",
+        "recovery_disposition": "REQUEST_REQUIRED_AUTHORIZATION",
+        "execution_path": [
+          "BOUNDARY_OBSERVED",
+          "BOUNDARY_CLASSIFIED",
+          "CHECKPOINTED",
+          "PUBLIC_TRANSITION_EMITTED",
+          "RECOVERY_SELECTED",
+          "QUIESCENT_BLOCKED"
+        ],
+        "checkpoint_required": true,
+        "journal_required": true,
+        "outbox_required": true,
+        "public_transition_required": true,
+        "repository_persistence_required": true,
+        "readback_required": false,
+        "redaction_required": false,
+        "supervisor_synthesized": false,
+        "taxonomy_evolution_required": false,
+        "success_terminal": false
+      },
+      "forbidden_outputs": [
+        {
+          "field": "success_terminal",
+          "value": true
+        },
+        {
+          "field": "public_transition_required",
+          "value": false
+        },
+        {
+          "field": "checkpoint_required",
+          "value": false
+        },
+        {
+          "field": "journal_required",
+          "value": false
+        },
+        {
+          "field": "outbox_required",
+          "value": false
+        }
+      ]
     },
     {
       "case_id": "EBR-037",
@@ -903,7 +2827,60 @@
         "public_transition",
         "recovery_disposition"
       ],
-      "proof_ceiling": "Taxonomy-class regression semantics only; downstream model obedience and external runtime execution remain unproven."
+      "proof_ceiling": "Taxonomy-class regression semantics only; downstream model obedience and external runtime execution remain unproven.",
+      "input_event": {
+        "observed_classification": "IS_RESOURCE_NOT_FOUND",
+        "process_alive": true,
+        "repository_available": true,
+        "repository_relevant": true,
+        "side_effect_state": "NONE",
+        "raw_detail_sensitive": false
+      },
+      "expected_output": {
+        "classification": "IS_RESOURCE_NOT_FOUND",
+        "materiality": "MATERIAL",
+        "recovery_disposition": "REFRESH_AND_RECONCILE",
+        "execution_path": [
+          "BOUNDARY_OBSERVED",
+          "BOUNDARY_CLASSIFIED",
+          "CHECKPOINTED",
+          "PUBLIC_TRANSITION_EMITTED",
+          "RECOVERY_SELECTED",
+          "RECOVERING"
+        ],
+        "checkpoint_required": true,
+        "journal_required": true,
+        "outbox_required": true,
+        "public_transition_required": true,
+        "repository_persistence_required": true,
+        "readback_required": false,
+        "redaction_required": false,
+        "supervisor_synthesized": false,
+        "taxonomy_evolution_required": false,
+        "success_terminal": false
+      },
+      "forbidden_outputs": [
+        {
+          "field": "success_terminal",
+          "value": true
+        },
+        {
+          "field": "public_transition_required",
+          "value": false
+        },
+        {
+          "field": "checkpoint_required",
+          "value": false
+        },
+        {
+          "field": "journal_required",
+          "value": false
+        },
+        {
+          "field": "outbox_required",
+          "value": false
+        }
+      ]
     },
     {
       "case_id": "EBR-038",
@@ -927,7 +2904,60 @@
         "public_transition",
         "recovery_disposition"
       ],
-      "proof_ceiling": "Taxonomy-class regression semantics only; downstream model obedience and external runtime execution remain unproven."
+      "proof_ceiling": "Taxonomy-class regression semantics only; downstream model obedience and external runtime execution remain unproven.",
+      "input_event": {
+        "observed_classification": "IS_EVIDENCE_STALE_OR_CONTRADICTORY",
+        "process_alive": true,
+        "repository_available": true,
+        "repository_relevant": true,
+        "side_effect_state": "NONE",
+        "raw_detail_sensitive": false
+      },
+      "expected_output": {
+        "classification": "IS_EVIDENCE_STALE_OR_CONTRADICTORY",
+        "materiality": "MATERIAL",
+        "recovery_disposition": "REFRESH_AND_RECONCILE",
+        "execution_path": [
+          "BOUNDARY_OBSERVED",
+          "BOUNDARY_CLASSIFIED",
+          "CHECKPOINTED",
+          "PUBLIC_TRANSITION_EMITTED",
+          "RECOVERY_SELECTED",
+          "RECOVERING"
+        ],
+        "checkpoint_required": true,
+        "journal_required": true,
+        "outbox_required": true,
+        "public_transition_required": true,
+        "repository_persistence_required": true,
+        "readback_required": false,
+        "redaction_required": false,
+        "supervisor_synthesized": false,
+        "taxonomy_evolution_required": false,
+        "success_terminal": false
+      },
+      "forbidden_outputs": [
+        {
+          "field": "success_terminal",
+          "value": true
+        },
+        {
+          "field": "public_transition_required",
+          "value": false
+        },
+        {
+          "field": "checkpoint_required",
+          "value": false
+        },
+        {
+          "field": "journal_required",
+          "value": false
+        },
+        {
+          "field": "outbox_required",
+          "value": false
+        }
+      ]
     },
     {
       "case_id": "EBR-039",
@@ -951,7 +2981,60 @@
         "public_transition",
         "recovery_disposition"
       ],
-      "proof_ceiling": "Taxonomy-class regression semantics only; downstream model obedience and external runtime execution remain unproven."
+      "proof_ceiling": "Taxonomy-class regression semantics only; downstream model obedience and external runtime execution remain unproven.",
+      "input_event": {
+        "observed_classification": "IS_DATA_INTEGRITY_FAILURE",
+        "process_alive": true,
+        "repository_available": true,
+        "repository_relevant": true,
+        "side_effect_state": "NONE",
+        "raw_detail_sensitive": false
+      },
+      "expected_output": {
+        "classification": "IS_DATA_INTEGRITY_FAILURE",
+        "materiality": "CRITICAL",
+        "recovery_disposition": "ABORT_UNSAFE_MUTATION",
+        "execution_path": [
+          "BOUNDARY_OBSERVED",
+          "BOUNDARY_CLASSIFIED",
+          "CHECKPOINTED",
+          "PUBLIC_TRANSITION_EMITTED",
+          "RECOVERY_SELECTED",
+          "QUIESCENT_BLOCKED"
+        ],
+        "checkpoint_required": true,
+        "journal_required": true,
+        "outbox_required": true,
+        "public_transition_required": true,
+        "repository_persistence_required": true,
+        "readback_required": false,
+        "redaction_required": false,
+        "supervisor_synthesized": false,
+        "taxonomy_evolution_required": false,
+        "success_terminal": false
+      },
+      "forbidden_outputs": [
+        {
+          "field": "success_terminal",
+          "value": true
+        },
+        {
+          "field": "public_transition_required",
+          "value": false
+        },
+        {
+          "field": "checkpoint_required",
+          "value": false
+        },
+        {
+          "field": "journal_required",
+          "value": false
+        },
+        {
+          "field": "outbox_required",
+          "value": false
+        }
+      ]
     },
     {
       "case_id": "EBR-040",
@@ -975,7 +3058,60 @@
         "public_transition",
         "recovery_disposition"
       ],
-      "proof_ceiling": "Taxonomy-class regression semantics only; downstream model obedience and external runtime execution remain unproven."
+      "proof_ceiling": "Taxonomy-class regression semantics only; downstream model obedience and external runtime execution remain unproven.",
+      "input_event": {
+        "observed_classification": "MT_OPTIMISTIC_LOCK_OR_VERSION_CONFLICT",
+        "process_alive": true,
+        "repository_available": true,
+        "repository_relevant": true,
+        "side_effect_state": "NONE",
+        "raw_detail_sensitive": false
+      },
+      "expected_output": {
+        "classification": "MT_OPTIMISTIC_LOCK_OR_VERSION_CONFLICT",
+        "materiality": "MATERIAL",
+        "recovery_disposition": "REFRESH_AND_RECONCILE",
+        "execution_path": [
+          "BOUNDARY_OBSERVED",
+          "BOUNDARY_CLASSIFIED",
+          "CHECKPOINTED",
+          "PUBLIC_TRANSITION_EMITTED",
+          "RECOVERY_SELECTED",
+          "RECOVERING"
+        ],
+        "checkpoint_required": true,
+        "journal_required": true,
+        "outbox_required": true,
+        "public_transition_required": true,
+        "repository_persistence_required": true,
+        "readback_required": false,
+        "redaction_required": false,
+        "supervisor_synthesized": false,
+        "taxonomy_evolution_required": false,
+        "success_terminal": false
+      },
+      "forbidden_outputs": [
+        {
+          "field": "success_terminal",
+          "value": true
+        },
+        {
+          "field": "public_transition_required",
+          "value": false
+        },
+        {
+          "field": "checkpoint_required",
+          "value": false
+        },
+        {
+          "field": "journal_required",
+          "value": false
+        },
+        {
+          "field": "outbox_required",
+          "value": false
+        }
+      ]
     },
     {
       "case_id": "EBR-041",
@@ -999,7 +3135,64 @@
         "public_transition",
         "recovery_disposition"
       ],
-      "proof_ceiling": "Taxonomy-class regression semantics only; downstream model obedience and external runtime execution remain unproven."
+      "proof_ceiling": "Taxonomy-class regression semantics only; downstream model obedience and external runtime execution remain unproven.",
+      "input_event": {
+        "observed_classification": "MT_DUPLICATE_OR_REPLAY_RISK",
+        "process_alive": true,
+        "repository_available": true,
+        "repository_relevant": true,
+        "side_effect_state": "UNKNOWN",
+        "raw_detail_sensitive": false
+      },
+      "expected_output": {
+        "classification": "MT_DUPLICATE_OR_REPLAY_RISK",
+        "materiality": "CRITICAL",
+        "recovery_disposition": "READ_AFTER_WRITE_RECONCILE",
+        "execution_path": [
+          "BOUNDARY_OBSERVED",
+          "BOUNDARY_CLASSIFIED",
+          "CHECKPOINTED",
+          "PUBLIC_TRANSITION_EMITTED",
+          "RECOVERY_SELECTED",
+          "RECOVERING"
+        ],
+        "checkpoint_required": true,
+        "journal_required": true,
+        "outbox_required": true,
+        "public_transition_required": true,
+        "repository_persistence_required": true,
+        "readback_required": true,
+        "redaction_required": false,
+        "supervisor_synthesized": false,
+        "taxonomy_evolution_required": false,
+        "success_terminal": false
+      },
+      "forbidden_outputs": [
+        {
+          "field": "success_terminal",
+          "value": true
+        },
+        {
+          "field": "public_transition_required",
+          "value": false
+        },
+        {
+          "field": "checkpoint_required",
+          "value": false
+        },
+        {
+          "field": "journal_required",
+          "value": false
+        },
+        {
+          "field": "outbox_required",
+          "value": false
+        },
+        {
+          "field": "readback_required",
+          "value": false
+        }
+      ]
     },
     {
       "case_id": "EBR-042",
@@ -1023,7 +3216,60 @@
         "public_transition",
         "recovery_disposition"
       ],
-      "proof_ceiling": "Taxonomy-class regression semantics only; downstream model obedience and external runtime execution remain unproven."
+      "proof_ceiling": "Taxonomy-class regression semantics only; downstream model obedience and external runtime execution remain unproven.",
+      "input_event": {
+        "observed_classification": "MT_ROLLBACK_REQUIRED",
+        "process_alive": true,
+        "repository_available": true,
+        "repository_relevant": true,
+        "side_effect_state": "NONE",
+        "raw_detail_sensitive": false
+      },
+      "expected_output": {
+        "classification": "MT_ROLLBACK_REQUIRED",
+        "materiality": "CRITICAL",
+        "recovery_disposition": "ABORT_UNSAFE_MUTATION",
+        "execution_path": [
+          "BOUNDARY_OBSERVED",
+          "BOUNDARY_CLASSIFIED",
+          "CHECKPOINTED",
+          "PUBLIC_TRANSITION_EMITTED",
+          "RECOVERY_SELECTED",
+          "QUIESCENT_BLOCKED"
+        ],
+        "checkpoint_required": true,
+        "journal_required": true,
+        "outbox_required": true,
+        "public_transition_required": true,
+        "repository_persistence_required": true,
+        "readback_required": false,
+        "redaction_required": false,
+        "supervisor_synthesized": false,
+        "taxonomy_evolution_required": false,
+        "success_terminal": false
+      },
+      "forbidden_outputs": [
+        {
+          "field": "success_terminal",
+          "value": true
+        },
+        {
+          "field": "public_transition_required",
+          "value": false
+        },
+        {
+          "field": "checkpoint_required",
+          "value": false
+        },
+        {
+          "field": "journal_required",
+          "value": false
+        },
+        {
+          "field": "outbox_required",
+          "value": false
+        }
+      ]
     },
     {
       "case_id": "EBR-043",
@@ -1047,7 +3293,60 @@
         "public_transition",
         "recovery_disposition"
       ],
-      "proof_ceiling": "Taxonomy-class regression semantics only; downstream model obedience and external runtime execution remain unproven."
+      "proof_ceiling": "Taxonomy-class regression semantics only; downstream model obedience and external runtime execution remain unproven.",
+      "input_event": {
+        "observed_classification": "VP_REQUIRED_PROOF_UNAVAILABLE",
+        "process_alive": true,
+        "repository_available": true,
+        "repository_relevant": true,
+        "side_effect_state": "NONE",
+        "raw_detail_sensitive": false
+      },
+      "expected_output": {
+        "classification": "VP_REQUIRED_PROOF_UNAVAILABLE",
+        "materiality": "MATERIAL",
+        "recovery_disposition": "HANDOFF_REQUIRED_SUCCESSOR",
+        "execution_path": [
+          "BOUNDARY_OBSERVED",
+          "BOUNDARY_CLASSIFIED",
+          "CHECKPOINTED",
+          "PUBLIC_TRANSITION_EMITTED",
+          "RECOVERY_SELECTED",
+          "QUIESCENT_BLOCKED"
+        ],
+        "checkpoint_required": true,
+        "journal_required": true,
+        "outbox_required": true,
+        "public_transition_required": true,
+        "repository_persistence_required": true,
+        "readback_required": false,
+        "redaction_required": false,
+        "supervisor_synthesized": false,
+        "taxonomy_evolution_required": false,
+        "success_terminal": false
+      },
+      "forbidden_outputs": [
+        {
+          "field": "success_terminal",
+          "value": true
+        },
+        {
+          "field": "public_transition_required",
+          "value": false
+        },
+        {
+          "field": "checkpoint_required",
+          "value": false
+        },
+        {
+          "field": "journal_required",
+          "value": false
+        },
+        {
+          "field": "outbox_required",
+          "value": false
+        }
+      ]
     },
     {
       "case_id": "EBR-044",
@@ -1071,7 +3370,60 @@
         "public_transition",
         "recovery_disposition"
       ],
-      "proof_ceiling": "Taxonomy-class regression semantics only; downstream model obedience and external runtime execution remain unproven."
+      "proof_ceiling": "Taxonomy-class regression semantics only; downstream model obedience and external runtime execution remain unproven.",
+      "input_event": {
+        "observed_classification": "VP_PROOF_RELEVANCE_CHANGED",
+        "process_alive": true,
+        "repository_available": true,
+        "repository_relevant": true,
+        "side_effect_state": "NONE",
+        "raw_detail_sensitive": false
+      },
+      "expected_output": {
+        "classification": "VP_PROOF_RELEVANCE_CHANGED",
+        "materiality": "MATERIAL",
+        "recovery_disposition": "REFRESH_AND_RECONCILE",
+        "execution_path": [
+          "BOUNDARY_OBSERVED",
+          "BOUNDARY_CLASSIFIED",
+          "CHECKPOINTED",
+          "PUBLIC_TRANSITION_EMITTED",
+          "RECOVERY_SELECTED",
+          "RECOVERING"
+        ],
+        "checkpoint_required": true,
+        "journal_required": true,
+        "outbox_required": true,
+        "public_transition_required": true,
+        "repository_persistence_required": true,
+        "readback_required": false,
+        "redaction_required": false,
+        "supervisor_synthesized": false,
+        "taxonomy_evolution_required": false,
+        "success_terminal": false
+      },
+      "forbidden_outputs": [
+        {
+          "field": "success_terminal",
+          "value": true
+        },
+        {
+          "field": "public_transition_required",
+          "value": false
+        },
+        {
+          "field": "checkpoint_required",
+          "value": false
+        },
+        {
+          "field": "journal_required",
+          "value": false
+        },
+        {
+          "field": "outbox_required",
+          "value": false
+        }
+      ]
     },
     {
       "case_id": "EBR-045",
@@ -1095,7 +3447,60 @@
         "public_transition",
         "recovery_disposition"
       ],
-      "proof_ceiling": "Taxonomy-class regression semantics only; downstream model obedience and external runtime execution remain unproven."
+      "proof_ceiling": "Taxonomy-class regression semantics only; downstream model obedience and external runtime execution remain unproven.",
+      "input_event": {
+        "observed_classification": "VP_EVIDENCE_STATE_PROMOTION_ATTEMPT",
+        "process_alive": true,
+        "repository_available": true,
+        "repository_relevant": true,
+        "side_effect_state": "NONE",
+        "raw_detail_sensitive": false
+      },
+      "expected_output": {
+        "classification": "VP_EVIDENCE_STATE_PROMOTION_ATTEMPT",
+        "materiality": "MATERIAL",
+        "recovery_disposition": "RESUME_FROM_CHECKPOINT",
+        "execution_path": [
+          "BOUNDARY_OBSERVED",
+          "BOUNDARY_CLASSIFIED",
+          "CHECKPOINTED",
+          "PUBLIC_TRANSITION_EMITTED",
+          "RECOVERY_SELECTED",
+          "RECOVERING"
+        ],
+        "checkpoint_required": true,
+        "journal_required": true,
+        "outbox_required": true,
+        "public_transition_required": true,
+        "repository_persistence_required": true,
+        "readback_required": false,
+        "redaction_required": false,
+        "supervisor_synthesized": false,
+        "taxonomy_evolution_required": false,
+        "success_terminal": false
+      },
+      "forbidden_outputs": [
+        {
+          "field": "success_terminal",
+          "value": true
+        },
+        {
+          "field": "public_transition_required",
+          "value": false
+        },
+        {
+          "field": "checkpoint_required",
+          "value": false
+        },
+        {
+          "field": "journal_required",
+          "value": false
+        },
+        {
+          "field": "outbox_required",
+          "value": false
+        }
+      ]
     },
     {
       "case_id": "EBR-046",
@@ -1119,7 +3524,60 @@
         "public_transition",
         "recovery_disposition"
       ],
-      "proof_ceiling": "Taxonomy-class regression semantics only; downstream model obedience and external runtime execution remain unproven."
+      "proof_ceiling": "Taxonomy-class regression semantics only; downstream model obedience and external runtime execution remain unproven.",
+      "input_event": {
+        "observed_classification": "CI_MERGE_CONFLICT",
+        "process_alive": true,
+        "repository_available": true,
+        "repository_relevant": true,
+        "side_effect_state": "NONE",
+        "raw_detail_sensitive": false
+      },
+      "expected_output": {
+        "classification": "CI_MERGE_CONFLICT",
+        "materiality": "MATERIAL",
+        "recovery_disposition": "REFRESH_AND_RECONCILE",
+        "execution_path": [
+          "BOUNDARY_OBSERVED",
+          "BOUNDARY_CLASSIFIED",
+          "CHECKPOINTED",
+          "PUBLIC_TRANSITION_EMITTED",
+          "RECOVERY_SELECTED",
+          "RECOVERING"
+        ],
+        "checkpoint_required": true,
+        "journal_required": true,
+        "outbox_required": true,
+        "public_transition_required": true,
+        "repository_persistence_required": true,
+        "readback_required": false,
+        "redaction_required": false,
+        "supervisor_synthesized": false,
+        "taxonomy_evolution_required": false,
+        "success_terminal": false
+      },
+      "forbidden_outputs": [
+        {
+          "field": "success_terminal",
+          "value": true
+        },
+        {
+          "field": "public_transition_required",
+          "value": false
+        },
+        {
+          "field": "checkpoint_required",
+          "value": false
+        },
+        {
+          "field": "journal_required",
+          "value": false
+        },
+        {
+          "field": "outbox_required",
+          "value": false
+        }
+      ]
     },
     {
       "case_id": "EBR-047",
@@ -1143,7 +3601,60 @@
         "public_transition",
         "recovery_disposition"
       ],
-      "proof_ceiling": "Taxonomy-class regression semantics only; downstream model obedience and external runtime execution remain unproven."
+      "proof_ceiling": "Taxonomy-class regression semantics only; downstream model obedience and external runtime execution remain unproven.",
+      "input_event": {
+        "observed_classification": "CI_SHARED_RESOURCE_CONTENTION",
+        "process_alive": true,
+        "repository_available": true,
+        "repository_relevant": true,
+        "side_effect_state": "NONE",
+        "raw_detail_sensitive": false
+      },
+      "expected_output": {
+        "classification": "CI_SHARED_RESOURCE_CONTENTION",
+        "materiality": "MATERIAL",
+        "recovery_disposition": "SERIALIZE_AND_CONTINUE",
+        "execution_path": [
+          "BOUNDARY_OBSERVED",
+          "BOUNDARY_CLASSIFIED",
+          "CHECKPOINTED",
+          "PUBLIC_TRANSITION_EMITTED",
+          "RECOVERY_SELECTED",
+          "RECOVERING"
+        ],
+        "checkpoint_required": true,
+        "journal_required": true,
+        "outbox_required": true,
+        "public_transition_required": true,
+        "repository_persistence_required": true,
+        "readback_required": false,
+        "redaction_required": false,
+        "supervisor_synthesized": false,
+        "taxonomy_evolution_required": false,
+        "success_terminal": false
+      },
+      "forbidden_outputs": [
+        {
+          "field": "success_terminal",
+          "value": true
+        },
+        {
+          "field": "public_transition_required",
+          "value": false
+        },
+        {
+          "field": "checkpoint_required",
+          "value": false
+        },
+        {
+          "field": "journal_required",
+          "value": false
+        },
+        {
+          "field": "outbox_required",
+          "value": false
+        }
+      ]
     },
     {
       "case_id": "EBR-048",
@@ -1167,7 +3678,60 @@
         "public_transition",
         "recovery_disposition"
       ],
-      "proof_ceiling": "Taxonomy-class regression semantics only; downstream model obedience and external runtime execution remain unproven."
+      "proof_ceiling": "Taxonomy-class regression semantics only; downstream model obedience and external runtime execution remain unproven.",
+      "input_event": {
+        "observed_classification": "CI_DEPENDENCY_NOT_INTEGRATED",
+        "process_alive": true,
+        "repository_available": true,
+        "repository_relevant": true,
+        "side_effect_state": "NONE",
+        "raw_detail_sensitive": false
+      },
+      "expected_output": {
+        "classification": "CI_DEPENDENCY_NOT_INTEGRATED",
+        "materiality": "MATERIAL",
+        "recovery_disposition": "WAIT_ON_EXTERNAL_GATE_WITH_DURABLE_HANDOFF",
+        "execution_path": [
+          "BOUNDARY_OBSERVED",
+          "BOUNDARY_CLASSIFIED",
+          "CHECKPOINTED",
+          "PUBLIC_TRANSITION_EMITTED",
+          "RECOVERY_SELECTED",
+          "QUIESCENT_BLOCKED"
+        ],
+        "checkpoint_required": true,
+        "journal_required": true,
+        "outbox_required": true,
+        "public_transition_required": true,
+        "repository_persistence_required": true,
+        "readback_required": false,
+        "redaction_required": false,
+        "supervisor_synthesized": false,
+        "taxonomy_evolution_required": false,
+        "success_terminal": false
+      },
+      "forbidden_outputs": [
+        {
+          "field": "success_terminal",
+          "value": true
+        },
+        {
+          "field": "public_transition_required",
+          "value": false
+        },
+        {
+          "field": "checkpoint_required",
+          "value": false
+        },
+        {
+          "field": "journal_required",
+          "value": false
+        },
+        {
+          "field": "outbox_required",
+          "value": false
+        }
+      ]
     },
     {
       "case_id": "EBR-049",
@@ -1191,7 +3755,60 @@
         "public_transition",
         "recovery_disposition"
       ],
-      "proof_ceiling": "Taxonomy-class regression semantics only; downstream model obedience and external runtime execution remain unproven."
+      "proof_ceiling": "Taxonomy-class regression semantics only; downstream model obedience and external runtime execution remain unproven.",
+      "input_event": {
+        "observed_classification": "OR_CONTEXT_OR_MEMORY_CEILING",
+        "process_alive": true,
+        "repository_available": true,
+        "repository_relevant": true,
+        "side_effect_state": "NONE",
+        "raw_detail_sensitive": false
+      },
+      "expected_output": {
+        "classification": "OR_CONTEXT_OR_MEMORY_CEILING",
+        "materiality": "MATERIAL",
+        "recovery_disposition": "RESUME_FROM_CHECKPOINT",
+        "execution_path": [
+          "BOUNDARY_OBSERVED",
+          "BOUNDARY_CLASSIFIED",
+          "CHECKPOINTED",
+          "PUBLIC_TRANSITION_EMITTED",
+          "RECOVERY_SELECTED",
+          "RECOVERING"
+        ],
+        "checkpoint_required": true,
+        "journal_required": true,
+        "outbox_required": true,
+        "public_transition_required": true,
+        "repository_persistence_required": true,
+        "readback_required": false,
+        "redaction_required": false,
+        "supervisor_synthesized": false,
+        "taxonomy_evolution_required": false,
+        "success_terminal": false
+      },
+      "forbidden_outputs": [
+        {
+          "field": "success_terminal",
+          "value": true
+        },
+        {
+          "field": "public_transition_required",
+          "value": false
+        },
+        {
+          "field": "checkpoint_required",
+          "value": false
+        },
+        {
+          "field": "journal_required",
+          "value": false
+        },
+        {
+          "field": "outbox_required",
+          "value": false
+        }
+      ]
     },
     {
       "case_id": "EBR-050",
@@ -1215,7 +3832,60 @@
         "public_transition",
         "recovery_disposition"
       ],
-      "proof_ceiling": "Taxonomy-class regression semantics only; downstream model obedience and external runtime execution remain unproven."
+      "proof_ceiling": "Taxonomy-class regression semantics only; downstream model obedience and external runtime execution remain unproven.",
+      "input_event": {
+        "observed_classification": "OR_PROCESS_OR_WORKER_CEILING",
+        "process_alive": true,
+        "repository_available": true,
+        "repository_relevant": true,
+        "side_effect_state": "NONE",
+        "raw_detail_sensitive": false
+      },
+      "expected_output": {
+        "classification": "OR_PROCESS_OR_WORKER_CEILING",
+        "materiality": "MATERIAL",
+        "recovery_disposition": "SERIALIZE_AND_CONTINUE",
+        "execution_path": [
+          "BOUNDARY_OBSERVED",
+          "BOUNDARY_CLASSIFIED",
+          "CHECKPOINTED",
+          "PUBLIC_TRANSITION_EMITTED",
+          "RECOVERY_SELECTED",
+          "RECOVERING"
+        ],
+        "checkpoint_required": true,
+        "journal_required": true,
+        "outbox_required": true,
+        "public_transition_required": true,
+        "repository_persistence_required": true,
+        "readback_required": false,
+        "redaction_required": false,
+        "supervisor_synthesized": false,
+        "taxonomy_evolution_required": false,
+        "success_terminal": false
+      },
+      "forbidden_outputs": [
+        {
+          "field": "success_terminal",
+          "value": true
+        },
+        {
+          "field": "public_transition_required",
+          "value": false
+        },
+        {
+          "field": "checkpoint_required",
+          "value": false
+        },
+        {
+          "field": "journal_required",
+          "value": false
+        },
+        {
+          "field": "outbox_required",
+          "value": false
+        }
+      ]
     },
     {
       "case_id": "EBR-051",
@@ -1239,7 +3909,60 @@
         "public_transition",
         "recovery_disposition"
       ],
-      "proof_ceiling": "Taxonomy-class regression semantics only; downstream model obedience and external runtime execution remain unproven."
+      "proof_ceiling": "Taxonomy-class regression semantics only; downstream model obedience and external runtime execution remain unproven.",
+      "input_event": {
+        "observed_classification": "DE_REQUIRED_ARTIFACT_OR_SERVICE_MISSING",
+        "process_alive": true,
+        "repository_available": true,
+        "repository_relevant": true,
+        "side_effect_state": "NONE",
+        "raw_detail_sensitive": false
+      },
+      "expected_output": {
+        "classification": "DE_REQUIRED_ARTIFACT_OR_SERVICE_MISSING",
+        "materiality": "MATERIAL",
+        "recovery_disposition": "HANDOFF_REQUIRED_SUCCESSOR",
+        "execution_path": [
+          "BOUNDARY_OBSERVED",
+          "BOUNDARY_CLASSIFIED",
+          "CHECKPOINTED",
+          "PUBLIC_TRANSITION_EMITTED",
+          "RECOVERY_SELECTED",
+          "QUIESCENT_BLOCKED"
+        ],
+        "checkpoint_required": true,
+        "journal_required": true,
+        "outbox_required": true,
+        "public_transition_required": true,
+        "repository_persistence_required": true,
+        "readback_required": false,
+        "redaction_required": false,
+        "supervisor_synthesized": false,
+        "taxonomy_evolution_required": false,
+        "success_terminal": false
+      },
+      "forbidden_outputs": [
+        {
+          "field": "success_terminal",
+          "value": true
+        },
+        {
+          "field": "public_transition_required",
+          "value": false
+        },
+        {
+          "field": "checkpoint_required",
+          "value": false
+        },
+        {
+          "field": "journal_required",
+          "value": false
+        },
+        {
+          "field": "outbox_required",
+          "value": false
+        }
+      ]
     },
     {
       "case_id": "EBR-052",
@@ -1263,7 +3986,60 @@
         "public_transition",
         "recovery_disposition"
       ],
-      "proof_ceiling": "Taxonomy-class regression semantics only; downstream model obedience and external runtime execution remain unproven."
+      "proof_ceiling": "Taxonomy-class regression semantics only; downstream model obedience and external runtime execution remain unproven.",
+      "input_event": {
+        "observed_classification": "DE_EXTERNAL_HUMAN_ACTION_REQUIRED",
+        "process_alive": true,
+        "repository_available": true,
+        "repository_relevant": true,
+        "side_effect_state": "NONE",
+        "raw_detail_sensitive": false
+      },
+      "expected_output": {
+        "classification": "DE_EXTERNAL_HUMAN_ACTION_REQUIRED",
+        "materiality": "MATERIAL",
+        "recovery_disposition": "WAIT_ON_EXTERNAL_GATE_WITH_DURABLE_HANDOFF",
+        "execution_path": [
+          "BOUNDARY_OBSERVED",
+          "BOUNDARY_CLASSIFIED",
+          "CHECKPOINTED",
+          "PUBLIC_TRANSITION_EMITTED",
+          "RECOVERY_SELECTED",
+          "QUIESCENT_BLOCKED"
+        ],
+        "checkpoint_required": true,
+        "journal_required": true,
+        "outbox_required": true,
+        "public_transition_required": true,
+        "repository_persistence_required": true,
+        "readback_required": false,
+        "redaction_required": false,
+        "supervisor_synthesized": false,
+        "taxonomy_evolution_required": false,
+        "success_terminal": false
+      },
+      "forbidden_outputs": [
+        {
+          "field": "success_terminal",
+          "value": true
+        },
+        {
+          "field": "public_transition_required",
+          "value": false
+        },
+        {
+          "field": "checkpoint_required",
+          "value": false
+        },
+        {
+          "field": "journal_required",
+          "value": false
+        },
+        {
+          "field": "outbox_required",
+          "value": false
+        }
+      ]
     },
     {
       "case_id": "EBR-053",
@@ -1287,7 +4063,60 @@
         "public_transition",
         "recovery_disposition"
       ],
-      "proof_ceiling": "Taxonomy-class regression semantics only; downstream model obedience and external runtime execution remain unproven."
+      "proof_ceiling": "Taxonomy-class regression semantics only; downstream model obedience and external runtime execution remain unproven.",
+      "input_event": {
+        "observed_classification": "DE_EXTERNAL_SYSTEM_NOT_READY",
+        "process_alive": true,
+        "repository_available": true,
+        "repository_relevant": true,
+        "side_effect_state": "NONE",
+        "raw_detail_sensitive": false
+      },
+      "expected_output": {
+        "classification": "DE_EXTERNAL_SYSTEM_NOT_READY",
+        "materiality": "MATERIAL",
+        "recovery_disposition": "WAIT_ON_EXTERNAL_GATE_WITH_DURABLE_HANDOFF",
+        "execution_path": [
+          "BOUNDARY_OBSERVED",
+          "BOUNDARY_CLASSIFIED",
+          "CHECKPOINTED",
+          "PUBLIC_TRANSITION_EMITTED",
+          "RECOVERY_SELECTED",
+          "QUIESCENT_BLOCKED"
+        ],
+        "checkpoint_required": true,
+        "journal_required": true,
+        "outbox_required": true,
+        "public_transition_required": true,
+        "repository_persistence_required": true,
+        "readback_required": false,
+        "redaction_required": false,
+        "supervisor_synthesized": false,
+        "taxonomy_evolution_required": false,
+        "success_terminal": false
+      },
+      "forbidden_outputs": [
+        {
+          "field": "success_terminal",
+          "value": true
+        },
+        {
+          "field": "public_transition_required",
+          "value": false
+        },
+        {
+          "field": "checkpoint_required",
+          "value": false
+        },
+        {
+          "field": "journal_required",
+          "value": false
+        },
+        {
+          "field": "outbox_required",
+          "value": false
+        }
+      ]
     },
     {
       "case_id": "EBR-054",
@@ -1311,7 +4140,60 @@
         "public_transition",
         "recovery_disposition"
       ],
-      "proof_ceiling": "Taxonomy-class regression semantics only; downstream model obedience and external runtime execution remain unproven."
+      "proof_ceiling": "Taxonomy-class regression semantics only; downstream model obedience and external runtime execution remain unproven.",
+      "input_event": {
+        "observed_classification": "UC_SCOPE_CHANGED",
+        "process_alive": true,
+        "repository_available": true,
+        "repository_relevant": true,
+        "side_effect_state": "NONE",
+        "raw_detail_sensitive": false
+      },
+      "expected_output": {
+        "classification": "UC_SCOPE_CHANGED",
+        "materiality": "MATERIAL",
+        "recovery_disposition": "REPLAN_WITHIN_SCOPE",
+        "execution_path": [
+          "BOUNDARY_OBSERVED",
+          "BOUNDARY_CLASSIFIED",
+          "CHECKPOINTED",
+          "PUBLIC_TRANSITION_EMITTED",
+          "RECOVERY_SELECTED",
+          "RECOVERING"
+        ],
+        "checkpoint_required": true,
+        "journal_required": true,
+        "outbox_required": true,
+        "public_transition_required": true,
+        "repository_persistence_required": true,
+        "readback_required": false,
+        "redaction_required": false,
+        "supervisor_synthesized": false,
+        "taxonomy_evolution_required": false,
+        "success_terminal": false
+      },
+      "forbidden_outputs": [
+        {
+          "field": "success_terminal",
+          "value": true
+        },
+        {
+          "field": "public_transition_required",
+          "value": false
+        },
+        {
+          "field": "checkpoint_required",
+          "value": false
+        },
+        {
+          "field": "journal_required",
+          "value": false
+        },
+        {
+          "field": "outbox_required",
+          "value": false
+        }
+      ]
     },
     {
       "case_id": "EBR-055",
@@ -1335,7 +4217,60 @@
         "public_transition",
         "recovery_disposition"
       ],
-      "proof_ceiling": "Taxonomy-class regression semantics only; downstream model obedience and external runtime execution remain unproven."
+      "proof_ceiling": "Taxonomy-class regression semantics only; downstream model obedience and external runtime execution remain unproven.",
+      "input_event": {
+        "observed_classification": "UC_CANCELLED",
+        "process_alive": true,
+        "repository_available": true,
+        "repository_relevant": true,
+        "side_effect_state": "NONE",
+        "raw_detail_sensitive": false
+      },
+      "expected_output": {
+        "classification": "UC_CANCELLED",
+        "materiality": "MATERIAL",
+        "recovery_disposition": "CONTINUE_UNCHANGED",
+        "execution_path": [
+          "BOUNDARY_OBSERVED",
+          "BOUNDARY_CLASSIFIED",
+          "CHECKPOINTED",
+          "PUBLIC_TRANSITION_EMITTED",
+          "RECOVERY_SELECTED",
+          "RECOVERING"
+        ],
+        "checkpoint_required": true,
+        "journal_required": true,
+        "outbox_required": true,
+        "public_transition_required": true,
+        "repository_persistence_required": true,
+        "readback_required": false,
+        "redaction_required": false,
+        "supervisor_synthesized": false,
+        "taxonomy_evolution_required": false,
+        "success_terminal": false
+      },
+      "forbidden_outputs": [
+        {
+          "field": "success_terminal",
+          "value": true
+        },
+        {
+          "field": "public_transition_required",
+          "value": false
+        },
+        {
+          "field": "checkpoint_required",
+          "value": false
+        },
+        {
+          "field": "journal_required",
+          "value": false
+        },
+        {
+          "field": "outbox_required",
+          "value": false
+        }
+      ]
     },
     {
       "case_id": "EBR-056",
@@ -1359,7 +4294,59 @@
         "public_transition",
         "recovery_disposition"
       ],
-      "proof_ceiling": "Taxonomy-class regression semantics only; downstream model obedience and external runtime execution remain unproven."
+      "proof_ceiling": "Taxonomy-class regression semantics only; downstream model obedience and external runtime execution remain unproven.",
+      "input_event": {
+        "observed_classification": "HT_PROCESS_CRASH",
+        "process_alive": false,
+        "repository_available": true,
+        "repository_relevant": true,
+        "side_effect_state": "NONE",
+        "raw_detail_sensitive": false
+      },
+      "expected_output": {
+        "classification": "HT_PROCESS_CRASH",
+        "materiality": "CRITICAL",
+        "recovery_disposition": "SYNTHESIZE_TERMINATION",
+        "execution_path": [
+          "HARD_TERMINATED_SYNTHETIC"
+        ],
+        "checkpoint_required": true,
+        "journal_required": true,
+        "outbox_required": true,
+        "public_transition_required": true,
+        "repository_persistence_required": true,
+        "readback_required": false,
+        "redaction_required": false,
+        "supervisor_synthesized": true,
+        "taxonomy_evolution_required": false,
+        "success_terminal": false
+      },
+      "forbidden_outputs": [
+        {
+          "field": "success_terminal",
+          "value": true
+        },
+        {
+          "field": "public_transition_required",
+          "value": false
+        },
+        {
+          "field": "checkpoint_required",
+          "value": false
+        },
+        {
+          "field": "journal_required",
+          "value": false
+        },
+        {
+          "field": "outbox_required",
+          "value": false
+        },
+        {
+          "field": "supervisor_synthesized",
+          "value": false
+        }
+      ]
     },
     {
       "case_id": "EBR-057",
@@ -1383,7 +4370,59 @@
         "public_transition",
         "recovery_disposition"
       ],
-      "proof_ceiling": "Taxonomy-class regression semantics only; downstream model obedience and external runtime execution remain unproven."
+      "proof_ceiling": "Taxonomy-class regression semantics only; downstream model obedience and external runtime execution remain unproven.",
+      "input_event": {
+        "observed_classification": "HT_LOST_EXECUTION_LEASE",
+        "process_alive": false,
+        "repository_available": true,
+        "repository_relevant": true,
+        "side_effect_state": "NONE",
+        "raw_detail_sensitive": false
+      },
+      "expected_output": {
+        "classification": "HT_LOST_EXECUTION_LEASE",
+        "materiality": "CRITICAL",
+        "recovery_disposition": "SYNTHESIZE_TERMINATION",
+        "execution_path": [
+          "HARD_TERMINATED_SYNTHETIC"
+        ],
+        "checkpoint_required": true,
+        "journal_required": true,
+        "outbox_required": true,
+        "public_transition_required": true,
+        "repository_persistence_required": true,
+        "readback_required": false,
+        "redaction_required": false,
+        "supervisor_synthesized": true,
+        "taxonomy_evolution_required": false,
+        "success_terminal": false
+      },
+      "forbidden_outputs": [
+        {
+          "field": "success_terminal",
+          "value": true
+        },
+        {
+          "field": "public_transition_required",
+          "value": false
+        },
+        {
+          "field": "checkpoint_required",
+          "value": false
+        },
+        {
+          "field": "journal_required",
+          "value": false
+        },
+        {
+          "field": "outbox_required",
+          "value": false
+        },
+        {
+          "field": "supervisor_synthesized",
+          "value": false
+        }
+      ]
     },
     {
       "case_id": "EBR-058",
@@ -1407,7 +4446,64 @@
         "public_transition",
         "taxonomy_evolution_candidate"
       ],
-      "proof_ceiling": "Fallback classification and retained-regression semantics only; downstream model obedience and host-runtime execution remain unproven."
+      "proof_ceiling": "Fallback classification and retained-regression semantics only; downstream model obedience and host-runtime execution remain unproven.",
+      "input_event": {
+        "observed_classification": "FUTURE_UNCLASSIFIED_SIGNAL",
+        "process_alive": true,
+        "repository_available": true,
+        "repository_relevant": true,
+        "side_effect_state": "NONE",
+        "raw_detail_sensitive": false
+      },
+      "expected_output": {
+        "classification": "UE_UNCLASSIFIED_MATERIAL_BOUNDARY",
+        "materiality": "MATERIAL",
+        "recovery_disposition": "REPLAN_WITHIN_SCOPE",
+        "execution_path": [
+          "BOUNDARY_OBSERVED",
+          "BOUNDARY_CLASSIFIED",
+          "CHECKPOINTED",
+          "PUBLIC_TRANSITION_EMITTED",
+          "RECOVERY_SELECTED",
+          "RECOVERING"
+        ],
+        "checkpoint_required": true,
+        "journal_required": true,
+        "outbox_required": true,
+        "public_transition_required": true,
+        "repository_persistence_required": true,
+        "readback_required": false,
+        "redaction_required": false,
+        "supervisor_synthesized": false,
+        "taxonomy_evolution_required": true,
+        "success_terminal": false
+      },
+      "forbidden_outputs": [
+        {
+          "field": "success_terminal",
+          "value": true
+        },
+        {
+          "field": "public_transition_required",
+          "value": false
+        },
+        {
+          "field": "checkpoint_required",
+          "value": false
+        },
+        {
+          "field": "journal_required",
+          "value": false
+        },
+        {
+          "field": "outbox_required",
+          "value": false
+        },
+        {
+          "field": "taxonomy_evolution_required",
+          "value": false
+        }
+      ]
     }
   ],
   "proof_ceiling": "Static contract/mutation floor for architecture, taxonomy, inheritance, and expected transitions. It does not itself execute downstream agents or an external host supervisor."

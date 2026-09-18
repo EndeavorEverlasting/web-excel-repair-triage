@@ -7,6 +7,11 @@ import sys
 import unittest
 from pathlib import Path
 
+from scripts.execution_boundary_engine import (
+    BoundaryEngineError,
+    assert_case,
+    evaluate_boundary,
+)
 from scripts.validate_execution_boundary_enforcement import (
     ExecutionBoundaryContractError,
     validate_documents,
@@ -188,6 +193,70 @@ class ExecutionBoundaryEnforcementTests(unittest.TestCase):
         del mutated["dual_lane_policy"]
         with self.assertRaisesRegex(ExecutionBoundaryContractError, "dual-lane"):
             self.validate(architecture=mutated)
+
+
+    def test_executable_matrix_all_cases_match_expected_outputs(self) -> None:
+        for case in self.matrix["cases"]:
+            with self.subTest(case_id=case["case_id"]):
+                actual = assert_case(case, self.architecture, self.taxonomy)
+                self.assertEqual(actual, case["expected_output"])
+
+    def test_recovery_behavior_drift_breaks_executable_fixture(self) -> None:
+        case = next(
+            case for case in self.matrix["cases"]
+            if case["classification"] == "EC_SEMANTIC_ABANDONMENT"
+        )
+        mutated = copy.deepcopy(self.taxonomy)
+        item = next(
+            item
+            for family in mutated["families"]
+            for item in family["classes"]
+            if item["id"] == "EC_SEMANTIC_ABANDONMENT"
+        )
+        item["default_recovery"] = "CONTINUE_UNCHANGED"
+        actual = evaluate_boundary(case["input_event"], self.architecture, mutated)
+        self.assertNotEqual(actual, case["expected_output"])
+
+    def test_transition_behavior_drift_fails_engine(self) -> None:
+        case = next(
+            case for case in self.matrix["cases"]
+            if case["classification"] == "EC_SEMANTIC_ABANDONMENT"
+        )
+        mutated = copy.deepcopy(self.architecture)
+        mutated["state_machine"]["allowed_transitions"]["BOUNDARY_OBSERVED"] = []
+        with self.assertRaisesRegex(BoundaryEngineError, "transition unavailable"):
+            evaluate_boundary(case["input_event"], mutated, self.taxonomy)
+
+    def test_journal_behavior_drift_breaks_executable_fixture(self) -> None:
+        case = next(
+            case for case in self.matrix["cases"]
+            if case["classification"] == "EC_SEMANTIC_ABANDONMENT"
+        )
+        mutated = copy.deepcopy(self.architecture)
+        mutated["architecture_layers"] = [
+            layer for layer in mutated["architecture_layers"]
+            if layer["id"] != "append_only_journal"
+        ]
+        actual = evaluate_boundary(case["input_event"], mutated, self.taxonomy)
+        self.assertNotEqual(actual, case["expected_output"])
+        self.assertFalse(actual["journal_required"])
+
+    def test_supervisor_behavior_drift_breaks_hard_termination_fixture(self) -> None:
+        case = next(
+            case for case in self.matrix["cases"]
+            if case["classification"] == "HT_HOST_FORCED_TERMINATION"
+        )
+        mutated = copy.deepcopy(self.architecture)
+        del mutated["external_supervisor_contract"]
+        actual = evaluate_boundary(case["input_event"], mutated, self.taxonomy)
+        self.assertNotEqual(actual, case["expected_output"])
+        self.assertFalse(actual["supervisor_synthesized"])
+
+    def test_unknown_detector_signal_uses_fail_safe_taxonomy_class(self) -> None:
+        case = next(case for case in self.matrix["cases"] if case["case_id"] == "EBR-058")
+        actual = evaluate_boundary(case["input_event"], self.architecture, self.taxonomy)
+        self.assertEqual(actual["classification"], "UE_UNCLASSIFIED_MATERIAL_BOUNDARY")
+        self.assertTrue(actual["taxonomy_evolution_required"])
 
 
 if __name__ == "__main__":
