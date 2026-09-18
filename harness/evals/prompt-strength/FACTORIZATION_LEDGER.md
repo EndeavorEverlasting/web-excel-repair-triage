@@ -1,31 +1,45 @@
-# Prompt Strength Factoring Ledger
+# Prompt Strength Closeout Factoring Ledger
 
 ## Topics found
 
-- **Floor / cleanup:** restore semantic strength after effective-representation drift; no bulk prompt rewrite.
-- **Harness spine:** shared prompt-strength semantic dimensions and proof boundaries.
-- **Agent harness:** parallel-dispatch ladder, execution tiering, runtime-tool truthfulness, isolated writers.
-- **Application logic:** none owned by this Phase-0 lane; prompts must not become the sole implementation of domain behavior.
-- **Integration seam:** compiler/effective/detail/copy representations and profile overlays.
-- **Validation:** adversarial negative/positive controls, local-proof continuity, test-floor registration.
-- **Docs/reporting:** durable recovery sprint map, lane handoffs, reconciliation receipts.
-- **Runtime proof:** deferred to compute-authority/observed evaluation after repository semantics are integrated.
-- **Research/design:** refreshed upstream mechanics extraction with provenance.
-- **Blocked/unsafe:** shared-policy/compiler convergence before #533/#535/#536 reconciliation; claiming observed parallelism without real launches.
+- **Floor / cleanup:** #537 stale dependency assumptions; PSA-029 false dimension credit; remove superseded waiver/history edits after current-main reconciliation.
+- **Harness spine:** #542 execution-boundary contract/taxonomy/state machine; prompt-strength contract; local required-check and regression-safety floors.
+- **Agent harness:** #543 effective-P07 local-proof obligation; repository-action receipts; parallel-dispatch manifest; P67 external-agent adapter.
+- **Conventional application logic:** failure-observatory sentinel/state/capsule behavior under #542; generated Prompt Kit remains builder-owned product artifact.
+- **Integration seam:** #542 sublane convergence; #537 test-floor/history convergence; generated source->site parity; release branch refresh.
+- **Validation:** unresolved #542 review findings, #543 stale generated-site failures, #537 semantic matrix failure, line-ending mutation fixture, exact-candidate hygiene.
+- **Docs/reporting:** canonical closeout plan, launch order, lane handoffs, machine dispatch manifest, exact closeout receipts.
+- **Runtime proof:** Pages deployment and P67 external-agent pilot.
+- **Release/PR hygiene:** #543 draft->ready->merge; #542 merge; #537 merge; #538 refresh/merge/tag.
+- **Research/design:** line-ending compatibility inventory before selecting explicit eol exceptions.
+- **Blocked:** local autonomous dispatch in this ChatGPT runtime; external-agent effectiveness where no provider adapter/credentials are available.
 
 ## Harness factoring
 
-- **Run context:** exact default/feature heads and proof-relevance inputs.
-- **Artifact registry:** prompt-strength contract, adversarial matrix, residual map, reconciliation receipt, Phase-0 receipt.
-- **Schemas/contracts:** `prompt-strength/v1`, existing parallel-dispatch/regression-safety/execution-tiering contracts.
-- **Validators:** `scripts/validate_prompt_strength.py`; later local required-check registration.
-- **Fixtures:** successor Lane 02 owns executable matrix fixtures.
-- **Workflows:** hosted CI remains adapter-only; do not create a hosted-only semantic owner.
-- **Skills/resources:** upstream donors remain reference sources; no direct authority transfer.
-- **Capabilities:** local repository validation and exact OpenCode CLI shape are evidenced; current runtime agent dispatch is not.
-- **Triggers/routing:** graph width/collision/authority conditions route work to the manifest lanes and strategic convergence owner.
-- **MCP/tools/hooks:** existing provider/connector evidence is inspection/proof support; local hooks remain independent repository controls.
+- **Run context:** refreshed main, exact PR heads, merge-base, candidate head, proof-relevance fingerprint.
+- **Artifact registry:** repository-action receipts, prompt-strength matrix/receipts, boundary matrix, Pages promotion receipts, P67 run bundles.
+- **Schemas/contracts:** prompt-strength, execution-boundary enforcement/taxonomy, repository-local-proof continuity, regression safety, P67 adapter contract.
+- **Validators:** prompt-strength validator; execution-boundary validator; privacy-observatory validator; prompt-regression-safety validator; local required-check runner.
+- **Fixtures:** #537 mutation cases, #542 boundary cases/privacy canaries, CRLF negative/positive fixture, P67 gold fixtures.
+- **Workflows:** hosted workflows remain adapters/proof surfaces. Pages and Operant workflows retain deployment/release authority.
+- **Skills/capabilities/triggers:** P67 + skill-evaluation owns observed model evaluation; P13/P94/P79 remain conceptual owners for recurring defects/regression/identity. No new skill/capability identity is needed for CRLF; it is repository hygiene policy.
+- **Routing:** Wave-A lanes route by current PR/file owner; convergence lanes serialize shared files.
+- **Hooks:** existing pre-commit/pre-push remain; CRLF lane strengthens repository policy without duplicating those hooks.
+- **MCP/tools:** provider tools may inspect/mutate PRs; they do not substitute for local workstation receipts.
 
 ## Application logic factoring
 
-No product/domain service, state-machine, persistence, UI, launcher, job, or deployment behavior is implemented in this Phase-0 lane. Later compiler/product wiring remains bounded by the existing Prompt Kit builders and runtime contracts; deterministic product behavior must stay in code/contracts rather than prompt prose alone.
+- **Domain services/state machines:** #542 execution-boundary engine and failure-observatory state handling.
+- **Adapters:** #543 compiler/local-action adapter; P67 external-agent adapter; Pages/Operant provider adapters.
+- **Persistence:** failure-observatory local state/secret and P67 ignored run evidence.
+- **UI:** no direct manual UI mutation in closeout lanes; generated Prompt Kit UI comes only from builder inputs.
+- **Launchers/jobs:** repository-action runner and P67 pilot runner are canonical launchers.
+- **Deployment:** Pages workflow only; release workflow only.
+- **Ownership law:** prompts may demand behavior but deterministic behavior remains in code/contracts/tests.
+
+## Collision summary
+
+- #542 and #537 both touch `harness/test-floor.v1.json`: #542 integrates first; #537 reconciles afterward.
+- #542 and later source-owning lanes can each change generated Prompt Kit HTML: never merge generated diffs without rebuilding from the newest source floor.
+- #543 owns `harness/repository-actions.v1.json`; CRLF lane must not modify it.
+- P67 shared registry is not part of this closeout until its canonical evaluation plan permits Sprint 3.
