@@ -70,6 +70,8 @@ Outputs/**
 !Outputs/admin-ready/.gitkeep
 !Outputs/cf_dict_deprecated.json
 !Outputs/dv_spec_deprecated.json
+!Outputs/prompt-parallel-dispatch/
+!Outputs/prompt-parallel-dispatch/manifest.json
 
 # Legacy location (root-level patch file)
 /*_patched.xlsx
