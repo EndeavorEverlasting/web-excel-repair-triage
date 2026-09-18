@@ -12,6 +12,8 @@ from scripts import validate_prompt_runtime_compliance_receipt as validator
 
 ROOT = Path(__file__).resolve().parents[1]
 POSITIVE = ROOT / "harness" / "evals" / "runtime-compliance" / "contract-fixtures" / "receipt.positive.v1.json"
+NEGATIVE_PENDING = ROOT / "harness" / "evals" / "runtime-compliance" / "contract-fixtures" / "receipt.negative.pending-publication.v1.json"
+NEGATIVE_READBACK = ROOT / "harness" / "evals" / "runtime-compliance" / "contract-fixtures" / "receipt.negative.ambiguous-no-readback.v1.json"
 
 
 def load_positive() -> dict:
@@ -32,6 +34,18 @@ class PromptRuntimeComplianceValidatorTests(unittest.TestCase):
         )
         self.assertEqual(result["counts"]["FAIL"], 0)
         self.assertEqual(result["counts"]["UNKNOWN"], 0)
+
+    def test_durable_negative_fixtures_fail_their_expected_rules(self) -> None:
+        cases = (
+            (NEGATIVE_PENDING, "PRCR.BOUNDARY.MATERIAL_PUBLICATION"),
+            (NEGATIVE_READBACK, "PRCR.ACTION.PARTIAL_READBACK"),
+        )
+        for path, rule_id in cases:
+            with self.subTest(path=path.name):
+                receipt = json.loads(path.read_text(encoding="utf-8"))
+                result = validator.validate_receipt(receipt)
+                self.assertEqual(result["overall_result"], "FAIL")
+                self.assertEqual(finding(result, rule_id)["result"], "FAIL")
 
     def test_duplicate_trace_identity_is_rejected(self) -> None:
         receipt = load_positive()
