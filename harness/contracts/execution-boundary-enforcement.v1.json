@@ -191,7 +191,8 @@
     "merge_gate_contract": "harness/contracts/pr-merge-gate.v1.json",
     "parallel_dispatch_contract": "harness/contracts/prompt-parallel-dispatch.v1.json",
     "prompt_strength_successor": "harness/contracts/prompt-strength.v1.json when integrated",
-    "external_supervisor_owner": "HOST_RUNTIME_REQUIRED_OUTSIDE_REPOSITORY_AGENT"
+    "external_supervisor_owner": "HOST_RUNTIME_REQUIRED_OUTSIDE_REPOSITORY_AGENT",
+    "privacy_failure_observatory_owner": "harness/contracts/privacy-preserving-failure-observatory.v1.json"
   },
   "phase_dependencies": {
     "phase_1": "This contract and human-readable architecture spec define enforcement topology and invariants.",
@@ -300,5 +301,13 @@
       "Synthetic termination records the last proven checkpoint and a resumable continuation token or equivalent stable checkpoint identity when available.",
       "Restart/resume creates an attributable continuation and does not erase the termination event."
     ]
+  },
+  "observability_clause_ids": {
+    "EBE.NO_SILENT_STOP": "A run may not stop or disappear with unfinished safe work and no classified terminal transition.",
+    "EBE.PUBLIC_TRANSITION": "Every material boundary must become an operator-visible BOUNDARY/IMPACT/PROVED/RECOVERY/NEXT transition.",
+    "EBE.READ_AFTER_WRITE": "Possible or unknown side effects must be reconciled before retry.",
+    "EBE.FINALIZATION_GATE": "Completion requires the requested outcome to pass the finalization gate.",
+    "EBE.SYSTEMIC_SPRINT": "Novel, recurrent, or prevention-gap boundaries create a systemic-learning lane without replacing primary recovery.",
+    "EBE.DURABLE_OUTBOX": "A material boundary and pending publication intent survive process loss until delivery is acknowledged."
   }
 }
