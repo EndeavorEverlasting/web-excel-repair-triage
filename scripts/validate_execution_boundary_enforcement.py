@@ -19,6 +19,13 @@ SHARED_POLICY = ROOT / "registry/prompts/actionable-next-step-policy.v1.json"
 MARKER = "EXECUTION BOUNDARY ACCOUNTABILITY CONTRACT"
 BOUNDARY_SPRINT_MARKER = "BOUNDARY-TO-SPRINT CONTINUATION CONTRACT"
 REQUIRED_PUBLIC_FIELDS = ["BOUNDARY", "IMPACT", "PROVED", "RECOVERY", "NEXT"]
+BLOCKED_RECOVERIES = {
+    "QUIESCE_UNCHANGED_BLOCKER",
+    "WAIT_ON_EXTERNAL_GATE_WITH_DURABLE_HANDOFF",
+    "REQUEST_REQUIRED_AUTHORIZATION",
+    "HANDOFF_REQUIRED_SUCCESSOR",
+    "ABORT_UNSAFE_MUTATION",
+}
 REQUIRED_LAYERS = {
     "objective_contract",
     "boundary_capture",
@@ -364,6 +371,22 @@ def validate_documents(
         forbidden_outputs = case.get("forbidden_outputs")
         if not isinstance(input_event, dict) or not input_event:
             raise ExecutionBoundaryContractError(f"executable input_event missing: {case_id}")
+        terminal_gate = input_event.get("terminal_gate", False)
+        if not isinstance(terminal_gate, bool):
+            raise ExecutionBoundaryContractError(f"terminal_gate must be boolean: {case_id}")
+        if case.get("expected_recovery") in BLOCKED_RECOVERIES and input_event.get("process_alive") is not False:
+            if terminal_gate is not True:
+                raise ExecutionBoundaryContractError(
+                    f"blocked recovery requires explicit terminal_gate evidence: {case_id}"
+                )
+        if (
+            terminal_gate
+            and case.get("expected_recovery") not in BLOCKED_RECOVERIES
+            and input_event.get("process_alive") is not False
+        ):
+            raise ExecutionBoundaryContractError(
+                f"terminal_gate conflicts with non-blocking recovery: {case_id}"
+            )
         if not isinstance(expected_output, dict) or not expected_output:
             raise ExecutionBoundaryContractError(f"executable expected_output missing: {case_id}")
         if not isinstance(forbidden_outputs, list) or not forbidden_outputs:
@@ -441,11 +464,30 @@ def validate_documents(
         "classification is optional reporting metadata",
         "convert it immediately into the next bounded sprint",
         "phase, tool, provider, context, proof, review, branch, prompt, or agent boundary",
+        "terminality requires evidence",
         "what boundary am i treating as terminal",
     ):
         if phrase not in boundary_sprint_lower:
             raise ExecutionBoundaryContractError(
                 f"shared boundary sprint policy missing required semantic: {phrase}"
+            )
+    for field in boundary_sprint["successor_sprint_required_fields"]:
+        rendered = field.replace("_", " ").lower()
+        if rendered not in boundary_sprint_lower:
+            raise ExecutionBoundaryContractError(
+                f"shared boundary sprint policy omits successor field: {field}"
+            )
+    for phrase in (
+        "explicit cancellation",
+        "safety",
+        "authorization",
+        "user-only",
+        "unavailable external",
+        "fully proven requested outcome",
+    ):
+        if phrase not in boundary_sprint_lower:
+            raise ExecutionBoundaryContractError(
+                f"shared boundary sprint policy omits terminal evidence semantic: {phrase}"
             )
 
     appendix_lower = appendix.lower()
