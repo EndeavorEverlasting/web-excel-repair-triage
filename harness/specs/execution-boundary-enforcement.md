@@ -145,6 +145,8 @@ An exact external gate can quiesce the sprint, but the run must retain the block
 
 This is intentionally separate from systemic prevention. **Every material boundary gets the primary recovery sprint.** Only novel/unclassified, recurrent/systemic, or missing-prevention-invariant boundaries additionally get the second prevention sprint through P13/P94 and the canonical regression loop.
 
+The deterministic oracle at `scripts/execution_boundary_engine.py` makes that rule executable rather than phrase-only: applicable cases must traverse `PRIMARY_RECOVERY_SPRINT_OPENED`, emit a typed `primary_recovery_sprint`, and mark the selected first action as required. The oracle proves sprint instantiation and action selection; it does **not** pretend that a third-party host executed the external action. Host/agent execution remains a separate runtime proof surface.
+
 ### 7. Repository publisher
 
 When a relevant writable repository exists, material operational learning should become durable **through the repository’s existing authority surfaces**:

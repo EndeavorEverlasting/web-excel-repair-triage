@@ -73,7 +73,19 @@ BOUNDARY_KEYS = {
     "redaction_required",
     "supervisor_synthesized",
     "taxonomy_evolution_required",
+    "primary_recovery_sprint_required",
+    "first_action_execution_required",
+    "primary_recovery_sprint",
     "success_terminal",
+}
+BOUNDARY_SPRINT_KEYS = {
+    "trigger_event_id",
+    "parent_objective_id",
+    "preserved_outcome",
+    "bounded_owned_scope",
+    "first_executable_action",
+    "completion_gate",
+    "return_condition",
 }
 RECEIPT_PROOF_STATES = {"IMPLEMENTED", "VALIDATED", "INTEGRATED", "OBSERVED"}
 CLAUSE_BY_BOUNDARY = {
@@ -168,9 +180,26 @@ def _validate_boundary(boundary: Any) -> None:
     path = boundary["execution_path"]
     if not isinstance(path, list) or not path or not all(isinstance(item, str) and item for item in path):
         raise ObservatoryError("boundary execution_path must be a non-empty string list")
-    for field in BOUNDARY_KEYS - {"classification", "materiality", "recovery_disposition", "execution_path"}:
+    sprint = boundary["primary_recovery_sprint"]
+    if sprint is not None:
+        if not isinstance(sprint, dict) or set(sprint) != BOUNDARY_SPRINT_KEYS:
+            raise ObservatoryError("boundary primary_recovery_sprint schema drift")
+        for field, value in sprint.items():
+            if not isinstance(value, str) or not value:
+                raise ObservatoryError(f"boundary sprint {field} must be a non-empty string")
+    for field in BOUNDARY_KEYS - {
+        "classification",
+        "materiality",
+        "recovery_disposition",
+        "execution_path",
+        "primary_recovery_sprint",
+    }:
         if type(boundary[field]) is not bool:
             raise ObservatoryError(f"boundary {field} must be boolean")
+    if boundary["primary_recovery_sprint_required"] != (sprint is not None):
+        raise ObservatoryError("boundary sprint requirement disagrees with sprint payload")
+    if boundary["first_action_execution_required"] != (sprint is not None):
+        raise ObservatoryError("boundary first-action requirement disagrees with sprint payload")
 
 
 def validate_state(state: Any) -> dict[str, Any]:

@@ -41,6 +41,7 @@
     "CHECKPOINTED",
     "PUBLIC_TRANSITION_EMITTED",
     "RECOVERY_SELECTED",
+    "PRIMARY_RECOVERY_SPRINT_OPENED",
     "RECOVERING",
     "OBJECTIVE_ACTIVE_RESUMED",
     "QUIESCENT_BLOCKED",
@@ -54,7 +55,8 @@
     "A material BOUNDARY_OBSERVED must reach PUBLIC_TRANSITION_EMITTED before ordinary agent-controlled termination.",
     "RECOVERING must resolve to OBJECTIVE_ACTIVE_RESUMED, QUIESCENT_BLOCKED, another BOUNDARY_OBSERVED, or FINALIZING; it may not disappear.",
     "HARD_TERMINATED_SYNTHETIC is emitted only by a supervisor outside the failed acting process.",
-    "A recovered boundary remains part of the run history; successful recovery does not erase it."
+    "A recovered boundary remains part of the run history; successful recovery does not erase it.",
+    "Every MATERIAL or CRITICAL non-hard, non-cancelled boundary must pass through PRIMARY_RECOVERY_SPRINT_OPENED before RECOVERING or QUIESCENT_BLOCKED."
   ],
   "boundary_event_envelope": {
     "required_fields": [
@@ -123,8 +125,8 @@
     },
     {
       "id": "recovery_router",
-      "responsibility": "Map the canonical class plus current evidence to an authorized continuation, fallback, serialization, retry, quiescence, handoff, or terminal disposition.",
-      "failure_prevented": "The agent improvising whether friction means retry, downgrade, ask, or quit."
+      "responsibility": "Map the canonical class plus current evidence to an authorized continuation and instantiate the typed primary recovery sprint before recovery, fallback, serialization, retry, quiescence, handoff, or terminal disposition.",
+      "failure_prevented": "Classification remaining advisory while no executable recovery sprint is created, or the agent improvising whether friction means retry, downgrade, ask, or quit."
     },
     {
       "id": "repository_publisher",
@@ -204,7 +206,7 @@
     "phase_4": "Strengthen the canonical shared prompt policy so every effective prompt inherits universal boundary-to-sprint continuation, while P07/P13/P94 composition keeps primary recovery distinct from conditional systemic prevention.",
     "phase_5": "Prove repository/provider integration and retain regression coverage."
   },
-  "proof_ceiling": "This architecture, taxonomy, shared Prompt Kit inheritance seam, and deterministic regression contract are tracked and validating. They can prove repository structure and retained semantic constraints after their registered checks pass. They do not by themselves prove downstream model obedience or an implemented out-of-process host supervisor; those require observed runtime/provider evidence.",
+  "proof_ceiling": "This architecture, taxonomy, shared Prompt Kit inheritance seam, deterministic boundary engine, and retained regression contract are tracked and validating. Registered checks can prove repository structure, universal primary-sprint instantiation, state transition, and first-action selection. They do not by themselves prove that an arbitrary downstream model/host executed the selected external action or that an out-of-process host supervisor is installed; those require observed runtime/provider evidence.",
   "delivery_contract": {
     "invariant": "Checkpoint state and a pending publication record form one durable boundary observation before best-effort delivery begins.",
     "publication_ack_states": [
@@ -242,7 +244,10 @@
       "If progress requires a genuinely unavailable external gate, enter QUIESCENT_BLOCKED with the exact blocker, resumption trigger, preserved sprint state, and next transition instead of inventing completion.",
       "Explicit operator cancellation may terminate primary recovery; safety or prohibited-action gates remain exact gates rather than excuses to abandon other safe paths.",
       "Hard termination cannot self-open a sprint; the external supervisor preserves the last checkpoint and exposes resumable continuation state for the next run."
-    ]
+    ],
+    "executable_oracle": "scripts/execution_boundary_engine.py",
+    "state_transition": "PRIMARY_RECOVERY_SPRINT_OPENED",
+    "proof_boundary": "The deterministic engine proves sprint instantiation, state transition, and first-action selection. The active host/agent must execute the selected action; external side effects remain runtime proof."
   },
   "dual_lane_policy": {
     "primary_lane": "For every MATERIAL or CRITICAL boundary on an unfinished objective, instantiate the boundary_sprint_contract and advance the original requested outcome through its first safe progress-bearing action.",
@@ -281,6 +286,7 @@
         "RECOVERY_SELECTED"
       ],
       "RECOVERY_SELECTED": [
+        "PRIMARY_RECOVERY_SPRINT_OPENED",
         "RECOVERING",
         "QUIESCENT_BLOCKED",
         "FINALIZING"
@@ -306,7 +312,13 @@
         "QUIESCENT_BLOCKED"
       ],
       "COMPLETE": [],
-      "HARD_TERMINATED_SYNTHETIC": []
+      "HARD_TERMINATED_SYNTHETIC": [],
+      "PRIMARY_RECOVERY_SPRINT_OPENED": [
+        "RECOVERING",
+        "QUIESCENT_BLOCKED",
+        "BOUNDARY_OBSERVED",
+        "FINALIZING"
+      ]
     },
     "external_only_transitions": [
       "Any nonterminal state -> HARD_TERMINATED_SYNTHETIC when the acting process loses its execution lease or dies without a valid terminal event."

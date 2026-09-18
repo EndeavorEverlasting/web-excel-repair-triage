@@ -231,6 +231,8 @@ class ExecutionBoundaryEnforcementTests(unittest.TestCase):
         contract = self.architecture["boundary_sprint_contract"]
         self.assertIn("Every MATERIAL or CRITICAL boundary", contract["applies_when"])
         self.assertIn("Classification is routing, not sprint eligibility.", contract["rules"])
+        self.assertEqual(contract["executable_oracle"], "scripts/execution_boundary_engine.py")
+        self.assertEqual(contract["state_transition"], "PRIMARY_RECOVERY_SPRINT_OPENED")
         mutated = copy.deepcopy(self.architecture)
         mutated["boundary_sprint_contract"]["applies_when"] = (
             "Only unknown or recurrent boundaries open a recovery sprint."
@@ -255,6 +257,27 @@ class ExecutionBoundaryEnforcementTests(unittest.TestCase):
             "classification is routing, not sprint eligibility",
         ):
             self.validate(policy=mutated)
+
+    def test_known_class_materializes_primary_recovery_sprint(self) -> None:
+        case = next(case for case in self.matrix["cases"] if case["case_id"] == "EBR-005")
+        actual = evaluate_boundary(case["input_event"], self.architecture, self.taxonomy)
+        self.assertEqual(actual["classification"], "OR_FANOUT_OR_TOOLCALL_CEILING")
+        self.assertTrue(actual["primary_recovery_sprint_required"])
+        self.assertTrue(actual["first_action_execution_required"])
+        self.assertIn("PRIMARY_RECOVERY_SPRINT_OPENED", actual["execution_path"])
+        self.assertEqual(
+            actual["primary_recovery_sprint"]["first_executable_action"],
+            case["expected_recovery"],
+        )
+
+    def test_engine_fails_if_primary_sprint_transition_is_removed(self) -> None:
+        case = next(case for case in self.matrix["cases"] if case["case_id"] == "EBR-005")
+        mutated = copy.deepcopy(self.architecture)
+        mutated["state_machine"]["allowed_transitions"]["RECOVERY_SELECTED"].remove(
+            "PRIMARY_RECOVERY_SPRINT_OPENED"
+        )
+        with self.assertRaisesRegex(BoundaryEngineError, "transition unavailable"):
+            evaluate_boundary(case["input_event"], mutated, self.taxonomy)
 
     def test_dual_lane_systemic_sprint_policy_is_mandatory(self) -> None:
         mutated = copy.deepcopy(self.architecture)
@@ -331,6 +354,9 @@ class ExecutionBoundaryEnforcementTests(unittest.TestCase):
         actual = evaluate_boundary(case["input_event"], self.architecture, self.taxonomy)
         self.assertEqual(actual["recovery_disposition"], "QUIESCE_UNCHANGED_BLOCKER")
         self.assertEqual(actual["execution_path"][-1], "QUIESCENT_BLOCKED")
+        self.assertFalse(actual["primary_recovery_sprint_required"])
+        self.assertFalse(actual["first_action_execution_required"])
+        self.assertIsNone(actual["primary_recovery_sprint"])
 
     def test_dead_non_ht_signal_normalizes_to_hard_termination(self) -> None:
         case = next(case for case in self.matrix["cases"] if case["case_id"] == "EBR-059")
@@ -338,6 +364,9 @@ class ExecutionBoundaryEnforcementTests(unittest.TestCase):
         self.assertEqual(actual["classification"], "HT_HOST_FORCED_TERMINATION")
         self.assertEqual(actual["recovery_disposition"], "SYNTHESIZE_TERMINATION")
         self.assertEqual(actual["execution_path"], ["HARD_TERMINATED_SYNTHETIC"])
+        self.assertFalse(actual["primary_recovery_sprint_required"])
+        self.assertFalse(actual["first_action_execution_required"])
+        self.assertIsNone(actual["primary_recovery_sprint"])
 
 
 if __name__ == "__main__":

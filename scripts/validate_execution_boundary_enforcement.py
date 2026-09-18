@@ -90,6 +90,7 @@ def validate_documents(
         "BOUNDARY_OBSERVED",
         "CHECKPOINTED",
         "PUBLIC_TRANSITION_EMITTED",
+        "PRIMARY_RECOVERY_SPRINT_OPENED",
         "RECOVERING",
         "FINALIZING",
         "COMPLETE",
@@ -169,6 +170,12 @@ def validate_documents(
         raise ExecutionBoundaryContractError("state machine allows direct active-to-complete transition")
     if machine.get("success_state") != "COMPLETE":
         raise ExecutionBoundaryContractError("COMPLETE must remain the only success state")
+    if "PRIMARY_RECOVERY_SPRINT_OPENED" not in allowed.get("RECOVERY_SELECTED", []):
+        raise ExecutionBoundaryContractError("recovery selection must open the primary recovery sprint")
+    if not {"RECOVERING", "QUIESCENT_BLOCKED"}.issubset(
+        set(allowed.get("PRIMARY_RECOVERY_SPRINT_OPENED", []))
+    ):
+        raise ExecutionBoundaryContractError("primary recovery sprint must route to recovery or exact quiescence")
 
     delivery = architecture.get("delivery_contract")
     if not isinstance(delivery, dict) or not _string_list(delivery.get("rules")):
@@ -196,6 +203,12 @@ def validate_documents(
         "return_condition",
     }:
         raise ExecutionBoundaryContractError("boundary sprint required fields drifted")
+    if boundary_sprint.get("executable_oracle") != "scripts/execution_boundary_engine.py":
+        raise ExecutionBoundaryContractError("boundary sprint executable oracle drifted")
+    if boundary_sprint.get("state_transition") != "PRIMARY_RECOVERY_SPRINT_OPENED":
+        raise ExecutionBoundaryContractError("boundary sprint executable state drifted")
+    if not _nonempty(boundary_sprint.get("proof_boundary")):
+        raise ExecutionBoundaryContractError("boundary sprint proof boundary missing")
     if not _string_list(sprint_rules):
         raise ExecutionBoundaryContractError("boundary sprint rules missing")
     sprint_text = " ".join(sprint_rules).lower()
@@ -370,6 +383,41 @@ def validate_documents(
             raise ExecutionBoundaryContractError(f"proof surfaces missing: {case_id}")
         if not _nonempty(case.get("proof_ceiling")):
             raise ExecutionBoundaryContractError(f"proof ceiling missing: {case_id}")
+
+        hard_termination_case = classification.startswith("HT_") or input_event.get("process_alive") is False
+        sprint_required = (
+            case.get("expected_materiality") in {"MATERIAL", "CRITICAL"}
+            and not hard_termination_case
+            and classification != "UC_CANCELLED"
+        )
+        if expected_output.get("primary_recovery_sprint_required") is not sprint_required:
+            raise ExecutionBoundaryContractError(f"primary recovery sprint requirement drifted: {case_id}")
+        if expected_output.get("first_action_execution_required") is not sprint_required:
+            raise ExecutionBoundaryContractError(f"first-action execution requirement drifted: {case_id}")
+        sprint = expected_output.get("primary_recovery_sprint")
+        path = expected_output.get("execution_path")
+        if sprint_required:
+            if not isinstance(sprint, dict) or set(sprint) != set(required_sprint_fields):
+                raise ExecutionBoundaryContractError(f"typed primary recovery sprint missing: {case_id}")
+            if sprint.get("first_executable_action") != case.get("expected_recovery"):
+                raise ExecutionBoundaryContractError(f"primary sprint action disagrees with recovery: {case_id}")
+            if not isinstance(path, list) or "PRIMARY_RECOVERY_SPRINT_OPENED" not in path:
+                raise ExecutionBoundaryContractError(f"primary recovery sprint state missing from path: {case_id}")
+            forbidden_pairs = {(item.get("field"), item.get("value")) for item in forbidden_outputs}
+            for required_negative in (
+                ("primary_recovery_sprint_required", False),
+                ("first_action_execution_required", False),
+                ("primary_recovery_sprint", None),
+            ):
+                if required_negative not in forbidden_pairs:
+                    raise ExecutionBoundaryContractError(
+                        f"primary recovery sprint negative control missing: {case_id} -> {required_negative[0]}"
+                    )
+        else:
+            if sprint is not None:
+                raise ExecutionBoundaryContractError(f"non-applicable case must not materialize sprint: {case_id}")
+            if isinstance(path, list) and "PRIMARY_RECOVERY_SPRINT_OPENED" in path:
+                raise ExecutionBoundaryContractError(f"non-applicable case entered primary sprint state: {case_id}")
 
     if covered_classes != class_ids:
         missing = sorted(class_ids - covered_classes)
