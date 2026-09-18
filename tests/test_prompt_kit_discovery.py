@@ -406,6 +406,15 @@ process.stdout.write(JSON.stringify(groups.map(function(g){return {name:g.name,i
         self.assertIn("desired prompt behavior", p65["proofGate"].lower())
         self.assertIn("grill me", p65["keywords"])
 
+
+    def test_copyable_p65_routes_context_derived_artifacts_to_p56(self) -> None:
+        payload = json.loads(TUTORIAL_PROMPTS.read_text(encoding="utf-8"))
+        p65 = next(item for item in payload["prompts"] if item["id"] == "P65")
+        content = p65["copyContent"]
+        self.assertIn("P56 Context-to-Artifact Generator", content)
+        self.assertIn("recover the intended artifact from conversation/repository/source context", content)
+        self.assertIn("P07 remains the owner for a bounded repository change that is already defined", content)
+
     def test_repo_front_door_exposes_browser_phone_zip_cmd_and_clone(self) -> None:
         readme = README.read_text(encoding="utf-8")
         access = ACCESS_GUIDE.read_text(encoding="utf-8")

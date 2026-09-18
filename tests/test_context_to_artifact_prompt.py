@@ -58,10 +58,51 @@ class ContextToArtifactPromptTests(unittest.TestCase):
         self.assertIn("do not prove compatibility with an inaccessible repository", self.content)
         self.assertIn("proof ceiling", self.p56["proofGate"].lower())
 
+
+    def test_p56_recovers_target_from_relevant_context_without_context_courier_work(self) -> None:
+        for marker in (
+            "THE IMMEDIATELY PRECEDING REQUEST IS THE ANCHOR, NOT THE CONTEXT BOUNDARY",
+            "CONTEXT HARVEST — PASS 1",
+            "CONTEXT HARVEST — PASS 2 / ARTIFACT RECONCILIATION",
+            "Do not ask the operator to restate recoverable context.",
+            "insight | source/evidence | authority/status | artifact impact",
+        ):
+            self.assertIn(marker, self.content)
+
+    def test_p56_resolves_artifact_owner_identity_and_operation_before_generation(self) -> None:
+        for marker in (
+            "ARTIFACT TARGET RESOLUTION",
+            "CANONICAL OWNER / ENGINE",
+            "CREATE_NEW",
+            "UPDATE_EXISTING",
+            "preferred read-only reference",
+            "artifact-derivation harness",
+            "owning artifact engine",
+            "Never infer overwrite authority",
+        ):
+            self.assertIn(marker, self.content)
+
+    def test_p56_requires_real_artifact_inspection_and_reverse_reconciliation(self) -> None:
+        for marker in (
+            "Generate the actual requested deliverable now",
+            "A generator exit code is not artifact proof",
+            "open/read/inspect the generated artifact itself",
+            "Disposition every material harvested insight once",
+            "bounded fixed point",
+            "Do not substitute the artifact-generation prompt for the artifact.",
+        ):
+            self.assertIn(marker, self.content)
+        self.assertIn("conversation to artifact", self.p56["keywords"])
+        self.assertIn("artifact derivation", self.p56["keywords"])
+
     def test_generated_site_contains_strengthened_p56(self) -> None:
         deployed = DEPLOYED.read_text(encoding="utf-8")
         for marker in (
             "CAPABILITY BOUNDARY — CHOOSE ONE MODE",
+            "CONTEXT HARVEST — PASS 1",
+            "ARTIFACT TARGET RESOLUTION",
+            "CREATE_NEW",
+            "CONTEXT HARVEST — PASS 2 / ARTIFACT RECONCILIATION",
             "DOSSIER-ONLY REPOSITORY-CAPABLE HANDOFF",
             "UNKNOWN_REQUIRES_REPO_INSPECTION",
             "complete standalone code/schemas/tests/examples",
