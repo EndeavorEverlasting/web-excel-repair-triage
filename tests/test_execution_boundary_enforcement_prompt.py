@@ -88,6 +88,52 @@ class ExecutionBoundaryEnforcementTests(unittest.TestCase):
         ):
             self.validate(policy=mutated)
 
+    def test_nonterminal_boundary_cannot_be_made_terminal_by_taxonomy(self) -> None:
+        mutated = copy.deepcopy(self.taxonomy)
+        fallback = next(
+            item
+            for family in mutated["families"]
+            for item in family["classes"]
+            if item["id"] == "UE_UNCLASSIFIED_MATERIAL_BOUNDARY"
+        )
+        fallback["default_recovery"] = "QUIESCE_UNCHANGED_BLOCKER"
+        case = next(item for item in self.matrix["cases"] if item["case_id"] == "EBR-058")
+        actual = evaluate_boundary(case["input_event"], self.architecture, mutated)
+        self.assertEqual(actual["classification"], "UE_UNCLASSIFIED_MATERIAL_BOUNDARY")
+        self.assertEqual(actual["recovery_disposition"], "REPLAN_WITHIN_SCOPE")
+        self.assertEqual(actual["execution_path"][-1], "RECOVERING")
+
+    def test_explicit_terminal_gate_can_quiesce_without_taxonomy_manufacturing_stop(self) -> None:
+        case = copy.deepcopy(
+            next(item for item in self.matrix["cases"] if item["case_id"] == "EBR-058")
+        )
+        case["input_event"]["terminal_gate"] = True
+        actual = evaluate_boundary(case["input_event"], self.architecture, self.taxonomy)
+        self.assertEqual(actual["execution_path"][-1], "QUIESCENT_BLOCKED")
+        self.assertEqual(actual["recovery_disposition"], "QUIESCE_UNCHANGED_BLOCKER")
+
+    def test_shared_boundary_policy_requires_every_successor_field(self) -> None:
+        mutated = copy.deepcopy(self.policy)
+        mutated["boundary_sprint_suffix"] = mutated["boundary_sprint_suffix"].replace(
+            "LAST PROVEN CHECKPOINT; ", ""
+        )
+        with self.assertRaisesRegex(
+            ExecutionBoundaryContractError,
+            "omits successor field: last_proven_checkpoint",
+        ):
+            self.validate(policy=mutated)
+
+    def test_shared_boundary_policy_requires_terminal_evidence(self) -> None:
+        mutated = copy.deepcopy(self.policy)
+        mutated["boundary_sprint_suffix"] = mutated["boundary_sprint_suffix"].replace(
+            "explicit cancellation", "ordinary interruption"
+        )
+        with self.assertRaisesRegex(
+            ExecutionBoundaryContractError,
+            "omits terminal evidence semantic: explicit cancellation",
+        ):
+            self.validate(policy=mutated)
+
     def test_current_documents_validate(self) -> None:
         summary = validate_paths()
         self.assertEqual(summary["layers"], 11)
