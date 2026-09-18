@@ -1,37 +1,89 @@
-# Lane 01 — Upstream Mechanics Refresh
+# LANE 01 — Repair #537 Prompt-Strength Semantic Core
 
-**Authority:** research-design contributor
-
-**Depends on:** Phase-0 contract available
-
-**Owned output:** `harness/evals/prompt-strength/upstream-residual-map.v1.json`
-
-**Forbidden:** shared prompt policy, P07 semantics, generated Prompt Kit HTML, active #533/#535/#536 owned files.
+**Repo:** EndeavorEverlasting/web-excel-repair-triage  
+**PR / branch:** #537 / `feat/prompt-strength-contract-matrix-20260917`  
+**Wave:** A  
+**Primary ownership:** prompt-strength semantic contract/matrix/validator/tests  
+**Hard dependencies:** none beyond refreshed main/provider truth  
+**Safe parallel work:** Lanes 02, 03, 04, 05  
+**Convergence owner:** Lane 07
 
 ## Mission
 
-Refresh registered upstream donor identities and extract only provenance-backed mechanics that can strengthen existing Prompt Kit owners.
+Repair #537's semantic defects while avoiding shared files now owned by #542/#543. The immediate known defect is PSA-029 over-crediting `fixed_point_continuation`.
 
 ## Read first
 
 - `AGENTS.md`
+- `harness/evals/PROMPT_STRENGTH_RECOVERY_SPRINT_PLAN.md`
 - `harness/contracts/prompt-strength.v1.json`
-- `harness/contracts/operant-external-resource-intake.v1.json`
-- `docs/PROMPT_KIT_MICHAELSHIMELES_SKILL_AUDIT.md`
-- `harness/evals/prompt-strength/upstream-residual-map.template.v1.json`
+- `harness/evals/prompt-strength/adversarial-regression-matrix.v1.json`
+- `scripts/validate_prompt_strength.py`
+- `tests/test_prompt_strength_contract_prompt.py`
+- current PR #537 reviews/checks
+- current `main` history contract after #541
+
+## Compact preflight
+
+Record current main SHA, #537 head, ahead/behind, dirty state, worktrees, open overlapping PRs, unresolved #537 review threads, exact failing checks.
+
+## Owned scope
+
+- prompt-strength contract
+- prompt-strength adversarial matrix
+- prompt-strength validator
+- focused prompt-strength test
+- prompt-strength planning/handoff artifacts
+
+## Forbidden scope
+
+- `harness/test-floor.v1.json` until Lane 07
+- `registry/prompts/actionable-next-step-policy.v1.json`
+- P07 compiler semantics/policy
+- `harness/repository-actions.v1.json`
+- hand-edited `web/prompt-kit/index.html`
+- #542 boundary/observatory files
 
 ## Tasks
 
-1. Refresh provider/default-branch truth and current donor revisions.
-2. Inspect DeepSeek Harness, Matt Pocock skills, Michael Shimeles skills, and the registered catalog surfaces actually relevant to agentic programming.
-3. Record each mechanic as source, pinned revision, current owner, existing coverage, distinct residual, disposition, and evidence refs.
-4. Prefer `NO_GAP` or `STRENGTHEN_EXISTING_OWNER`; use `REQUIRES_P79_REVIEW` only when a distinct residual survives comparison.
-5. Do not author or allocate new prompt identities.
+1. Refresh `origin/main` and PR #537 provider state.
+2. Reproduce the current focused failure before editing.
+3. Repair PSA-029: remove `fixed_point_continuation` unless its stimulus/assertions genuinely exercise fixed-point continuation. Do not weaken semantic-evidence matching.
+4. Re-read every unresolved #537 review thread against the current branch; implement still-valid findings only.
+5. Re-run focused prompt-strength validation.
+6. Do not rebase/merge current main if doing so would force resolution of #542-owned `test-floor`; leave that for Lane 07.
+7. Commit only owned files and push the existing #537 branch.
 
-## Validation
+## Validation order
 
-Validate JSON shape and read back every source identity. No downstream model-effectiveness claim is permitted.
+```bash
+python scripts/validate_prompt_strength.py --summary
+python -m unittest tests.test_prompt_strength_contract_prompt -v
+git diff --check
+git diff --cached --check
+```
 
-## Proof ceiling
+If local repository actions are usable, also run the smallest relevant read-only action without regenerating the site.
 
-Research/design evidence only; no strategic prompt mutation and no model-obedience proof.
+## Safety
+
+Preserve unrelated dirty work. No force push. No new prompt identity. No waiver deletion/addition merely to satisfy history checks. A current-main P07/history discrepancy is Lane 07 evidence, not license to mutate history here.
+
+## Commit / push contract
+
+Commit one coherent semantic repair to the existing #537 branch. Push normally. Do not merge #537 in this lane.
+
+## Proof level / ceiling
+
+Target: IMPLEMENTED + LOCALLY VALIDATED focused semantic core.  
+Ceiling: no shared-floor reconciliation, mainline integration, Pages deployment, or downstream model-obedience proof.
+
+## Exact final response
+
+Report: refreshed main/head; changed files; reproduced defect; repair; focused command results; unresolved review/checks; commit SHA; push state; preserved git/worktree state; exact handoff to Lane 07.
+
+## NEXT COMMAND
+
+```bash
+git fetch --all --prune --tags && git switch feat/prompt-strength-contract-matrix-20260917 && python scripts/validate_prompt_strength.py --summary
+```
