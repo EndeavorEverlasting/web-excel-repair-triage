@@ -2,9 +2,12 @@
 """Local, zero-content prototype for privacy-preserving prompt failure observability."""
 from __future__ import annotations
 
+import hashlib
+import hmac
 import json
 import os
 import re
+import secrets
 from pathlib import Path
 from typing import Any
 
@@ -55,6 +58,35 @@ CLAUSE_BY_BOUNDARY = {
 
 class ObservatoryError(ValueError):
     pass
+
+
+def load_or_create_local_secret(path: Path) -> bytes:
+    if path.exists():
+        secret = path.read_bytes()
+        if len(secret) != 32:
+            raise ObservatoryError("local correlation secret must be exactly 32 bytes")
+        return secret
+    path.parent.mkdir(parents=True, exist_ok=True)
+    secret = secrets.token_bytes(32)
+    tmp = path.with_suffix(path.suffix + ".tmp")
+    tmp.write_bytes(secret)
+    os.replace(tmp, path)
+    return secret
+
+
+def derive_local_run_key(host_generation_id: Any, local_secret: bytes) -> str:
+    if not isinstance(host_generation_id, str) or not host_generation_id or len(host_generation_id) > 256:
+        raise ObservatoryError("host generation id required for local correlation")
+    if len(local_secret) != 32:
+        raise ObservatoryError("local correlation secret must be exactly 32 bytes")
+    digest = hmac.new(local_secret, host_generation_id.encode("utf-8"), hashlib.sha256).hexdigest()
+    return digest[:24]
+
+
+def state_path_for_run(state_dir: Path, run_key: str) -> Path:
+    if not re.fullmatch(r"[0-9a-f]{24}", run_key):
+        raise ObservatoryError("invalid local run key")
+    return state_dir / "runs" / f"{run_key}.json"
 
 
 def new_state() -> dict[str, Any]:
