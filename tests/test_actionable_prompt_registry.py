@@ -143,6 +143,69 @@ class ActionablePromptRegistryTests(unittest.TestCase):
                 self.assertIn("NON-PROGRESS / QUIESCENCE CONTRACT", by_id[prompt_id]["copyContent"])
                 self.assertIn("progress-bearing", by_id[prompt_id]["nextStep"])
 
+    def test_conversation_artifact_continuity_is_global_and_p95_specializes_it(self) -> None:
+        marker = "CONVERSATION-TO-ARTIFACT CONTINUITY CONTRACT"
+        appendix = self.policy["copy_content_appendix"]
+        for phrase in (
+            marker,
+            "Materialize throughout the work at evidence-changing checkpoints",
+            "Reuse the smallest existing canonical owner",
+            "another competent agent continue without reconstructing the originating chat",
+            "Persist distilled repository-relevant truth, not a raw transcript",
+            "artifactization must reduce drift, not fossilize stale truth",
+            "For prototypes, prefer executable seams plus focused tests, fixtures, traces, or receipts",
+            "classify durability as BLOCKED",
+            "Avoid artifact theater",
+            "A durable artifact must govern behavior, prove it, route continuation, or preserve a material decision",
+        ):
+            self.assertIn(phrase, appendix)
+
+        self.assertIn(
+            "materialize the distilled safe truth into the smallest existing canonical artifact",
+            self.policy["next_step_suffix"],
+        )
+
+        forbidden = "\n".join(self.policy["forbidden_solo_actions"])
+        for phrase in (
+            "leave accepted execution-relevant or reusable conversation state only in chat",
+            "copy raw chat transcripts, secrets, private content, hidden reasoning",
+            "create duplicate summaries, second sources of truth, or consumerless artifacts",
+        ):
+            self.assertIn(phrase, forbidden)
+
+        for prompt in self.prompts:
+            with self.subTest(prompt=prompt["id"]):
+                self.assertIn(marker, prompt["copyContent"])
+
+        raw_spec = json.loads(
+            (
+                REPO_ROOT
+                / "registry"
+                / "prompts"
+                / "spec-architecture-prompts.v1.json"
+            ).read_text(encoding="utf-8")
+        )
+        p95 = next(prompt for prompt in raw_spec["prompts"] if prompt["id"] == "P95")
+        self.assertIn(
+            "Prototype-derived design decisions that later work depends on are materialized",
+            p95["expectedOutput"],
+        )
+        self.assertIn(
+            "At each evidence-changing prototype checkpoint",
+            p95["nextStep"],
+        )
+        self.assertIn(
+            "Prototype-derived continuation truth is not accepted as durable proof when it exists only in chat",
+            p95["proofGate"],
+        )
+        for keyword in (
+            "artifact continuity",
+            "chat to artifact",
+            "prototype evidence durability",
+        ):
+            self.assertIn(keyword, p95["keywords"])
+        self.assertLessEqual(len(p95["copyContent"]), 10000)
+
     def test_existing_work_and_pr_reuse_is_global_policy(self) -> None:
         reuse = self.policy["existing_work_reuse"]
         self.assertIn(
