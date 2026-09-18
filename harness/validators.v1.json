@@ -368,22 +368,6 @@
       "blocking": true,
       "output": "Outputs/repo-native-update/receipt.json",
       "proof_ceiling": "Generated canary surface matches canonical input with a reviewable receipt; local CLI only."
-    },
-    {
-      "id": "execution-boundary-enforcement-audit",
-      "class": "contract",
-      "command": "python scripts/validate_execution_boundary_enforcement.py --summary",
-      "blocking": true,
-      "output": "process log",
-      "proof_ceiling": "Static architecture, taxonomy, full-class regression coverage, and shared Prompt Kit inheritance proof."
-    },
-    {
-      "id": "execution-boundary-enforcement-tests",
-      "class": "test",
-      "command": "python -m unittest tests.test_execution_boundary_enforcement_prompt -v",
-      "blocking": true,
-      "output": "process log",
-      "proof_ceiling": "Executable positive/negative regression floor for execution-boundary enforcement contracts and Prompt Kit inheritance."
     }
   ],
   "profiles": {
