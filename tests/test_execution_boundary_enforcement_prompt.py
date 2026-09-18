@@ -45,7 +45,7 @@ class ExecutionBoundaryEnforcementTests(unittest.TestCase):
         self.assertEqual(summary["layers"], 11)
         self.assertEqual(summary["families"], 14)
         self.assertEqual(summary["classes"], 58)
-        self.assertEqual(summary["cases"], 58)
+        self.assertEqual(summary["cases"], 59)
 
     def test_validator_cli_passes_with_summary(self) -> None:
         completed = subprocess.run(
@@ -58,7 +58,7 @@ class ExecutionBoundaryEnforcementTests(unittest.TestCase):
         self.assertEqual(completed.returncode, 0, completed.stderr or completed.stdout)
         self.assertIn("EXECUTION BOUNDARY ENFORCEMENT: PASS", completed.stdout)
         self.assertIn("classes=58", completed.stdout)
-        self.assertIn("cases=58", completed.stdout)
+        self.assertIn("cases=59", completed.stdout)
 
     def test_duplicate_taxonomy_class_fails_closed(self) -> None:
         mutated = copy.deepcopy(self.taxonomy)
@@ -75,11 +75,12 @@ class ExecutionBoundaryEnforcementTests(unittest.TestCase):
 
     def test_every_class_requires_positive_and_negative_coverage(self) -> None:
         mutated = copy.deepcopy(self.matrix)
-        removed = mutated["cases"].pop()
+        removed = next(case for case in mutated["cases"] if case["case_id"] == "EBR-001")
+        mutated["cases"] = [case for case in mutated["cases"] if case["case_id"] != "EBR-001"]
         mutated["case_contract"]["minimum_cases"] = len(mutated["cases"])
         with self.assertRaisesRegex(ExecutionBoundaryContractError, "every canonical class requires regression coverage"):
             self.validate(matrix=mutated)
-        self.assertTrue(removed["classification"])
+        self.assertEqual(removed["classification"], "CR_TOOL_UNAVAILABLE")
 
     def test_positive_control_is_mandatory(self) -> None:
         mutated = copy.deepcopy(self.matrix)
@@ -119,6 +120,9 @@ class ExecutionBoundaryEnforcementTests(unittest.TestCase):
         case["expected_recovery"] = "RETRY_BOUNDED"
         case["expected_output"]["recovery_disposition"] = "RETRY_BOUNDED"
         case["expected_output"]["readback_required"] = False
+        case["forbidden_outputs"] = [
+            item for item in case["forbidden_outputs"] if item.get("field") != "readback_required"
+        ]
         with self.assertRaisesRegex(ExecutionBoundaryContractError, "partial-write case must reconcile"):
             self.validate(matrix=mutated_matrix, taxonomy=mutated_taxonomy)
 
@@ -131,8 +135,10 @@ class ExecutionBoundaryEnforcementTests(unittest.TestCase):
             if item["id"] == "HT_HOST_FORCED_TERMINATION"
         )
         item["default_recovery"] = "RESUME_FROM_CHECKPOINT"
-        case["expected_recovery"] = "RESUME_FROM_CHECKPOINT"
-        case["expected_output"]["recovery_disposition"] = "RESUME_FROM_CHECKPOINT"
+        for candidate in mutated_matrix["cases"]:
+            if candidate["classification"] == "HT_HOST_FORCED_TERMINATION":
+                candidate["expected_recovery"] = "RESUME_FROM_CHECKPOINT"
+                candidate["expected_output"]["recovery_disposition"] = "RESUME_FROM_CHECKPOINT"
         with self.assertRaisesRegex(ExecutionBoundaryContractError, "hard-termination case must be supervisor-synthesized"):
             self.validate(matrix=mutated_matrix, taxonomy=mutated_taxonomy)
 
