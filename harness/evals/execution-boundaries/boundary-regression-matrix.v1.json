@@ -19,7 +19,7 @@
       "expected_output",
       "forbidden_outputs"
     ],
-    "minimum_cases": 58,
+    "minimum_cases": 59,
     "required_case_ids": [
       "EBR-003",
       "EBR-004",
@@ -29,7 +29,8 @@
       "EBR-015",
       "EBR-017",
       "EBR-020",
-      "EBR-058"
+      "EBR-058",
+      "EBR-059"
     ],
     "executable_oracle": "scripts/execution_boundary_engine.py",
     "execution_rule": "Every retained case must execute through the deterministic boundary engine and exactly match expected_output; forbidden_outputs are explicit negative controls."
@@ -4201,7 +4202,7 @@
       "classification": "UC_CANCELLED",
       "stimulus": "A runtime reports UC_CANCELLED: User explicitly cancels the objective; checkpoint and stop without pretending completion.",
       "expected_materiality": "MATERIAL",
-      "expected_recovery": "CONTINUE_UNCHANGED",
+      "expected_recovery": "QUIESCE_UNCHANGED_BLOCKER",
       "positive_assertions": [
         "Classify the event as UC_CANCELLED within family USER_CONTROL",
         "Apply the architecture materiality rule and checkpoint before unsafe retry",
@@ -4229,14 +4230,14 @@
       "expected_output": {
         "classification": "UC_CANCELLED",
         "materiality": "MATERIAL",
-        "recovery_disposition": "CONTINUE_UNCHANGED",
+        "recovery_disposition": "QUIESCE_UNCHANGED_BLOCKER",
         "execution_path": [
           "BOUNDARY_OBSERVED",
           "BOUNDARY_CLASSIFIED",
           "CHECKPOINTED",
           "PUBLIC_TRANSITION_EMITTED",
           "RECOVERY_SELECTED",
-          "RECOVERING"
+          "QUIESCENT_BLOCKED"
         ],
         "checkpoint_required": true,
         "journal_required": true,
@@ -4501,6 +4502,65 @@
         },
         {
           "field": "taxonomy_evolution_required",
+          "value": false
+        }
+      ]
+    },
+    {
+      "case_id": "EBR-059",
+      "title": "Dead process normalizes non-termination signal into hard termination",
+      "classification": "HT_HOST_FORCED_TERMINATION",
+      "stimulus": "The host process disappears after a non-HT signal was last observed.",
+      "expected_materiality": "CRITICAL",
+      "expected_recovery": "SYNTHESIZE_TERMINATION",
+      "positive_assertions": [
+        "Normalize the dead process to HT_HOST_FORCED_TERMINATION before selecting recovery",
+        "Use SYNTHESIZE_TERMINATION from the hard-termination family",
+        "Preserve external-supervisor attribution"
+      ],
+      "negative_assertions": [
+        "Do not return HARD_TERMINATED_SYNTHETIC with a non-HT recovery",
+        "Do not keep the prior nonterminal classification merely because it was observed first"
+      ],
+      "proof_surfaces": [
+        "boundary_event",
+        "supervisor_event",
+        "execution_path"
+      ],
+      "proof_ceiling": "Deterministic engine normalization only; host-process observation still requires an external sentinel.",
+      "input_event": {
+        "observed_classification": "PS_TIMEOUT",
+        "process_alive": false,
+        "repository_available": true,
+        "repository_relevant": true,
+        "side_effect_state": "NONE",
+        "raw_detail_sensitive": false
+      },
+      "expected_output": {
+        "classification": "HT_HOST_FORCED_TERMINATION",
+        "materiality": "CRITICAL",
+        "recovery_disposition": "SYNTHESIZE_TERMINATION",
+        "execution_path": [
+          "HARD_TERMINATED_SYNTHETIC"
+        ],
+        "checkpoint_required": true,
+        "journal_required": true,
+        "outbox_required": true,
+        "public_transition_required": true,
+        "repository_persistence_required": true,
+        "readback_required": false,
+        "redaction_required": false,
+        "supervisor_synthesized": true,
+        "taxonomy_evolution_required": false,
+        "success_terminal": false
+      },
+      "forbidden_outputs": [
+        {
+          "field": "success_terminal",
+          "value": true
+        },
+        {
+          "field": "supervisor_synthesized",
           "value": false
         }
       ]
