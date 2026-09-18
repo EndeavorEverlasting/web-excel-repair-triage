@@ -28,10 +28,11 @@
     "scenario_id": "RTC01",
     "kind": "synthetic",
     "protected_invariants": [
-      "local-proof continuity",
-      "boundary recovery required/opened",
-      "first safe progress-bearing action",
-      "no false proof promotion"
+      "PRCR.BOUNDARY.MATERIAL_PUBLICATION",
+      "PRCR.BOUNDARY.RECOVERY_REQUIRED",
+      "PRCR.BOUNDARY.RECOVERY_OPENED",
+      "PRCR.BOUNDARY.FIRST_ACTION_PROGRESS",
+      "PRCR.PROOF.NO_PROMOTION_FROM_BLOCKED"
     ],
     "fixture_path": "harness/evals/runtime-compliance/contract-fixtures/receipt.positive.v1.json"
   },
@@ -62,7 +63,9 @@
         "preserves_parent_outcome": true
       },
       "summary": "Provider quota limit removed the preferred hosted execution path.",
-      "evidence_refs": ["EV-001"]
+      "evidence_refs": [
+        "EV-001"
+      ]
     }
   ],
   "actions": [
@@ -83,7 +86,9 @@
       "retry_of_action_id": null,
       "idempotency_key": null,
       "summary": "Executed the repository-local proof path after provider loss.",
-      "evidence_refs": ["EV-002"]
+      "evidence_refs": [
+        "EV-002"
+      ]
     }
   ],
   "terminal": {
@@ -109,15 +114,32 @@
     "proof_ceiling": "Repository-local proof only; the hosted-only gate remains BLOCKED and unobserved.",
     "fingerprint": {
       "effective_prompt": "P07@rev-abc1234",
-      "governing_contracts": ["prompt-runtime-compliance/v1", "execution-boundary-taxonomy/v1"],
+      "governing_contracts": [
+        "prompt-runtime-compliance/v1",
+        "execution-boundary-taxonomy/v1"
+      ],
       "scenario_fixture": "RTC01",
       "evaluator": "prompt-runtime-compliance/v1",
       "model_config": "fp-cfg-rtc01-0001",
       "runtime_host": null
     },
     "checks": [
-      {"check_id": "CK-001", "name": "repository-local-proof", "status": "PASS", "evidence_refs": ["EV-002"]},
-      {"check_id": "CK-002", "name": "hosted-only-gate", "status": "BLOCKED", "evidence_refs": ["EV-001"]}
+      {
+        "check_id": "CK-001",
+        "name": "repository-local-proof",
+        "status": "PASS",
+        "evidence_refs": [
+          "EV-002"
+        ]
+      },
+      {
+        "check_id": "CK-002",
+        "name": "hosted-only-gate",
+        "status": "BLOCKED",
+        "evidence_refs": [
+          "EV-001"
+        ]
+      }
     ]
   },
   "regression_linkage": {
@@ -129,8 +151,18 @@
     "regression_link_ids": []
   },
   "evidence": [
-    {"evidence_id": "EV-001", "kind": "provider", "ref": "provider:quota-limit-signal", "supports": "Provider execution became unavailable via a quota/billing limit."},
-    {"evidence_id": "EV-002", "kind": "repository", "ref": "repo:local-proof-run", "supports": "Repository-local validation path executed successfully on the exact head."}
+    {
+      "evidence_id": "EV-001",
+      "kind": "provider",
+      "ref": "provider:quota-limit-signal",
+      "supports": "Provider execution became unavailable via a quota/billing limit."
+    },
+    {
+      "evidence_id": "EV-002",
+      "kind": "repository",
+      "ref": "repo:local-proof-run",
+      "supports": "Repository-local validation path executed successfully on the exact head."
+    }
   ],
   "privacy": {
     "raw_transcript_persisted": false,
