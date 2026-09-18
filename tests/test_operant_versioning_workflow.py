@@ -179,6 +179,24 @@ class OperantVersioningWorkflowTests(unittest.TestCase):
         self.assertNotIn("git push --force", workflow)
         self.assertNotIn("git push -f", workflow)
 
+    def test_release_pr_lookup_uses_shell_safe_jq_literal(self) -> None:
+        workflow = WORKFLOW.read_text(encoding="utf-8")
+        self.assertIn(
+            'startswith("automation/operant-release-v")',
+            workflow,
+        )
+        self.assertNotIn(
+            r'startswith(\\\"automation/operant-release-v\\\")',
+            workflow,
+        )
+        self.assertEqual(
+            workflow.count(
+                "gh pr list --state open --base main "
+                "--json headRefName,url,number"
+            ),
+            1,
+        )
+
     def test_mainline_release_owners_are_serialized_across_push_and_dispatch(self) -> None:
         workflow = WORKFLOW.read_text(encoding="utf-8")
 
