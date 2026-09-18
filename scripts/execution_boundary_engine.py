@@ -69,6 +69,8 @@ def evaluate_boundary(
     index = _taxonomy_index(taxonomy)
     observed = str(input_event.get("observed_classification", "")).strip()
     classification = observed if observed in index else FALLBACK_CLASS
+    if input_event.get("process_alive") is False and not classification.startswith("HT_"):
+        classification = "HT_HOST_FORCED_TERMINATION"
     spec = index[classification]
     materiality = spec.get("default_materiality")
     recovery = spec.get("default_recovery")
