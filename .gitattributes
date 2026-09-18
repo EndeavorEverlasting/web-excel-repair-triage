@@ -1,8 +1,8 @@
 # Canonical repository line-ending policy.
-# Git stores text normalized in the index; these rules make checkout behavior deterministic.
-* text=auto
+# Auto-detected text defaults to LF on every platform; specific Windows launchers override to CRLF.
+* text=auto eol=lf
 
-# Source, configuration, and documentation are LF across platforms.
+# Source, configuration, and documentation are explicit LF controls.
 .gitattributes text eol=lf
 *.py text eol=lf
 *.json text eol=lf
@@ -17,6 +17,12 @@
 *.html text eol=lf
 *.sh text eol=lf
 *.ps1 text eol=lf
+*.txt text eol=lf
+*.csv text eol=lf
+*.tsv text eol=lf
+*.xml text eol=lf
+*.sha256 text eol=lf
+*.webmanifest text eol=lf
 
 # Windows command-processor launchers retain native CRLF checkouts.
 *.cmd text eol=crlf
