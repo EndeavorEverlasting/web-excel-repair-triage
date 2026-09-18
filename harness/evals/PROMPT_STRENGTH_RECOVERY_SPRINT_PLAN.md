@@ -20,7 +20,7 @@ Close the remaining Prompt Kit strength, execution-boundary, local-proof, line-e
 - #537 remains open and stale relative to current main; its semantic core is valuable but must not carry superseded dependency assumptions.
 - #538 is the open Operant v0.9.0 release carrier; it is downstream of accepted mainline semantics and must be refreshed, not hand-edited around newer work.
 - No tracked root `.gitattributes` exists on current main. Exact-candidate `git diff --check` exists, but repository-wide line-ending policy is not yet canonical.
-- P67 compute-authority evaluation is integrated through its runtime harness; observed external-agent effectiveness remains `UNPROVEN_RUNTIME`.
+- P67 compute-authority evaluation is integrated through its runtime harness; observed external-agent effectiveness remains `UNPROVEN_RUNTIME`.\n- P66/work-queue indexing is temporarily collision-blocked: open PR #524 owns `.ai/WORK_QUEUE.md`. This plan remains the complete canonical owner; Lane 07 or the later ledger owner must reconcile the index after #524 resolves rather than creating a competing ledger write.
 
 ## Ownership / collision map
 
