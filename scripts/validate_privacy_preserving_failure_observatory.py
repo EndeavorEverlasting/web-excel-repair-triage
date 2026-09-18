@@ -42,10 +42,22 @@ def validate() -> dict[str, int]:
         raise ValueError(f"Cursor hook coverage drifted: {sorted(configured ^ SUPPORTED_CURSOR_HOOKS)}")
     if configured & CONTENT_BEARING_HOOKS:
         raise ValueError("content-bearing Cursor hook configured")
+    for entries in hooks.get("hooks", {}).values():
+        for entry in entries:
+            command = entry.get("command", "")
+            if "--state-dir .afk-observatory" not in command:
+                raise ValueError("Cursor hook example must use isolated state directory")
+            if "--state .afk-observatory/state.json" in command:
+                raise ValueError("single shared Cursor state file is forbidden")
     for path in CORE_PATHS:
         bad = _imports(path) & FORBIDDEN_NETWORK_IMPORTS
         if bad:
             raise ValueError(f"network-capable imports forbidden in {path.name}: {sorted(bad)}")
+    local_correlation = contract.get("local_correlation")
+    if not isinstance(local_correlation, dict) or "HMAC-SHA256" not in local_correlation.get("derivation", ""):
+        raise ValueError("local HMAC correlation contract missing")
+    if "run_key" in contract.get("contribution_capsule_allowlist", []):
+        raise ValueError("local run key must never be exportable")
     phases = {item["phase"]: item["status"] for item in contract.get("phase_map", [])}
     if phases.get("P2_ANONYMOUS_CONTRIBUTION") != "BLOCKED_BY_PRIVACY_DESIGN_APPROVAL":
         raise ValueError("anonymous contribution must remain separately gated")
