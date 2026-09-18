@@ -120,11 +120,28 @@ class PromptRegressionSafetyTests(unittest.TestCase):
             self.assertEqual(run_git(repo, "commit", "-qm", "clean candidate").returncode, 0)
             self.assertEqual(run_git(repo, "diff", "--check", f"{base}...HEAD").returncode, 0)
 
-    def test_systemic_family_cannot_degrade_to_prompt_by_prompt_cleanup(self) -> None:
+    def test_systemic_family_accepts_scoped_shared_policy_without_forcing_global_owner(self) -> None:
         register = copy.deepcopy(self.register)
-        register["families"][0]["prompt_strengthening"] = "SCOPED_SHARED_POLICY"
-        with self.assertRaisesRegex(regression.RegressionSafetyError, "shared prompt policy"):
-            regression.validate_register(register, self.contract)
+        family = next(
+            item for item in register["families"] if item["id"] == "PROVIDER_QUOTA_TERMINATION"
+        )
+        family["prompt_strengthening"] = "SCOPED_SHARED_POLICY"
+        family["prevention_surfaces"].remove(
+            self.contract["authority"]["prompt_strengthening_owner"]
+        )
+        result = regression.validate_register(register, self.contract)
+        self.assertGreaterEqual(result["families"], 1)
+
+    def test_contract_rejects_prompt_by_prompt_strengthening_mode(self) -> None:
+        contract = copy.deepcopy(self.contract)
+        contract["defect_family_contract"]["allowed_prompt_strengthening"].append(
+            "PROMPT_BY_PROMPT"
+        )
+        with self.assertRaisesRegex(
+            regression.RegressionSafetyError,
+            "global and scoped shared-policy modes only",
+        ):
+            regression.validate_contract(contract)
 
     def test_systemic_family_requires_recurrence_evidence(self) -> None:
         register = copy.deepcopy(self.register)
