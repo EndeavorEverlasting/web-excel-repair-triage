@@ -4,5 +4,21 @@
     "preserve_canonical",
     "replacement_authorized"
   ],
-  "migrations": []
+  "migrations": [
+    {
+      "migration_id": "2026-09-18-p65-context-artifact-route",
+      "path": "registry/prompts/tutorial-discovery-prompts.v1.json",
+      "from_git_blob_sha1": "e35ee86a19c6b7704544aaad6947f1324c7f3b2b",
+      "to_git_blob_sha1": "7a17f864f0bc26be2ee29a5811fe17f1501a7747",
+      "affected_prompt_ids": [
+        "P65"
+      ],
+      "change_kind": "strengthening",
+      "effective_identity_change": "preserve_canonical",
+      "rationale": "P65 already recognizes artifact creation in its routing interview but omitted the existing P56 Context-to-Artifact Generator from its primary routing map. Add the missing canonical route while preserving P65 identity and P07's bounded-repository-build role.",
+      "focused_tests": [
+        "tests/test_prompt_kit_discovery.py"
+      ]
+    }
+  ]
 }
