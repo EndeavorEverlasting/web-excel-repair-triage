@@ -17,7 +17,7 @@ SCRIPTS = EVAL / "scripts"
 if str(SCRIPTS) not in sys.path:
     sys.path.insert(0, str(SCRIPTS))
 
-from conditions import validate_conditions  # noqa: E402
+from conditions import DEFAULT_GENERATION, GENERATIONS, normalize_generation, validate_conditions  # noqa: E402
 from grade_run import grade_run  # noqa: E402
 from init_run import initialize_run, materialize_workspace_evidence  # noqa: E402
 from runtime_adapter import invoke_or_mark_invalid, mark_invalid  # noqa: E402
@@ -30,8 +30,14 @@ def _rng(seed: str) -> random.Random:
     return random.Random(int.from_bytes(digest[:8], "big"))
 
 
-def build_plan(*, seed: str | None = None, cases: list[str] | None = None) -> dict[str, Any]:
-    contract = validate_conditions()
+def build_plan(
+    *,
+    seed: str | None = None,
+    cases: list[str] | None = None,
+    generation: str = DEFAULT_GENERATION,
+) -> dict[str, Any]:
+    generation = normalize_generation(generation)
+    contract = validate_conditions(generation)
     pilot = contract["pilot"]
     selected = [case.upper() for case in (cases or pilot["cases"])]
     expected = set(pilot["cases"])
@@ -58,6 +64,7 @@ def build_plan(*, seed: str | None = None, cases: list[str] | None = None) -> di
     return {
         "schema_version": "compute-authority-pilot-plan/v1",
         "study_id": contract["study_id"],
+        "generation": generation,
         "seed": seed,
         "pair_orders": pair_orders,
         "runs": assignments,
@@ -107,6 +114,7 @@ def _invalidate_identity_mismatch(pair_records: list[dict[str, Any]]) -> int:
 
 
 def execute_pilot(plan: dict[str, Any], *, pilot_id: str, adapter_config: dict[str, Any] | None) -> dict[str, Any]:
+    generation = normalize_generation(plan.get("generation", DEFAULT_GENERATION))
     records: list[dict[str, Any]] = []
     valid_runs = invalid_runs = 0
     by_pair: dict[int, list[dict[str, Any]]] = {}
@@ -117,6 +125,7 @@ def execute_pilot(plan: dict[str, Any], *, pilot_id: str, adapter_config: dict[s
             condition=spec["condition"],
             repetition=spec["repetition"],
             run_id=run_id,
+            generation=generation,
         )
         outcome = invoke_or_mark_invalid(adapter_config, run_dir)
         record: dict[str, Any] = {
@@ -170,6 +179,7 @@ def execute_pilot(plan: dict[str, Any], *, pilot_id: str, adapter_config: dict[s
     return {
         "schema_version": "compute-authority-pilot-receipt/v1",
         "pilot_id": pilot_id,
+        "generation": generation,
         "runtime_state": runtime_state,
         "planned_runs": plan["planned_runs"],
         "valid_runs": valid_runs,
@@ -185,6 +195,7 @@ def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--adapter-config", type=Path)
     parser.add_argument("--pilot-id", default="pilot")
+    parser.add_argument("--generation", choices=sorted(GENERATIONS), default=DEFAULT_GENERATION)
     parser.add_argument("--seed")
     parser.add_argument("--case", action="append", dest="cases")
     parser.add_argument("--plan-output", type=Path, default=DEFAULT_OUTPUT / "pilot-plan.json")
@@ -193,13 +204,14 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--summary", action="store_true")
     args = parser.parse_args(argv)
 
-    plan = build_plan(seed=args.seed, cases=args.cases)
+    plan = build_plan(seed=args.seed, cases=args.cases, generation=args.generation)
     args.plan_output.parent.mkdir(parents=True, exist_ok=True)
     args.plan_output.write_text(json.dumps(plan, indent=2, sort_keys=True) + "\n", encoding="utf-8")
     if args.plan_only:
         receipt = {
             "schema_version": "compute-authority-pilot-receipt/v1",
             "pilot_id": args.pilot_id,
+            "generation": plan["generation"],
             "runtime_state": "UNPROVEN_RUNTIME",
             "planned_runs": plan["planned_runs"],
             "valid_runs": 0,

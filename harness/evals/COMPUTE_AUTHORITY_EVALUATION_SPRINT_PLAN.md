@@ -1,6 +1,6 @@
 # Prompt Kit Compute-Authority External-Agent Evaluation Sprint Map
 
-**Status:** Sprint 1 + Sprint 2 runtime harness INTEGRATED on main — observed external-agent pilot/main-study effectiveness remains `UNPROVEN_RUNTIME`; Sprint 3 not started
+**Status:** Sprint 1 + Sprint 2 runtime harness INTEGRATED on main — observed external-agent pilot/main-study effectiveness remains `UNPROVEN_RUNTIME`; Sprint 3 not started. Generation `v2` (released Operant v0.9.0 treatment, preserved pre-`a583b333` control) is codified in §15; Gen1 stays frozen and default.
 **Canonical owner:** P67 Repository Eval Framework Builder + existing `skill-evaluation` capability
 **Repository:** `EndeavorEverlasting/web-excel-repair-triage`
 **Evidence floor at plan creation:** `main@fd3b3910e0ce80f3880ebd15426278354b065f48`
@@ -294,7 +294,7 @@ Provider-backed model-runtime execution remains separately typed from CI/static 
 - This file is the complete canonical sprint/dependency map.
 - `.ai/WORK_QUEUE.md` indexes this plan, current state, owner, and next action; the ledger does not replace this file.
 - Material changes to test cases, metrics, thresholds, condition identity, sample size, or phase dependencies must update this plan before the next dependent sprint begins.
-- Once Sprint 2 freezes Control/Treatment, do not tune treatment wording during the same study. A discovered prompt weakness becomes a separately versioned repair followed by a fresh evaluation generation.
+- Once Sprint 2 freezes Control/Treatment, do not tune treatment wording during the same study. A discovered prompt weakness becomes a separately versioned repair followed by a fresh evaluation generation. The first such generation is `v2`, codified in §15: it never mutates the frozen `v1` files in place; it adds sibling generation artifacts selected through an explicit generation selector.
 
 ## 14. Current state and exact next action
 
@@ -309,3 +309,21 @@ Provider-backed model-runtime execution remains separately typed from CI/static 
 **Proof ceiling now:** IMPLEMENTED / VALIDATED / INTEGRATED for Sprint 1 and Sprint 2 repository/runtime-harness behavior; `UNPROVEN_RUNTIME` for real external-agent pilot effectiveness; Sprint 3 is dependency-gated and NOT STARTED.
 
 **NEXT ACTION:** P67 model-runtime / `skill-evaluation` owner — from refreshed main containing `300d949fdcf79bbac018440a85052302d575bd2c`, provide or select an accessible external-agent adapter config that satisfies `harness/evals/compute-authority/runtime/adapter-contract.v1.json`, then run `python harness/evals/compute-authority/scripts/pilot.py --adapter-config <adapter.json> --pilot-id <provider-model-pilot> --summary`; completion gate is 16 classified paired runs with valid same-provider/agent/model identities, zero forbidden-mutation escape, no gold leakage, and a pilot aggregate/fixture-validity disposition. If no external runtime is available, preserve `UNPROVEN_RUNTIME` and do not start Sprint 3.
+
+## 15. Generation versioning
+
+The study measures a fixed question — *does the strengthened execution policy beat the un-strengthened baseline?* — across successive treatment revisions. Because the shared Prompt Kit execution policy is versioned repository state, the frozen treatment eventually stops representing the currently released policy. §13 governs this: treatment drift is repaired by a **separately versioned fresh evaluation generation**, never by mutating a frozen generation in place.
+
+### Identity of each generation
+
+| Generation | Status | Control | Treatment | Selector |
+| --- | --- | --- | --- | --- |
+| `v1` | frozen (default) | pre-`a583b333` policy at `49951e238bd47e536b40815552ceb32a1aac7815` | strengthened policy at `741fc565ecc1772d2fcfce43e8c2d071b9d35d81` | `runtime/conditions.v1.json` + `prompts/identities.json` |
+| `v2` | frozen | **same** pre-`a583b333` control at `49951e238bd47e536b40815552ceb32a1aac7815` | released Operant v0.9.0 policy at `fc9437ff3fa83ce9df82c6ad85a79d09d7e0bd17` | `runtime/conditions.v2.json` + `prompts/gen2/identities.json` |
+
+### Rules
+
+- **Control is preserved, not re-baselined.** `v2` keeps the exact `v1` control (same source commit and byte-identical prompt snapshot / contract hash), so the longitudinal comparison to the un-strengthened baseline stays valid. Re-baselining control to a pre-v0.9.0 policy would answer a *different* causal question (marginal release delta); if that is wanted later it is a separately defined study, not a mutation of P67.
+- **Gen1 is never mutated.** `v2` adds sibling artifacts only. `prompts/prompt-*.txt`, `prompts/identities.json`, and `runtime/conditions.v1.json` remain byte-for-byte frozen.
+- **Explicit generation selector.** `scripts/_bootstrap_prompts.py` and `scripts/conditions.py` accept `--generation {v1,v2}` (default `v1`). Each generation pins its treatment commit deterministically, so any generation is fully reproducible from any checkout. All existing callers that omit the selector continue to resolve `v1`.
+- **Effectiveness proof stays per-generation and `UNPROVEN_RUNTIME`.** Adding `v2` does not itself produce any observed result. The `v2` verdict remains `UNPROVEN_RUNTIME` until a compatible real external-agent adapter executes the 16-run pilot for `v2` under the same acceptance contract (§7). Repository/CI proof of the `v2` artifacts is harness proof only.

@@ -43,6 +43,40 @@ class ComputeAuthorityRuntimeHarnessTests(unittest.TestCase):
         self.assertEqual(contract["pilot"]["expected_runs"], 16)
         self.assertEqual(set(contract["conditions"]), {"control", "treatment"})
 
+    def test_gen2_conditions_preserve_control_and_advance_treatment(self) -> None:
+        v1 = conditions.validate_conditions()
+        v2 = conditions.validate_conditions("v2")
+        self.assertTrue(v2["frozen"])
+        self.assertEqual(v2["generation"], "v2")
+        self.assertEqual(v2["pilot"]["expected_runs"], 16)
+        self.assertEqual(
+            v2["conditions"]["control"]["prompt_contract_sha"],
+            v1["conditions"]["control"]["prompt_contract_sha"],
+        )
+        self.assertNotEqual(
+            v2["conditions"]["treatment"]["prompt_contract_sha"],
+            v1["conditions"]["treatment"]["prompt_contract_sha"],
+        )
+
+    def test_gen2_selector_binds_gen2_prompt_snapshots(self) -> None:
+        run_dir = initialize_run(
+            case_id="TC01",
+            condition="treatment",
+            run_id="runtime-test-gen2",
+            generation="v2",
+        )
+        meta = json.loads((run_dir / "run.json").read_text(encoding="utf-8"))
+        condition = json.loads((run_dir / "condition.json").read_text(encoding="utf-8"))
+        self.assertEqual(meta["generation"], "v2")
+        self.assertIn("prompts/gen2/", condition["prompt_path"])
+
+    def test_gen2_pilot_plan_is_balanced_and_labeled(self) -> None:
+        plan = pilot.build_plan(generation="v2")
+        self.assertEqual(plan["generation"], "v2")
+        self.assertEqual(plan["planned_runs"], 16)
+        self.assertEqual(plan["control_first_pairs"], 4)
+        self.assertEqual(plan["treatment_first_pairs"], 4)
+
     def test_pilot_order_is_deterministic_balanced_and_paired(self) -> None:
         first = pilot.build_plan()
         second = pilot.build_plan()

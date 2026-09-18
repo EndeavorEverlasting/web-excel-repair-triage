@@ -1,0 +1,27 @@
+{
+  "schema_version": "compute-authority-prompt-identities/v1",
+  "generation": "v2",
+  "control": {
+    "condition": "control",
+    "source_commit": "49951e238bd47e536b40815552ceb32a1aac7815",
+    "prompt_path": "harness/evals/compute-authority/prompts/gen2/prompt-control.txt",
+    "prompt_contract_sha": "6330edbc6b510fa6f09e204c0faba50d93bbdb749c52d773804b3227fe1ae78d",
+    "markers": {
+      "compute_authority": false,
+      "exhaustive_compute": false,
+      "end_state_horizon": false
+    }
+  },
+  "treatment": {
+    "condition": "treatment",
+    "source_commit": "fc9437ff3fa83ce9df82c6ad85a79d09d7e0bd17",
+    "prompt_path": "harness/evals/compute-authority/prompts/gen2/prompt-treatment.txt",
+    "prompt_contract_sha": "3f63851634cc4b42ac4afd9101c76065d202b6d15e15734818a68dd59e8dda8c",
+    "markers": {
+      "compute_authority": true,
+      "exhaustive_compute": true,
+      "end_state_horizon": true
+    }
+  },
+  "freeze_note": "Treatment is the released Operant v0.9.0 shared execution policy at fc9437ff3fa83ce9df82c6ad85a79d09d7e0bd17. Control is preserved byte-for-byte from generation v1 (the policy immediately before a583b333) so the longitudinal baseline comparison stays valid; control is not re-baselined."
+}

@@ -31,6 +31,26 @@ class ComputeAuthorityEvalHarnessTests(unittest.TestCase):
             digest = hashlib.sha256(body.encode("utf-8")).hexdigest()
             self.assertEqual(digest, meta["prompt_contract_sha"], condition)
 
+    def test_gen2_preserves_control_and_advances_treatment(self) -> None:
+        v1 = json.loads((EVAL / "prompts" / "identities.json").read_text(encoding="utf-8"))
+        gen2 = json.loads((EVAL / "prompts" / "gen2" / "identities.json").read_text(encoding="utf-8"))
+        self.assertEqual(gen2["generation"], "v2")
+        self.assertEqual(
+            gen2["control"]["prompt_contract_sha"], v1["control"]["prompt_contract_sha"]
+        )
+        self.assertEqual(gen2["control"]["source_commit"], v1["control"]["source_commit"])
+        self.assertNotEqual(
+            gen2["treatment"]["prompt_contract_sha"], v1["treatment"]["prompt_contract_sha"]
+        )
+        self.assertTrue(gen2["treatment"]["markers"]["compute_authority"])
+        self.assertTrue(gen2["treatment"]["markers"]["exhaustive_compute"])
+        self.assertTrue(gen2["treatment"]["markers"]["end_state_horizon"])
+        for condition in ("control", "treatment"):
+            meta = gen2[condition]
+            body = (ROOT / meta["prompt_path"]).read_text(encoding="utf-8").replace("\r\n", "\n")
+            digest = hashlib.sha256(body.encode("utf-8")).hexdigest()
+            self.assertEqual(digest, meta["prompt_contract_sha"], condition)
+
     def test_hidden_manifests_exist_and_are_excluded_from_workspaces(self) -> None:
         for case_id in [f"TC{i:02d}" for i in range(1, 9)]:
             hidden = EVAL / "fixtures" / case_id / "evaluator.manifest.yaml"

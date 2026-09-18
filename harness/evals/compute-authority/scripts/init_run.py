@@ -20,7 +20,7 @@ SCRIPTS = EVAL / "scripts"
 if str(SCRIPTS) not in sys.path:
     sys.path.insert(0, str(SCRIPTS))
 
-from conditions import resolve  # noqa: E402
+from conditions import DEFAULT_GENERATION, GENERATIONS, normalize_generation, resolve  # noqa: E402
 from reset_fixture import reset_case, workspace_hash  # noqa: E402
 
 VALID_CASES = {f"TC{i:02d}" for i in range(1, 9)}
@@ -119,13 +119,15 @@ def initialize_run(
     run_id: str | None = None,
     agent: str = "",
     model: str = "",
+    generation: str = DEFAULT_GENERATION,
 ) -> Path:
     case_id = case_id.upper()
     if case_id not in VALID_CASES:
         raise ValueError(f"invalid case: {case_id}")
     if repetition < 1:
         raise ValueError("repetition must be >= 1")
-    frozen = resolve(condition)
+    generation = normalize_generation(generation)
+    frozen = resolve(condition, generation)
     run_id = validate_run_id(run_id or f"{case_id}-{condition}-r{repetition}")
     run_dir = EVAL / "runs" / run_id
     if run_dir.exists():
@@ -176,6 +178,7 @@ def initialize_run(
         "run_id": run_id,
         "test_case": case_id,
         "condition": condition,
+        "generation": generation,
         "repetition": repetition,
         "agent": agent,
         "model": model,
@@ -200,6 +203,7 @@ def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--case", required=True)
     parser.add_argument("--condition", required=True, choices=["control", "treatment"])
+    parser.add_argument("--generation", choices=sorted(GENERATIONS), default=DEFAULT_GENERATION)
     parser.add_argument("--repetition", type=int, default=1)
     parser.add_argument("--run-id")
     parser.add_argument("--agent", default="")
@@ -212,6 +216,7 @@ def main(argv: list[str] | None = None) -> int:
         run_id=args.run_id,
         agent=args.agent,
         model=args.model,
+        generation=args.generation,
     )
     print(run_dir)
     return 0
