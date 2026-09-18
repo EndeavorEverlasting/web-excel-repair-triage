@@ -17,6 +17,7 @@ Human-facing Operant releases. Git commit/artifact identity remains the forensic
 - feat(prompt-kit): compile recurring-defect safety into operational prompts (`4d40758c`)
 - feat(prompt-kit): make execution boundaries public state (`3ffd70be`)
 - feat(harness): close execution boundary delivery gaps (`dc019578`)
+- feat(prompt-kit): make conversation truth artifact-durable (#547) (`92624c15`)
 
 ### Fixes / performance
 
