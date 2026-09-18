@@ -1,0 +1,31 @@
+{
+  "version": 1,
+  "note": "EXAMPLE ONLY — do not auto-install. Local-only prototype; afterAgentThought/afterAgentResponse are intentionally absent.",
+  "hooks": {
+    "beforeSubmitPrompt": [
+      {
+        "command": "python scripts/cursor_failure_sentinel.py --state .afk-observatory/state.json hook beforeSubmitPrompt"
+      }
+    ],
+    "postToolUseFailure": [
+      {
+        "command": "python scripts/cursor_failure_sentinel.py --state .afk-observatory/state.json hook postToolUseFailure"
+      }
+    ],
+    "afterFileEdit": [
+      {
+        "command": "python scripts/cursor_failure_sentinel.py --state .afk-observatory/state.json hook afterFileEdit"
+      }
+    ],
+    "stop": [
+      {
+        "command": "python scripts/cursor_failure_sentinel.py --state .afk-observatory/state.json hook stop"
+      }
+    ],
+    "sessionEnd": [
+      {
+        "command": "python scripts/cursor_failure_sentinel.py --state .afk-observatory/state.json hook sessionEnd"
+      }
+    ]
+  }
+}
