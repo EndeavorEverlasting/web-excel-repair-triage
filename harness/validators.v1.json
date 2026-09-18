@@ -346,6 +346,38 @@
       "proof_ceiling": "Executable deterministic resource projection and lazy-loading regression proof."
     },
     {
+      "id": "execution-boundary-enforcement-audit",
+      "class": "contract",
+      "command": "python scripts/validate_execution_boundary_enforcement.py --summary",
+      "blocking": true,
+      "output": "process log",
+      "proof_ceiling": "Static architecture, taxonomy, executable regression-matrix, and shared Prompt Kit boundary-inheritance proof."
+    },
+    {
+      "id": "execution-boundary-enforcement-tests",
+      "class": "test",
+      "command": "python -m unittest tests.test_execution_boundary_enforcement_prompt -v",
+      "blocking": true,
+      "output": "process log",
+      "proof_ceiling": "Executable boundary state-machine, recovery, supervisor, and negative-control regression proof."
+    },
+    {
+      "id": "privacy-failure-observatory-audit",
+      "class": "contract",
+      "command": "python scripts/validate_privacy_preserving_failure_observatory.py",
+      "blocking": true,
+      "output": "process log",
+      "proof_ceiling": "Static local-only observatory, hook allowlist, privacy diode, and no-network contract proof."
+    },
+    {
+      "id": "privacy-failure-observatory-tests",
+      "class": "test",
+      "command": "python -m unittest tests.test_privacy_preserving_failure_observatory_prompt -v",
+      "blocking": true,
+      "output": "process log",
+      "proof_ceiling": "Executable zero-content state, provenance, hard-stop, persistence, and privacy-canary regression proof."
+    },
+    {
       "id": "repo-native-update-audit",
       "class": "contract",
       "command": "python scripts/validate_repo_native_update_harness.py --summary",
@@ -405,6 +437,10 @@
       "prompt-kit-ui-format-alignment-tests",
       "operant-external-resource-audit",
       "operant-external-resource-tests",
+      "execution-boundary-enforcement-audit",
+      "execution-boundary-enforcement-tests",
+      "privacy-failure-observatory-audit",
+      "privacy-failure-observatory-tests",
       "repo-native-update-audit",
       "repo-native-update-tests",
       "repo-native-update-parity",
@@ -436,6 +472,10 @@
       "prompt-kit-ui-format-alignment-tests",
       "operant-external-resource-audit",
       "operant-external-resource-tests",
+      "execution-boundary-enforcement-audit",
+      "execution-boundary-enforcement-tests",
+      "privacy-failure-observatory-audit",
+      "privacy-failure-observatory-tests",
       "repo-native-update-audit",
       "repo-native-update-tests",
       "repo-native-update-parity",
@@ -494,6 +534,10 @@
       "prompt-kit-ui-format-alignment-tests",
       "operant-external-resource-audit",
       "operant-external-resource-tests",
+      "execution-boundary-enforcement-audit",
+      "execution-boundary-enforcement-tests",
+      "privacy-failure-observatory-audit",
+      "privacy-failure-observatory-tests",
       "repo-native-update-audit",
       "repo-native-update-tests",
       "repo-native-update-parity",
