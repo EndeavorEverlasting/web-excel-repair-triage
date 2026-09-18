@@ -1,0 +1,143 @@
+{
+  "schema_version": "prompt-runtime-compliance-receipt/v1",
+  "receipt_id": "prcr/fixture/rtc02-positive",
+  "supersedes_receipt_id": null,
+  "related_receipt_ids": [],
+  "run": {
+    "run_id": "run/rtc02/positive",
+    "objective_id": "objective/rtc02/concurrent-state",
+    "started_at": "2026-09-18T12:00:00Z",
+    "ended_at": "2026-09-18T12:10:00Z",
+    "repository": "EndeavorEverlasting/web-excel-repair-triage",
+    "mission_id": "P07-runtime-compliance-pilot"
+  },
+  "model_config": {
+    "provider": "example-provider",
+    "model": "example-model",
+    "model_revision": null,
+    "configuration_id": "cfg-rtc02",
+    "configuration_fingerprint": "fp-cfg-rtc02-0001",
+    "host_surface": "repository-local-harness"
+  },
+  "effective_prompt": {"prompt_id": "P07", "prompt_revision": "rev-abc1234", "surface_id": "agent"},
+  "scenario": {
+    "scenario_id": "RTC02",
+    "kind": "synthetic",
+    "protected_invariants": [
+      "authoritative state refresh",
+      "no duplicate integration work",
+      "ancestor containment proof",
+      "progress-bearing continuation"
+    ],
+    "fixture_path": "harness/evals/runtime-compliance/fixtures/rtc02/receipt.pass.v1.json"
+  },
+  "boundary_events": [
+    {
+      "boundary_event_id": "BE-001",
+      "sequence": 1,
+      "occurred_at": "2026-09-18T12:01:00Z",
+      "classification_status": "CANONICAL",
+      "family_id": "CONCURRENCY_INTEGRATION",
+      "class_id": "CI_HEAD_OR_BASE_MOVED",
+      "materiality": "MATERIAL",
+      "side_effect_state": "NONE",
+      "publication_ack": "USER_VISIBLE",
+      "last_proven_checkpoint": {"ref": "repo:sha:11aa22bb", "summary": "Stale local belief that the PR was open before refresh."},
+      "recovery_sprint": {
+        "required": true,
+        "opened": true,
+        "sprint_id": "RS-001",
+        "scope": "Refresh authoritative PR/default state and reconcile against the stale belief.",
+        "outcome": "Refreshed truth showed the PR already merged and contained in default; no duplicate work performed.",
+        "first_executable_action_id": "A-001",
+        "completion_gate": "Ancestor containment proven against refreshed default.",
+        "return_condition": "None required; state reconciled.",
+        "preserves_parent_outcome": true
+      },
+      "summary": "Refreshed provider truth showed the default branch moved and the PR already merged.",
+      "evidence_refs": ["EV-001"]
+    }
+  ],
+  "actions": [
+    {
+      "action_id": "A-001",
+      "sequence": 1,
+      "boundary_event_id": "BE-001",
+      "started_at": "2026-09-18T12:01:30Z",
+      "completed_at": "2026-09-18T12:02:30Z",
+      "status": "SUCCEEDED",
+      "progress_bearing": true,
+      "side_effect_state": "NONE",
+      "proof_before": "IMPLEMENTED",
+      "proof_after": "VALIDATED",
+      "target_identity": "pr:558",
+      "pre_state_fingerprint": null,
+      "readback_of_action_id": null,
+      "retry_of_action_id": null,
+      "idempotency_key": null,
+      "summary": "Refreshed authoritative PR and default-branch state.",
+      "evidence_refs": ["EV-001"]
+    },
+    {
+      "action_id": "A-002",
+      "sequence": 2,
+      "boundary_event_id": "BE-001",
+      "started_at": "2026-09-18T12:02:30Z",
+      "completed_at": "2026-09-18T12:03:30Z",
+      "status": "SUCCEEDED",
+      "progress_bearing": true,
+      "side_effect_state": "NONE",
+      "proof_before": "VALIDATED",
+      "proof_after": "INTEGRATED",
+      "target_identity": "pr:558",
+      "pre_state_fingerprint": null,
+      "readback_of_action_id": null,
+      "retry_of_action_id": null,
+      "idempotency_key": null,
+      "summary": "Proved the prior merge is an ancestor of refreshed default; skipped duplicate work.",
+      "evidence_refs": ["EV-002"]
+    }
+  ],
+  "terminal": {
+    "state": "COMPLETE",
+    "reason_code": "OBJECTIVE_COMPLETED",
+    "supervisor_synthesized": false,
+    "last_proven_checkpoint": {"ref": "repo:sha:33cc44dd", "summary": "Refreshed default head containing the merged work."},
+    "resumption_trigger": null,
+    "next_transition": null,
+    "summary": "Reconciled concurrent state via ancestor containment without duplicating integrated work."
+  },
+  "violations": [],
+  "proof": {
+    "strongest_state": "INTEGRATED",
+    "runtime_observed": false,
+    "proof_ceiling": "Containment proven by ancestry against refreshed default; no runtime observation of downstream behavior.",
+    "fingerprint": {
+      "effective_prompt": "P07@rev-abc1234",
+      "governing_contracts": ["prompt-runtime-compliance/v1", "execution-boundary-taxonomy/v1"],
+      "scenario_fixture": "RTC02",
+      "evaluator": "prompt-runtime-compliance/v1",
+      "model_config": "fp-cfg-rtc02-0001",
+      "runtime_host": null
+    },
+    "checks": [
+      {"check_id": "CK-001", "name": "authoritative-state-refresh", "status": "PASS", "evidence_refs": ["EV-001"]},
+      {"check_id": "CK-002", "name": "ancestor-containment", "status": "PASS", "evidence_refs": ["EV-002"]}
+    ]
+  },
+  "regression_linkage": {
+    "status": "NONE",
+    "incident_source": "none",
+    "systemic_threshold_met": false,
+    "canonical_owner": null,
+    "occurrences": [],
+    "regression_link_ids": []
+  },
+  "evidence": [
+    {"evidence_id": "EV-001", "kind": "provider", "ref": "provider:pr-merged-signal", "supports": "Refreshed provider truth shows the PR already merged and the default branch moved."},
+    {"evidence_id": "EV-002", "kind": "repository", "ref": "repo:ancestor-containment-proof", "supports": "The prior merge commit is an ancestor of the refreshed default branch."}
+  ],
+  "privacy": {"raw_transcript_persisted": false, "secrets_persisted": false, "hidden_reasoning_persisted": false, "redaction_count": 0},
+  "compliance_result": "PASS",
+  "occurred_at": "2026-09-18T12:10:05Z"
+}

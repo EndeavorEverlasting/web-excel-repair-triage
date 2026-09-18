@@ -1,0 +1,53 @@
+{
+  "manifest_version": "runtime-compliance-scenario-index/v1",
+  "title": "P07 Runtime Compliance Five-Scenario Fixture Index",
+  "receipt_schema": "prompt-runtime-compliance-receipt/v1",
+  "receipt_schema_path": "harness/contracts/prompt-runtime-compliance-receipt.schema.v1.json",
+  "semantic_contract": "prompt-runtime-compliance/v1",
+  "semantic_contract_path": "harness/contracts/prompt-runtime-compliance.v1.json",
+  "boundary_taxonomy": "execution-boundary-taxonomy/v1",
+  "purpose": "Deterministic RTC01..RTC05 scenario oracles. Each scenario carries a positive continuation receipt and a negative failure-oracle receipt plus a scenario definition of protected invariants, forbidden behavior signature, and expected rule outcomes. These are fixture data for the Sprint 2A validator and the Sprint 3A runner; they do not implement the validator or any runtime adapter.",
+  "proof_ceiling": "Deterministic scenario/oracle correctness only. Fixtures do not prove validator detector behavior or downstream model obedience; validator-vs-oracle sensitivity is proven at convergence.",
+  "scenarios": [
+    {
+      "scenario_id": "RTC01",
+      "title": "Provider unavailable while repository-local proof remains",
+      "directory": "harness/evals/runtime-compliance/fixtures/rtc01",
+      "definition": "harness/evals/runtime-compliance/fixtures/rtc01/scenario.json",
+      "positive_receipt": "harness/evals/runtime-compliance/fixtures/rtc01/receipt.pass.v1.json",
+      "negative_receipt": "harness/evals/runtime-compliance/fixtures/rtc01/receipt.fail.v1.json"
+    },
+    {
+      "scenario_id": "RTC02",
+      "title": "PR or branch state changes concurrently",
+      "directory": "harness/evals/runtime-compliance/fixtures/rtc02",
+      "definition": "harness/evals/runtime-compliance/fixtures/rtc02/scenario.json",
+      "positive_receipt": "harness/evals/runtime-compliance/fixtures/rtc02/receipt.pass.v1.json",
+      "negative_receipt": "harness/evals/runtime-compliance/fixtures/rtc02/receipt.fail.v1.json"
+    },
+    {
+      "scenario_id": "RTC03",
+      "title": "Phase boundary is mistaken for a terminal boundary",
+      "directory": "harness/evals/runtime-compliance/fixtures/rtc03",
+      "definition": "harness/evals/runtime-compliance/fixtures/rtc03/scenario.json",
+      "positive_receipt": "harness/evals/runtime-compliance/fixtures/rtc03/receipt.pass.v1.json",
+      "negative_receipt": "harness/evals/runtime-compliance/fixtures/rtc03/receipt.fail.v1.json"
+    },
+    {
+      "scenario_id": "RTC04",
+      "title": "Mutation result is partial or unknown",
+      "directory": "harness/evals/runtime-compliance/fixtures/rtc04",
+      "definition": "harness/evals/runtime-compliance/fixtures/rtc04/scenario.json",
+      "positive_receipt": "harness/evals/runtime-compliance/fixtures/rtc04/receipt.pass.v1.json",
+      "negative_receipt": "harness/evals/runtime-compliance/fixtures/rtc04/receipt.fail.v1.json"
+    },
+    {
+      "scenario_id": "RTC05",
+      "title": "Parallel graph width >= 2 but preferred adapter is unavailable",
+      "directory": "harness/evals/runtime-compliance/fixtures/rtc05",
+      "definition": "harness/evals/runtime-compliance/fixtures/rtc05/scenario.json",
+      "positive_receipt": "harness/evals/runtime-compliance/fixtures/rtc05/receipt.pass.v1.json",
+      "negative_receipt": "harness/evals/runtime-compliance/fixtures/rtc05/receipt.fail.v1.json"
+    }
+  ]
+}

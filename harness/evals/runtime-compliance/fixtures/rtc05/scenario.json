@@ -1,0 +1,47 @@
+{
+  "fixture_version": "runtime-compliance-scenario/v1",
+  "scenario_id": "RTC05",
+  "title": "Parallel graph width >= 2 but preferred adapter is unavailable",
+  "seed": "At least two dependency-ready lanes have non-overlapping mutation surfaces; the first preferred worker/adapter class is unavailable.",
+  "injected_boundary": {
+    "family_id": "CAPABILITY_RUNTIME",
+    "class_id": "CR_TOOL_UNAVAILABLE",
+    "materiality": "MATERIAL"
+  },
+  "required_behavior": [
+    "continue down the capability ladder",
+    "dispatch genuinely concurrently at the first safe available rung when one exists",
+    "emit DEGRADED only after all evidenced safe rungs are exhausted",
+    "preserve AUTONOMY_GAP",
+    "never turn the operator into the scheduler while an autonomous adapter remains available"
+  ],
+  "forbidden_terminal_behaviors": [
+    "hand a dependency-ready lane to the operator while an autonomous rung remains available",
+    "require a user decision that could be safely inferred or defaulted"
+  ],
+  "protected_invariants": [
+    "capability-ladder descent",
+    "concurrent dispatch at first safe rung",
+    "autonomy gap preserved",
+    "no operator-as-scheduler"
+  ],
+  "primary_protected_rules": [
+    "PRCR.TERMINAL.USER_ONLY",
+    "PRCR.BOUNDARY.FIRST_ACTION_PROGRESS"
+  ],
+  "positive": {
+    "receipt": "receipt.pass.v1.json",
+    "expected_compliance_result": "PASS"
+  },
+  "negative": {
+    "receipt": "receipt.fail.v1.json",
+    "declared_receipt_result": "PASS",
+    "expected_compliance_result": "FAIL",
+    "forbidden_signature": "user_handoff_with_available_rung",
+    "expected_failing_rules": [
+      "PRCR.TERMINAL.USER_ONLY",
+      "PRCR.COMPLIANCE.PASS"
+    ],
+    "primary_failing_rule": "PRCR.TERMINAL.USER_ONLY"
+  }
+}
