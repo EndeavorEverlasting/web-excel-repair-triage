@@ -62,7 +62,7 @@ def build_request(
         "refresh_strategy": (
             "create-two-parent-candidate-tree-commit-and-fast-forward-target-head"
             if requires_external_refresh
-            else "open-pr-from-staged-candidate-head"
+            else "create-target-head-from-staged-candidate-and-open-pr"
         ),
     }
 
