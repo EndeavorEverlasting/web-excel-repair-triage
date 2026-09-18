@@ -7,18 +7,32 @@ import json
 import sys
 from pathlib import Path
 
-from scripts.failure_observatory import (
-    ObservatoryError,
-    adapt_cursor_hook,
-    apply_signal,
-    compile_capsule,
-    derive_local_run_key,
-    load_or_create_local_secret,
-    load_state,
-    receipt_signal,
-    save_state,
-    state_path_for_run,
-)
+try:
+    from scripts.failure_observatory import (
+        ObservatoryError,
+        adapt_cursor_hook,
+        apply_signal,
+        compile_capsule,
+        derive_local_run_key,
+        load_or_create_local_secret,
+        load_state,
+        receipt_signal,
+        save_state,
+        state_path_for_run,
+    )
+except ModuleNotFoundError:
+    from failure_observatory import (
+        ObservatoryError,
+        adapt_cursor_hook,
+        apply_signal,
+        compile_capsule,
+        derive_local_run_key,
+        load_or_create_local_secret,
+        load_state,
+        receipt_signal,
+        save_state,
+        state_path_for_run,
+    )
 
 ROOT = Path(__file__).resolve().parents[1]
 ARCHITECTURE = ROOT / "harness/contracts/execution-boundary-enforcement.v1.json"
