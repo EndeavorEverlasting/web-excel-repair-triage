@@ -1,30 +1,30 @@
 {
   "version": 1,
-  "note": "EXAMPLE ONLY — do not auto-install. Local-only prototype; afterAgentThought/afterAgentResponse are intentionally absent.",
+  "note": "EXAMPLE ONLY — do not auto-install. Local-only prototype; run state is isolated by a device-local HMAC of Cursor generation_id; raw host identifiers are never persisted or exported; afterAgentThought/afterAgentResponse are intentionally absent.",
   "hooks": {
     "beforeSubmitPrompt": [
       {
-        "command": "python scripts/cursor_failure_sentinel.py --state .afk-observatory/state.json hook beforeSubmitPrompt"
+        "command": "python scripts/cursor_failure_sentinel.py --state-dir .afk-observatory hook beforeSubmitPrompt"
       }
     ],
     "postToolUseFailure": [
       {
-        "command": "python scripts/cursor_failure_sentinel.py --state .afk-observatory/state.json hook postToolUseFailure"
+        "command": "python scripts/cursor_failure_sentinel.py --state-dir .afk-observatory hook postToolUseFailure"
       }
     ],
     "afterFileEdit": [
       {
-        "command": "python scripts/cursor_failure_sentinel.py --state .afk-observatory/state.json hook afterFileEdit"
+        "command": "python scripts/cursor_failure_sentinel.py --state-dir .afk-observatory hook afterFileEdit"
       }
     ],
     "stop": [
       {
-        "command": "python scripts/cursor_failure_sentinel.py --state .afk-observatory/state.json hook stop"
+        "command": "python scripts/cursor_failure_sentinel.py --state-dir .afk-observatory hook stop"
       }
     ],
     "sessionEnd": [
       {
-        "command": "python scripts/cursor_failure_sentinel.py --state .afk-observatory/state.json hook sessionEnd"
+        "command": "python scripts/cursor_failure_sentinel.py --state-dir .afk-observatory hook sessionEnd"
       }
     ]
   }
