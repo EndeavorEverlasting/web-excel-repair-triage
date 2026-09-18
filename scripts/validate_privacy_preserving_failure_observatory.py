@@ -30,6 +30,23 @@ def _imports(path: Path) -> set[str]:
     return found
 
 
+
+
+
+def validate_hook_configuration(hooks: Any) -> dict[str, list[dict[str, Any]]]:
+    if not isinstance(hooks, dict):
+        raise ValueError("Cursor hook configuration must be an object")
+    hook_map = hooks.get("hooks")
+    if not isinstance(hook_map, dict):
+        raise ValueError("Cursor hook configuration 'hooks' must be an object")
+    for hook_name, entries in hook_map.items():
+        if not isinstance(entries, list):
+            raise ValueError(f"Cursor hook entries for {hook_name!r} must be an array")
+        for entry in entries:
+            if not isinstance(entry, dict):
+                raise ValueError(f"Cursor hook entry for {hook_name!r} must be an object")
+    return hook_map
+
 def validate() -> dict[str, int]:
     contract = json.loads(CONTRACT_PATH.read_text(encoding="utf-8"))
     architecture = json.loads(ARCHITECTURE_PATH.read_text(encoding="utf-8"))
@@ -42,12 +59,13 @@ def validate() -> dict[str, int]:
         raise ValueError("selected design seam drifted")
     if set(contract.get("contribution_capsule_allowlist", [])) != CAPSULE_KEYS:
         raise ValueError("capsule allowlist drifted")
-    configured = set(hooks.get("hooks", {}))
+    hook_map = validate_hook_configuration(hooks)
+    configured = set(hook_map)
     if configured != SUPPORTED_CURSOR_HOOKS:
         raise ValueError(f"Cursor hook coverage drifted: {sorted(configured ^ SUPPORTED_CURSOR_HOOKS)}")
     if configured & CONTENT_BEARING_HOOKS:
         raise ValueError("content-bearing Cursor hook configured")
-    for entries in hooks.get("hooks", {}).values():
+    for entries in hook_map.values():
         for entry in entries:
             command = entry.get("command", "")
             if "--state-dir .afk-observatory" not in command:

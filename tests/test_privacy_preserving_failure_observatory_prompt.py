@@ -3,13 +3,17 @@ from __future__ import annotations
 import ast
 from concurrent.futures import ThreadPoolExecutor
 import json
+import os
 import subprocess
 import sys
 import tempfile
 import unittest
 from pathlib import Path
 
-from scripts.validate_privacy_preserving_failure_observatory import validate as validate_observatory
+from scripts.validate_privacy_preserving_failure_observatory import (
+    validate as validate_observatory,
+    validate_hook_configuration,
+)
 
 from scripts.failure_observatory import (
     CAPSULE_KEYS,
@@ -260,12 +264,85 @@ class PrivacyPreservingFailureObservatoryTests(unittest.TestCase):
                 secrets = list(pool.map(lambda _: load_or_create_local_secret(path), range(32)))
             self.assertTrue(all(secret == secrets[0] for secret in secrets))
             self.assertEqual(len(secrets[0]), 32)
+            if os.name == "posix":
+                self.assertEqual(path.stat().st_mode & 0o777, 0o600)
 
     def test_independent_generations_resolve_to_distinct_local_keys(self) -> None:
         secret = b"z" * 32
         first = derive_local_run_key("generation-one", secret)
         second = derive_local_run_key("generation-two", secret)
         self.assertNotEqual(first, second)
+
+
+
+    def test_interrupt_signal_is_sticky_until_next_run(self) -> None:
+        state = new_state()
+        state = self.apply(state, "beforeSubmitPrompt", {"prompt": "[[AFK_PROMPT:P07@2026.09]]"})
+        state = self.apply(
+            state,
+            "postToolUseFailure",
+            {"tool_name": "Shell", "failure_type": "error", "is_interrupt": True},
+        )
+        state = self.apply(
+            state,
+            "postToolUseFailure",
+            {"tool_name": "Read", "failure_type": "timeout", "is_interrupt": False},
+        )
+        state = self.apply(state, "stop", {"status": "completed", "loop_count": 0})
+        self.assertEqual(compile_capsule(state)["boundary_class"], "UC_CANCELLED")
+
+    def test_finalization_receipt_requires_matching_active_run(self) -> None:
+        with self.assertRaisesRegex(ObservatoryError, "active run"):
+            apply_signal(new_state(), receipt_signal("P07", "2026.09", "VALIDATED"), ARCHITECTURE, TAXONOMY)
+
+        state = new_state()
+        state = self.apply(state, "beforeSubmitPrompt", {"prompt": "[[AFK_PROMPT:P07@2026.09]]"})
+        snapshot = json.loads(json.dumps(state))
+        with self.assertRaisesRegex(ObservatoryError, "does not match"):
+            apply_signal(state, receipt_signal("P08", "2026.09", "VALIDATED"), ARCHITECTURE, TAXONOMY)
+        self.assertEqual(state, snapshot)
+
+        state = apply_signal(state, receipt_signal("P07", "2026.09", "VALIDATED"), ARCHITECTURE, TAXONOMY)
+        state = self.apply(state, "stop", {"status": "completed", "loop_count": 0})
+        with self.assertRaisesRegex(ObservatoryError, "active run"):
+            apply_signal(state, receipt_signal("P07", "2026.09", "OBSERVED"), ARCHITECTURE, TAXONOMY)
+
+    def test_run_state_validation_rejects_extra_fields_bad_types_and_receiptless_success(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp) / "state.json"
+
+            extra = new_state()
+            extra["raw_payload"] = "PRIVATE"
+            with self.assertRaisesRegex(ObservatoryError, "schema drift"):
+                save_state(path, extra)
+            self.assertFalse(path.exists())
+
+            path.write_text(json.dumps(extra), encoding="utf-8")
+            with self.assertRaisesRegex(ObservatoryError, "schema drift"):
+                load_state(path)
+
+            bad_type = new_state()
+            bad_type["mutation_count_bucket"] = "1"
+            with self.assertRaisesRegex(ObservatoryError, "mutation_count_bucket"):
+                save_state(path, bad_type)
+
+            success = new_state()
+            success.update(
+                prompt_id="P07",
+                prompt_release="2026.09",
+                objective_active=False,
+                outcome="SUCCESS",
+            )
+            with self.assertRaisesRegex(ObservatoryError, "requires finalization receipt"):
+                compile_capsule(success)
+
+    def test_hook_validator_rejects_malformed_shapes(self) -> None:
+        with self.assertRaisesRegex(ValueError, "'hooks' must be an object"):
+            validate_hook_configuration({"hooks": []})
+        with self.assertRaisesRegex(ValueError, "must be an array"):
+            validate_hook_configuration({"hooks": {"stop": {}}})
+        with self.assertRaisesRegex(ValueError, "must be an object"):
+            validate_hook_configuration({"hooks": {"stop": ["not-an-object"]}})
 
     def test_zero_content_state_round_trip(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:

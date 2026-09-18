@@ -203,4 +203,4 @@ The shared policy is the inheritance seam. P07/P13/P94 specialize behavior; they
 
 ## Proof ceiling
 
-This phase specifies the architecture and durable ownership seams. It does **not** yet claim that the taxonomy exists, the host supervisor is implemented, downstream models obey the contract, or every Prompt Kit representation inherits it. Those are intentionally explicit successor gates.
+The architecture, taxonomy, shared Prompt Kit inheritance seam, and deterministic regression contract are tracked and validating. They do **not** by themselves prove downstream model obedience, an implemented out-of-process host supervisor, or inheritance by every Prompt Kit representation. Those remain explicit proof limits.
