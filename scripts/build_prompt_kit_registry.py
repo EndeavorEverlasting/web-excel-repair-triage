@@ -94,6 +94,9 @@ REQUIRED_ACTIONABILITY_POLICY_FIELDS = {
     "existing_work_reuse",
     "forbidden_solo_actions",
     "copy_content_appendix",
+    "boundary_sprint_policy_id",
+    "boundary_sprint_marker",
+    "boundary_sprint_suffix",
 }
 REQUIRED_DISPLAY_ORDER_FIELDS = {
     "schema_version",
@@ -155,6 +158,9 @@ def load_actionability_policy() -> dict[str, Any]:
         "next_step_suffix",
         "allowed_none_value",
         "copy_content_appendix",
+        "boundary_sprint_policy_id",
+        "boundary_sprint_marker",
+        "boundary_sprint_suffix",
     ):
         value = payload.get(field)
         if not isinstance(value, str) or not value.strip():
@@ -212,6 +218,10 @@ def load_actionability_policy() -> dict[str, Any]:
     closeout_marker = str(payload["closeout_marker"])
     if closeout_marker not in appendix:
         raise SystemExit("Actionability appendix must include its operational closeout marker")
+    boundary_marker = str(payload["boundary_sprint_marker"])
+    boundary_suffix = str(payload["boundary_sprint_suffix"])
+    if boundary_marker not in boundary_suffix:
+        raise SystemExit("Boundary sprint suffix must include its declared marker")
     return payload
 
 
@@ -339,6 +349,24 @@ def apply_actionability_policy(
     return strengthened
 
 
+def apply_boundary_sprint_policy(
+    prompt: dict[str, Any], policy: dict[str, Any]
+) -> dict[str, Any]:
+    """Embed classification-independent boundary continuation in every Prompt Kit prompt."""
+    prompt_id = str(prompt.get("id", "unknown"))
+    copy_content = str(prompt.get("copyContent", "")).rstrip()
+    if not copy_content:
+        raise SystemExit(f"Prompt {prompt_id} has empty copyContent")
+
+    strengthened = dict(prompt)
+    marker = str(policy["boundary_sprint_marker"]).strip()
+    suffix = str(policy["boundary_sprint_suffix"]).strip()
+    if marker not in copy_content:
+        strengthened["copyContent"] = f"{copy_content}\n\n{suffix}"
+    strengthened["boundaryContinuationPolicy"] = str(policy["boundary_sprint_policy_id"])
+    return strengthened
+
+
 def apply_display_order(
     prompts: list[dict[str, Any]], policy: dict[str, Any]
 ) -> list[dict[str, Any]]:
@@ -410,6 +438,10 @@ def load_prompt_registry() -> list[dict[str, Any]]:
     strengthened_prompts = [
         apply_actionability_policy(prompt, actionability_policy) for prompt in prompts
     ]
+    strengthened_prompts = [
+        apply_boundary_sprint_policy(prompt, actionability_policy)
+        for prompt in strengthened_prompts
+    ]
     annotated_prompts = apply_display_order(
         strengthened_prompts, load_display_order_policy()
     )
@@ -435,6 +467,7 @@ def load_content_prompt_registry() -> list[dict[str, Any]]:
 
     _validate_unique_prompt_identity(prompts, "content")
     prompt_classification.validate_prompt_classification(prompts, "content")
+    actionability_policy = load_actionability_policy()
     prepared: list[dict[str, Any]] = []
     for prompt in prompts:
         prompt_id = str(prompt["id"])
@@ -448,6 +481,7 @@ def load_content_prompt_registry() -> list[dict[str, Any]]:
             raise SystemExit(f"Content prompt {prompt_id} has empty copyContent")
         item = dict(prompt)
         item["actionabilityPolicy"] = "not-applicable:content-only"
+        item = apply_boundary_sprint_policy(item, actionability_policy)
         prepared.append(item)
     return prepared
 
@@ -758,29 +792,3 @@ def main(argv: list[str] | None = None) -> int:
         output = validate_output_path(args.output)
     except ValueError as exc:
         print(f"Prompt Kit output rejected: {exc}", file=sys.stderr)
-        return 2
-
-    prompts = load_prompt_kit_registry()
-    expected = render()
-
-    if args.check:
-        if not output.exists():
-            print(f"Prompt Kit check failed: output is missing: {output}", file=sys.stderr)
-            return 1
-        actual = output.read_text(encoding="utf-8")
-        if actual != expected:
-            print(f"Prompt Kit check failed: output is stale: {output}", file=sys.stderr)
-            return 1
-        print(f"Prompt Kit check passed: {output} ({len(prompts)} prompts)")
-        return 0
-
-    output.parent.mkdir(parents=True, exist_ok=True)
-    output.write_text(expected, encoding="utf-8")
-    print(f"Built {output} ({len(expected)} bytes, {len(prompts)} prompts)")
-    if args.open_after_build:
-        webbrowser.open(output.as_uri())
-    return 0
-
-
-if __name__ == "__main__":
-    raise SystemExit(main())
