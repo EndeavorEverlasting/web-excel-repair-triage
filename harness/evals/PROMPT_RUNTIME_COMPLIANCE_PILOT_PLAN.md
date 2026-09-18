@@ -182,6 +182,15 @@ Required behavior:
 - never blindly replay;
 - preserve partial/unknown side-effect state in the receipt.
 
+Executable RTC04 protocol:
+- the fixture exposes a typed mutation target with a stable target identity and a deterministic pre-mutation state fingerprint;
+- the runtime capture assigns every attempted mutation a stable `action_id` and records `side_effect_state` as `NONE`, `CONFIRMED`, `PARTIAL`, or `UNKNOWN`;
+- a PARTIAL/UNKNOWN mutation emits a mandatory `authoritative_readback` operation before any semantically equivalent retry;
+- readback records the authoritative target state/fingerprint plus a `readback_of_action_id` reference so the evaluator can distinguish "mutation applied" from "mutation absent";
+- any retry records `retry_of_action_id` and, when the provider supports one, reuses the original idempotency/dedupe key;
+- the duplicate-effect oracle fails when an equivalent mutation is retried before readback or when readback proves the original effect already exists and the runtime applies it again;
+- if the target/provider cannot expose an authoritative readback capable of distinguishing those states, RTC04 is BLOCKED or INCONCLUSIVE at that proof gate rather than simulated as PASS.
+
 Primary protected rules:
 - read-after-write;
 - action sequencing;
@@ -213,9 +222,17 @@ The specialized artifact is:
 
 `prompt-runtime-compliance-receipt/v1`
 
-Recommended canonical schema path:
+Canonical schema path:
 
 `harness/contracts/prompt-runtime-compliance-receipt.schema.v1.json`
+
+Canonical semantic contract path:
+
+`harness/contracts/prompt-runtime-compliance.v1.json`
+
+Canonical runtime capture/mapping path:
+
+`harness/evals/runtime-compliance/runtime/capture-mapping.v1.json`
 
 The receipt records:
 
@@ -240,6 +257,36 @@ Relationship rules:
 4. P13/P94 regression artifacts may link violations/receipt IDs as incident evidence.
 5. Raw prompts, responses, conversation transcripts, hidden reasoning, credentials, or secret-bearing payloads are forbidden persisted evidence.
 
+## Runtime capture and proof mapping
+
+The runtime-compliance capture is a separate typed schema because the frozen compute-authority capture cannot represent boundary recovery without losing required information.
+
+Canonical mapping artifact:
+
+`harness/evals/runtime-compliance/runtime/capture-mapping.v1.json`
+
+It must define and validate these lossless mappings:
+
+| Runtime-compliance capture | Compliance receipt | Observed-behavior proof |
+|---|---|---|
+| provider/model/config/runtime identity | `model_config` + proof fingerprint | subject/runtime provenance where supported |
+| scenario/run/objective identity | `run` + `scenario` | subject/claim correlation |
+| boundary event, classification, checkpoint, publication ACK | `boundary_events[]` | observation references; rich event remains in compliance receipt |
+| mutation/action, side-effect state, readback/retry linkage | `actions[]` | observation references; rich action remains in compliance receipt |
+| termination state/reason/resume trigger | `terminal` | terminal observation/claim evidence |
+| validations and protected contracts | `proof.checks[]` | claims and required evidence class |
+| workspace/provider structural evidence | `evidence[]` | subject artifact/path/hash where applicable |
+| evaluator findings | `violations[]` | claim PASS/FAIL observation references |
+| P13/P94 linkage | `regression_linkage` | linked evidence only; no duplicated regression semantics |
+
+Mapping invariants:
+- conversion is fail-closed when a required compliance field has no source mapping;
+- rich boundary/action payloads remain authoritative in the compliance receipt and are referenced, not flattened away, by generic observed-proof artifacts;
+- an `observed-behavior-proof/v1` claim may PASS only when the corresponding compliance receipt validates and the observed evidence class is strong enough;
+- `target_runtime_observed` is available only for a real external-agent execution, never a fake adapter;
+- the mapping must preserve exact receipt ID, run/scenario identity, prompt/model/config fingerprint, and evidence references so P99/P13/P94 adapters can correlate without raw transcript persistence;
+- the compute-authority capture schema is not modified or treated as an interchangeable source schema.
+
 ## Semantic validator rule families
 
 The validator must implement the accepted rule table for `prompt-runtime-compliance-receipt/v1`, including at minimum:
@@ -262,11 +309,11 @@ The validator must implement the accepted rule table for `prompt-runtime-complia
 - privacy/redaction invariants;
 - overall PASS/FAIL/BLOCKED/INCONCLUSIVE consistency.
 
-Recommended validator path:
+Canonical validator path:
 
 `scripts/validate_prompt_runtime_compliance_receipt.py`
 
-Recommended machine-readable validation result:
+Canonical machine-readable validation result:
 
 `prompt-runtime-compliance-validation/v1`
 
@@ -314,9 +361,17 @@ Dependencies:
 
 Owned scope:
 - `harness/contracts/prompt-runtime-compliance-receipt.schema.v1.json`;
-- `harness/contracts/prompt-runtime-compliance.v1.json` or equivalent canonical semantic-rule owner;
-- runtime-compliance architecture/README under `harness/evals/runtime-compliance/`;
-- schema/rule fixtures required only for contract proof.
+- `harness/contracts/prompt-runtime-compliance.v1.json`;
+- `harness/evals/runtime-compliance/runtime/capture-mapping.v1.json`;
+- `harness/evals/runtime-compliance/README.md`;
+- schema/rule/mapping fixtures required only for contract proof.
+
+Identity requirements:
+- receipt schema ID is exactly `prompt-runtime-compliance-receipt/v1`;
+- semantic contract ID is exactly `prompt-runtime-compliance/v1`;
+- validation result schema is exactly `prompt-runtime-compliance-validation/v1`;
+- capture mapping schema is exactly `prompt-runtime-compliance-capture-mapping/v1`;
+- later root-harness registration must point to these exact paths/identities; aliases or "equivalent" alternate owners are rejected unless a separately reviewed migration changes this plan first.
 
 Forbidden:
 - external runtime execution;
@@ -408,13 +463,23 @@ Safe parallel group:
 - Sprint 3B.
 
 Owned scope:
-- runtime-compliance-specific adapter/capture contract;
+- `harness/evals/runtime-compliance/runtime/adapter-contract.v1.json`;
+- `harness/evals/runtime-compliance/runtime/capture-schema.v1.json`;
+- the Sprint-1-owned `harness/evals/runtime-compliance/runtime/capture-mapping.v1.json` as a pinned dependency, not a competing writer;
 - isolated run initialization;
 - provider-neutral runner;
 - sanitized structural capture;
+- typed mutation/checkpoint/readback/retry event capture required by RTC04;
 - runtime-compliance receipt generation;
-- bridge to `observed-behavior-proof/v1` when exact runtime observation exists;
+- bridge to `observed-behavior-proof/v1` using the capture mapping when exact runtime observation exists;
 - runner tests with fake adapters only for harness proof.
+
+RTC04 runner requirements:
+- expose fixture-provided typed mutation and authoritative-readback operations;
+- record stable action IDs, target identities, pre-state fingerprints, side-effect states, readback references, and retry references;
+- prohibit equivalent retry after PARTIAL/UNKNOWN until authoritative readback is recorded;
+- fail closed when readback cannot distinguish whether the first effect applied;
+- detect duplicate effects using the fixture oracle rather than provider self-report.
 
 Forbidden:
 - changing frozen compute-authority adapter/capture semantics;
@@ -428,7 +493,9 @@ Reuse:
 Expected result:
 - plan-only mode yields UNPROVEN_RUNTIME;
 - real adapter mode yields one compliance receipt per RTC case;
-- invalid/incomplete/private captures fail closed.
+- RTC04 can prove readback-before-retry and duplicate-effect sensitivity against its typed fixture target;
+- runtime capture converts losslessly into the compliance receipt and only then into generic observed-proof references;
+- invalid, unmapped, incomplete, or private captures fail closed.
 
 Proof ceiling:
 - repository runtime-harness behavior; real model compliance still requires observed runs.
