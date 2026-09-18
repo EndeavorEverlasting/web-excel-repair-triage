@@ -450,8 +450,27 @@ def validate_documents(
         raise ExecutionBoundaryContractError("shared policy must continue to apply to every prompt")
     suffix = shared_policy.get("next_step_suffix")
     appendix = shared_policy.get("copy_content_appendix")
+    boundary_policy_id = shared_policy.get("boundary_sprint_policy_id")
+    boundary_marker = shared_policy.get("boundary_sprint_marker")
+    boundary_suffix = shared_policy.get("boundary_sprint_suffix")
     if not _nonempty(suffix) or not _nonempty(appendix):
         raise ExecutionBoundaryContractError("shared prompt policy surfaces missing")
+    if boundary_policy_id != "boundary-to-sprint-continuation/v1":
+        raise ExecutionBoundaryContractError("boundary continuation policy identity drifted")
+    if not _nonempty(boundary_marker) or not _nonempty(boundary_suffix):
+        raise ExecutionBoundaryContractError("boundary continuation subpolicy missing")
+    if boundary_marker not in boundary_suffix:
+        raise ExecutionBoundaryContractError("boundary continuation marker missing from suffix")
+    boundary_suffix_lower = boundary_suffix.lower()
+    for phrase in (
+        "sprint eligibility",
+        "first safe progress-bearing action",
+        "what boundary am i treating as terminal?",
+    ):
+        if phrase not in boundary_suffix_lower:
+            raise ExecutionBoundaryContractError(
+                f"boundary continuation subpolicy missing semantic: {phrase}"
+            )
     if MARKER not in suffix or MARKER not in appendix:
         raise ExecutionBoundaryContractError("boundary accountability marker missing from shared inheritance surfaces")
     for path in (
