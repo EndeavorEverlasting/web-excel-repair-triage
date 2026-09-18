@@ -39,6 +39,16 @@ class ContextToArtifactPromptTests(unittest.TestCase):
             self.assertIn(marker, self.content)
         self.assertIn("Recover facts yourself before asking the user to repeat them.", self.p56["inspectFirst"])
         self.assertIn("whole relevant context", self.p56["expectedOutput"].lower())
+        ordered_sections = (
+            "CONTEXT IS AN ANCHOR, NOT A BOUNDARY",
+            "ARTIFACT TARGET RESOLUTION",
+            "CAPABILITY BOUNDARY — CHOOSE ONE MODE",
+            "CANONICAL OWNER + DERIVATION CONTRACT",
+            "ARTIFACT EXECUTION CONTRACT",
+            "SECOND-PASS COMPLETENESS REVIEW",
+        )
+        positions = [self.content.index(marker) for marker in ordered_sections]
+        self.assertEqual(positions, sorted(positions), "P56 must recover context before target resolution and artifact execution")
 
     def test_p56_reuses_artifact_derivation_and_provider_owners(self) -> None:
         for marker in (
