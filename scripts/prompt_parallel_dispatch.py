@@ -314,10 +314,32 @@ def dispatch_manifest(
         raise DispatchError("DEGRADED execution requires --allow-degraded-serial and remains UNPROVEN parallelism")
 
     results: dict[str, dict[str, Any]] = {}
+    executable_status = _contract()["policy"]["executable_manifest_lane_status"]
+    blocked_rule = _contract()["policy"]["blocked_manifest_lane_rule"]
+    terminal_rule = _contract()["policy"]["terminal_manifest_lane_rule"]
+    for lane_id, lane in lanes.items():
+        lane_status = lane["status"]
+        if lane_status == "BLOCKED":
+            results[lane_id] = {
+                "lane_id": lane_id,
+                "status": "BLOCKED",
+                "adapter_kind": lane["adapter"]["kind"],
+                "evidence": [{"type": "manifest_status", "reason": blocked_rule}],
+            }
+        elif lane_status != executable_status:
+            raise DispatchError(
+                f"lane {lane_id} status {lane_status!r} is not executable: {terminal_rule}"
+            )
+
     observed_parallelism = False
     for wave in validated["waves"]:
-        runnable = [lane_id for lane_id in wave if all(results.get(dep, {}).get("status") == "PASS" for dep in lanes[lane_id]["dependencies"])]
-        blocked = sorted(set(wave) - set(runnable))
+        runnable = [
+            lane_id
+            for lane_id in wave
+            if lane_id not in results
+            and all(results.get(dep, {}).get("status") == "PASS" for dep in lanes[lane_id]["dependencies"])
+        ]
+        blocked = sorted(set(wave) - set(runnable) - set(results))
         for lane_id in blocked:
             results[lane_id] = {
                 "lane_id": lane_id,
