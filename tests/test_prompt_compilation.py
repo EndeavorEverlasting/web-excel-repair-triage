@@ -121,6 +121,20 @@ class PromptLanguageCompilerTests(unittest.TestCase):
         self.assertIn("next safe progress-bearing sprint", serial_prompt)
         self.assertIn("PREMATURE_TERMINATION_GAP", serial_prompt)
 
+    def test_p07_repository_actions_fingerprint_consumed_tc06_fixtures(self) -> None:
+        registry = compiler.load_json(ROOT / "harness" / "repository-actions.v1.json")
+        expected = {
+            "harness/prompt-compilation/fixtures/TC06-parallelism-modality/semantics.json",
+            "harness/prompt-compilation/fixtures/TC06-parallelism-modality/profile.json",
+            "harness/prompt-compilation/fixtures/TC06-parallelism-modality/context.json",
+        }
+        for action_id in ("prompt-kit-build-proof", "prompt-kit-proof"):
+            action = next(item for item in registry["actions"] if item["id"] == action_id)
+            self.assertTrue(
+                expected.issubset(set(action["proof_inputs"])),
+                f"{action_id} must fingerprint every TC06 fixture consumed by the focused P07 proof",
+            )
+
     def test_rejects_weakening_constructs_for_must_obligation(self) -> None:
         weak = (
             "Consider parallel work where useful. Agents could dispatch lanes "
