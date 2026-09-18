@@ -241,12 +241,26 @@ class OperantProductIdentityTests(unittest.TestCase):
             any("stale Operant release candidate version" in item for item in stale)
         )
 
-    def test_workflow_refreshes_open_release_pr_and_pins_dispatch_to_main(self) -> None:
+    def test_workflow_stages_open_release_pr_refresh_and_pins_dispatch_to_main(self) -> None:
         workflow = (
             ROOT / ".github/workflows/operant-versioning.yml"
         ).read_text(encoding="utf-8")
         self.assertIn("ref: main", workflow)
-        self.assertIn("Refreshing open Operant release PR branch in place", workflow)
+        self.assertIn(
+            "Staging refreshed Operant release candidate for external publication",
+            workflow,
+        )
+        self.assertIn(
+            'staging_branch="automation/operant-release-staging-v${next_version}"',
+            workflow,
+        )
+        self.assertIn('target_head="${existing_branch:-$pending_branch}"', workflow)
+        self.assertIn('candidate_branch="$staging_branch"', workflow)
+        self.assertEqual(workflow.count("gh pr list --state open --base main"), 1)
+        self.assertNotIn('candidate_branch="$pending_branch"', workflow)
+        self.assertNotIn("Refreshing open Operant release PR branch in place", workflow)
+        self.assertNotIn('git checkout -B "$existing_branch"', workflow)
+        self.assertNotIn('gh pr edit "$existing_url"', workflow)
         self.assertIn("validate-release-candidate", workflow)
         self.assertIn("docs/prompts.json", workflow)
         self.assertIn("docs/reference.json", workflow)
