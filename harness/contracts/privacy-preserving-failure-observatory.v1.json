@@ -1,0 +1,186 @@
+{
+  "schema_version": "privacy-preserving-failure-observatory/v1",
+  "contract_id": "privacy-preserving-failure-observatory",
+  "status": "PROTOTYPE",
+  "purpose": "Detect Prompt Kit execution failures in third-party agent hosts without collecting user code, repository identity, transcript content, reasoning text, shell arguments, error strings, account identity, or stable device identity.",
+  "default_mode": "LOCAL_ONLY",
+  "design_choice": "ALLOWLIST_LOCAL_SENTINEL_PLUS_STRUCTURED_RECEIPT",
+  "privacy_invariants": [
+    "Prompts never transmit telemetry directly.",
+    "Third-party hook payloads are toxic input; only explicitly enumerated categorical fields may cross the host-adapter boundary.",
+    "Contribution capsules are constructed from an empty allowlist schema, never by redacting a full host payload.",
+    "Prompt/response/reasoning/error/command/path/workspace/repository/email/session/device/account identity and exact timestamps are forbidden from capsules.",
+    "The prototype contains no network sender.",
+    "Local-only observability must remain useful when networking is permanently disabled.",
+    "Hard-stop detection belongs outside the acting agent; finalization receipts improve precision but are never the sole detector.",
+    "Public prompt provenance is limited to a bounded prompt id and public release bucket.",
+    "Repository learning is a future projection over approved aggregate phenotypes, never raw individual forensic evidence."
+  ],
+  "deployment_operating_model": {
+    "selected": "LOCAL_PROCESS",
+    "rationale": "A local hook process plus zero-content state is sufficient for detection/explanation; remote infrastructure is unnecessary for P0.",
+    "rejected_for_prototype": [
+      "MANAGED_PAAS",
+      "OCI_HOST",
+      "KUBERNETES"
+    ],
+    "successor_networking_gate": "Evaluate anonymous contribution only after local privacy canaries pass and a separate privacy/consent contract is approved."
+  },
+  "domain_vocabulary": {
+    "HostHookPayload": "Raw third-party hook JSON; toxic by default and never durable.",
+    "HostSignal": "Small allowlisted categorical event emitted by a host adapter.",
+    "PromptProvenance": "Public prompt id plus bounded public release bucket.",
+    "FinalizationReceipt": "Structured local terminal proof statement.",
+    "RunState": "Local zero-content state owned by the sentinel.",
+    "FailurePhenotype": "Canonical host-independent explanation of execution failure.",
+    "ContributionCapsule": "Fixed-schema local preview containing no user content or stable user identity.",
+    "PrivacyCanary": "Injected secret/path/content sentinel proving non-reachability."
+  },
+  "toxic_fields": [
+    "prompt",
+    "attachments",
+    "text",
+    "thought",
+    "error_message",
+    "tool_input",
+    "command",
+    "args",
+    "cwd",
+    "file_path",
+    "workspace",
+    "repository",
+    "email",
+    "conversation_id",
+    "session_id",
+    "generation_id",
+    "tool_use_id",
+    "device_id",
+    "account_id",
+    "exact_timestamp"
+  ],
+  "cursor_hook_allowlist": {
+    "beforeSubmitPrompt": [
+      "public_prompt_marker_only"
+    ],
+    "postToolUseFailure": [
+      "failure_type",
+      "is_interrupt",
+      "tool_name_category"
+    ],
+    "afterFileEdit": [
+      "mutation_observed"
+    ],
+    "stop": [
+      "status",
+      "loop_count_bucket"
+    ],
+    "sessionEnd": [
+      "reason"
+    ],
+    "explicitly_forbidden_hooks": [
+      "afterAgentThought",
+      "afterAgentResponse"
+    ]
+  },
+  "contribution_capsule_allowlist": [
+    "schema_version",
+    "prompt_id",
+    "prompt_release",
+    "host_family",
+    "outcome",
+    "boundary_class",
+    "contract_clause",
+    "failure_type",
+    "mutation_bucket",
+    "recovery_disposition",
+    "terminal_state",
+    "receipt_present"
+  ],
+  "modules": [
+    {
+      "id": "cursor_hook_adapter",
+      "owns": "Raw Cursor payload -> HostSignal translation only.",
+      "public_interface": "adapt_cursor_hook(hook_name, raw_payload) -> HostSignal",
+      "failure_contract": "Reject unsupported/content-bearing hooks and unbounded provenance."
+    },
+    {
+      "id": "local_run_store",
+      "owns": "Cross-process zero-content RunState persistence.",
+      "public_interface": "load_state/save_state",
+      "failure_contract": "Fail closed on malformed state; never write raw payloads."
+    },
+    {
+      "id": "failure_sentinel",
+      "owns": "Run lifecycle, receipt reconciliation, failure phenotype selection.",
+      "public_interface": "apply_signal(state, signal, architecture, taxonomy) -> RunState",
+      "failure_contract": "Unknown material stop becomes fail-safe boundary rather than silent success."
+    },
+    {
+      "id": "boundary_engine_port",
+      "owns": "Canonical classification/recovery decision.",
+      "public_interface": "evaluate_boundary()",
+      "failure_contract": "Propagate taxonomy/state-machine errors."
+    },
+    {
+      "id": "zero_content_compiler",
+      "owns": "ContributionCapsule construction/validation.",
+      "public_interface": "compile_capsule(state) -> dict",
+      "failure_contract": "Reject non-allowlisted schema."
+    },
+    {
+      "id": "repository_learner",
+      "owns": "Future aggregate-to-regression projection only.",
+      "public_interface": "NOT_IMPLEMENTED_IN_P0",
+      "failure_contract": "No individual-event repository publication."
+    }
+  ],
+  "candidate_comparison": [
+    {
+      "candidate": "TRANSCRIPT_CLASSIFIER",
+      "hard_stop_detection": true,
+      "privacy": "REJECT",
+      "reason": "Requires response/transcript/reasoning content."
+    },
+    {
+      "candidate": "REDACT_THEN_SEND",
+      "hard_stop_detection": true,
+      "privacy": "REJECT",
+      "reason": "Starts with toxic data and depends on perfect removal."
+    },
+    {
+      "candidate": "RECEIPT_ONLY_SELF_REPORT",
+      "hard_stop_detection": false,
+      "privacy": "STRONG_BUT_INCOMPLETE",
+      "reason": "Silent cessation can prevent the receipt."
+    },
+    {
+      "candidate": "ALLOWLIST_LOCAL_SENTINEL_PLUS_STRUCTURED_RECEIPT",
+      "hard_stop_detection": true,
+      "privacy": "SELECTED",
+      "reason": "External liveness plus explicit terminal proof without content dependence."
+    }
+  ],
+  "phase_map": [
+    {
+      "phase": "P0_LOCAL_PROTOTYPE",
+      "status": "ACTIVE",
+      "gate": "Focused tests plus deterministic floor; no network transport."
+    },
+    {
+      "phase": "P1_HOST_INSTALLATION",
+      "status": "REQUIRED_SUCCESSOR_WORK",
+      "gate": "Observed local Cursor runs for success, semantic abandonment, user abort, and host error."
+    },
+    {
+      "phase": "P2_ANONYMOUS_CONTRIBUTION",
+      "status": "BLOCKED_BY_PRIVACY_DESIGN_APPROVAL",
+      "gate": "Explicit opt-in, unlinkability analysis, thresholding/privacy budget, and no-content wire proof."
+    },
+    {
+      "phase": "P3_REPOSITORY_LEARNER",
+      "status": "REQUIRED_SUCCESSOR_WORK_AFTER_P2",
+      "gate": "Repository consumes only approved aggregate phenotypes."
+    }
+  ],
+  "proof_ceiling": "P0 proves local adapter/sentinel/compiler behavior and forbidden-data non-reachability under deterministic fixtures. It does not prove Cursor installation, arbitrary hostile runtimes, anonymous transport, differential privacy, or repository aggregation."
+}
