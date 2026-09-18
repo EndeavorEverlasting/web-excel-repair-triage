@@ -13,6 +13,7 @@ ROOT = Path(__file__).resolve().parents[1]
 CONTRACT = ROOT / "harness/contracts/prompt-strength.v1.json"
 MATRIX = ROOT / "harness/evals/prompt-strength/adversarial-regression-matrix.v1.json"
 DISPATCH_SEED = ROOT / "harness/evals/prompt-strength/parallel-dispatch-manifest.seed.v1.json"
+DISPATCH_MANIFEST = ROOT / "Outputs/prompt-parallel-dispatch/manifest.json"
 
 
 class PromptStrengthContractTests(unittest.TestCase):
@@ -39,21 +40,24 @@ class PromptStrengthContractTests(unittest.TestCase):
         self.assertIn("dimensions=21", completed.stdout)
         self.assertIn("cases=31", completed.stdout)
 
-    def test_dispatch_seed_passes_repository_validator(self) -> None:
-        completed = subprocess.run(
-            [
-                sys.executable,
-                "scripts/prompt_parallel_dispatch.py",
-                "validate",
-                "--manifest",
-                str(DISPATCH_SEED.relative_to(ROOT)),
-            ],
-            cwd=ROOT,
-            check=False,
-            capture_output=True,
-            text=True,
-        )
-        self.assertEqual(completed.returncode, 0, completed.stderr or completed.stdout)
+    def test_dispatch_seed_and_primary_manifest_are_identical_and_valid(self) -> None:
+        self.assertTrue(DISPATCH_MANIFEST.is_file(), "primary dispatch manifest must be tracked")
+        self.assertEqual(DISPATCH_MANIFEST.read_bytes(), DISPATCH_SEED.read_bytes())
+        for path in (DISPATCH_SEED, DISPATCH_MANIFEST):
+            completed = subprocess.run(
+                [
+                    sys.executable,
+                    "scripts/prompt_parallel_dispatch.py",
+                    "validate",
+                    "--manifest",
+                    str(path.relative_to(ROOT)),
+                ],
+                cwd=ROOT,
+                check=False,
+                capture_output=True,
+                text=True,
+            )
+            self.assertEqual(completed.returncode, 0, completed.stderr or completed.stdout)
 
     def test_efficient_profile_cannot_drop_immutable_dimension(self) -> None:
         mutated = copy.deepcopy(self.contract)
