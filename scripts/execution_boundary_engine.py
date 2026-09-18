@@ -25,6 +25,7 @@ BLOCKED_RECOVERIES = {
     "ABORT_UNSAFE_MUTATION",
 }
 READBACK_RECOVERIES = {"READ_AFTER_WRITE_RECONCILE"}
+NONTERMINAL_BLOCKED_RECOVERY_FALLBACK = "REPLAN_WITHIN_SCOPE"
 REQUIRED_PUBLIC_FIELDS = ["BOUNDARY", "IMPACT", "PROVED", "RECOVERY", "NEXT"]
 
 
@@ -73,27 +74,43 @@ def evaluate_boundary(
         classification = "HT_HOST_FORCED_TERMINATION"
     spec = index[classification]
     materiality = spec.get("default_materiality")
-    recovery = spec.get("default_recovery")
+    taxonomy_recovery = spec.get("default_recovery")
     if materiality not in taxonomy.get("materiality_levels", {}):
         raise BoundaryEngineError(f"invalid class materiality: {classification}")
-    if recovery not in taxonomy.get("recovery_dispositions", []):
+    if taxonomy_recovery not in taxonomy.get("recovery_dispositions", []):
         raise BoundaryEngineError(f"invalid class recovery: {classification}")
 
     material = materiality in {"MATERIAL", "CRITICAL"}
-    hard_termination = classification.startswith("HT_") or input_event.get("process_alive") is False
+    hard_termination = input_event.get("process_alive") is False
+    explicit_terminal_gate = input_event.get("terminal_gate", False)
+    if not isinstance(explicit_terminal_gate, bool):
+        raise BoundaryEngineError("terminal_gate must be boolean when provided")
     layers = _layer_ids(architecture)
 
+    # Liveness is decided from execution evidence before taxonomy is allowed to
+    # refine the recovery method. A taxonomy class can describe a boundary but
+    # cannot manufacture a stop when no terminal gate was actually observed.
     if hard_termination:
+        recovery = "SYNTHESIZE_TERMINATION"
         path = ["HARD_TERMINATED_SYNTHETIC"]
         supervisor = architecture.get("external_supervisor_contract")
         supervisor_synthesized = isinstance(supervisor, dict) and bool(supervisor.get("rules"))
-    else:
-        final_state = (
-            "QUIESCENT_BLOCKED"
-            if recovery in BLOCKED_RECOVERIES
-            else "RECOVERING"
+    elif explicit_terminal_gate:
+        recovery = (
+            taxonomy_recovery
+            if taxonomy_recovery in BLOCKED_RECOVERIES
+            else "QUIESCE_UNCHANGED_BLOCKER"
         )
-        path = [*NORMAL_PATH_PREFIX, final_state]
+        path = [*NORMAL_PATH_PREFIX, "QUIESCENT_BLOCKED"]
+        _assert_path_supported(path, architecture)
+        supervisor_synthesized = False
+    else:
+        recovery = (
+            NONTERMINAL_BLOCKED_RECOVERY_FALLBACK
+            if taxonomy_recovery in BLOCKED_RECOVERIES
+            else taxonomy_recovery
+        )
+        path = [*NORMAL_PATH_PREFIX, "RECOVERING"]
         _assert_path_supported(path, architecture)
         supervisor_synthesized = False
 
