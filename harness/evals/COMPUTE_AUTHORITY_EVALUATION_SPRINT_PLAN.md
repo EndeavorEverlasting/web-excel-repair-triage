@@ -5,7 +5,7 @@
 **Repository:** `EndeavorEverlasting/web-excel-repair-triage`
 **Evidence floor at plan creation:** `main@fd3b3910e0ce80f3880ebd15426278354b065f48`
 **Floor proof:** PR #452 merged at `fd3b3910...`; exact-main push workflows observed 12/12 completed successfully
-**Latest integrated program floor:** Sprint 1 via PR #464 / merge `43b1953092b518fe3a76b5fe0bfab179f730e849`; Sprint 2 via PR #530 / merge `300d949fdcf79bbac018440a85052302d575bd2c`
+**Latest integrated program floor:** Sprint 1 via PR #464 / merge `43b1953092b518fe3a76b5fe0bfab179f730e849`; Sprint 2 via PR #530 / merge `300d949fdcf79bbac018440a85052302d575bd2c`; Gen2 generation support via PR #557 / merge `e0038eec048af029f6f27bb2f0dc70f875e09e06`
 **Primary target:** measure whether external agents spend more *useful* compute under the strengthened shared Prompt Kit compute-authority contract
 **Plan owner path:** `harness/evals/COMPUTE_AUTHORITY_EVALUATION_SPRINT_PLAN.md`
 **Sprint 1+2 implementation path:** `harness/evals/compute-authority/`
@@ -298,17 +298,17 @@ Provider-backed model-runtime execution remains separately typed from CI/static 
 
 ## 14. Current state and exact next action
 
-**Completed/proven:** Sprint 1 is integrated via PR #464 / `43b1953092b518fe3a76b5fe0bfab179f730e849`. Sprint 2 repository/runtime-harness behavior is integrated via PR #530 / `300d949fdcf79bbac018440a85052302d575bd2c`. The mainline manifest is in phase `B_runtime_harness`; the provider-neutral adapter, frozen conditions, isolated run bundles, structural workspace-delta evidence, deterministic pairing, pair identity checks, invalid-run receipts, and no-runtime promotion guard are present and validated. Repository/CI proof explicitly leaves external-agent effectiveness `UNPROVEN_RUNTIME`.
+**Completed/proven:** Sprint 1 is integrated via PR #464 / `43b1953092b518fe3a76b5fe0bfab179f730e849`. Sprint 2 repository/runtime-harness behavior is integrated via PR #530 / `300d949fdcf79bbac018440a85052302d575bd2c`. Generation-aware Gen2 support is integrated and deployed via PR #557 / `e0038eec048af029f6f27bb2f0dc70f875e09e06`; Gen1 remains frozen/default and Gen2 remains separately frozen with `UNPROVEN_RUNTIME`.
 
-**Remaining:** execute the real 16-run external-agent pilot through a concrete provider adapter; validate pilot capture/scoring/cost assumptions and fixture validity; only after that gate is valid may Sprint 3 reconcile #450-owned shared P67 surfaces and run the 48-valid-run main study/blinded effectiveness decision.
+**Remaining:** build the concrete external-agent execution adapter described in §16, prove its measurement/capture integrity, run a bounded observed adapter smoke, then execute the real 16-run Gen2 pilot. Only after that pilot is valid may Sprint 3 reconcile #450-owned shared P67 surfaces and run the 48-valid-run main study/blinded effectiveness decision.
 
-**Risks:** evaluator overfitting; provider nondeterminism; hidden-gold leakage; transcript privacy; raw token/tool volume being mistaken for usefulness; #450 collision on shared P67 registry; cost/credential limits in live model runs.
+**Risks:** evaluator overfitting; provider nondeterminism; hidden-gold leakage; transcript privacy; adapter self-grading; provider/config drift between paired runs; raw token/tool volume being mistaken for usefulness; #450 collision on shared P67 registry; cost/credential limits in live model runs.
 
-**Blockers:** the Sprint 2 harness itself is not blocked. The empirical pilot is `BLOCKED` in environments without an accessible external-agent runtime/adapter plus any required provider credentials/quota. `.ai/WORK_QUEUE.md` synchronization is temporarily collision-blocked because open PR #524 currently owns that shared ledger file; do not create a competing ledger writer.
+**Blockers:** observed Gen2 effectiveness is blocked until the concrete runtime adapter and its neutral-capture boundary are implemented and a real provider/model is authenticated with usable quota. The adapter program itself is no longer fictional or unspecified: AgentSwitchboard draft PR #311 owns the implementation plan. `.ai/WORK_QUEUE.md` synchronization remains collision-blocked while another writer owns that shared ledger surface.
 
-**Proof ceiling now:** IMPLEMENTED / VALIDATED / INTEGRATED for Sprint 1 and Sprint 2 repository/runtime-harness behavior; `UNPROVEN_RUNTIME` for real external-agent pilot effectiveness; Sprint 3 is dependency-gated and NOT STARTED.
+**Proof ceiling now:** IMPLEMENTED / VALIDATED / INTEGRATED / DEPLOYED for Gen2 harness artifacts; `UNPROVEN_RUNTIME` for real external-agent pilot effectiveness; Sprint 3 is dependency-gated and NOT STARTED.
 
-**NEXT ACTION:** P67 model-runtime / `skill-evaluation` owner — from refreshed main containing `300d949fdcf79bbac018440a85052302d575bd2c`, provide or select an accessible external-agent adapter config that satisfies `harness/evals/compute-authority/runtime/adapter-contract.v1.json`, then run `python harness/evals/compute-authority/scripts/pilot.py --adapter-config <adapter.json> --pilot-id <provider-model-pilot> --summary`; completion gate is 16 classified paired runs with valid same-provider/agent/model identities, zero forbidden-mutation escape, no gold leakage, and a pilot aggregate/fixture-validity disposition. If no external runtime is available, preserve `UNPROVEN_RUNTIME` and do not start Sprint 3.
+**NEXT ACTION:** execute §16 ADP-00 (Triage neutral-capture authority) and AgentSwitchboard ADP-01 (OpenCode capability/readiness) concurrently. Do not ask the operator to invent an adapter JSON. ADP-02 must produce the repository-owned executable/config generator after both contracts are green.
 
 ## 15. Generation versioning
 
@@ -327,3 +327,77 @@ The study measures a fixed question — *does the strengthened execution policy 
 - **Gen1 is never mutated.** `v2` adds sibling artifacts only. `prompts/prompt-*.txt`, `prompts/identities.json`, and `runtime/conditions.v1.json` remain byte-for-byte frozen.
 - **Explicit generation selector.** `scripts/_bootstrap_prompts.py` and `scripts/conditions.py` accept `--generation {v1,v2}` (default `v1`). Each generation pins its treatment commit deterministically, so any generation is fully reproducible from any checkout. All existing callers that omit the selector continue to resolve `v1`.
 - **Effectiveness proof stays per-generation and `UNPROVEN_RUNTIME`.** Adding `v2` does not itself produce any observed result. The `v2` verdict remains `UNPROVEN_RUNTIME` until a compatible real external-agent adapter executes the 16-run pilot for `v2` under the same acceptance contract (§7). Repository/CI proof of the `v2` artifacts is harness proof only.
+
+
+## 16. Concrete external-agent adapter program
+
+The external-agent dependency is now a named cross-repository program rather than an unspecified future adapter.
+
+**Runtime owner:** AgentSwitchboard plan `ASB-2026-09-P67-OPENCODE-EVALUATION-ADAPTER`, currently tracked in draft PR #311 at `plans/active/ASB-2026-09-p67-opencode-evaluation-adapter.plan.json`.
+
+**First backend:** OpenCode V2 with an explicitly selected provider/model. AgentSwitchboard owns launch/readiness/evidence transport; P67 remains authoritative for scientific identity, grading, thresholds, validity, and proof promotion. FirstMate remains the canonical crew/session runtime and is not duplicated by this evaluation seam.
+
+### Measurement-integrity correction before live runs
+
+The current `compute-authority-provider-capture/v1` seam permits the runtime adapter to supply fields that are partly evaluative, including usefulness, first-green, and fixed-point annotations. That makes the runtime under evaluation too close to grading itself.
+
+Before any observed Gen2 pilot:
+
+- version the capture/annotation boundary rather than silently redefining v1;
+- external runtime output must be **neutral structural telemetry**;
+- adapter/provider output may carry structural identity, action/tool category, action index, timestamps, validation identity/return code when independently observed, child/subagent lane timing, termination reason, and trustworthy usage/cost counters;
+- adapter/provider output must not decide usefulness, semantic first-green sufficiency, true fixed point, contract correctness, seeded-defect success, or treatment effectiveness;
+- P67 derives those evaluator labels from workspace mutation, validators, contract evidence, hidden evaluator manifests, and neutral telemetry;
+- add a negative fixture proving self-rated/evaluator-only capture is rejected and a positive fixture proving neutral telemetry is accepted;
+- frozen Gen1/Gen2 prompt snapshots and identities must not change as part of this repair.
+
+### Adapter phase map
+
+| Phase | Owner | Depends on | Completion gate |
+| --- | --- | --- | --- |
+| ADP-00 Neutral capture authority | Triage P67 | Gen2 integrated | versioned neutral capture + evaluator annotation derivation; negative self-rating and positive neutral fixtures green |
+| ADP-01 OpenCode capability/readiness | AgentSwitchboard | current ASB main | exact installed/upstream noninteractive/structured-event/config/plugin/provider identity capabilities proven or one typed blocker |
+| ADP-02 Canonical adapter + config generator | AgentSwitchboard | ADP-00 + ADP-01 | P67 placeholder invocation writes one privacy-bounded neutral result; timeout/nonzero/missing-result fail closed |
+| ADP-03 Synthetic interoperability | ASB + Triage seam | ADP-02 | action/validation/subagent/parallel/error paths covered; no raw-text/gold leakage; cross-repo consumer contract green |
+| ADP-04 Observed adapter smoke | authorized provider runtime | ADP-03 | TC01 control/treatment pair same provider/agent/model; optional TC06 pair only with real >=2 worker capacity; no effectiveness verdict |
+| ADP-05 Gen2 16-run pilot | P67 model-runtime | ADP-04 | 16 classified paired runs, stable pair identity, zero forbidden escape/gold leakage, valid pilot aggregate/fixture disposition |
+| ADP-06 Sprint 3 handoff | P67 convergence | ADP-05 | existing 48-valid-run/blinded-decision dependency gate opens without changing frozen Gen2 treatment or thresholds |
+
+### Canonical adapter invocation target
+
+ADP-02 must graduate the placeholder to a repository-owned executable, planned under AgentSwitchboard:
+
+`tooling/evals/p67-opencode-adapter/Invoke-P67OpenCodeAdapter.ps1`
+
+A companion `New-P67AdapterConfig.ps1` generates the machine-local JSON consumed by P67. The generated config contains executable paths, provider/model identity, timeout, and explicit credential **variable names** only; it never stores credential values. The operator must not hand-author or shuttle this JSON.
+
+The adapter remains argv-only / `shell=false` from the P67 side and receives only `{workspace}`, `{task}`, `{prompt}`, and `{result}`.
+
+### Privacy and isolation
+
+- raw prompt, response, transcript, clipboard, query, provider stdout/stderr, and raw tool arguments/output are not persisted;
+- project/global OpenCode configuration may not silently contaminate the experiment;
+- execution is rooted in the isolated P67 fixture workspace;
+- external-directory mutation and unrelated network/tool surfaces are denied unless the selected provider requires and the contract explicitly permits them;
+- provider login is never automated and credentials never enter tracked source/evidence;
+- process trees and waits are bounded;
+- provider/agent/model identity must match within each pair.
+
+### Proof ladder
+
+1. **CONTRACT:** neutral capture + capability contracts.
+2. **SYNTHETIC:** fake OpenCode event interoperability.
+3. **OBSERVED_ADAPTER_RUNTIME:** bounded TC01 pair (and conditional TC06 pair).
+4. **OBSERVED_PILOT:** 16-run Gen2 pilot.
+5. **OBSERVED_EFFECTIVENESS:** only the existing Sprint 3 study may reach the final verdict.
+
+Static/CI proof cannot skip a rung.
+
+### Immediate parallel launch
+
+The dependency graph is width 2 now:
+
+- **Lane A / Triage:** ADP-00, owned by P67.
+- **Lane B / AgentSwitchboard:** ADP-01, owned by ASB PR #311.
+
+After both lanes are green, ADP-02 becomes the single convergence owner. No full pilot begins before ADP-03 and ADP-04 close.
