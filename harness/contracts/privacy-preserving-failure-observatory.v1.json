@@ -118,9 +118,9 @@
     },
     {
       "id": "boundary_engine_port",
-      "owns": "Canonical classification/recovery decision.",
-      "public_interface": "evaluate_boundary()",
-      "failure_contract": "Propagate taxonomy/state-machine errors."
+      "owns": "Canonical classification/recovery decision plus typed primary recovery-sprint instantiation.",
+      "public_interface": "evaluate_boundary() -> boundary decision including primary_recovery_sprint when applicable",
+      "failure_contract": "Propagate taxonomy/state-machine/sprint-contract errors; never infer success from missing sprint state."
     },
     {
       "id": "zero_content_compiler",

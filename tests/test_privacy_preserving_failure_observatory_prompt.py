@@ -150,6 +150,13 @@ class PrivacyPreservingFailureObservatoryTests(unittest.TestCase):
         self.assertEqual(capsule["failure_type"], "timeout")
         self.assertEqual(capsule["mutation_bucket"], "ONE")
         self.assertFalse(capsule["receipt_present"])
+        self.assertTrue(state["boundary"]["primary_recovery_sprint_required"])
+        self.assertTrue(state["boundary"]["first_action_execution_required"])
+        self.assertEqual(
+            state["boundary"]["primary_recovery_sprint"]["first_executable_action"],
+            state["boundary"]["recovery_disposition"],
+        )
+        self.assertIn("PRIMARY_RECOVERY_SPRINT_OPENED", state["boundary"]["execution_path"])
 
     def test_user_abort_is_stable_stop_not_recovery_loop(self) -> None:
         state = new_state()
@@ -164,6 +171,9 @@ class PrivacyPreservingFailureObservatoryTests(unittest.TestCase):
         self.assertEqual(capsule["boundary_class"], "UC_CANCELLED")
         self.assertEqual(capsule["recovery_disposition"], "QUIESCE_UNCHANGED_BLOCKER")
         self.assertEqual(capsule["terminal_state"], "QUIESCENT_BLOCKED")
+        self.assertFalse(state["boundary"]["primary_recovery_sprint_required"])
+        self.assertFalse(state["boundary"]["first_action_execution_required"])
+        self.assertIsNone(state["boundary"]["primary_recovery_sprint"])
 
     def test_session_error_normalizes_to_hard_termination(self) -> None:
         state = new_state()

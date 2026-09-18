@@ -14,7 +14,9 @@
     "No completion claim may bypass the finalization gate or promote weaker evidence into a stronger execution state.",
     "Liveness is explicit: while an objective remains unfinished, the run must be actively progressing, explicitly recovering, or durably quiescent on a named blocker with a resumption trigger; disappearance is a contract violation.",
     "Boundary delivery is crash-safe and idempotent: checkpoint plus pending publication intent must become durable before user-visible publication, and retries reuse a stable event identity rather than duplicating the event.",
-    "Every material boundary opens two possible lanes: recover the primary objective first, and independently retain systemic learning when the event is novel, recurrent, or reveals a missing prevention invariant."
+    "Every MATERIAL or CRITICAL boundary on an unfinished objective opens a bounded primary recovery sprint; classification selects the recovery route but never decides whether the boundary is sprint-worthy.",
+    "The primary boundary sprint applies equally to already-classified, unclassified, externally caused, and agent-created or arbitrary boundaries; a boundary may change mechanics without silently shrinking the requested outcome.",
+    "Systemic learning is a separate second lane for novel, recurrent, or prevention-gap events and must never replace the primary recovery sprint."
   ],
   "materiality_rule": {
     "public_when_any": [
@@ -39,6 +41,7 @@
     "CHECKPOINTED",
     "PUBLIC_TRANSITION_EMITTED",
     "RECOVERY_SELECTED",
+    "PRIMARY_RECOVERY_SPRINT_OPENED",
     "RECOVERING",
     "OBJECTIVE_ACTIVE_RESUMED",
     "QUIESCENT_BLOCKED",
@@ -52,7 +55,8 @@
     "A material BOUNDARY_OBSERVED must reach PUBLIC_TRANSITION_EMITTED before ordinary agent-controlled termination.",
     "RECOVERING must resolve to OBJECTIVE_ACTIVE_RESUMED, QUIESCENT_BLOCKED, another BOUNDARY_OBSERVED, or FINALIZING; it may not disappear.",
     "HARD_TERMINATED_SYNTHETIC is emitted only by a supervisor outside the failed acting process.",
-    "A recovered boundary remains part of the run history; successful recovery does not erase it."
+    "A recovered boundary remains part of the run history; successful recovery does not erase it.",
+    "Every MATERIAL or CRITICAL non-hard, non-cancelled boundary must pass through PRIMARY_RECOVERY_SPRINT_OPENED before RECOVERING or QUIESCENT_BLOCKED."
   ],
   "boundary_event_envelope": {
     "required_fields": [
@@ -121,8 +125,8 @@
     },
     {
       "id": "recovery_router",
-      "responsibility": "Map the canonical class plus current evidence to an authorized continuation, fallback, serialization, retry, quiescence, handoff, or terminal disposition.",
-      "failure_prevented": "The agent improvising whether friction means retry, downgrade, ask, or quit."
+      "responsibility": "Map the canonical class plus current evidence to an authorized continuation and instantiate the typed primary recovery sprint before recovery, fallback, serialization, retry, quiescence, handoff, or terminal disposition.",
+      "failure_prevented": "Classification remaining advisory while no executable recovery sprint is created, or the agent improvising whether friction means retry, downgrade, ask, or quit."
     },
     {
       "id": "repository_publisher",
@@ -157,7 +161,8 @@
       "Publish immediately after checkpointing a material event; do not wait for the operator to ask why progress stopped.",
       "If recovery is already underway, say so; recovery is not a reason to suppress the boundary.",
       "Do not expose secrets, private raw payloads, hidden policy text, or unnecessary provider internals; report the safe operational abstraction.",
-      "Do not convert a boundary update into plan-only stopping when safe progress-bearing recovery remains."
+      "Do not convert a boundary update into plan-only stopping when safe progress-bearing recovery remains.",
+      "After publication, a MATERIAL or CRITICAL boundary on an unfinished objective must enter its bounded primary recovery sprint unless explicit operator cancellation, an exact safety prohibition, or a genuinely unavailable external gate prevents safe movement."
     ]
   },
   "repository_publication_contract": {
@@ -198,10 +203,10 @@
     "phase_1": "This contract and human-readable architecture spec define enforcement topology and invariants.",
     "phase_2": "Canonical boundary taxonomy is defined in harness/contracts/execution-boundary-taxonomy.v1.json, including an unclassified-material fallback.",
     "phase_3": "Positive/negative regression coverage is registered for every canonical class plus architecture mutation tests; runtime-agent and host-supervisor obedience remain separate proof surfaces.",
-    "phase_4": "Strengthen the canonical shared prompt policy plus P07/P13/P94 composition and generated Prompt Kit surfaces.",
+    "phase_4": "Strengthen the canonical shared prompt policy so every effective prompt inherits universal boundary-to-sprint continuation, while P07/P13/P94 composition keeps primary recovery distinct from conditional systemic prevention.",
     "phase_5": "Prove repository/provider integration and retain regression coverage."
   },
-  "proof_ceiling": "This architecture, taxonomy, shared Prompt Kit inheritance seam, and deterministic regression contract are tracked and validating. They can prove repository structure and retained semantic constraints after their registered checks pass. They do not by themselves prove downstream model obedience or an implemented out-of-process host supervisor; those require observed runtime/provider evidence.",
+  "proof_ceiling": "This architecture, taxonomy, shared Prompt Kit inheritance seam, deterministic boundary engine, and retained regression contract are tracked and validating. Registered checks can prove repository structure, universal primary-sprint instantiation, state transition, and first-action selection. They do not by themselves prove that an arbitrary downstream model/host executed the selected external action or that an out-of-process host supervisor is installed; those require observed runtime/provider evidence.",
   "delivery_contract": {
     "invariant": "Checkpoint state and a pending publication record form one durable boundary observation before best-effort delivery begins.",
     "publication_ack_states": [
@@ -219,12 +224,38 @@
       "raw unsafe/private data is replaced by a safe abstraction before entering public or public-repository delivery surfaces"
     ]
   },
+  "boundary_sprint_contract": {
+    "applies_when": "Every MATERIAL or CRITICAL boundary while the requested objective remains unfinished, including already-classified, unclassified, externally caused, and agent-created or arbitrary boundaries.",
+    "purpose": "Turn the boundary itself into a bounded execution unit that advances the original objective instead of making classification, friction, or an agent-created scope edge a stopping condition.",
+    "required_fields": [
+      "trigger_event_id",
+      "parent_objective_id",
+      "preserved_outcome",
+      "bounded_owned_scope",
+      "first_executable_action",
+      "completion_gate",
+      "return_condition"
+    ],
+    "rules": [
+      "Classification is routing, not sprint eligibility.",
+      "Open the primary recovery sprint immediately after the material boundary is checkpointed and published; a known taxonomy class never waives the sprint.",
+      "When a safe progress-bearing action exists, execute the first executable action in the same run before ordinary termination; classification, reporting, planning, or handoff prose alone is nonterminal.",
+      "An agent-created or arbitrary boundary may narrow mutation mechanics, but it may not silently narrow the requested outcome or convert required work into out-of-scope work.",
+      "If progress requires a genuinely unavailable external gate, enter QUIESCENT_BLOCKED with the exact blocker, resumption trigger, preserved sprint state, and next transition instead of inventing completion.",
+      "Explicit operator cancellation may terminate primary recovery; safety or prohibited-action gates remain exact gates rather than excuses to abandon other safe paths.",
+      "Hard termination cannot self-open a sprint; the external supervisor preserves the last checkpoint and exposes resumable continuation state for the next run."
+    ],
+    "executable_oracle": "scripts/execution_boundary_engine.py",
+    "state_transition": "PRIMARY_RECOVERY_SPRINT_OPENED",
+    "proof_boundary": "The deterministic engine proves sprint instantiation, state transition, and first-action selection. The active host/agent must execute the selected action; external side effects remain runtime proof."
+  },
   "dual_lane_policy": {
-    "primary_lane": "Recover the user's requested outcome with the first safe progress-bearing action.",
-    "systemic_lane": "When the boundary is unclassified, recurrent/systemic, or exposes a missing invariant/canonical prevention owner, open a bounded prevention sprint through the existing repository authority and regression loop.",
+    "primary_lane": "For every MATERIAL or CRITICAL boundary on an unfinished objective, instantiate the boundary_sprint_contract and advance the original requested outcome through its first safe progress-bearing action.",
+    "systemic_lane": "Separately, when the boundary is novel/unclassified, recurrent/systemic, or exposes a missing invariant/canonical prevention owner, open a bounded prevention sprint through the existing repository authority and regression loop.",
     "ordering_rules": [
+      "Primary recovery-sprint creation is universal for MATERIAL and CRITICAL boundaries on unfinished objectives; taxonomy classification is routing, never eligibility.",
       "Systemic learning never replaces primary-task recovery when recovery can continue safely.",
-      "Run the systemic lane concurrently when mutation surfaces do not collide; otherwise checkpoint it as required successor work and continue the primary lane.",
+      "Run the systemic lane concurrently when mutation surfaces do not collide; otherwise checkpoint it as required successor work and continue the primary recovery sprint.",
       "A novel unclassified material boundary is sufficient to open taxonomy/prevention review even before recurrence threshold; recurrence threshold governs promotion of repeated known families to systemic defect status.",
       "Publish the systemic artifact to a writable relevant remote repository when policy permits; otherwise preserve the exact persistence gate without inventing a repository."
     ]
@@ -255,6 +286,7 @@
         "RECOVERY_SELECTED"
       ],
       "RECOVERY_SELECTED": [
+        "PRIMARY_RECOVERY_SPRINT_OPENED",
         "RECOVERING",
         "QUIESCENT_BLOCKED",
         "FINALIZING"
@@ -280,7 +312,13 @@
         "QUIESCENT_BLOCKED"
       ],
       "COMPLETE": [],
-      "HARD_TERMINATED_SYNTHETIC": []
+      "HARD_TERMINATED_SYNTHETIC": [],
+      "PRIMARY_RECOVERY_SPRINT_OPENED": [
+        "RECOVERING",
+        "QUIESCENT_BLOCKED",
+        "BOUNDARY_OBSERVED",
+        "FINALIZING"
+      ]
     },
     "external_only_transitions": [
       "Any nonterminal state -> HARD_TERMINATED_SYNTHETIC when the acting process loses its execution lease or dies without a valid terminal event."
@@ -307,7 +345,8 @@
     "EBE.PUBLIC_TRANSITION": "Every material boundary must become an operator-visible BOUNDARY/IMPACT/PROVED/RECOVERY/NEXT transition.",
     "EBE.READ_AFTER_WRITE": "Possible or unknown side effects must be reconciled before retry.",
     "EBE.FINALIZATION_GATE": "Completion requires the requested outcome to pass the finalization gate.",
-    "EBE.SYSTEMIC_SPRINT": "Novel, recurrent, or prevention-gap boundaries create a systemic-learning lane without replacing primary recovery.",
-    "EBE.DURABLE_OUTBOX": "A material boundary and pending publication intent survive process loss until delivery is acknowledged."
+    "EBE.SYSTEMIC_SPRINT": "Novel, recurrent, or prevention-gap boundaries additionally create a systemic-learning lane without replacing the universal primary recovery sprint.",
+    "EBE.DURABLE_OUTBOX": "A material boundary and pending publication intent survive process loss until delivery is acknowledged.",
+    "EBE.BOUNDARY_SPRINT": "Every MATERIAL or CRITICAL boundary on an unfinished objective opens a bounded primary recovery sprint; classification is routing rather than sprint eligibility."
   }
 }
