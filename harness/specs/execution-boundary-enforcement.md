@@ -124,6 +124,27 @@ Classification must determine continuation. The agent does not improvise whether
 
 The future taxonomy maps classes to behaviors such as bounded retry, serialize, alternate adapter, local-proof substitution, refresh/reconcile, read-after-write, quiesce, explicit handoff, or true terminal block.
 
+### 6A. Boundary-to-sprint continuation
+
+Classification is **routing, not sprint eligibility**.
+
+Every MATERIAL or CRITICAL boundary encountered while the requested objective is unfinished opens a bounded **primary recovery sprint**. This applies whether the boundary is already classified, unclassified, caused by an external provider, or created by the agent itself through an assumption, phase boundary, capability judgment, or newly noticed scope edge.
+
+The sprint preserves the original outcome and binds only the recovery mechanics:
+
+- triggering boundary/event;
+- parent objective and preserved requested outcome;
+- smallest owned recovery scope;
+- first executable progress-bearing action;
+- completion gate;
+- return condition to the parent objective.
+
+When a safe progress-bearing action exists, the agent executes that first action in the same run. A classification, explanation, plan, handoff, branch/PR status, or newly discovered boundary is not a terminal result by itself.
+
+An exact external gate can quiesce the sprint, but the run must retain the blocker, resumption trigger, and next transition. Explicit operator cancellation and genuine safety/prohibition gates remain valid stop conditions; they do not license abandonment of other safe routes.
+
+This is intentionally separate from systemic prevention. **Every material boundary gets the primary recovery sprint.** Only novel/unclassified, recurrent/systemic, or missing-prevention-invariant boundaries additionally get the second prevention sprint through P13/P94 and the canonical regression loop.
+
 ### 7. Repository publisher
 
 When a relevant writable repository exists, material operational learning should become durable **through the repository’s existing authority surfaces**:

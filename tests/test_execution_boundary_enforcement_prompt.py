@@ -227,6 +227,35 @@ class ExecutionBoundaryEnforcementTests(unittest.TestCase):
         with self.assertRaisesRegex(ExecutionBoundaryContractError, "direct active-to-complete"):
             self.validate(architecture=mutated)
 
+    def test_every_material_boundary_opens_primary_recovery_sprint(self) -> None:
+        contract = self.architecture["boundary_sprint_contract"]
+        self.assertIn("Every MATERIAL or CRITICAL boundary", contract["applies_when"])
+        self.assertIn("Classification is routing, not sprint eligibility.", contract["rules"])
+        mutated = copy.deepcopy(self.architecture)
+        mutated["boundary_sprint_contract"]["applies_when"] = (
+            "Only unknown or recurrent boundaries open a recovery sprint."
+        )
+        with self.assertRaisesRegex(
+            ExecutionBoundaryContractError,
+            "every material or critical boundary",
+        ):
+            self.validate(architecture=mutated)
+
+    def test_shared_policy_cannot_make_taxonomy_a_sprint_eligibility_gate(self) -> None:
+        appendix = self.policy["copy_content_appendix"]
+        self.assertIn("BOUNDARY-TO-SPRINT CONTINUATION", appendix)
+        self.assertIn("classification is routing, not sprint eligibility", appendix.lower())
+        mutated = copy.deepcopy(self.policy)
+        mutated["copy_content_appendix"] = mutated["copy_content_appendix"].replace(
+            "classification is routing, not sprint eligibility",
+            "only unclassified boundaries are sprint eligible",
+        )
+        with self.assertRaisesRegex(
+            ExecutionBoundaryContractError,
+            "classification is routing, not sprint eligibility",
+        ):
+            self.validate(policy=mutated)
+
     def test_dual_lane_systemic_sprint_policy_is_mandatory(self) -> None:
         mutated = copy.deepcopy(self.architecture)
         del mutated["dual_lane_policy"]

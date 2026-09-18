@@ -1,0 +1,48 @@
+name: Temporary universal boundary sprint materializer
+
+on:
+  pull_request:
+    types: [opened, synchronize]
+
+permissions:
+  contents: write
+
+concurrency:
+  group: universal-boundary-sprint-${{ github.event.pull_request.number }}
+  cancel-in-progress: false
+
+jobs:
+  materialize:
+    if: github.event.pull_request.head.repo.full_name == github.repository && github.event.pull_request.head.ref == 'fix/universal-boundary-recovery-sprint-20260918'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: fix/universal-boundary-recovery-sprint-20260918
+          fetch-depth: 0
+      - uses: actions/setup-python@v7
+        with:
+          python-version: '3.11'
+      - name: Generate, prove, and publish canonical Prompt Kit projection
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git fetch --no-tags origin +refs/heads/main:refs/remotes/origin/main
+          git merge-base --is-ancestor origin/main HEAD
+          python scripts/validate_execution_boundary_enforcement.py --summary
+          python -m unittest tests.test_execution_boundary_enforcement_prompt -v
+          python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html
+          python scripts/prompt_registry_ops.py validate
+          python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html --check
+          git diff --check
+          git rm -f .github/workflows/tmp-universal-boundary-sprint-materializer.yml
+          git add web/prompt-kit/index.html
+          git diff --cached --check
+          if git diff --cached --quiet; then
+            echo "No generated projection delta; temporary workflow removed only in worktree."
+            exit 1
+          fi
+          git commit -m "build(prompt-kit): publish universal boundary sprint semantics"
+          git push origin HEAD:fix/universal-boundary-recovery-sprint-20260918

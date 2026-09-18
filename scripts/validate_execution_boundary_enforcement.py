@@ -178,6 +178,36 @@ def validate_documents(
         if phrase not in delivery_text:
             raise ExecutionBoundaryContractError(f"delivery contract missing semantic: {phrase}")
 
+    boundary_sprint = architecture.get("boundary_sprint_contract")
+    if not isinstance(boundary_sprint, dict):
+        raise ExecutionBoundaryContractError("universal boundary sprint contract missing")
+    applies_when = boundary_sprint.get("applies_when")
+    sprint_rules = boundary_sprint.get("rules")
+    required_sprint_fields = boundary_sprint.get("required_fields")
+    if not _nonempty(applies_when) or "every material or critical boundary" not in applies_when.lower():
+        raise ExecutionBoundaryContractError("boundary sprint must apply to every material or critical boundary")
+    if not _string_list(required_sprint_fields) or set(required_sprint_fields) != {
+        "trigger_event_id",
+        "parent_objective_id",
+        "preserved_outcome",
+        "bounded_owned_scope",
+        "first_executable_action",
+        "completion_gate",
+        "return_condition",
+    }:
+        raise ExecutionBoundaryContractError("boundary sprint required fields drifted")
+    if not _string_list(sprint_rules):
+        raise ExecutionBoundaryContractError("boundary sprint rules missing")
+    sprint_text = " ".join(sprint_rules).lower()
+    for phrase in (
+        "classification is routing, not sprint eligibility",
+        "execute the first executable action",
+        "agent-created or arbitrary boundary",
+        "genuinely unavailable external gate",
+    ):
+        if phrase not in sprint_text:
+            raise ExecutionBoundaryContractError(f"boundary sprint semantic missing: {phrase}")
+
     dual_lane = architecture.get("dual_lane_policy")
     if not isinstance(dual_lane, dict) or not _string_list(dual_lane.get("ordering_rules")):
         raise ExecutionBoundaryContractError("dual-lane recovery/systemic sprint policy missing")
@@ -389,6 +419,9 @@ def validate_documents(
         "silence is never a terminal state",
         "external supervisor",
         "ue_unclassified_material_boundary",
+        "boundary-to-sprint continuation",
+        "classification is routing, not sprint eligibility",
+        "arbitrary-boundary rule",
         "dual-lane sprint",
     ):
         if phrase not in appendix_lower:
