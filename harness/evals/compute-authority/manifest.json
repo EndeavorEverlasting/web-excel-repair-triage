@@ -21,6 +21,19 @@
   },
   "prompt_identities": "harness/evals/compute-authority/prompts/identities.json",
   "condition_manifest": "harness/evals/compute-authority/runtime/conditions.v1.json",
+  "default_generation": "v1",
+  "generations": {
+    "v1": {
+      "status": "frozen",
+      "prompt_identities": "harness/evals/compute-authority/prompts/identities.json",
+      "condition_manifest": "harness/evals/compute-authority/runtime/conditions.v1.json"
+    },
+    "v2": {
+      "status": "frozen",
+      "prompt_identities": "harness/evals/compute-authority/prompts/gen2/identities.json",
+      "condition_manifest": "harness/evals/compute-authority/runtime/conditions.v2.json"
+    }
+  },
   "adapter_contract": "harness/evals/compute-authority/runtime/adapter-contract.v1.json",
   "fixtures_root": "harness/evals/compute-authority/fixtures",
   "runs_root": "harness/evals/compute-authority/runs",

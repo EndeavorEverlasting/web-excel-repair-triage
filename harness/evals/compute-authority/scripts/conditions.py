@@ -10,10 +10,30 @@ from typing import Any
 
 ROOT = Path(__file__).resolve().parents[4]
 EVAL = ROOT / "harness" / "evals" / "compute-authority"
-CONDITIONS = EVAL / "runtime" / "conditions.v1.json"
-IDENTITIES = EVAL / "prompts" / "identities.json"
+DEFAULT_GENERATION = "v1"
+GENERATIONS = {
+    "v1": {
+        "conditions": EVAL / "runtime" / "conditions.v1.json",
+        "identities": EVAL / "prompts" / "identities.json",
+    },
+    "v2": {
+        "conditions": EVAL / "runtime" / "conditions.v2.json",
+        "identities": EVAL / "prompts" / "gen2" / "identities.json",
+    },
+}
+# Backward-compatible default (generation v1) locators.
+CONDITIONS = GENERATIONS[DEFAULT_GENERATION]["conditions"]
+IDENTITIES = GENERATIONS[DEFAULT_GENERATION]["identities"]
 VALID_CONDITIONS = ("control", "treatment")
 EXPECTED_CASES = tuple(f"TC{i:02d}" for i in range(1, 9))
+
+
+def normalize_generation(generation: str | None) -> str:
+    token = (generation or DEFAULT_GENERATION).lower().strip()
+    token = {"gen1": "v1", "gen2": "v2", "1": "v1", "2": "v2"}.get(token, token)
+    if token not in GENERATIONS:
+        raise ValueError(f"unknown generation: {generation!r}")
+    return token
 
 
 def _json(path: Path) -> dict[str, Any]:
@@ -28,9 +48,11 @@ def _prompt_digest(path: Path) -> str:
     return hashlib.sha256(body.encode("utf-8")).hexdigest()
 
 
-def validate_conditions() -> dict[str, Any]:
-    contract = _json(CONDITIONS)
-    identities = _json(IDENTITIES)
+def validate_conditions(generation: str = DEFAULT_GENERATION) -> dict[str, Any]:
+    generation = normalize_generation(generation)
+    spec = GENERATIONS[generation]
+    contract = _json(spec["conditions"])
+    identities = _json(spec["identities"])
     errors: list[str] = []
 
     if contract.get("schema_version") != "compute-authority-conditions/v1":
@@ -39,6 +61,10 @@ def validate_conditions() -> dict[str, Any]:
         errors.append("unexpected study_id")
     if contract.get("frozen") is not True:
         errors.append("conditions must be frozen")
+    if contract.get("generation", DEFAULT_GENERATION) != generation:
+        errors.append("conditions generation mismatch")
+    if identities.get("generation", DEFAULT_GENERATION) != generation:
+        errors.append("identities generation mismatch")
 
     configured = contract.get("conditions")
     if not isinstance(configured, dict) or set(configured) != set(VALID_CONDITIONS):
@@ -82,28 +108,30 @@ def validate_conditions() -> dict[str, Any]:
     return contract
 
 
-def resolve(condition: str) -> dict[str, Any]:
+def resolve(condition: str, generation: str = DEFAULT_GENERATION) -> dict[str, Any]:
     normalized = condition.lower().strip()
     if normalized not in VALID_CONDITIONS:
         raise ValueError(f"unknown condition: {condition!r}")
-    return dict(validate_conditions()["conditions"][normalized])
+    return dict(validate_conditions(generation)["conditions"][normalized])
 
 
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--condition", choices=VALID_CONDITIONS)
+    parser.add_argument("--generation", choices=sorted(GENERATIONS), default=DEFAULT_GENERATION)
     parser.add_argument("--output", type=Path)
     parser.add_argument("--summary", action="store_true")
     args = parser.parse_args(argv)
 
-    contract = validate_conditions()
+    contract = validate_conditions(args.generation)
     payload: dict[str, Any]
     if args.condition:
-        payload = resolve(args.condition)
+        payload = resolve(args.condition, args.generation)
     else:
         payload = {
             "status": "PASS",
             "study_id": contract["study_id"],
+            "generation": normalize_generation(args.generation),
             "conditions": list(VALID_CONDITIONS),
             "pilot_runs": contract["pilot"]["expected_runs"],
             "runtime_absence_state": contract["runtime_absence_state"],
