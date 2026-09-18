@@ -104,10 +104,14 @@ def validate_contract(contract: dict[str, Any]) -> None:
         family_contract.get("allowed_classifications"),
         "defect_family_contract.allowed_classifications",
     )
-    _string_list(
+    allowed_prompt_strengthening = _string_list(
         family_contract.get("allowed_prompt_strengthening"),
         "defect_family_contract.allowed_prompt_strengthening",
     )
+    if set(allowed_prompt_strengthening) != {"GLOBAL_SHARED_POLICY", "SCOPED_SHARED_POLICY"}:
+        raise RegressionSafetyError(
+            "allowed_prompt_strengthening must preserve global and scoped shared-policy modes only"
+        )
     if family_contract.get("occurrence_commit_format") != "lowercase-40-hex":
         raise RegressionSafetyError("occurrence_commit_format must be lowercase-40-hex")
 
@@ -260,8 +264,6 @@ def validate_register(register: dict[str, Any], contract: dict[str, Any]) -> dic
             raise RegressionSafetyError(f"invalid defect-family classification: {family_id}")
         if family.get("prompt_strengthening") not in allowed_strengthening:
             raise RegressionSafetyError(f"invalid prompt-strengthening mode: {family_id}")
-        if family.get("status") == "SYSTEMIC" and family.get("prompt_strengthening") != "GLOBAL_SHARED_POLICY":
-            raise RegressionSafetyError(f"systemic family must strengthen shared prompt policy: {family_id}")
         if type(family.get("recurring_across_repositories")) is not bool:
             raise RegressionSafetyError("recurring_across_repositories must be boolean")
         if type(family.get("matrix_capture_required")) is not bool:
