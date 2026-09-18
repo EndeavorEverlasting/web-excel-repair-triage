@@ -72,6 +72,15 @@ jobs:
         uses: actions/setup-python@v7
         with:
           python-version: '3.11'
+      - name: Materialize generated Prompt Kit candidate for recovery
+        run: python scripts/build_prompt_kit_registry.py --output Outputs/prompt-kit-generated/index.html
+      - name: Publish generated Prompt Kit candidate
+        uses: actions/upload-artifact@v4
+        with:
+          name: prompt-kit-generated-candidate
+          path: Outputs/prompt-kit-generated/index.html
+          if-no-files-found: error
+          retention-days: 1
       - name: Validate private feedback AFK factoring
         run: |
           python scripts/validate_prompt_kit_feedback_afk_routing.py --summary
