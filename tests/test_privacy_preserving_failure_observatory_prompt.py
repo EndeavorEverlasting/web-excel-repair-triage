@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import ast
+from concurrent.futures import ThreadPoolExecutor
 import json
 import tempfile
 import unittest
@@ -16,6 +17,7 @@ from scripts.failure_observatory import (
     apply_signal,
     compile_capsule,
     derive_local_run_key,
+    load_or_create_local_secret,
     load_state,
     new_state,
     receipt_signal,
@@ -227,6 +229,14 @@ class PrivacyPreservingFailureObservatoryTests(unittest.TestCase):
         capsule = compile_capsule(state)
         self.assertNotIn("run_key", capsule)
         self.assertNotIn(generation_id, json.dumps(capsule, sort_keys=True))
+
+    def test_local_secret_creation_is_race_safe(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp) / "correlation.key"
+            with ThreadPoolExecutor(max_workers=8) as pool:
+                secrets = list(pool.map(lambda _: load_or_create_local_secret(path), range(32)))
+            self.assertTrue(all(secret == secrets[0] for secret in secrets))
+            self.assertEqual(len(secrets[0]), 32)
 
     def test_independent_generations_resolve_to_distinct_local_keys(self) -> None:
         secret = b"z" * 32
