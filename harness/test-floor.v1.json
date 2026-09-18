@@ -53,7 +53,8 @@
     "tests/test_test_floor_evolution_prompt.py",
     "tests/test_ux_design_prompt_suite.py",
     "tests/test_hh_ticket_tracking_prompt.py",
-    "tests/test_execution_boundary_enforcement_prompt.py"
+    "tests/test_execution_boundary_enforcement_prompt.py",
+    "tests/test_privacy_preserving_failure_observatory.py"
   ],
   "prompt_semantic_test_globs": [
     "tests/test_*_prompt.py",
