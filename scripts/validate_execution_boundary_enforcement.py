@@ -100,7 +100,8 @@ def validate_documents(
         raise ExecutionBoundaryContractError("direct completion must be forbidden")
     if "PUBLIC_TRANSITION_EMITTED" not in transition_text:
         raise ExecutionBoundaryContractError("material boundary publication transition missing")
-    if "external supervisor" not in transition_text.lower():
+    transition_lower = transition_text.lower()
+    if "external supervisor" not in transition_lower and "supervisor outside" not in transition_lower:
         raise ExecutionBoundaryContractError("hard termination must be externally supervised")
 
     envelope = architecture.get("boundary_event_envelope")
