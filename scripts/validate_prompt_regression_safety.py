@@ -21,6 +21,7 @@ POLICY_PATH = ROOT / "registry" / "prompts" / "actionable-next-step-policy.v1.js
 TEST_FLOOR_PATH = ROOT / "harness" / "test-floor.v1.json"
 REQUIRED_CHECKS_PATH = ROOT / "harness" / "promotion" / "required-checks.v1.json"
 PRE_COMMIT_PATH = ROOT / ".githooks" / "pre-commit"
+GITATTRIBUTES_PATH = ROOT / ".gitattributes"
 VALIDATORS_PATH = ROOT / "harness" / "validators.v1.json"
 FOCUSED_TEST = "tests/test_prompt_regression_safety_prompt.py"
 COMMIT_RE = re.compile(r"^[0-9a-f]{40}$")
@@ -165,6 +166,38 @@ def validate_contract(contract: dict[str, Any]) -> None:
     if set(commands) != expected_commands:
         raise RegressionSafetyError("patch-hygiene commands must cover working, staged, and exact candidates")
     _text(hygiene.get("rule"), "repository_hygiene.rule")
+
+    line_policy = hygiene.get("line_ending_policy")
+    if not isinstance(line_policy, dict):
+        raise RegressionSafetyError("repository_hygiene.line_ending_policy must be an object")
+    required_line_policy = {
+        "owner",
+        "text_default",
+        "lf_patterns",
+        "crlf_patterns",
+        "binary_patterns",
+        "rule",
+    }
+    if set(line_policy) != required_line_policy:
+        raise RegressionSafetyError("line-ending policy fields do not match contract")
+    if line_policy.get("owner") != ".gitattributes":
+        raise RegressionSafetyError("line-ending policy owner must be .gitattributes")
+    if line_policy.get("text_default") != "* text=auto":
+        raise RegressionSafetyError("line-ending policy must retain * text=auto")
+    lf_patterns = _string_list(line_policy.get("lf_patterns"), "repository_hygiene.line_ending_policy.lf_patterns")
+    crlf_patterns = _string_list(line_policy.get("crlf_patterns"), "repository_hygiene.line_ending_policy.crlf_patterns")
+    binary_patterns = _string_list(line_policy.get("binary_patterns"), "repository_hygiene.line_ending_policy.binary_patterns")
+    for required_pattern in (".gitattributes", "*.py", "*.json", "*.md", "*.sh", "*.ps1"):
+        if required_pattern not in lf_patterns:
+            raise RegressionSafetyError(f"line-ending LF policy missing pattern: {required_pattern}")
+    for required_pattern in ("*.cmd", "*.bat"):
+        if required_pattern not in crlf_patterns:
+            raise RegressionSafetyError(f"line-ending CRLF policy missing pattern: {required_pattern}")
+    for required_pattern in ("*.xlsx", "*.docx", "*.pdf", "*.zip", "*.png"):
+        if required_pattern not in binary_patterns:
+            raise RegressionSafetyError(f"line-ending binary policy missing pattern: {required_pattern}")
+    _text(line_policy.get("rule"), "repository_hygiene.line_ending_policy.rule")
+
     _text(contract.get("matrix_boundary"), "matrix_boundary")
 
     requirements = _string_list(
@@ -301,6 +334,7 @@ def validate_repository_wiring(
     required_checks: dict[str, Any] | None = None,
     validators: dict[str, Any] | None = None,
     pre_commit_text: str | None = None,
+    gitattributes_text: str | None = None,
 ) -> None:
     marker = contract["prompt_marker"]
     policy = load_json(POLICY_PATH) if policy is None else policy
@@ -329,6 +363,28 @@ def validate_repository_wiring(
     pre_commit_text = PRE_COMMIT_PATH.read_text(encoding="utf-8") if pre_commit_text is None else pre_commit_text
     if "git diff --cached --check" not in pre_commit_text:
         raise RegressionSafetyError("pre-commit hook must retain staged patch-hygiene proof")
+
+    gitattributes_text = (
+        GITATTRIBUTES_PATH.read_text(encoding="utf-8")
+        if gitattributes_text is None
+        else gitattributes_text
+    )
+    attribute_lines = {
+        line.strip()
+        for line in gitattributes_text.splitlines()
+        if line.strip() and not line.lstrip().startswith("#")
+    }
+    line_policy = contract["repository_hygiene"]["line_ending_policy"]
+    expected_attribute_lines = {line_policy["text_default"]}
+    expected_attribute_lines.update(f"{pattern} text eol=lf" for pattern in line_policy["lf_patterns"])
+    expected_attribute_lines.update(f"{pattern} text eol=crlf" for pattern in line_policy["crlf_patterns"])
+    expected_attribute_lines.update(f"{pattern} binary" for pattern in line_policy["binary_patterns"])
+    missing_attribute_lines = sorted(expected_attribute_lines - attribute_lines)
+    if missing_attribute_lines:
+        raise RegressionSafetyError(
+            "line-ending policy is missing required .gitattributes rules: "
+            + ", ".join(missing_attribute_lines)
+        )
 
     required_checks = load_json(REQUIRED_CHECKS_PATH) if required_checks is None else required_checks
     destinations = required_checks.get("destinations")
