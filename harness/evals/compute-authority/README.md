@@ -24,7 +24,7 @@ The last command deliberately emits `UNPROVEN_RUNTIME`; it proves only that the 
 
 ## Runtime adapter
 
-An external runtime is attached with a JSON config matching `runtime/adapter-contract.v1.json`:
+An external runtime is attached with a JSON config matching `runtime/adapter-contract.v1.json` (or v2):
 
 ```json
 {
@@ -37,7 +37,12 @@ An external runtime is attached with a JSON config matching `runtime/adapter-con
 
 The adapter command executes with `shell=false` inside the isolated fixture workspace. The harness supplies four placeholders: `{workspace}`, `{task}`, `{prompt}`, and `{result}`. The provider writes one JSON result to the temporary `{result}` path.
 
-Only the structural allowlist in `runtime/adapter-contract.v1.json` may be persisted. Raw prompt/response/clipboard/transcript/query/identity fields are rejected. Provider stdout/stderr are not persisted. Unknown or invalid runtime evidence becomes an explicit invalid-run receipt; incomplete runs are not silently scored.
+### Capture schema versions
+
+- **v1** (`runtime/adapter-contract.v1.json`): Original schema; permits evaluative fields (`useful`, `first_green`, `after_fixed_point`, `contracts`, `outcomes`) in provider capture. Backward compatible.
+- **v2** (`runtime/adapter-contract.v2.json`): Neutral capture boundary (ADP-00). Provider output must be **neutral structural telemetry** only: structural identity, action/tool category, action index, timestamps, validation identity/return code, child/subagent lane timing, termination reason, trustworthy usage/cost counters. Evaluative fields are forbidden; P67 derives usefulness, first-green, fixed-point, contract correctness, and defect success from workspace mutation, validators, contract evidence, and hidden manifests.
+
+Only the structural allowlist in the adapter contract may be persisted. Raw prompt/response/clipboard/transcript/query/identity fields are rejected. Provider stdout/stderr are not persisted. Unknown or invalid runtime evidence becomes an explicit invalid-run receipt; incomplete runs are not silently scored.
 
 Observed pilot invocation:
 
@@ -54,7 +59,8 @@ Provider credentials remain outside the repository and may be passed to the subp
 
 - `prompts/identities.json` — Sprint 1 frozen prompt identities.
 - `runtime/conditions.v1.json` — immutable Sprint 2 condition/pairing contract.
-- `runtime/adapter-contract.v1.json` — provider-neutral execution/capture/privacy boundary.
+- `runtime/adapter-contract.v1.json` — provider-neutral execution/capture/privacy boundary (v1, permits evaluative fields).
+- `runtime/adapter-contract.v2.json` — neutral capture boundary (v2, evaluative fields forbidden; ADP-00).
 - `fixtures/` — eight deterministic cases; evaluator gold stays outside agent workspaces.
 - `runs/` — ignored per-run evidence bundles.
 - `aggregate/` — ignored aggregate runtime outputs.

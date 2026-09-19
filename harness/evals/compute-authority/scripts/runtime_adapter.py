@@ -13,28 +13,44 @@ from pathlib import Path
 from typing import Any
 
 SCHEMA_CONFIG = "compute-authority-agent-adapter/v1"
-SCHEMA_CAPTURE = "compute-authority-provider-capture/v1"
+SCHEMA_CAPTURE_V1 = "compute-authority-provider-capture/v1"
+SCHEMA_CAPTURE_V2 = "compute-authority-provider-capture/v2"
 INVALID_CODES = {
     "RUNTIME_UNAVAILABLE", "ADAPTER_CONFIG_INVALID", "ADAPTER_EXIT_NONZERO",
     "ADAPTER_LAUNCH_ERROR", "ADAPTER_RESULT_MISSING", "ADAPTER_RESULT_INVALID",
-    "CAPTURE_PRIVACY_REJECTED", "ADAPTER_TIMEOUT", "EVIDENCE_INCOMPLETE",
-    "PAIR_IDENTITY_MISMATCH",
+    "CAPTURE_PRIVACY_REJECTED", "CAPTURE_EVALUATIVE_REJECTED", "ADAPTER_TIMEOUT",
+    "EVIDENCE_INCOMPLETE", "PAIR_IDENTITY_MISMATCH",
 }
-TOP_ALLOWED = {
+TOP_ALLOWED_V1 = {
     "schema_version", "provider", "agent", "model", "status",
     "termination_reason", "usage", "events", "contracts", "validations", "outcomes",
+}
+TOP_ALLOWED_V2 = {
+    "schema_version", "provider", "agent", "model", "status",
+    "termination_reason", "usage", "events", "validations",
 }
 USAGE_ALLOWED = {
     "tool_calls", "retries", "input_tokens", "output_tokens", "total_tokens",
     "cost_microusd", "latency_ms",
 }
-EVENT_ALLOWED = {
+EVENT_ALLOWED_V1 = {
     "id", "kind", "useful", "action_index", "first_green", "after_fixed_point",
     "started_ns", "ended_ns", "hypothesis_id", "validation_id", "result_code",
 }
-EVENT_KINDS = {"action", "hypothesis", "validation", "parallel_lane", "fixed_point"}
+EVENT_ALLOWED_V2 = {
+    "id", "kind", "category", "action_index", "started_ns", "ended_ns",
+    "hypothesis_id", "validation_id", "result_code", "child_lane_id",
+}
+EVENT_KINDS_V1 = {"action", "hypothesis", "validation", "parallel_lane", "fixed_point"}
+EVENT_KINDS_V2 = {"action", "hypothesis_test", "validation_run", "child_lane", "termination"}
+EVENT_CATEGORIES = {"read", "write", "execute", "search", "analysis", "test", "unknown"}
 CONTRACT_ALLOWED = {"id", "status", "correct"}
-VALIDATION_ALLOWED = {"id", "status", "return_code"}
+VALIDATION_ALLOWED_V1 = {"id", "status", "return_code"}
+VALIDATION_ALLOWED_V2 = {"id", "command", "return_code", "started_ns", "ended_ns"}
+EVALUATIVE_FIELDS_V2 = {
+    "useful", "first_green", "after_fixed_point", "correct",
+    "seeded_defects_found", "contracts", "outcomes",
+}
 FORBIDDEN_TOKENS = {
     "prompt", "response", "clipboard", "transcript", "content", "text", "query",
     "user_id", "session_id", "identity",
@@ -108,25 +124,35 @@ def _usage(value: Any) -> dict[str, int | float]:
     return out
 
 
-def _events(value: Any) -> list[dict[str, Any]]:
+def _events(value: Any, schema_version: str) -> list[dict[str, Any]]:
     if not isinstance(value, list):
         raise AdapterError("EVIDENCE_INCOMPLETE", "events must be an array")
+    is_v2 = schema_version == SCHEMA_CAPTURE_V2
+    event_allowed = EVENT_ALLOWED_V2 if is_v2 else EVENT_ALLOWED_V1
+    event_kinds = EVENT_KINDS_V2 if is_v2 else EVENT_KINDS_V1
     out: list[dict[str, Any]] = []
     for i, item in enumerate(value):
         if not isinstance(item, dict):
             raise AdapterError("ADAPTER_RESULT_INVALID", f"event[{i}] must be an object")
-        _extra(item, EVENT_ALLOWED, f"event[{i}]")
+        if is_v2:
+            for forbidden in EVALUATIVE_FIELDS_V2:
+                if forbidden in item:
+                    raise AdapterError("CAPTURE_EVALUATIVE_REJECTED", f"event[{i}] contains evaluative field '{forbidden}' forbidden in v2")
+        _extra(item, event_allowed, f"event[{i}]")
         event: dict[str, Any] = {"kind": _ident(item.get("kind"), f"event[{i}].kind")}
-        if event["kind"] not in EVENT_KINDS:
+        if event["kind"] not in event_kinds:
             raise AdapterError("ADAPTER_RESULT_INVALID", f"event[{i}].kind unsupported")
-        for key in ("id", "hypothesis_id", "validation_id", "result_code"):
+        for key in ("id", "hypothesis_id", "validation_id", "result_code", "child_lane_id", "category"):
             if key in item:
-                event[key] = _ident(item[key], f"event[{i}].{key}")
-        for key in ("useful", "first_green", "after_fixed_point"):
-            if key in item:
-                if not isinstance(item[key], bool):
-                    raise AdapterError("ADAPTER_RESULT_INVALID", f"event[{i}].{key} must be boolean")
-                event[key] = item[key]
+                event[key] = _ident(item[key], f"event[{i}].{key}", empty=(key == "category"))
+        if is_v2 and "category" in event and event["category"] and event["category"] not in EVENT_CATEGORIES:
+            raise AdapterError("ADAPTER_RESULT_INVALID", f"event[{i}].category unsupported")
+        if not is_v2:
+            for key in ("useful", "first_green", "after_fixed_point"):
+                if key in item:
+                    if not isinstance(item[key], bool):
+                        raise AdapterError("ADAPTER_RESULT_INVALID", f"event[{i}].{key} must be boolean")
+                    event[key] = item[key]
         for key in ("action_index", "started_ns", "ended_ns"):
             if key in item:
                 n = item[key]
@@ -138,11 +164,12 @@ def _events(value: Any) -> list[dict[str, Any]]:
         if "started_ns" in event and event["ended_ns"] < event["started_ns"]:
             raise AdapterError("ADAPTER_RESULT_INVALID", f"event[{i}] interval reversed")
         out.append(event)
-    _event_invariants(out)
+    _event_invariants(out, schema_version)
     return out
 
 
-def _event_invariants(events: list[dict[str, Any]]) -> None:
+def _event_invariants(events: list[dict[str, Any]], schema_version: str) -> None:
+    is_v2 = schema_version == SCHEMA_CAPTURE_V2
     ids: set[str] = set()
     actions: list[int] = []
     green: list[int] = []
@@ -159,11 +186,11 @@ def _event_invariants(events: list[dict[str, Any]]) -> None:
             if not isinstance(idx, int) or idx < 1:
                 raise AdapterError("EVIDENCE_INCOMPLETE", f"action {event_id} requires positive action_index")
             actions.append(idx)
-            if event.get("first_green") is True:
+            if not is_v2 and event.get("first_green") is True:
                 green.append(idx)
-        elif event.get("first_green") is True or event.get("after_fixed_point") is True:
+        elif not is_v2 and (event.get("first_green") is True or event.get("after_fixed_point") is True):
             raise AdapterError("EVIDENCE_INCOMPLETE", f"{event['kind']} cannot carry action markers")
-        if event["kind"] == "fixed_point":
+        if not is_v2 and event["kind"] == "fixed_point":
             if not isinstance(idx, int) or idx < 1:
                 raise AdapterError("EVIDENCE_INCOMPLETE", f"fixed_point {event_id} requires positive action_index")
             fixed.append(idx)
@@ -173,25 +200,31 @@ def _event_invariants(events: list[dict[str, Any]]) -> None:
         raise AdapterError("EVIDENCE_INCOMPLETE", "action_index values must be unique")
     if actions != sorted(actions):
         raise AdapterError("EVIDENCE_INCOMPLETE", "action_index values must increase in event order")
-    if len(green) > 1 or len(fixed) > 1:
-        raise AdapterError("EVIDENCE_INCOMPLETE", "first_green/fixed_point markers must be singular")
-    fixed_idx = fixed[0] if fixed else None
-    for event in events:
-        if event.get("kind") == "action" and event.get("after_fixed_point") is True:
-            if fixed_idx is None or event["action_index"] <= fixed_idx:
-                raise AdapterError("EVIDENCE_INCOMPLETE", "after_fixed_point contradicts fixed-point ordering")
+    if not is_v2:
+        if len(green) > 1 or len(fixed) > 1:
+            raise AdapterError("EVIDENCE_INCOMPLETE", "first_green/fixed_point markers must be singular")
+        fixed_idx = fixed[0] if fixed else None
+        for event in events:
+            if event.get("kind") == "action" and event.get("after_fixed_point") is True:
+                if fixed_idx is None or event["action_index"] <= fixed_idx:
+                    raise AdapterError("EVIDENCE_INCOMPLETE", "after_fixed_point contradicts fixed-point ordering")
 
 
-def _records(value: Any, allowed: set[str], label: str) -> list[dict[str, Any]]:
+def _records(value: Any, allowed: set[str], label: str, schema_version: str) -> list[dict[str, Any]]:
     if value is None:
         return []
     if not isinstance(value, list):
         raise AdapterError("ADAPTER_RESULT_INVALID", f"{label} must be an array")
+    is_v2 = schema_version == SCHEMA_CAPTURE_V2
     out: list[dict[str, Any]] = []
     ids: set[str] = set()
     for i, item in enumerate(value):
         if not isinstance(item, dict):
             raise AdapterError("ADAPTER_RESULT_INVALID", f"{label}[{i}] must be an object")
+        if is_v2 and label == "validations":
+            for forbidden in EVALUATIVE_FIELDS_V2:
+                if forbidden in item:
+                    raise AdapterError("CAPTURE_EVALUATIVE_REJECTED", f"{label}[{i}] contains evaluative field '{forbidden}' forbidden in v2")
         _extra(item, allowed, f"{label}[{i}]")
         clean: dict[str, Any] = {}
         for key, raw in item.items():
@@ -202,6 +235,10 @@ def _records(value: Any, allowed: set[str], label: str) -> list[dict[str, Any]]:
             elif key == "return_code":
                 if isinstance(raw, bool) or not isinstance(raw, int):
                     raise AdapterError("ADAPTER_RESULT_INVALID", f"{label}[{i}].return_code must be integer")
+                clean[key] = raw
+            elif key in ("started_ns", "ended_ns"):
+                if isinstance(raw, bool) or not isinstance(raw, int) or raw < 0:
+                    raise AdapterError("ADAPTER_RESULT_INVALID", f"{label}[{i}].{key} must be non-negative integer")
                 clean[key] = raw
             else:
                 clean[key] = _ident(raw, f"{label}[{i}].{key}")
@@ -216,42 +253,53 @@ def _records(value: Any, allowed: set[str], label: str) -> list[dict[str, Any]]:
 def sanitize_capture(payload: Any) -> dict[str, Any]:
     if not isinstance(payload, dict):
         raise AdapterError("ADAPTER_RESULT_INVALID", "provider result must be an object")
-    _extra(payload, TOP_ALLOWED, "capture")
-    if payload.get("schema_version") != SCHEMA_CAPTURE:
-        raise AdapterError("ADAPTER_RESULT_INVALID", "provider capture schema_version mismatch")
-    required = {"provider", "status", "termination_reason", "events", "outcomes"}
+    schema_version = payload.get("schema_version")
+    if schema_version not in {SCHEMA_CAPTURE_V1, SCHEMA_CAPTURE_V2}:
+        raise AdapterError("ADAPTER_RESULT_INVALID", f"provider capture schema_version unsupported or missing: {schema_version!r}")
+    is_v2 = schema_version == SCHEMA_CAPTURE_V2
+    top_allowed = TOP_ALLOWED_V2 if is_v2 else TOP_ALLOWED_V1
+    validation_allowed = VALIDATION_ALLOWED_V2 if is_v2 else VALIDATION_ALLOWED_V1
+    if is_v2:
+        for forbidden in EVALUATIVE_FIELDS_V2:
+            if forbidden in payload:
+                raise AdapterError("CAPTURE_EVALUATIVE_REJECTED", f"capture top-level contains evaluative field '{forbidden}' forbidden in v2")
+    _extra(payload, top_allowed, "capture")
+    required_base = {"provider", "status", "termination_reason", "events"}
+    required = required_base | ({"outcomes"} if not is_v2 else set())
     missing = sorted(required - set(payload))
     if missing:
         raise AdapterError("EVIDENCE_INCOMPLETE", f"provider capture missing required fields: {missing}")
     status = _ident(payload["status"], "status")
     if status != "complete":
         raise AdapterError("EVIDENCE_INCOMPLETE", f"capture status must be complete, got {status!r}")
-    outcomes = payload["outcomes"]
-    if not isinstance(outcomes, dict):
-        raise AdapterError("EVIDENCE_INCOMPLETE", "outcomes must be an object")
-    _extra(outcomes, {"seeded_defects_found"}, "outcomes")
-    defects = outcomes.get("seeded_defects_found")
-    if isinstance(defects, bool) or not isinstance(defects, int) or defects < 0:
-        raise AdapterError("EVIDENCE_INCOMPLETE", "outcomes.seeded_defects_found must be a non-negative integer")
-    return {
-        "schema_version": SCHEMA_CAPTURE,
+    result: dict[str, Any] = {
+        "schema_version": schema_version,
         "provider": _ident(payload["provider"], "provider"),
         "agent": _ident(payload.get("agent"), "agent", empty=True),
         "model": _ident(payload.get("model"), "model", empty=True),
         "status": status,
         "termination_reason": _ident(payload["termination_reason"], "termination_reason"),
         "usage": _usage(payload.get("usage")),
-        "events": _events(payload["events"]),
-        "contracts": _records(payload.get("contracts"), CONTRACT_ALLOWED, "contracts"),
-        "validations": _records(payload.get("validations"), VALIDATION_ALLOWED, "validations"),
-        "outcomes": {"seeded_defects_found": defects},
+        "events": _events(payload["events"], schema_version),
+        "validations": _records(payload.get("validations"), validation_allowed, "validations", schema_version),
     }
+    if not is_v2:
+        outcomes = payload["outcomes"]
+        if not isinstance(outcomes, dict):
+            raise AdapterError("EVIDENCE_INCOMPLETE", "outcomes must be an object")
+        _extra(outcomes, {"seeded_defects_found"}, "outcomes")
+        defects = outcomes.get("seeded_defects_found")
+        if isinstance(defects, bool) or not isinstance(defects, int) or defects < 0:
+            raise AdapterError("EVIDENCE_INCOMPLETE", "outcomes.seeded_defects_found must be a non-negative integer")
+        result["contracts"] = _records(payload.get("contracts"), CONTRACT_ALLOWED, "contracts", schema_version)
+        result["outcomes"] = {"seeded_defects_found": defects}
+    return result
 
 
 def _overlap(events: list[dict[str, Any]]) -> int:
     points: list[tuple[int, int]] = []
     for event in events:
-        if event.get("kind") == "parallel_lane" and "started_ns" in event:
+        if event.get("kind") in {"parallel_lane", "child_lane"} and "started_ns" in event:
             points += [(event["started_ns"], 1), (event["ended_ns"], -1)]
     active = peak = 0
     for _, delta in sorted(points, key=lambda p: (p[0], p[1])):
@@ -261,8 +309,18 @@ def _overlap(events: list[dict[str, Any]]) -> int:
 
 
 def derive_metrics(capture: dict[str, Any]) -> dict[str, Any]:
+    schema_version = capture.get("schema_version")
+    is_v2 = schema_version == SCHEMA_CAPTURE_V2
     events = capture["events"]
     actions = [e for e in events if e["kind"] == "action"]
+    if is_v2:
+        hypotheses = [e for e in events if e["kind"] == "hypothesis_test"]
+        return {
+            "total_substantive_actions": len(actions),
+            "hypotheses_considered": len({e.get("hypothesis_id") for e in hypotheses if e.get("hypothesis_id")}),
+            "hypotheses_tested": sum(bool(e.get("result_code")) for e in hypotheses),
+            "parallel_lanes_used": _overlap(events),
+        }
     useful = sum(e.get("useful") is True for e in actions)
     green = [e["action_index"] for e in actions if e.get("first_green") is True]
     first_green = green[0] if green else None
@@ -345,9 +403,11 @@ def invoke_adapter(config: dict[str, Any], run_dir: Path) -> dict[str, Any]:
             raise AdapterError("ADAPTER_RESULT_INVALID", f"adapter result JSON invalid: {type(exc).__name__}") from exc
         capture = sanitize_capture(raw)
         metrics = derive_metrics(capture)
+        is_v2 = capture.get("schema_version") == SCHEMA_CAPTURE_V2
         (run_dir / "provider-capture.json").write_text(json.dumps(capture, indent=2, sort_keys=True) + "\n", encoding="utf-8")
         (run_dir / "tool-events.jsonl").write_text("".join(json.dumps(e, sort_keys=True) + "\n" for e in capture["events"]), encoding="utf-8")
-        (run_dir / "contracts.json").write_text(json.dumps({"contracts": capture["contracts"]}, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+        if not is_v2:
+            (run_dir / "contracts.json").write_text(json.dumps({"contracts": capture["contracts"]}, indent=2, sort_keys=True) + "\n", encoding="utf-8")
         (run_dir / "validation-results.json").write_text(json.dumps({"validations": capture["validations"]}, indent=2, sort_keys=True) + "\n", encoding="utf-8")
         (run_dir / "metrics.json").write_text(json.dumps(metrics, indent=2, sort_keys=True) + "\n", encoding="utf-8")
         run_path = run_dir / "run.json"
