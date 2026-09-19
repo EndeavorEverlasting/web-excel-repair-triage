@@ -2,7 +2,7 @@
 
 **Status:** TRACKED / WAVES 0–2 INTEGRATED ON MAIN / PLANNING MAP INTEGRATED VIA #471
 **Repository:** `EndeavorEverlasting/web-excel-repair-triage`
-**Planning floor:** refreshed `main@d63c04429a21ab4b491c4f3499c75454a518daf3` (provider refresh 2026-09-19)
+**Planning floor:** refreshed `main@3644dd3bdf2f89dccfb07f554f753c93c917e65e` (provider refresh 2026-09-19)
 **Canonical strategic predecessor:** `harness/prompt-topology/POST_PHASE_C_STRATEGIC_SCOUT.md`
 **Required P95 architecture output:** `harness/prompt-topology/EVIDENCE_SPINE_ARCHITECTURE.md` (INTEGRATED via #473)
 
@@ -257,7 +257,7 @@ The following remain outside this three-panel map unless the P95 architecture or
 | --- | --- | --- | --- |
 | Parallel/autonomous dispatch floor | PR #467/#477 / prompt operations | INTEGRATED on main | reuse; do not duplicate in RRB-03 |
 | Evidence lifecycle ownership | P95 / Prompt Topology strategy | INTEGRATED via #473 | preserve adapter-only ownership; no universal event bus |
-| Routing control plane | Evidence Spine Lane A + RRB-03 decision seam | Route receipts INTEGRATED via #596 / `2d26e7e`; registry-bound decision compiler IMPLEMENTED on `feat/rrb03-routing-decision-r2-20260919` | focused regression + deterministic floor -> exact-head review -> integrate decision seam -> hand off `asb.prompt-dispatch/v1` production to AgentSwitchboard |
+| Routing control plane | Evidence Spine Lane A + RRB-03 decision seam | Route receipts INTEGRATED via #596 / `2d26e7e`; registry-bound decision compiler IMPLEMENTED on `feat/rrb03-routing-decision-r3-20260919` | focused regression + deterministic floor -> exact-head review -> integrate decision seam -> hand off `asb.prompt-dispatch/v1` production to AgentSwitchboard |
 | Prompt Finder observation lane | PR #431 donor | IMPLEMENTED on stale/unmergeable branch only | P95 disposition -> reconcile or retire -> validate/integrate |
 | Outcome/correction semantics | P99/P115 on main | INTEGRATED | reuse; extend only through owned contracts |
 | Local evidence retention/privacy | serverless lifecycle on main | INTEGRATED implementation | reuse and prove new writes remain bounded |
