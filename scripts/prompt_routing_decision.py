@@ -23,6 +23,7 @@ EVENT_RE = re.compile(r"^evt_[A-Za-z0-9][A-Za-z0-9._-]{7,95}$")
 CORR_RE = re.compile(r"^corr_[A-Za-z0-9][A-Za-z0-9._-]{7,95}$")
 SHA_RE = re.compile(r"^[a-f0-9]{64}$")
 PROMPT_ID_RE = re.compile(r"^P[0-9]{2,4}$")
+WIRE_PROMPT_ID_RE = re.compile(r"^P[0-9]{2,3}$")
 RFC3339_RE = re.compile(
     r"^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?(?:Z|[+-]\d{2}:\d{2})$"
 )
@@ -110,6 +111,10 @@ def _prompt_ref(
     kit_version: str,
 ) -> dict[str, str]:
     prompt_id = str(record["id"]).upper()
+    if not WIRE_PROMPT_ID_RE.fullmatch(prompt_id):
+        raise RoutingDecisionError(
+            f"canonical prompt {prompt_id} cannot be represented by the frozen ASB promptRef protocol"
+        )
     execution_surface = str(record.get("executionSurface") or "regular_ai_prompt")
     if execution_surface not in {"regular_ai_prompt", "gnhf_launch_artifact"}:
         raise RoutingDecisionError(
@@ -130,8 +135,8 @@ def _validate_prompt_ref(value: Any, field: str) -> dict[str, Any] | None:
     if not isinstance(value, dict) or set(value) != PROMPT_REF_FIELDS:
         raise RoutingDecisionError(f"{field} must be a complete promptRef object or null")
     prompt_id = value.get("id")
-    if not isinstance(prompt_id, str) or not PROMPT_ID_RE.fullmatch(prompt_id):
-        raise RoutingDecisionError(f"{field}.id is invalid")
+    if not isinstance(prompt_id, str) or not WIRE_PROMPT_ID_RE.fullmatch(prompt_id):
+        raise RoutingDecisionError(f"{field}.id is invalid for the frozen ASB promptRef protocol")
     for digest_field in ("registrySha256", "promptSha256"):
         digest = value.get(digest_field)
         if not isinstance(digest, str) or not SHA_RE.fullmatch(digest):
