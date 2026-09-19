@@ -253,7 +253,7 @@ Canonical terminal action: none; no safe actionable work remains
 
 ## TRQ-016 — Prompt Compilation Sprint 6 Compute Mode observed browser proof
 
-- **Status:** IN_PROGRESS
+- **Status:** CLAIMED
 - **Priority:** P1
 - **Owner:** test/prompt-compilation-compute-mode-browser-proof-20260916
 - **Branch / PR:** test/prompt-compilation-compute-mode-browser-proof-20260916 / #524
