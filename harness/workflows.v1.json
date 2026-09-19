@@ -235,7 +235,8 @@
         "fixtures",
         "runner",
         "machine-readable results",
-        "directly related repairs"
+        "directly related repairs",
+        "prompt-strengthening runtime-compliance use-case routing metadata and traversal regressions"
       ],
       "forbidden_scope": [
         "moving deterministic product behavior into prose",
@@ -243,9 +244,12 @@
         "unmeasured efficiency claims"
       ],
       "entry_points": [
-        "Prompt Kit P62"
+        "Prompt Kit P62",
+        "harness/evals/PROMPT_RUNTIME_COMPLIANCE_PILOT_PLAN.md",
+        "harness/evals/runtime-compliance/scripts/pilot.py",
+        "scripts/validate_prompt_runtime_compliance_receipt.py"
       ],
-      "validation_profile": "target-repository",
+      "validation_profile": "required_checks",
       "failure_policy": "Reproduce the weakness, repair the smallest owned boundary, and rerun correctness before accepting efficiency changes.",
       "handoff_fields": [
         "baseline",
@@ -253,6 +257,12 @@
         "runner",
         "before and after results",
         "remaining runtime gates"
+      ],
+      "capability_ids": [
+        "skill-evaluation"
+      ],
+      "use_case_ids": [
+        "prompt-strengthening-runtime-compliance"
       ]
     },
     {

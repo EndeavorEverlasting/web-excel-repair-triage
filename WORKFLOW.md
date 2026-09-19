@@ -168,8 +168,11 @@ Audit every canonical and effective prompt. Require equal canonical, effective, 
 **Workflow ID:** `skill-evaluation`
 **Trigger:** `skill-quality-unproven`
 **Capability:** `skill-evaluation`; Prompt Kit owner P62.
+**Skill:** `.ai/skills/skill-evaluation/SKILL.md`
 
 Define the eval contract and baseline, add positive/negative/near-miss/boundary/malformed/regression cases, reproduce weaknesses, implement the smallest valid repair, and measure performance, calls, context, retries, cost, and tokens when available. Accept efficiency changes only after correctness, safety, and routing gates remain green.
+
+For use case `prompt-strengthening-runtime-compliance`, enter through the plan, pilot runner, or semantic validator registered by `harness/capabilities.v1.json`; load the remaining participants on demand. Resolve artifact ID `prompt-runtime-compliance-evidence` through `harness/artifacts.v1.json`, and keep observed external-agent behavior separate from repository proof.
 
 ### H. Prompt Kit browser-proof scratch cleanup
 
