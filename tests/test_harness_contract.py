@@ -469,9 +469,9 @@ class HarnessContractTests(unittest.TestCase):
                 "Strengthen Prompt Kit execution behavior",
                 use_case["originating_user_intent"],
             )
-            self.assertIn(
-                "prompt-runtime-compliance-tests",
+            self.assertEqual(
                 use_case["validator_ids"],
+                ["prompt-runtime-compliance-receipt-audit"],
             )
 
     def test_prompt_language_mutation_precedes_runtime_proof(self) -> None:
