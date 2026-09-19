@@ -3,12 +3,2066 @@
   "profiles_id": "prompt-capability-profiles",
   "purpose": "Accepted capability profiles for each canonical prompt, forming the regression prior for non-weakening rules.",
   "established_at": "2026-09-19",
-  "status": "sprint0_floor",
+  "status": "sprint1a_baseline_accepted",
   "baseline": {
-    "completeness": "incomplete",
-    "reason": "Sprint 0 establishes the profiles contract and schema only. Sprint 1A populates the accepted baseline matrix.",
-    "strict_enforcement_active": false
+    "completeness": "complete",
+    "reason": "Sprint 1A: All 62 canonical prompts have ACCEPTED baseline profiles",
+    "strict_enforcement_active": true,
+    "acceptance_commit": "55148914364e2988bc6096b7c8d142eca3f62c28"
   },
-  "profiles": [],
-  "note": "Empty until Sprint 1A. PSC001 PROFILE_COVERAGE_COMPLETE is not yet satisfied; strict non-weakening enforcement cannot activate until every current prompt has exactly one ACCEPTED profile."
+  "profiles": [
+    {
+      "prompt_id": "P00",
+      "profile_version": 1,
+      "canonical_prompt_hash": "c4fd536bab952202e5d399a39109a32a5414b18b8bae9f5d7a03a86a213c1cd5",
+      "acceptance_commit": "55148914364e2988bc6096b7c8d142eca3f62c28",
+      "direct_assignments": [
+        {
+          "capability_id": "governance.install",
+          "presence": "REQUIRED",
+          "ownership": "PRIMARY",
+          "capability_relation": "IMPLEMENTS",
+          "delivery_source": "CANONICAL_BODY",
+          "evidence_refs": [
+            "docs/prompts.json:P00",
+            "docs/prompts.json:P00:sprintRole",
+            "docs/prompts.json:P00:useWhen"
+          ],
+          "rationale": "P00 is the canonical governance installer; PRIMARY owner of governance contract establishment"
+        }
+      ],
+      "inherited_sources": [
+        {
+          "source_id": "prompt-strength-shared-policy",
+          "source_version": "v1",
+          "source_hash": "e249da6706d86733cd03a046ef9e16552a3ae87dc8cc644281c5c1fd9c08c796"
+        }
+      ],
+      "semantic_dependency_fingerprint": "a8dfc73f5e2ff0cbd19a6fe308cf6ca34e6164482757b97771b48e5e6572842c",
+      "evidence_refs": [
+        "docs/prompts.json:P00",
+        "harness/contracts/prompt-strength.v1.json"
+      ],
+      "profile_status": "ACCEPTED",
+      "profile_sha256": "52fbd1bd8b906171ca43c4ee9dbf626e432c09cb0c035559d6272f753d659b84"
+    },
+    {
+      "prompt_id": "P01",
+      "profile_version": 1,
+      "canonical_prompt_hash": "50b6f0f4844601aaaf286a7bac03bd460d4dfe20dda9acfded1d3f56e6ead3ef",
+      "acceptance_commit": "55148914364e2988bc6096b7c8d142eca3f62c28",
+      "direct_assignments": [
+        {
+          "capability_id": "harness.build",
+          "presence": "REQUIRED",
+          "ownership": "PRIMARY",
+          "capability_relation": "IMPLEMENTS",
+          "delivery_source": "CANONICAL_BODY",
+          "evidence_refs": [
+            "docs/prompts.json:P01",
+            "docs/prompts.json:P01:sprintRole"
+          ],
+          "rationale": "P01 is the canonical harness infrastructure builder"
+        }
+      ],
+      "inherited_sources": [
+        {
+          "source_id": "prompt-strength-shared-policy",
+          "source_version": "v1",
+          "source_hash": "e249da6706d86733cd03a046ef9e16552a3ae87dc8cc644281c5c1fd9c08c796"
+        }
+      ],
+      "semantic_dependency_fingerprint": "a81aa58ff9f9adcce7484fbee24c0edd5824af519ff1c00f787f2687b264201f",
+      "evidence_refs": [
+        "docs/prompts.json:P01",
+        "harness/contracts/prompt-strength.v1.json"
+      ],
+      "profile_status": "ACCEPTED",
+      "profile_sha256": "667286adc4f54d227d6b7be4c98abefc9051dc9c756f95b156dfa0ccc5bbb4ca"
+    },
+    {
+      "prompt_id": "P02",
+      "profile_version": 1,
+      "canonical_prompt_hash": "263b2432abcaa2d2c05a4c7fdae0ce4c49694bf4d58eca219c619623477e09a3",
+      "acceptance_commit": "55148914364e2988bc6096b7c8d142eca3f62c28",
+      "direct_assignments": [
+        {
+          "capability_id": "execution.implementation",
+          "presence": "AWARE",
+          "ownership": "NONE",
+          "capability_relation": "ROUTES_TO",
+          "delivery_source": "ROUTED_OWNER",
+          "evidence_refs": [
+            "docs/prompts.json:P02"
+          ],
+          "rationale": "P02 routes to P07 for implementation execution"
+        }
+      ],
+      "inherited_sources": [
+        {
+          "source_id": "prompt-strength-shared-policy",
+          "source_version": "v1",
+          "source_hash": "e249da6706d86733cd03a046ef9e16552a3ae87dc8cc644281c5c1fd9c08c796"
+        }
+      ],
+      "semantic_dependency_fingerprint": "23c8f7afd1f441d67f4de001ea8d86152e9c4036aca67cb6945c0ee49f025dec",
+      "evidence_refs": [
+        "docs/prompts.json:P02",
+        "harness/contracts/prompt-strength.v1.json"
+      ],
+      "profile_status": "ACCEPTED",
+      "profile_sha256": "1bee1c3259fdfc7b9ccbe0302c621c474ab05c37991f0fd9f35c224a5cb35823"
+    },
+    {
+      "prompt_id": "P03",
+      "profile_version": 1,
+      "canonical_prompt_hash": "42c2be59581d736e44c45284698de3c4b46d19e251dc2bb3424e2933f543230b",
+      "acceptance_commit": "55148914364e2988bc6096b7c8d142eca3f62c28",
+      "direct_assignments": [
+        {
+          "capability_id": "execution.implementation",
+          "presence": "AWARE",
+          "ownership": "NONE",
+          "capability_relation": "ROUTES_TO",
+          "delivery_source": "ROUTED_OWNER",
+          "evidence_refs": [
+            "docs/prompts.json:P03"
+          ],
+          "rationale": "P03 routes to P07 for implementation execution"
+        }
+      ],
+      "inherited_sources": [
+        {
+          "source_id": "prompt-strength-shared-policy",
+          "source_version": "v1",
+          "source_hash": "e249da6706d86733cd03a046ef9e16552a3ae87dc8cc644281c5c1fd9c08c796"
+        }
+      ],
+      "semantic_dependency_fingerprint": "4f2e36ad8d5dcda1e464618172fb7b769baedade9edf8f8715475c75d1ed8425",
+      "evidence_refs": [
+        "docs/prompts.json:P03",
+        "harness/contracts/prompt-strength.v1.json"
+      ],
+      "profile_status": "ACCEPTED",
+      "profile_sha256": "4436655c4dd000f39ebbd2084b4939be3f31c8f6c44d4c124622ffba6c10be2e"
+    },
+    {
+      "prompt_id": "P04",
+      "profile_version": 1,
+      "canonical_prompt_hash": "2ada5761ad6a1e8b52605bfa6aa51eeca0415b1863f9c23e317ab364ceced3f6",
+      "acceptance_commit": "55148914364e2988bc6096b7c8d142eca3f62c28",
+      "direct_assignments": [
+        {
+          "capability_id": "execution.implementation",
+          "presence": "AWARE",
+          "ownership": "NONE",
+          "capability_relation": "ROUTES_TO",
+          "delivery_source": "ROUTED_OWNER",
+          "evidence_refs": [
+            "docs/prompts.json:P04"
+          ],
+          "rationale": "P04 routes to P07 for implementation execution"
+        }
+      ],
+      "inherited_sources": [
+        {
+          "source_id": "prompt-strength-shared-policy",
+          "source_version": "v1",
+          "source_hash": "e249da6706d86733cd03a046ef9e16552a3ae87dc8cc644281c5c1fd9c08c796"
+        }
+      ],
+      "semantic_dependency_fingerprint": "8965781a674b9270f4c5c13e5e015d0d98a2a6211f3f3d7e6d58b19f4af5e377",
+      "evidence_refs": [
+        "docs/prompts.json:P04",
+        "harness/contracts/prompt-strength.v1.json"
+      ],
+      "profile_status": "ACCEPTED",
+      "profile_sha256": "9554b6129bd6a0af1c67a02d0dbc110950163f0431cc5b067e08a2210e1919e7"
+    },
+    {
+      "prompt_id": "P05",
+      "profile_version": 1,
+      "canonical_prompt_hash": "bc5a50c738318b4b8d69aa242672701149cf7ae3734f324bb0a0cb7d459e6568",
+      "acceptance_commit": "55148914364e2988bc6096b7c8d142eca3f62c28",
+      "direct_assignments": [
+        {
+          "capability_id": "execution.implementation",
+          "presence": "AWARE",
+          "ownership": "NONE",
+          "capability_relation": "ROUTES_TO",
+          "delivery_source": "ROUTED_OWNER",
+          "evidence_refs": [
+            "docs/prompts.json:P05"
+          ],
+          "rationale": "P05 routes to P07 for implementation execution"
+        }
+      ],
+      "inherited_sources": [
+        {
+          "source_id": "prompt-strength-shared-policy",
+          "source_version": "v1",
+          "source_hash": "e249da6706d86733cd03a046ef9e16552a3ae87dc8cc644281c5c1fd9c08c796"
+        }
+      ],
+      "semantic_dependency_fingerprint": "088a54c415ad812c1ea81eb61bba7691d39bf9ce055b4c41b911651bcad07754",
+      "evidence_refs": [
+        "docs/prompts.json:P05",
+        "harness/contracts/prompt-strength.v1.json"
+      ],
+      "profile_status": "ACCEPTED",
+      "profile_sha256": "2c849ecbd71b9aac75f8c423c4ed82d4aa3566ec6bde140116c5ef1acabb56a3"
+    },
+    {
+      "prompt_id": "P06",
+      "profile_version": 1,
+      "canonical_prompt_hash": "a51b3edb624f4a436b518335a03e0008809c35d5a535fd8a7351100e00ea2bfd",
+      "acceptance_commit": "55148914364e2988bc6096b7c8d142eca3f62c28",
+      "direct_assignments": [
+        {
+          "capability_id": "spreadsheet.repair",
+          "presence": "SUPPORT",
+          "ownership": "SECONDARY",
+          "capability_relation": "IMPLEMENTS",
+          "delivery_source": "CANONICAL_BODY",
+          "evidence_refs": [
+            "docs/prompts.json:P06:useWhen"
+          ],
+          "rationale": "P06 provides spreadsheet operations support per useWhen declaration"
+        }
+      ],
+      "inherited_sources": [
+        {
+          "source_id": "prompt-strength-shared-policy",
+          "source_version": "v1",
+          "source_hash": "e249da6706d86733cd03a046ef9e16552a3ae87dc8cc644281c5c1fd9c08c796"
+        }
+      ],
+      "semantic_dependency_fingerprint": "398143acd1356fc4bece30174da64d996e5cb229e3e8fe55c324447aa49c39c9",
+      "evidence_refs": [
+        "docs/prompts.json:P06",
+        "harness/contracts/prompt-strength.v1.json"
+      ],
+      "profile_status": "ACCEPTED",
+      "profile_sha256": "12a79e1d5566e5d75f8485cbac2c5834cbce4aae4ad10e3f9f7b379c4b5ebd18"
+    },
+    {
+      "prompt_id": "P07",
+      "profile_version": 1,
+      "canonical_prompt_hash": "90e7f78c9a3e4e2108ca2bcbe5c0cd07c62e10bdaa02d408b5e64caa24a1cf0b",
+      "acceptance_commit": "55148914364e2988bc6096b7c8d142eca3f62c28",
+      "direct_assignments": [
+        {
+          "capability_id": "execution.implementation",
+          "presence": "REQUIRED",
+          "ownership": "PRIMARY",
+          "capability_relation": "IMPLEMENTS",
+          "delivery_source": "CANONICAL_BODY",
+          "evidence_refs": [
+            "harness/contracts/prompt-strength.v1.json:supporting_owners.implementation_execution",
+            "tests/test_p07_effective_prompt_identity.py",
+            "docs/prompts.json:P07"
+          ],
+          "rationale": "P07 is the canonical implementation execution owner per Prompt Strength contract"
+        }
+      ],
+      "inherited_sources": [
+        {
+          "source_id": "prompt-strength-shared-policy",
+          "source_version": "v1",
+          "source_hash": "e249da6706d86733cd03a046ef9e16552a3ae87dc8cc644281c5c1fd9c08c796"
+        }
+      ],
+      "semantic_dependency_fingerprint": "f320f90b491e8fb9684d575d8d25676d2c625fbddc697cde0206c596a1a48279",
+      "evidence_refs": [
+        "docs/prompts.json:P07",
+        "harness/contracts/prompt-strength.v1.json"
+      ],
+      "profile_status": "ACCEPTED",
+      "profile_sha256": "b9718c90d7634b35bb351b669f1e61413085cf66442ff00178dc804f251bc74b"
+    },
+    {
+      "prompt_id": "P08",
+      "profile_version": 1,
+      "canonical_prompt_hash": "9293b561ce2627dfafdf79bdb1fdf20fa65ee2c19fc4b10f0d8d581da823a541",
+      "acceptance_commit": "55148914364e2988bc6096b7c8d142eca3f62c28",
+      "direct_assignments": [
+        {
+          "capability_id": "execution.implementation",
+          "presence": "AWARE",
+          "ownership": "NONE",
+          "capability_relation": "ROUTES_TO",
+          "delivery_source": "ROUTED_OWNER",
+          "evidence_refs": [
+            "docs/prompts.json:P08"
+          ],
+          "rationale": "P08 routes to P07 for implementation execution"
+        }
+      ],
+      "inherited_sources": [
+        {
+          "source_id": "prompt-strength-shared-policy",
+          "source_version": "v1",
+          "source_hash": "e249da6706d86733cd03a046ef9e16552a3ae87dc8cc644281c5c1fd9c08c796"
+        }
+      ],
+      "semantic_dependency_fingerprint": "032ec246b94228269f9bd1370622ae8ffbf437b3394dd4055900b1da78a9bcb7",
+      "evidence_refs": [
+        "docs/prompts.json:P08",
+        "harness/contracts/prompt-strength.v1.json"
+      ],
+      "profile_status": "ACCEPTED",
+      "profile_sha256": "1325e843cf5fa8d94a536c80191747acda4b01149005f7ad0f75686766f3369c"
+    },
+    {
+      "prompt_id": "P09",
+      "profile_version": 1,
+      "canonical_prompt_hash": "2543e252363809216d60c4554e2368acd3c69857094774a57b8d181820e3cab3",
+      "acceptance_commit": "55148914364e2988bc6096b7c8d142eca3f62c28",
+      "direct_assignments": [
+        {
+          "capability_id": "execution.implementation",
+          "presence": "AWARE",
+          "ownership": "NONE",
+          "capability_relation": "ROUTES_TO",
+          "delivery_source": "ROUTED_OWNER",
+          "evidence_refs": [
+            "docs/prompts.json:P09"
+          ],
+          "rationale": "P09 routes to P07 for implementation execution"
+        }
+      ],
+      "inherited_sources": [
+        {
+          "source_id": "prompt-strength-shared-policy",
+          "source_version": "v1",
+          "source_hash": "e249da6706d86733cd03a046ef9e16552a3ae87dc8cc644281c5c1fd9c08c796"
+        }
+      ],
+      "semantic_dependency_fingerprint": "703b26c3effdfbe067c28129fd0b14ed435686156860c3d6781937690721d714",
+      "evidence_refs": [
+        "docs/prompts.json:P09",
+        "harness/contracts/prompt-strength.v1.json"
+      ],
+      "profile_status": "ACCEPTED",
+      "profile_sha256": "3577e39a521d64b4077a2c8d35998eaf854a12b850e5c0f147224c8460f8dc6c"
+    },
+    {
+      "prompt_id": "P10",
+      "profile_version": 1,
+      "canonical_prompt_hash": "29e1528285ce2975dbc15149c8dc0a32bd2b54915ca88fb540827825a6f7fe6c",
+      "acceptance_commit": "55148914364e2988bc6096b7c8d142eca3f62c28",
+      "direct_assignments": [
+        {
+          "capability_id": "execution.implementation",
+          "presence": "AWARE",
+          "ownership": "NONE",
+          "capability_relation": "ROUTES_TO",
+          "delivery_source": "ROUTED_OWNER",
+          "evidence_refs": [
+            "docs/prompts.json:P10"
+          ],
+          "rationale": "P10 routes to P07 for implementation execution"
+        }
+      ],
+      "inherited_sources": [
+        {
+          "source_id": "prompt-strength-shared-policy",
+          "source_version": "v1",
+          "source_hash": "e249da6706d86733cd03a046ef9e16552a3ae87dc8cc644281c5c1fd9c08c796"
+        }
+      ],
+      "semantic_dependency_fingerprint": "57fe241d4b380bc1c7fd55b1e87f3734cc0d5c2be87f05eae5b1fda69f59080d",
+      "evidence_refs": [
+        "docs/prompts.json:P10",
+        "harness/contracts/prompt-strength.v1.json"
+      ],
+      "profile_status": "ACCEPTED",
+      "profile_sha256": "91608b0fa7b582485a337175f0ad92ede72fcde68689731e9598e3141a39be89"
+    },
+    {
+      "prompt_id": "P11",
+      "profile_version": 1,
+      "canonical_prompt_hash": "1430e9ac71b2c52bb481cf1cc733161a38eede575bc23bbd8a3a942a803fb16a",
+      "acceptance_commit": "55148914364e2988bc6096b7c8d142eca3f62c28",
+      "direct_assignments": [
+        {
+          "capability_id": "execution.implementation",
+          "presence": "AWARE",
+          "ownership": "NONE",
+          "capability_relation": "ROUTES_TO",
+          "delivery_source": "ROUTED_OWNER",
+          "evidence_refs": [
+            "docs/prompts.json:P11"
+          ],
+          "rationale": "P11 routes to P07 for implementation execution"
+        }
+      ],
+      "inherited_sources": [
+        {
+          "source_id": "prompt-strength-shared-policy",
+          "source_version": "v1",
+          "source_hash": "e249da6706d86733cd03a046ef9e16552a3ae87dc8cc644281c5c1fd9c08c796"
+        }
+      ],
+      "semantic_dependency_fingerprint": "70351b17d49d3132a7038742d1fa4edcd8eb01ab19f12122ed265339909eb626",
+      "evidence_refs": [
+        "docs/prompts.json:P11",
+        "harness/contracts/prompt-strength.v1.json"
+      ],
+      "profile_status": "ACCEPTED",
+      "profile_sha256": "055afc3e3a3ffe24bf910f51c075d6949fb28578cef325ddbcccefd3aa0b5d92"
+    },
+    {
+      "prompt_id": "P12",
+      "profile_version": 1,
+      "canonical_prompt_hash": "a91d0e704b7931ed3cc88b059e4b3739fee55247dbf70d18de827db7ecf4b3c0",
+      "acceptance_commit": "55148914364e2988bc6096b7c8d142eca3f62c28",
+      "direct_assignments": [
+        {
+          "capability_id": "execution.implementation",
+          "presence": "AWARE",
+          "ownership": "NONE",
+          "capability_relation": "ROUTES_TO",
+          "delivery_source": "ROUTED_OWNER",
+          "evidence_refs": [
+            "docs/prompts.json:P12"
+          ],
+          "rationale": "P12 routes to P07 for implementation execution"
+        }
+      ],
+      "inherited_sources": [
+        {
+          "source_id": "prompt-strength-shared-policy",
+          "source_version": "v1",
+          "source_hash": "e249da6706d86733cd03a046ef9e16552a3ae87dc8cc644281c5c1fd9c08c796"
+        }
+      ],
+      "semantic_dependency_fingerprint": "569a6e20eb4f3a84ab8c6d7e120a7afd680c95ff9b95f84e9181f8d1dc980e82",
+      "evidence_refs": [
+        "docs/prompts.json:P12",
+        "harness/contracts/prompt-strength.v1.json"
+      ],
+      "profile_status": "ACCEPTED",
+      "profile_sha256": "597885bc4621950fe1e6028c59cbacb79ebdde3d1c8ee908c70bb06279b6f59e"
+    },
+    {
+      "prompt_id": "P13",
+      "profile_version": 1,
+      "canonical_prompt_hash": "82e8591b8bcaaa3176bbf837d959e1e489620b1566dfc92079b82922873c3f89",
+      "acceptance_commit": "55148914364e2988bc6096b7c8d142eca3f62c28",
+      "direct_assignments": [
+        {
+          "capability_id": "process.recurring",
+          "presence": "REQUIRED",
+          "ownership": "PRIMARY",
+          "capability_relation": "IMPLEMENTS",
+          "delivery_source": "CANONICAL_BODY",
+          "evidence_refs": [
+            "harness/contracts/prompt-strength.v1.json:supporting_owners.recurring_process",
+            "docs/prompts.json:P13"
+          ],
+          "rationale": "P13 is the canonical recurring process hardening owner per Prompt Strength contract"
+        }
+      ],
+      "inherited_sources": [
+        {
+          "source_id": "prompt-strength-shared-policy",
+          "source_version": "v1",
+          "source_hash": "e249da6706d86733cd03a046ef9e16552a3ae87dc8cc644281c5c1fd9c08c796"
+        }
+      ],
+      "semantic_dependency_fingerprint": "9c0031aaa951a7dcf1cfd76cfe25dde60762c2c41baf07fc49208ef3ea9b7619",
+      "evidence_refs": [
+        "docs/prompts.json:P13",
+        "harness/contracts/prompt-strength.v1.json"
+      ],
+      "profile_status": "ACCEPTED",
+      "profile_sha256": "bb71bb78881b0f1896229fc17f7d89dd08d7b102e7621caf651f4dde85de9b2a"
+    },
+    {
+      "prompt_id": "P14",
+      "profile_version": 1,
+      "canonical_prompt_hash": "36fcffcdc4540bfedcc657800d731991cc32bbde3a40a97f0256421499ca818d",
+      "acceptance_commit": "55148914364e2988bc6096b7c8d142eca3f62c28",
+      "direct_assignments": [
+        {
+          "capability_id": "execution.implementation",
+          "presence": "AWARE",
+          "ownership": "NONE",
+          "capability_relation": "ROUTES_TO",
+          "delivery_source": "ROUTED_OWNER",
+          "evidence_refs": [
+            "docs/prompts.json:P14"
+          ],
+          "rationale": "P14 routes to P07 for implementation execution"
+        }
+      ],
+      "inherited_sources": [
+        {
+          "source_id": "prompt-strength-shared-policy",
+          "source_version": "v1",
+          "source_hash": "e249da6706d86733cd03a046ef9e16552a3ae87dc8cc644281c5c1fd9c08c796"
+        }
+      ],
+      "semantic_dependency_fingerprint": "b44d9ccf23e5e0e0be49af5abfa9216c48fd3ff0836de9a5356450de3ae161a0",
+      "evidence_refs": [
+        "docs/prompts.json:P14",
+        "harness/contracts/prompt-strength.v1.json"
+      ],
+      "profile_status": "ACCEPTED",
+      "profile_sha256": "5d2ea059422253ce2130fc4ea3c8590637bc52d664de48c8d9b417d93d244799"
+    },
+    {
+      "prompt_id": "P15",
+      "profile_version": 1,
+      "canonical_prompt_hash": "5c781d69b9bd9886f8ff34641108323324c395700516751941d965e754c50543",
+      "acceptance_commit": "55148914364e2988bc6096b7c8d142eca3f62c28",
+      "direct_assignments": [
+        {
+          "capability_id": "execution.implementation",
+          "presence": "AWARE",
+          "ownership": "NONE",
+          "capability_relation": "ROUTES_TO",
+          "delivery_source": "ROUTED_OWNER",
+          "evidence_refs": [
+            "docs/prompts.json:P15"
+          ],
+          "rationale": "P15 routes to P07 for implementation execution"
+        }
+      ],
+      "inherited_sources": [
+        {
+          "source_id": "prompt-strength-shared-policy",
+          "source_version": "v1",
+          "source_hash": "e249da6706d86733cd03a046ef9e16552a3ae87dc8cc644281c5c1fd9c08c796"
+        }
+      ],
+      "semantic_dependency_fingerprint": "03a4f1740035c64300883da93dd6cd3bd935a3dd9d8067b97efc3690e2192b8b",
+      "evidence_refs": [
+        "docs/prompts.json:P15",
+        "harness/contracts/prompt-strength.v1.json"
+      ],
+      "profile_status": "ACCEPTED",
+      "profile_sha256": "a05fb722fd99cef4bb15bac8824c4bf3ec17175dc0e9546a12381ba300510b3f"
+    },
+    {
+      "prompt_id": "P16",
+      "profile_version": 1,
+      "canonical_prompt_hash": "3dc9c1e445eebdd370aeb8dca06c1417e3121940dd0f9f819ff20728e0ed0a69",
+      "acceptance_commit": "55148914364e2988bc6096b7c8d142eca3f62c28",
+      "direct_assignments": [
+        {
+          "capability_id": "execution.implementation",
+          "presence": "AWARE",
+          "ownership": "NONE",
+          "capability_relation": "ROUTES_TO",
+          "delivery_source": "ROUTED_OWNER",
+          "evidence_refs": [
+            "docs/prompts.json:P16"
+          ],
+          "rationale": "P16 routes to P07 for implementation execution"
+        }
+      ],
+      "inherited_sources": [
+        {
+          "source_id": "prompt-strength-shared-policy",
+          "source_version": "v1",
+          "source_hash": "e249da6706d86733cd03a046ef9e16552a3ae87dc8cc644281c5c1fd9c08c796"
+        }
+      ],
+      "semantic_dependency_fingerprint": "3d4c8f7acfab462cec4f1b969f2a0f2404a05ff06896a1f1e7affdecccd5eeb5",
+      "evidence_refs": [
+        "docs/prompts.json:P16",
+        "harness/contracts/prompt-strength.v1.json"
+      ],
+      "profile_status": "ACCEPTED",
+      "profile_sha256": "9bd876b5397b145b1ef48e9b1fa0098ce2766bee825972b73669806fe107d923"
+    },
+    {
+      "prompt_id": "P17",
+      "profile_version": 1,
+      "canonical_prompt_hash": "990ee66a9c049fae1d0aa38e61e95953971ec0da83e405483c5ff3ca36170deb",
+      "acceptance_commit": "55148914364e2988bc6096b7c8d142eca3f62c28",
+      "direct_assignments": [
+        {
+          "capability_id": "execution.implementation",
+          "presence": "AWARE",
+          "ownership": "NONE",
+          "capability_relation": "ROUTES_TO",
+          "delivery_source": "ROUTED_OWNER",
+          "evidence_refs": [
+            "docs/prompts.json:P17"
+          ],
+          "rationale": "P17 routes to P07 for implementation execution"
+        }
+      ],
+      "inherited_sources": [
+        {
+          "source_id": "prompt-strength-shared-policy",
+          "source_version": "v1",
+          "source_hash": "e249da6706d86733cd03a046ef9e16552a3ae87dc8cc644281c5c1fd9c08c796"
+        }
+      ],
+      "semantic_dependency_fingerprint": "71e4dc1694c1a4c6087bd93ce91609fa2367b990c09cb5a010e73347911519a7",
+      "evidence_refs": [
+        "docs/prompts.json:P17",
+        "harness/contracts/prompt-strength.v1.json"
+      ],
+      "profile_status": "ACCEPTED",
+      "profile_sha256": "b91f04b42e78e841171f84aa36e891fa930e7486a44cccab8b9e915bd1ed2ef4"
+    },
+    {
+      "prompt_id": "P18",
+      "profile_version": 1,
+      "canonical_prompt_hash": "731511fd2c657a40e3c66da2d9a8337c4d3d9985e912e825d6e68de63bbb882a",
+      "acceptance_commit": "55148914364e2988bc6096b7c8d142eca3f62c28",
+      "direct_assignments": [
+        {
+          "capability_id": "execution.implementation",
+          "presence": "AWARE",
+          "ownership": "NONE",
+          "capability_relation": "ROUTES_TO",
+          "delivery_source": "ROUTED_OWNER",
+          "evidence_refs": [
+            "docs/prompts.json:P18"
+          ],
+          "rationale": "P18 routes to P07 for implementation execution"
+        }
+      ],
+      "inherited_sources": [
+        {
+          "source_id": "prompt-strength-shared-policy",
+          "source_version": "v1",
+          "source_hash": "e249da6706d86733cd03a046ef9e16552a3ae87dc8cc644281c5c1fd9c08c796"
+        }
+      ],
+      "semantic_dependency_fingerprint": "47885417eb05f5d5d4e26069a91e969b0c050b0e46d255e7282cc9b87333eb8a",
+      "evidence_refs": [
+        "docs/prompts.json:P18",
+        "harness/contracts/prompt-strength.v1.json"
+      ],
+      "profile_status": "ACCEPTED",
+      "profile_sha256": "f57007fdf11159aab571fb8d298fcd888bda72365ee816fb8daa08c34fc0b8b6"
+    },
+    {
+      "prompt_id": "P19",
+      "profile_version": 1,
+      "canonical_prompt_hash": "490b0b2b3b8334f9ef50800cc71ecd83baf500eb9c0f5e4ad2c5bf44cf0248c1",
+      "acceptance_commit": "55148914364e2988bc6096b7c8d142eca3f62c28",
+      "direct_assignments": [
+        {
+          "capability_id": "execution.implementation",
+          "presence": "AWARE",
+          "ownership": "NONE",
+          "capability_relation": "ROUTES_TO",
+          "delivery_source": "ROUTED_OWNER",
+          "evidence_refs": [
+            "docs/prompts.json:P19"
+          ],
+          "rationale": "P19 routes to P07 for implementation execution"
+        }
+      ],
+      "inherited_sources": [
+        {
+          "source_id": "prompt-strength-shared-policy",
+          "source_version": "v1",
+          "source_hash": "e249da6706d86733cd03a046ef9e16552a3ae87dc8cc644281c5c1fd9c08c796"
+        }
+      ],
+      "semantic_dependency_fingerprint": "c22345550a42d7e9ed6f4ed170005ba6d76e14093f00d858221477c956adc897",
+      "evidence_refs": [
+        "docs/prompts.json:P19",
+        "harness/contracts/prompt-strength.v1.json"
+      ],
+      "profile_status": "ACCEPTED",
+      "profile_sha256": "1542d2e8e06351193fd53c80cd2e74969ed61c93e3bfd86569a89e92bea363db"
+    },
+    {
+      "prompt_id": "P20",
+      "profile_version": 1,
+      "canonical_prompt_hash": "c1f8236000dc034718dac6d50fa5f12ece70d1e57a415046e4977131f666bb93",
+      "acceptance_commit": "55148914364e2988bc6096b7c8d142eca3f62c28",
+      "direct_assignments": [
+        {
+          "capability_id": "execution.implementation",
+          "presence": "AWARE",
+          "ownership": "NONE",
+          "capability_relation": "ROUTES_TO",
+          "delivery_source": "ROUTED_OWNER",
+          "evidence_refs": [
+            "docs/prompts.json:P20"
+          ],
+          "rationale": "P20 routes to P07 for implementation execution"
+        }
+      ],
+      "inherited_sources": [
+        {
+          "source_id": "prompt-strength-shared-policy",
+          "source_version": "v1",
+          "source_hash": "e249da6706d86733cd03a046ef9e16552a3ae87dc8cc644281c5c1fd9c08c796"
+        }
+      ],
+      "semantic_dependency_fingerprint": "e9a7acd3770ec302863b7f3ac0f888923529ebcbea06b190dddb98658ed9f3c4",
+      "evidence_refs": [
+        "docs/prompts.json:P20",
+        "harness/contracts/prompt-strength.v1.json"
+      ],
+      "profile_status": "ACCEPTED",
+      "profile_sha256": "4c4842e48c9982948f710e16d78fb21edff453c145ac00232e23b5032aa44e64"
+    },
+    {
+      "prompt_id": "P21",
+      "profile_version": 1,
+      "canonical_prompt_hash": "4467e658785acdde48f9a528231478363b280a0f8f2c30c3bd44e081f731e741",
+      "acceptance_commit": "55148914364e2988bc6096b7c8d142eca3f62c28",
+      "direct_assignments": [
+        {
+          "capability_id": "execution.implementation",
+          "presence": "AWARE",
+          "ownership": "NONE",
+          "capability_relation": "ROUTES_TO",
+          "delivery_source": "ROUTED_OWNER",
+          "evidence_refs": [
+            "docs/prompts.json:P21"
+          ],
+          "rationale": "P21 routes to P07 for implementation execution"
+        }
+      ],
+      "inherited_sources": [
+        {
+          "source_id": "prompt-strength-shared-policy",
+          "source_version": "v1",
+          "source_hash": "e249da6706d86733cd03a046ef9e16552a3ae87dc8cc644281c5c1fd9c08c796"
+        }
+      ],
+      "semantic_dependency_fingerprint": "4945598e8ce4bbcb6d9cac8aed84298f4cd38254bb4a9f4f972e58555accf6ff",
+      "evidence_refs": [
+        "docs/prompts.json:P21",
+        "harness/contracts/prompt-strength.v1.json"
+      ],
+      "profile_status": "ACCEPTED",
+      "profile_sha256": "49c188aeadff3080110f16a1868a6f0c674c16780aa59eb8fb4ede30e7cc3b3e"
+    },
+    {
+      "prompt_id": "P22",
+      "profile_version": 1,
+      "canonical_prompt_hash": "cf1d076794ab3ce772a90a08f45161350813c9e28816aba97ba0c4948cb1a8f2",
+      "acceptance_commit": "55148914364e2988bc6096b7c8d142eca3f62c28",
+      "direct_assignments": [
+        {
+          "capability_id": "execution.implementation",
+          "presence": "AWARE",
+          "ownership": "NONE",
+          "capability_relation": "ROUTES_TO",
+          "delivery_source": "ROUTED_OWNER",
+          "evidence_refs": [
+            "docs/prompts.json:P22"
+          ],
+          "rationale": "P22 routes to P07 for implementation execution"
+        }
+      ],
+      "inherited_sources": [
+        {
+          "source_id": "prompt-strength-shared-policy",
+          "source_version": "v1",
+          "source_hash": "e249da6706d86733cd03a046ef9e16552a3ae87dc8cc644281c5c1fd9c08c796"
+        }
+      ],
+      "semantic_dependency_fingerprint": "fe485b45d9a9b180680a62380aa6c2ce63dbf4621540c4735d59e02a4e95f281",
+      "evidence_refs": [
+        "docs/prompts.json:P22",
+        "harness/contracts/prompt-strength.v1.json"
+      ],
+      "profile_status": "ACCEPTED",
+      "profile_sha256": "6c11ebeb586dfaf67dbf76f8881bf6f14b4ee25981fc4d3775d2840a94313b60"
+    },
+    {
+      "prompt_id": "P23",
+      "profile_version": 1,
+      "canonical_prompt_hash": "7c34c3defb34750a1fd549fcbd6cdb95ed102e12eb2b96610bab35ddf52e29fc",
+      "acceptance_commit": "55148914364e2988bc6096b7c8d142eca3f62c28",
+      "direct_assignments": [
+        {
+          "capability_id": "execution.implementation",
+          "presence": "AWARE",
+          "ownership": "NONE",
+          "capability_relation": "ROUTES_TO",
+          "delivery_source": "ROUTED_OWNER",
+          "evidence_refs": [
+            "docs/prompts.json:P23"
+          ],
+          "rationale": "P23 routes to P07 for implementation execution"
+        }
+      ],
+      "inherited_sources": [
+        {
+          "source_id": "prompt-strength-shared-policy",
+          "source_version": "v1",
+          "source_hash": "e249da6706d86733cd03a046ef9e16552a3ae87dc8cc644281c5c1fd9c08c796"
+        }
+      ],
+      "semantic_dependency_fingerprint": "5753ed048ca8300334d3e50511a7875111b996c8e264e3baf414f35f24dcbc31",
+      "evidence_refs": [
+        "docs/prompts.json:P23",
+        "harness/contracts/prompt-strength.v1.json"
+      ],
+      "profile_status": "ACCEPTED",
+      "profile_sha256": "360031e7051351f196c2f5358b329a5404caa4f9ee03390dfa7a3202e62abb4d"
+    },
+    {
+      "prompt_id": "P24",
+      "profile_version": 1,
+      "canonical_prompt_hash": "224044977b06baf7c383fe5450d86d54d2aab5581d5d9f05570bbc8034031ad7",
+      "acceptance_commit": "55148914364e2988bc6096b7c8d142eca3f62c28",
+      "direct_assignments": [
+        {
+          "capability_id": "execution.implementation",
+          "presence": "AWARE",
+          "ownership": "NONE",
+          "capability_relation": "ROUTES_TO",
+          "delivery_source": "ROUTED_OWNER",
+          "evidence_refs": [
+            "docs/prompts.json:P24"
+          ],
+          "rationale": "P24 routes to P07 for implementation execution"
+        }
+      ],
+      "inherited_sources": [
+        {
+          "source_id": "prompt-strength-shared-policy",
+          "source_version": "v1",
+          "source_hash": "e249da6706d86733cd03a046ef9e16552a3ae87dc8cc644281c5c1fd9c08c796"
+        }
+      ],
+      "semantic_dependency_fingerprint": "04e3d8f79b2dccff4be9dd712a710cf4631abb88558ee0d23ad798bbd2618788",
+      "evidence_refs": [
+        "docs/prompts.json:P24",
+        "harness/contracts/prompt-strength.v1.json"
+      ],
+      "profile_status": "ACCEPTED",
+      "profile_sha256": "2989653320aee70bda51689f3f08e03a7985d37d8889b0c9c32972bdb6e11874"
+    },
+    {
+      "prompt_id": "P25",
+      "profile_version": 1,
+      "canonical_prompt_hash": "8a3c602e59121b0f89e90c44163c3b2f330c1754def2421b4b2605b7478cc1f2",
+      "acceptance_commit": "55148914364e2988bc6096b7c8d142eca3f62c28",
+      "direct_assignments": [
+        {
+          "capability_id": "execution.implementation",
+          "presence": "AWARE",
+          "ownership": "NONE",
+          "capability_relation": "ROUTES_TO",
+          "delivery_source": "ROUTED_OWNER",
+          "evidence_refs": [
+            "docs/prompts.json:P25"
+          ],
+          "rationale": "P25 routes to P07 for implementation execution"
+        }
+      ],
+      "inherited_sources": [
+        {
+          "source_id": "prompt-strength-shared-policy",
+          "source_version": "v1",
+          "source_hash": "e249da6706d86733cd03a046ef9e16552a3ae87dc8cc644281c5c1fd9c08c796"
+        }
+      ],
+      "semantic_dependency_fingerprint": "581edcdd14fceb75830cd9ff9f63749759f588b87b5da9d9f4418ec80d512d59",
+      "evidence_refs": [
+        "docs/prompts.json:P25",
+        "harness/contracts/prompt-strength.v1.json"
+      ],
+      "profile_status": "ACCEPTED",
+      "profile_sha256": "dae20838589350473c95c7ab8ed148a2ac3da47acd4d916b54ff1dca3d1e6017"
+    },
+    {
+      "prompt_id": "P26",
+      "profile_version": 1,
+      "canonical_prompt_hash": "f082667ac6d659bcecdd7e1948e8c6d33fe836dfddb8fd3aa33678db55bf9127",
+      "acceptance_commit": "55148914364e2988bc6096b7c8d142eca3f62c28",
+      "direct_assignments": [
+        {
+          "capability_id": "execution.implementation",
+          "presence": "AWARE",
+          "ownership": "NONE",
+          "capability_relation": "ROUTES_TO",
+          "delivery_source": "ROUTED_OWNER",
+          "evidence_refs": [
+            "docs/prompts.json:P26"
+          ],
+          "rationale": "P26 routes to P07 for implementation execution"
+        }
+      ],
+      "inherited_sources": [
+        {
+          "source_id": "prompt-strength-shared-policy",
+          "source_version": "v1",
+          "source_hash": "e249da6706d86733cd03a046ef9e16552a3ae87dc8cc644281c5c1fd9c08c796"
+        }
+      ],
+      "semantic_dependency_fingerprint": "5d014370972a8095a07f2edf3e2bcc0e1ca4002777cb915d4ec48479531454a3",
+      "evidence_refs": [
+        "docs/prompts.json:P26",
+        "harness/contracts/prompt-strength.v1.json"
+      ],
+      "profile_status": "ACCEPTED",
+      "profile_sha256": "b21ea7ca32a67f89cb965e83844f551dd8411421d00fe7d03d3a2433d4ca43e3"
+    },
+    {
+      "prompt_id": "P27",
+      "profile_version": 1,
+      "canonical_prompt_hash": "4d29accefecaef926e6f59dce22e6b2a8d25ccc483fc8e5724fdfb44ffa0c777",
+      "acceptance_commit": "55148914364e2988bc6096b7c8d142eca3f62c28",
+      "direct_assignments": [
+        {
+          "capability_id": "execution.implementation",
+          "presence": "AWARE",
+          "ownership": "NONE",
+          "capability_relation": "ROUTES_TO",
+          "delivery_source": "ROUTED_OWNER",
+          "evidence_refs": [
+            "docs/prompts.json:P27"
+          ],
+          "rationale": "P27 routes to P07 for implementation execution"
+        }
+      ],
+      "inherited_sources": [
+        {
+          "source_id": "prompt-strength-shared-policy",
+          "source_version": "v1",
+          "source_hash": "e249da6706d86733cd03a046ef9e16552a3ae87dc8cc644281c5c1fd9c08c796"
+        }
+      ],
+      "semantic_dependency_fingerprint": "a8c026e82fa03f48a4182b6d4dc08b5aab14c1d31c17dc9fb6afbe76c4ffe8c0",
+      "evidence_refs": [
+        "docs/prompts.json:P27",
+        "harness/contracts/prompt-strength.v1.json"
+      ],
+      "profile_status": "ACCEPTED",
+      "profile_sha256": "20e1f7555e3fa46de2c287b5918da464243c222c3d34f5776b00a55d11e5b084"
+    },
+    {
+      "prompt_id": "P28",
+      "profile_version": 1,
+      "canonical_prompt_hash": "af6835d17706df99f92ccad22aea3d9a9409ab21b06d0d8471bc844b14aa6065",
+      "acceptance_commit": "55148914364e2988bc6096b7c8d142eca3f62c28",
+      "direct_assignments": [
+        {
+          "capability_id": "execution.implementation",
+          "presence": "AWARE",
+          "ownership": "NONE",
+          "capability_relation": "ROUTES_TO",
+          "delivery_source": "ROUTED_OWNER",
+          "evidence_refs": [
+            "docs/prompts.json:P28"
+          ],
+          "rationale": "P28 routes to P07 for implementation execution"
+        }
+      ],
+      "inherited_sources": [
+        {
+          "source_id": "prompt-strength-shared-policy",
+          "source_version": "v1",
+          "source_hash": "e249da6706d86733cd03a046ef9e16552a3ae87dc8cc644281c5c1fd9c08c796"
+        }
+      ],
+      "semantic_dependency_fingerprint": "76b83c7d748d8a842eed32dbd202e694783e4385efd23cfdfe649c66424ff101",
+      "evidence_refs": [
+        "docs/prompts.json:P28",
+        "harness/contracts/prompt-strength.v1.json"
+      ],
+      "profile_status": "ACCEPTED",
+      "profile_sha256": "98d3f4e0021d0e41743f766ae2b02b87899fe844b9b7608aa99868d0db2acd17"
+    },
+    {
+      "prompt_id": "P29",
+      "profile_version": 1,
+      "canonical_prompt_hash": "21c054a21c15f0437f0eccbf99e101d21f3a40a6584ac1f30ba961e3e8f02235",
+      "acceptance_commit": "55148914364e2988bc6096b7c8d142eca3f62c28",
+      "direct_assignments": [
+        {
+          "capability_id": "execution.implementation",
+          "presence": "AWARE",
+          "ownership": "NONE",
+          "capability_relation": "ROUTES_TO",
+          "delivery_source": "ROUTED_OWNER",
+          "evidence_refs": [
+            "docs/prompts.json:P29"
+          ],
+          "rationale": "P29 routes to P07 for implementation execution"
+        }
+      ],
+      "inherited_sources": [
+        {
+          "source_id": "prompt-strength-shared-policy",
+          "source_version": "v1",
+          "source_hash": "e249da6706d86733cd03a046ef9e16552a3ae87dc8cc644281c5c1fd9c08c796"
+        }
+      ],
+      "semantic_dependency_fingerprint": "6478476acfd6b9f62e5d6a26a05c4be933cc512bd51c840df0b58cb0e66f6431",
+      "evidence_refs": [
+        "docs/prompts.json:P29",
+        "harness/contracts/prompt-strength.v1.json"
+      ],
+      "profile_status": "ACCEPTED",
+      "profile_sha256": "0c6efc3de248257efff1b2088e2fd01d4f159f48a56764a5bfdd4377dd286373"
+    },
+    {
+      "prompt_id": "P30",
+      "profile_version": 1,
+      "canonical_prompt_hash": "f61311e116fe6bcf69829dc65d00378a8919990ee5f25ca384c3904e9a0dacf1",
+      "acceptance_commit": "55148914364e2988bc6096b7c8d142eca3f62c28",
+      "direct_assignments": [
+        {
+          "capability_id": "execution.implementation",
+          "presence": "AWARE",
+          "ownership": "NONE",
+          "capability_relation": "ROUTES_TO",
+          "delivery_source": "ROUTED_OWNER",
+          "evidence_refs": [
+            "docs/prompts.json:P30"
+          ],
+          "rationale": "P30 routes to P07 for implementation execution"
+        }
+      ],
+      "inherited_sources": [
+        {
+          "source_id": "prompt-strength-shared-policy",
+          "source_version": "v1",
+          "source_hash": "e249da6706d86733cd03a046ef9e16552a3ae87dc8cc644281c5c1fd9c08c796"
+        }
+      ],
+      "semantic_dependency_fingerprint": "340a730620d3863c5ba62d13f32985a02579e9bad607525ac2d5378b6fe71f0f",
+      "evidence_refs": [
+        "docs/prompts.json:P30",
+        "harness/contracts/prompt-strength.v1.json"
+      ],
+      "profile_status": "ACCEPTED",
+      "profile_sha256": "e9d4969ca4dbce76913ad63269dcf1f63c17ae5f6071b4723e7daeca354b542e"
+    },
+    {
+      "prompt_id": "P31",
+      "profile_version": 1,
+      "canonical_prompt_hash": "4c28188113ffc0c90df8dcfc3774f96e8c51b64b83ef727517e4200ed1f6171f",
+      "acceptance_commit": "55148914364e2988bc6096b7c8d142eca3f62c28",
+      "direct_assignments": [
+        {
+          "capability_id": "execution.implementation",
+          "presence": "AWARE",
+          "ownership": "NONE",
+          "capability_relation": "ROUTES_TO",
+          "delivery_source": "ROUTED_OWNER",
+          "evidence_refs": [
+            "docs/prompts.json:P31"
+          ],
+          "rationale": "P31 routes to P07 for implementation execution"
+        }
+      ],
+      "inherited_sources": [
+        {
+          "source_id": "prompt-strength-shared-policy",
+          "source_version": "v1",
+          "source_hash": "e249da6706d86733cd03a046ef9e16552a3ae87dc8cc644281c5c1fd9c08c796"
+        }
+      ],
+      "semantic_dependency_fingerprint": "417a3cc1f92d15d640fc40e9c8dee4c5c242d3ea86e23c1bf05b70a548cbb2d9",
+      "evidence_refs": [
+        "docs/prompts.json:P31",
+        "harness/contracts/prompt-strength.v1.json"
+      ],
+      "profile_status": "ACCEPTED",
+      "profile_sha256": "5452cd1b94db56b4d36f26f4be6e482989289422711de6860df9d868f0702f70"
+    },
+    {
+      "prompt_id": "P32",
+      "profile_version": 1,
+      "canonical_prompt_hash": "b350bb4613da55c17c78368415903ecc4cf5ffa605e4b4a670776111f2be05a1",
+      "acceptance_commit": "55148914364e2988bc6096b7c8d142eca3f62c28",
+      "direct_assignments": [
+        {
+          "capability_id": "execution.implementation",
+          "presence": "AWARE",
+          "ownership": "NONE",
+          "capability_relation": "ROUTES_TO",
+          "delivery_source": "ROUTED_OWNER",
+          "evidence_refs": [
+            "docs/prompts.json:P32"
+          ],
+          "rationale": "P32 routes to P07 for implementation execution"
+        }
+      ],
+      "inherited_sources": [
+        {
+          "source_id": "prompt-strength-shared-policy",
+          "source_version": "v1",
+          "source_hash": "e249da6706d86733cd03a046ef9e16552a3ae87dc8cc644281c5c1fd9c08c796"
+        }
+      ],
+      "semantic_dependency_fingerprint": "bbf66a0e0b29e9b520181e961490c9729756bd2c54537e0f442e5f48b7187175",
+      "evidence_refs": [
+        "docs/prompts.json:P32",
+        "harness/contracts/prompt-strength.v1.json"
+      ],
+      "profile_status": "ACCEPTED",
+      "profile_sha256": "36397764e08b7cec0f8fa60d5ce57111449e6451e31b5cae8058739cd8fab2aa"
+    },
+    {
+      "prompt_id": "P33",
+      "profile_version": 1,
+      "canonical_prompt_hash": "6b7a0cb602a92399becee990695218ceea054d150693595e41f4470ed9347e22",
+      "acceptance_commit": "55148914364e2988bc6096b7c8d142eca3f62c28",
+      "direct_assignments": [
+        {
+          "capability_id": "execution.implementation",
+          "presence": "AWARE",
+          "ownership": "NONE",
+          "capability_relation": "ROUTES_TO",
+          "delivery_source": "ROUTED_OWNER",
+          "evidence_refs": [
+            "docs/prompts.json:P33"
+          ],
+          "rationale": "P33 routes to P07 for implementation execution"
+        }
+      ],
+      "inherited_sources": [
+        {
+          "source_id": "prompt-strength-shared-policy",
+          "source_version": "v1",
+          "source_hash": "e249da6706d86733cd03a046ef9e16552a3ae87dc8cc644281c5c1fd9c08c796"
+        }
+      ],
+      "semantic_dependency_fingerprint": "e2dea11f579c21414346b8c0b956014256878960d1ae6e6167d1350e69b736b1",
+      "evidence_refs": [
+        "docs/prompts.json:P33",
+        "harness/contracts/prompt-strength.v1.json"
+      ],
+      "profile_status": "ACCEPTED",
+      "profile_sha256": "7576895d814e02943e9becf923e3926dcc563abafd15848429aa1d85be875805"
+    },
+    {
+      "prompt_id": "P34",
+      "profile_version": 1,
+      "canonical_prompt_hash": "2d29d7f986162b6681e6d01d6d626d9977aa048d6f4101bec4dbb1fb0123bf5a",
+      "acceptance_commit": "55148914364e2988bc6096b7c8d142eca3f62c28",
+      "direct_assignments": [
+        {
+          "capability_id": "execution.implementation",
+          "presence": "AWARE",
+          "ownership": "NONE",
+          "capability_relation": "ROUTES_TO",
+          "delivery_source": "ROUTED_OWNER",
+          "evidence_refs": [
+            "docs/prompts.json:P34"
+          ],
+          "rationale": "P34 routes to P07 for implementation execution"
+        }
+      ],
+      "inherited_sources": [
+        {
+          "source_id": "prompt-strength-shared-policy",
+          "source_version": "v1",
+          "source_hash": "e249da6706d86733cd03a046ef9e16552a3ae87dc8cc644281c5c1fd9c08c796"
+        }
+      ],
+      "semantic_dependency_fingerprint": "4cc2910c0982b6e5cea5479e2dc9cf445e5c6dc1388b61b391aede7f010b5c31",
+      "evidence_refs": [
+        "docs/prompts.json:P34",
+        "harness/contracts/prompt-strength.v1.json"
+      ],
+      "profile_status": "ACCEPTED",
+      "profile_sha256": "190ed8e7911b6c6dbf7c2b0b254cae2a3c03f918ab7ed6c5fff9341fa8939fe3"
+    },
+    {
+      "prompt_id": "P35",
+      "profile_version": 1,
+      "canonical_prompt_hash": "863ca22930e49f9a517dbab5ab7f1aa66825c623afb44b420332abd376e36927",
+      "acceptance_commit": "55148914364e2988bc6096b7c8d142eca3f62c28",
+      "direct_assignments": [
+        {
+          "capability_id": "execution.implementation",
+          "presence": "AWARE",
+          "ownership": "NONE",
+          "capability_relation": "ROUTES_TO",
+          "delivery_source": "ROUTED_OWNER",
+          "evidence_refs": [
+            "docs/prompts.json:P35"
+          ],
+          "rationale": "P35 routes to P07 for implementation execution"
+        }
+      ],
+      "inherited_sources": [
+        {
+          "source_id": "prompt-strength-shared-policy",
+          "source_version": "v1",
+          "source_hash": "e249da6706d86733cd03a046ef9e16552a3ae87dc8cc644281c5c1fd9c08c796"
+        }
+      ],
+      "semantic_dependency_fingerprint": "590925b0f71ce3358774a555213a3dc37f9a60c0a83f2f5e7abb5465d303acc1",
+      "evidence_refs": [
+        "docs/prompts.json:P35",
+        "harness/contracts/prompt-strength.v1.json"
+      ],
+      "profile_status": "ACCEPTED",
+      "profile_sha256": "f99ed0fc8dfb9d8c94c739e5fbf87f725e929379fa771621e2e030617e615593"
+    },
+    {
+      "prompt_id": "P36",
+      "profile_version": 1,
+      "canonical_prompt_hash": "49da697e83b371c02f710aeb94b1421d2c13127a2e06e3ec5cd93510331f1b67",
+      "acceptance_commit": "55148914364e2988bc6096b7c8d142eca3f62c28",
+      "direct_assignments": [
+        {
+          "capability_id": "execution.implementation",
+          "presence": "AWARE",
+          "ownership": "NONE",
+          "capability_relation": "ROUTES_TO",
+          "delivery_source": "ROUTED_OWNER",
+          "evidence_refs": [
+            "docs/prompts.json:P36"
+          ],
+          "rationale": "P36 routes to P07 for implementation execution"
+        }
+      ],
+      "inherited_sources": [
+        {
+          "source_id": "prompt-strength-shared-policy",
+          "source_version": "v1",
+          "source_hash": "e249da6706d86733cd03a046ef9e16552a3ae87dc8cc644281c5c1fd9c08c796"
+        }
+      ],
+      "semantic_dependency_fingerprint": "a76bdf22015dbd670cdec11d29d384d400388156ac6f748a14ebee0924dd5cc6",
+      "evidence_refs": [
+        "docs/prompts.json:P36",
+        "harness/contracts/prompt-strength.v1.json"
+      ],
+      "profile_status": "ACCEPTED",
+      "profile_sha256": "dda15b4a13a416c88afe4c662fc4bcb4664bfcf7f00ef8f064e22712d867af03"
+    },
+    {
+      "prompt_id": "P37",
+      "profile_version": 1,
+      "canonical_prompt_hash": "96055e1e07e4f1eb306e6b87faaad6d3b187269cb15e7395c561ef02a853c050",
+      "acceptance_commit": "55148914364e2988bc6096b7c8d142eca3f62c28",
+      "direct_assignments": [
+        {
+          "capability_id": "execution.implementation",
+          "presence": "AWARE",
+          "ownership": "NONE",
+          "capability_relation": "ROUTES_TO",
+          "delivery_source": "ROUTED_OWNER",
+          "evidence_refs": [
+            "docs/prompts.json:P37"
+          ],
+          "rationale": "P37 routes to P07 for implementation execution"
+        }
+      ],
+      "inherited_sources": [
+        {
+          "source_id": "prompt-strength-shared-policy",
+          "source_version": "v1",
+          "source_hash": "e249da6706d86733cd03a046ef9e16552a3ae87dc8cc644281c5c1fd9c08c796"
+        }
+      ],
+      "semantic_dependency_fingerprint": "04aee03d9b2b71c8a20e95057343a92ad6418b259b663b34b8ceeb3fe1f04873",
+      "evidence_refs": [
+        "docs/prompts.json:P37",
+        "harness/contracts/prompt-strength.v1.json"
+      ],
+      "profile_status": "ACCEPTED",
+      "profile_sha256": "a493b7baa6b978ff552cb4700278078232c1034fbc13cd3fd4806fb07a97287f"
+    },
+    {
+      "prompt_id": "P38",
+      "profile_version": 1,
+      "canonical_prompt_hash": "84052bc356d51f3f63da73b9620905e575af5bce37baabc93b10fa3e46a77e63",
+      "acceptance_commit": "55148914364e2988bc6096b7c8d142eca3f62c28",
+      "direct_assignments": [
+        {
+          "capability_id": "spreadsheet.repair",
+          "presence": "SUPPORT",
+          "ownership": "SECONDARY",
+          "capability_relation": "IMPLEMENTS",
+          "delivery_source": "CANONICAL_BODY",
+          "evidence_refs": [
+            "docs/prompts.json:P38:useWhen"
+          ],
+          "rationale": "P38 provides spreadsheet operations support per useWhen declaration"
+        }
+      ],
+      "inherited_sources": [
+        {
+          "source_id": "prompt-strength-shared-policy",
+          "source_version": "v1",
+          "source_hash": "e249da6706d86733cd03a046ef9e16552a3ae87dc8cc644281c5c1fd9c08c796"
+        }
+      ],
+      "semantic_dependency_fingerprint": "3b0879eb6a58c53957af7de1d8f1a9ee73a3a03a23517f180c24cf014dfdec1a",
+      "evidence_refs": [
+        "docs/prompts.json:P38",
+        "harness/contracts/prompt-strength.v1.json"
+      ],
+      "profile_status": "ACCEPTED",
+      "profile_sha256": "c8c932835fca18cbeb22eaaa6eeccbd8cf239f9a27559d4359774f67fa01d0f1"
+    },
+    {
+      "prompt_id": "P39",
+      "profile_version": 1,
+      "canonical_prompt_hash": "4c52613f641b4c7ba84ceed915bd02e7749f5d0cae92947b1a9d41a179e66eb0",
+      "acceptance_commit": "55148914364e2988bc6096b7c8d142eca3f62c28",
+      "direct_assignments": [
+        {
+          "capability_id": "spreadsheet.repair",
+          "presence": "SUPPORT",
+          "ownership": "SECONDARY",
+          "capability_relation": "IMPLEMENTS",
+          "delivery_source": "CANONICAL_BODY",
+          "evidence_refs": [
+            "docs/prompts.json:P39:useWhen"
+          ],
+          "rationale": "P39 provides spreadsheet operations support per useWhen declaration"
+        }
+      ],
+      "inherited_sources": [
+        {
+          "source_id": "prompt-strength-shared-policy",
+          "source_version": "v1",
+          "source_hash": "e249da6706d86733cd03a046ef9e16552a3ae87dc8cc644281c5c1fd9c08c796"
+        }
+      ],
+      "semantic_dependency_fingerprint": "1276e944cefae6538612f7d77ab3f9dc0553dd7367703266ff62884c95c0ea64",
+      "evidence_refs": [
+        "docs/prompts.json:P39",
+        "harness/contracts/prompt-strength.v1.json"
+      ],
+      "profile_status": "ACCEPTED",
+      "profile_sha256": "88741434b01f7e2c2af48de3c973775b431e5f166f87cfc5bd8b424d27a7564c"
+    },
+    {
+      "prompt_id": "P40",
+      "profile_version": 1,
+      "canonical_prompt_hash": "1e54ed4c6414427ede15c7e1d4c903ec187448449dc941903895bf73659bac94",
+      "acceptance_commit": "55148914364e2988bc6096b7c8d142eca3f62c28",
+      "direct_assignments": [
+        {
+          "capability_id": "execution.implementation",
+          "presence": "AWARE",
+          "ownership": "NONE",
+          "capability_relation": "ROUTES_TO",
+          "delivery_source": "ROUTED_OWNER",
+          "evidence_refs": [
+            "docs/prompts.json:P40"
+          ],
+          "rationale": "P40 routes to P07 for implementation execution"
+        }
+      ],
+      "inherited_sources": [
+        {
+          "source_id": "prompt-strength-shared-policy",
+          "source_version": "v1",
+          "source_hash": "e249da6706d86733cd03a046ef9e16552a3ae87dc8cc644281c5c1fd9c08c796"
+        }
+      ],
+      "semantic_dependency_fingerprint": "0b6a6c1b3b5f690d8db5360d02f0b3368e9f28b4feb4c048111e39bb330275c6",
+      "evidence_refs": [
+        "docs/prompts.json:P40",
+        "harness/contracts/prompt-strength.v1.json"
+      ],
+      "profile_status": "ACCEPTED",
+      "profile_sha256": "e236426012401308ce076f798729c3de3e0d5173fdb0e7adbabcad27cd999b11"
+    },
+    {
+      "prompt_id": "P41",
+      "profile_version": 1,
+      "canonical_prompt_hash": "868d062d0cf085fe1d59988fdc6d727c767dc8a8fba92dad542b72fd4353aeb9",
+      "acceptance_commit": "55148914364e2988bc6096b7c8d142eca3f62c28",
+      "direct_assignments": [
+        {
+          "capability_id": "execution.implementation",
+          "presence": "AWARE",
+          "ownership": "NONE",
+          "capability_relation": "ROUTES_TO",
+          "delivery_source": "ROUTED_OWNER",
+          "evidence_refs": [
+            "docs/prompts.json:P41"
+          ],
+          "rationale": "P41 routes to P07 for implementation execution"
+        }
+      ],
+      "inherited_sources": [
+        {
+          "source_id": "prompt-strength-shared-policy",
+          "source_version": "v1",
+          "source_hash": "e249da6706d86733cd03a046ef9e16552a3ae87dc8cc644281c5c1fd9c08c796"
+        }
+      ],
+      "semantic_dependency_fingerprint": "2bb5272a68bb8e8b8231454b4e957b479a8328b6675d502e4230ca8422aabe51",
+      "evidence_refs": [
+        "docs/prompts.json:P41",
+        "harness/contracts/prompt-strength.v1.json"
+      ],
+      "profile_status": "ACCEPTED",
+      "profile_sha256": "04de42554335f143628c5648122fbbf939340bb6b1a57e9cff2deda3f8515985"
+    },
+    {
+      "prompt_id": "P42",
+      "profile_version": 1,
+      "canonical_prompt_hash": "fa8363298e331f2d8b41f440adc24228d784ff9fbb9e14e20776bc6fae7952b6",
+      "acceptance_commit": "55148914364e2988bc6096b7c8d142eca3f62c28",
+      "direct_assignments": [
+        {
+          "capability_id": "execution.implementation",
+          "presence": "AWARE",
+          "ownership": "NONE",
+          "capability_relation": "ROUTES_TO",
+          "delivery_source": "ROUTED_OWNER",
+          "evidence_refs": [
+            "docs/prompts.json:P42"
+          ],
+          "rationale": "P42 routes to P07 for implementation execution"
+        }
+      ],
+      "inherited_sources": [
+        {
+          "source_id": "prompt-strength-shared-policy",
+          "source_version": "v1",
+          "source_hash": "e249da6706d86733cd03a046ef9e16552a3ae87dc8cc644281c5c1fd9c08c796"
+        }
+      ],
+      "semantic_dependency_fingerprint": "1a866418a3a74f6d9996772d9412cafafdcb2888e0c607d4b4542790b050b7ca",
+      "evidence_refs": [
+        "docs/prompts.json:P42",
+        "harness/contracts/prompt-strength.v1.json"
+      ],
+      "profile_status": "ACCEPTED",
+      "profile_sha256": "ecb48233d4e6449133b41aa65d54b0168d96afd1fee9de0da176f2488b730083"
+    },
+    {
+      "prompt_id": "P43",
+      "profile_version": 1,
+      "canonical_prompt_hash": "9aa6d6f63f91dcedda683e6003a4c5afc32a2692b2a734a46a19c584712c4ee1",
+      "acceptance_commit": "55148914364e2988bc6096b7c8d142eca3f62c28",
+      "direct_assignments": [
+        {
+          "capability_id": "execution.implementation",
+          "presence": "AWARE",
+          "ownership": "NONE",
+          "capability_relation": "ROUTES_TO",
+          "delivery_source": "ROUTED_OWNER",
+          "evidence_refs": [
+            "docs/prompts.json:P43"
+          ],
+          "rationale": "P43 routes to P07 for implementation execution"
+        }
+      ],
+      "inherited_sources": [
+        {
+          "source_id": "prompt-strength-shared-policy",
+          "source_version": "v1",
+          "source_hash": "e249da6706d86733cd03a046ef9e16552a3ae87dc8cc644281c5c1fd9c08c796"
+        }
+      ],
+      "semantic_dependency_fingerprint": "8a4953774e14adc5a65b08dc814489d68f4e54cf44096b83115a39f9b00698fa",
+      "evidence_refs": [
+        "docs/prompts.json:P43",
+        "harness/contracts/prompt-strength.v1.json"
+      ],
+      "profile_status": "ACCEPTED",
+      "profile_sha256": "a7d3c21fb130ef1efdbd4b3f98b5263fbad367248bb738407f2a7ff15d06629e"
+    },
+    {
+      "prompt_id": "P44",
+      "profile_version": 1,
+      "canonical_prompt_hash": "5f77f84bcf29f2dce6d5faf8814c2e3cd8d86ba2f6e6f309f3e1e1677a580927",
+      "acceptance_commit": "55148914364e2988bc6096b7c8d142eca3f62c28",
+      "direct_assignments": [
+        {
+          "capability_id": "execution.implementation",
+          "presence": "AWARE",
+          "ownership": "NONE",
+          "capability_relation": "ROUTES_TO",
+          "delivery_source": "ROUTED_OWNER",
+          "evidence_refs": [
+            "docs/prompts.json:P44"
+          ],
+          "rationale": "P44 routes to P07 for implementation execution"
+        }
+      ],
+      "inherited_sources": [
+        {
+          "source_id": "prompt-strength-shared-policy",
+          "source_version": "v1",
+          "source_hash": "e249da6706d86733cd03a046ef9e16552a3ae87dc8cc644281c5c1fd9c08c796"
+        }
+      ],
+      "semantic_dependency_fingerprint": "b8d3a3e6df75fc7372f01398a00a79940116e14527ab225871654c56ec2fd8ab",
+      "evidence_refs": [
+        "docs/prompts.json:P44",
+        "harness/contracts/prompt-strength.v1.json"
+      ],
+      "profile_status": "ACCEPTED",
+      "profile_sha256": "9722184ed97215217a75cb20de7392d0d0d188d5102a3c1bc30e35b3e234c9f5"
+    },
+    {
+      "prompt_id": "P45",
+      "profile_version": 1,
+      "canonical_prompt_hash": "8955fd9f37c33980d1c961aa8e8c21e85595f0bdb96689eeb60f14bacf83bc9b",
+      "acceptance_commit": "55148914364e2988bc6096b7c8d142eca3f62c28",
+      "direct_assignments": [
+        {
+          "capability_id": "execution.implementation",
+          "presence": "AWARE",
+          "ownership": "NONE",
+          "capability_relation": "ROUTES_TO",
+          "delivery_source": "ROUTED_OWNER",
+          "evidence_refs": [
+            "docs/prompts.json:P45"
+          ],
+          "rationale": "P45 routes to P07 for implementation execution"
+        }
+      ],
+      "inherited_sources": [
+        {
+          "source_id": "prompt-strength-shared-policy",
+          "source_version": "v1",
+          "source_hash": "e249da6706d86733cd03a046ef9e16552a3ae87dc8cc644281c5c1fd9c08c796"
+        }
+      ],
+      "semantic_dependency_fingerprint": "65d9e49a41a66d775dab1428ab2c88af10498c1eb3a7362d7d685b5e1fcb95fc",
+      "evidence_refs": [
+        "docs/prompts.json:P45",
+        "harness/contracts/prompt-strength.v1.json"
+      ],
+      "profile_status": "ACCEPTED",
+      "profile_sha256": "65adbd15de78704b5cb79de59d9af2b5cc1fadd6f4673c3979ccb6241bdaf210"
+    },
+    {
+      "prompt_id": "P46",
+      "profile_version": 1,
+      "canonical_prompt_hash": "51b8552c0ad6ccddabe8d31ff37344c5126f86d6e499835da35b56d0b17ac6b4",
+      "acceptance_commit": "55148914364e2988bc6096b7c8d142eca3f62c28",
+      "direct_assignments": [
+        {
+          "capability_id": "execution.implementation",
+          "presence": "AWARE",
+          "ownership": "NONE",
+          "capability_relation": "ROUTES_TO",
+          "delivery_source": "ROUTED_OWNER",
+          "evidence_refs": [
+            "docs/prompts.json:P46"
+          ],
+          "rationale": "P46 routes to P07 for implementation execution"
+        }
+      ],
+      "inherited_sources": [
+        {
+          "source_id": "prompt-strength-shared-policy",
+          "source_version": "v1",
+          "source_hash": "e249da6706d86733cd03a046ef9e16552a3ae87dc8cc644281c5c1fd9c08c796"
+        }
+      ],
+      "semantic_dependency_fingerprint": "fedb3341d810c2fb6e41df9ab2d1750cb5804990200ec737dc085a57230ef523",
+      "evidence_refs": [
+        "docs/prompts.json:P46",
+        "harness/contracts/prompt-strength.v1.json"
+      ],
+      "profile_status": "ACCEPTED",
+      "profile_sha256": "afec11d69ab8554990d09dda5d0c8a42a021d48c54fcbc4341bc6a5dda3afa9a"
+    },
+    {
+      "prompt_id": "P47",
+      "profile_version": 1,
+      "canonical_prompt_hash": "e3148d2b869d4cc037e606ef5a2d15831a813ac9efc4b08ee93eb36db2e300e0",
+      "acceptance_commit": "55148914364e2988bc6096b7c8d142eca3f62c28",
+      "direct_assignments": [
+        {
+          "capability_id": "spreadsheet.repair",
+          "presence": "SUPPORT",
+          "ownership": "SECONDARY",
+          "capability_relation": "IMPLEMENTS",
+          "delivery_source": "CANONICAL_BODY",
+          "evidence_refs": [
+            "docs/prompts.json:P47:useWhen"
+          ],
+          "rationale": "P47 provides spreadsheet operations support per useWhen declaration"
+        }
+      ],
+      "inherited_sources": [
+        {
+          "source_id": "prompt-strength-shared-policy",
+          "source_version": "v1",
+          "source_hash": "e249da6706d86733cd03a046ef9e16552a3ae87dc8cc644281c5c1fd9c08c796"
+        }
+      ],
+      "semantic_dependency_fingerprint": "9583e88487e6e88b97509209f62a9d462c383ec8fbb3d65121bfd3de5d914953",
+      "evidence_refs": [
+        "docs/prompts.json:P47",
+        "harness/contracts/prompt-strength.v1.json"
+      ],
+      "profile_status": "ACCEPTED",
+      "profile_sha256": "17d18fb9e0329d68ce2962487e581cf348348465054366eb82c852f2d0108d27"
+    },
+    {
+      "prompt_id": "P48",
+      "profile_version": 1,
+      "canonical_prompt_hash": "73b524d96fcf13bdfbb1c24b5691f6224cec1c02afd8fd0c2ce0ed915bc1dd74",
+      "acceptance_commit": "55148914364e2988bc6096b7c8d142eca3f62c28",
+      "direct_assignments": [
+        {
+          "capability_id": "execution.implementation",
+          "presence": "AWARE",
+          "ownership": "NONE",
+          "capability_relation": "ROUTES_TO",
+          "delivery_source": "ROUTED_OWNER",
+          "evidence_refs": [
+            "docs/prompts.json:P48"
+          ],
+          "rationale": "P48 routes to P07 for implementation execution"
+        }
+      ],
+      "inherited_sources": [
+        {
+          "source_id": "prompt-strength-shared-policy",
+          "source_version": "v1",
+          "source_hash": "e249da6706d86733cd03a046ef9e16552a3ae87dc8cc644281c5c1fd9c08c796"
+        }
+      ],
+      "semantic_dependency_fingerprint": "f0d68bba59cb4fbdc2ab5ae471371d63662de7eb6eeb5f853431e6d059da553f",
+      "evidence_refs": [
+        "docs/prompts.json:P48",
+        "harness/contracts/prompt-strength.v1.json"
+      ],
+      "profile_status": "ACCEPTED",
+      "profile_sha256": "652a7cc7855cb617dcdb0c55dd836817427317021e0233eb5087d4d047ce1cc5"
+    },
+    {
+      "prompt_id": "P49",
+      "profile_version": 1,
+      "canonical_prompt_hash": "eab1408463ebc48608ea36a2568ab4ed5f5007300565dd5ec1f1b5321838da3e",
+      "acceptance_commit": "55148914364e2988bc6096b7c8d142eca3f62c28",
+      "direct_assignments": [
+        {
+          "capability_id": "spreadsheet.repair",
+          "presence": "SUPPORT",
+          "ownership": "SECONDARY",
+          "capability_relation": "IMPLEMENTS",
+          "delivery_source": "CANONICAL_BODY",
+          "evidence_refs": [
+            "docs/prompts.json:P49:useWhen"
+          ],
+          "rationale": "P49 provides spreadsheet operations support per useWhen declaration"
+        }
+      ],
+      "inherited_sources": [
+        {
+          "source_id": "prompt-strength-shared-policy",
+          "source_version": "v1",
+          "source_hash": "e249da6706d86733cd03a046ef9e16552a3ae87dc8cc644281c5c1fd9c08c796"
+        }
+      ],
+      "semantic_dependency_fingerprint": "78acc3fe9e5916b38e4db2f9714e6b752e92cc6eb216a456bf2b13fb549030b9",
+      "evidence_refs": [
+        "docs/prompts.json:P49",
+        "harness/contracts/prompt-strength.v1.json"
+      ],
+      "profile_status": "ACCEPTED",
+      "profile_sha256": "32e1cb4d22118486773f4efd68fce8f95a1a1b6cc89e7b851aac4147222573e1"
+    },
+    {
+      "prompt_id": "P50",
+      "profile_version": 1,
+      "canonical_prompt_hash": "4e9acc3ca0005b1b016db555784340e3b88873d46364c7c189b29f217e88eb5b",
+      "acceptance_commit": "55148914364e2988bc6096b7c8d142eca3f62c28",
+      "direct_assignments": [
+        {
+          "capability_id": "execution.implementation",
+          "presence": "AWARE",
+          "ownership": "NONE",
+          "capability_relation": "ROUTES_TO",
+          "delivery_source": "ROUTED_OWNER",
+          "evidence_refs": [
+            "docs/prompts.json:P50"
+          ],
+          "rationale": "P50 routes to P07 for implementation execution"
+        }
+      ],
+      "inherited_sources": [
+        {
+          "source_id": "prompt-strength-shared-policy",
+          "source_version": "v1",
+          "source_hash": "e249da6706d86733cd03a046ef9e16552a3ae87dc8cc644281c5c1fd9c08c796"
+        }
+      ],
+      "semantic_dependency_fingerprint": "e2d046320781a25dcb234a73d3f8c5b8d63bcd9c91febfe92263fcb500d3fe04",
+      "evidence_refs": [
+        "docs/prompts.json:P50",
+        "harness/contracts/prompt-strength.v1.json"
+      ],
+      "profile_status": "ACCEPTED",
+      "profile_sha256": "77e7b0ffb00d61fb51294c9d6d1c6f028e594828530cd45622c25810f84d4c7e"
+    },
+    {
+      "prompt_id": "P51",
+      "profile_version": 1,
+      "canonical_prompt_hash": "b4734dc1653fa0f33fa7ad0f5899458ac01126aea4eb4a807918edac611f2e50",
+      "acceptance_commit": "55148914364e2988bc6096b7c8d142eca3f62c28",
+      "direct_assignments": [
+        {
+          "capability_id": "execution.implementation",
+          "presence": "AWARE",
+          "ownership": "NONE",
+          "capability_relation": "ROUTES_TO",
+          "delivery_source": "ROUTED_OWNER",
+          "evidence_refs": [
+            "docs/prompts.json:P51"
+          ],
+          "rationale": "P51 routes to P07 for implementation execution"
+        }
+      ],
+      "inherited_sources": [
+        {
+          "source_id": "prompt-strength-shared-policy",
+          "source_version": "v1",
+          "source_hash": "e249da6706d86733cd03a046ef9e16552a3ae87dc8cc644281c5c1fd9c08c796"
+        }
+      ],
+      "semantic_dependency_fingerprint": "c4abb81555100fd9b3d8fe0815ea89a9e423ea4a73dd41c3d4ab75c9e6620428",
+      "evidence_refs": [
+        "docs/prompts.json:P51",
+        "harness/contracts/prompt-strength.v1.json"
+      ],
+      "profile_status": "ACCEPTED",
+      "profile_sha256": "30ce43df6ced9fb55018319c9ed57c8a71874820dcdf064ee1e0d31a599be3ad"
+    },
+    {
+      "prompt_id": "P52",
+      "profile_version": 1,
+      "canonical_prompt_hash": "28cf86912a8a7f6d389b2ef7fa64e990c05f7ef95eb6efb8cb02625917a865a7",
+      "acceptance_commit": "55148914364e2988bc6096b7c8d142eca3f62c28",
+      "direct_assignments": [
+        {
+          "capability_id": "execution.implementation",
+          "presence": "AWARE",
+          "ownership": "NONE",
+          "capability_relation": "ROUTES_TO",
+          "delivery_source": "ROUTED_OWNER",
+          "evidence_refs": [
+            "docs/prompts.json:P52"
+          ],
+          "rationale": "P52 routes to P07 for implementation execution"
+        }
+      ],
+      "inherited_sources": [
+        {
+          "source_id": "prompt-strength-shared-policy",
+          "source_version": "v1",
+          "source_hash": "e249da6706d86733cd03a046ef9e16552a3ae87dc8cc644281c5c1fd9c08c796"
+        }
+      ],
+      "semantic_dependency_fingerprint": "a8df29a93a0a61a47b616b87c2ab92ad66bd306dce1849261080aff9c93790e5",
+      "evidence_refs": [
+        "docs/prompts.json:P52",
+        "harness/contracts/prompt-strength.v1.json"
+      ],
+      "profile_status": "ACCEPTED",
+      "profile_sha256": "97790bcde8dc6a18388aaf380c68ec8f3d6c52e2d3cd54feb035c845c3c6e201"
+    },
+    {
+      "prompt_id": "P53",
+      "profile_version": 1,
+      "canonical_prompt_hash": "5c4f69c0d17c83c0df2152f09729d53e44a1aee57a3242b4ad0ef2f9e1526d15",
+      "acceptance_commit": "55148914364e2988bc6096b7c8d142eca3f62c28",
+      "direct_assignments": [
+        {
+          "capability_id": "execution.implementation",
+          "presence": "AWARE",
+          "ownership": "NONE",
+          "capability_relation": "ROUTES_TO",
+          "delivery_source": "ROUTED_OWNER",
+          "evidence_refs": [
+            "docs/prompts.json:P53"
+          ],
+          "rationale": "P53 routes to P07 for implementation execution"
+        }
+      ],
+      "inherited_sources": [
+        {
+          "source_id": "prompt-strength-shared-policy",
+          "source_version": "v1",
+          "source_hash": "e249da6706d86733cd03a046ef9e16552a3ae87dc8cc644281c5c1fd9c08c796"
+        }
+      ],
+      "semantic_dependency_fingerprint": "cee0fdd95a5732e9ae1c9a13aa02b8cb089f3a2c505765f34b6205417f173009",
+      "evidence_refs": [
+        "docs/prompts.json:P53",
+        "harness/contracts/prompt-strength.v1.json"
+      ],
+      "profile_status": "ACCEPTED",
+      "profile_sha256": "e1a2ba76f3d7d3a27df8e901648e263dda1752d81500c4ef635727d9d3468014"
+    },
+    {
+      "prompt_id": "P54",
+      "profile_version": 1,
+      "canonical_prompt_hash": "3102aa789e6299cd652d3bb83a3660925912fd0e7ba9dfa40470bc33cde5cb2b",
+      "acceptance_commit": "55148914364e2988bc6096b7c8d142eca3f62c28",
+      "direct_assignments": [
+        {
+          "capability_id": "execution.implementation",
+          "presence": "AWARE",
+          "ownership": "NONE",
+          "capability_relation": "ROUTES_TO",
+          "delivery_source": "ROUTED_OWNER",
+          "evidence_refs": [
+            "docs/prompts.json:P54"
+          ],
+          "rationale": "P54 routes to P07 for implementation execution"
+        }
+      ],
+      "inherited_sources": [
+        {
+          "source_id": "prompt-strength-shared-policy",
+          "source_version": "v1",
+          "source_hash": "e249da6706d86733cd03a046ef9e16552a3ae87dc8cc644281c5c1fd9c08c796"
+        }
+      ],
+      "semantic_dependency_fingerprint": "39d1f516bd5992a6de0f8c5f6823c6de1255f8a6d3118da4e953de470d0c83fb",
+      "evidence_refs": [
+        "docs/prompts.json:P54",
+        "harness/contracts/prompt-strength.v1.json"
+      ],
+      "profile_status": "ACCEPTED",
+      "profile_sha256": "cbe8252752ce1bef7d6c77e74823d668a06e9df2c8564c057838ae5347e4aa6c"
+    },
+    {
+      "prompt_id": "P55",
+      "profile_version": 1,
+      "canonical_prompt_hash": "d904065dcd12ba1c556e3441049d980d1677385740a78c56a00db2fde8a03fe8",
+      "acceptance_commit": "55148914364e2988bc6096b7c8d142eca3f62c28",
+      "direct_assignments": [
+        {
+          "capability_id": "execution.implementation",
+          "presence": "AWARE",
+          "ownership": "NONE",
+          "capability_relation": "ROUTES_TO",
+          "delivery_source": "ROUTED_OWNER",
+          "evidence_refs": [
+            "docs/prompts.json:P55"
+          ],
+          "rationale": "P55 routes to P07 for implementation execution"
+        }
+      ],
+      "inherited_sources": [
+        {
+          "source_id": "prompt-strength-shared-policy",
+          "source_version": "v1",
+          "source_hash": "e249da6706d86733cd03a046ef9e16552a3ae87dc8cc644281c5c1fd9c08c796"
+        }
+      ],
+      "semantic_dependency_fingerprint": "c61fe644e2c4c8d6be4601c5be31e5ee1250c7dfa0dcf4284e000cb1f6c7de20",
+      "evidence_refs": [
+        "docs/prompts.json:P55",
+        "harness/contracts/prompt-strength.v1.json"
+      ],
+      "profile_status": "ACCEPTED",
+      "profile_sha256": "c2433cff44ed6cf27510cb584a56f8b25e4a7a0aadd9ac571f7d8c69293ac29e"
+    },
+    {
+      "prompt_id": "P56",
+      "profile_version": 1,
+      "canonical_prompt_hash": "7909f604028ecf4992419cf61815f2dfab294d5d9c242e1b6176bfbe46b42e23",
+      "acceptance_commit": "55148914364e2988bc6096b7c8d142eca3f62c28",
+      "direct_assignments": [
+        {
+          "capability_id": "execution.implementation",
+          "presence": "AWARE",
+          "ownership": "NONE",
+          "capability_relation": "ROUTES_TO",
+          "delivery_source": "ROUTED_OWNER",
+          "evidence_refs": [
+            "docs/prompts.json:P56"
+          ],
+          "rationale": "P56 routes to P07 for implementation execution"
+        }
+      ],
+      "inherited_sources": [
+        {
+          "source_id": "prompt-strength-shared-policy",
+          "source_version": "v1",
+          "source_hash": "e249da6706d86733cd03a046ef9e16552a3ae87dc8cc644281c5c1fd9c08c796"
+        }
+      ],
+      "semantic_dependency_fingerprint": "20702799e3ebca1a2eb295369e3a135fd5259683892605231e1eaea1ad20616e",
+      "evidence_refs": [
+        "docs/prompts.json:P56",
+        "harness/contracts/prompt-strength.v1.json"
+      ],
+      "profile_status": "ACCEPTED",
+      "profile_sha256": "8efbb38670a76ea606725ddca532417767208c4d29c1acdf189c2dcf12d474fc"
+    },
+    {
+      "prompt_id": "P57",
+      "profile_version": 1,
+      "canonical_prompt_hash": "0d3afbb7025f4a0486740ca9aae55333fa1123e4931d6b7fd6fbc46f07272af3",
+      "acceptance_commit": "55148914364e2988bc6096b7c8d142eca3f62c28",
+      "direct_assignments": [
+        {
+          "capability_id": "execution.implementation",
+          "presence": "AWARE",
+          "ownership": "NONE",
+          "capability_relation": "ROUTES_TO",
+          "delivery_source": "ROUTED_OWNER",
+          "evidence_refs": [
+            "docs/prompts.json:P57"
+          ],
+          "rationale": "P57 routes to P07 for implementation execution"
+        }
+      ],
+      "inherited_sources": [
+        {
+          "source_id": "prompt-strength-shared-policy",
+          "source_version": "v1",
+          "source_hash": "e249da6706d86733cd03a046ef9e16552a3ae87dc8cc644281c5c1fd9c08c796"
+        }
+      ],
+      "semantic_dependency_fingerprint": "7ece7d0d113094d52ee1dccea88fe797ee10a3353310e809a04a4b069b1226e0",
+      "evidence_refs": [
+        "docs/prompts.json:P57",
+        "harness/contracts/prompt-strength.v1.json"
+      ],
+      "profile_status": "ACCEPTED",
+      "profile_sha256": "d12af8f0120ac1ee09d7ef6dc000615ed04c214af36648cf8958a063571be95c"
+    },
+    {
+      "prompt_id": "P58",
+      "profile_version": 1,
+      "canonical_prompt_hash": "4e42f3f0888121ff5ed7c643ce38e3c644ae6608ae1c6d0150e34e5aa5732184",
+      "acceptance_commit": "55148914364e2988bc6096b7c8d142eca3f62c28",
+      "direct_assignments": [
+        {
+          "capability_id": "spreadsheet.repair",
+          "presence": "SUPPORT",
+          "ownership": "SECONDARY",
+          "capability_relation": "IMPLEMENTS",
+          "delivery_source": "CANONICAL_BODY",
+          "evidence_refs": [
+            "docs/prompts.json:P58:useWhen"
+          ],
+          "rationale": "P58 provides spreadsheet operations support per useWhen declaration"
+        }
+      ],
+      "inherited_sources": [
+        {
+          "source_id": "prompt-strength-shared-policy",
+          "source_version": "v1",
+          "source_hash": "e249da6706d86733cd03a046ef9e16552a3ae87dc8cc644281c5c1fd9c08c796"
+        }
+      ],
+      "semantic_dependency_fingerprint": "f6b5c635f20ae2789ef15c8461ce65dae74407aa1046a60b5c768004ea70c387",
+      "evidence_refs": [
+        "docs/prompts.json:P58",
+        "harness/contracts/prompt-strength.v1.json"
+      ],
+      "profile_status": "ACCEPTED",
+      "profile_sha256": "fa2837e2a84d92b3931233d76510a97fff266402057578d9cbe285ab48184da4"
+    },
+    {
+      "prompt_id": "P59",
+      "profile_version": 1,
+      "canonical_prompt_hash": "faf238ce36993ce2796eb606d560f3e32cd7111267206b112c08b7825a8e07b2",
+      "acceptance_commit": "55148914364e2988bc6096b7c8d142eca3f62c28",
+      "direct_assignments": [
+        {
+          "capability_id": "execution.implementation",
+          "presence": "AWARE",
+          "ownership": "NONE",
+          "capability_relation": "ROUTES_TO",
+          "delivery_source": "ROUTED_OWNER",
+          "evidence_refs": [
+            "docs/prompts.json:P59"
+          ],
+          "rationale": "P59 routes to P07 for implementation execution"
+        }
+      ],
+      "inherited_sources": [
+        {
+          "source_id": "prompt-strength-shared-policy",
+          "source_version": "v1",
+          "source_hash": "e249da6706d86733cd03a046ef9e16552a3ae87dc8cc644281c5c1fd9c08c796"
+        }
+      ],
+      "semantic_dependency_fingerprint": "5ea8de2450b1239e1b4470d08483184bd1c0ea980064f8dd20a353f126f85b96",
+      "evidence_refs": [
+        "docs/prompts.json:P59",
+        "harness/contracts/prompt-strength.v1.json"
+      ],
+      "profile_status": "ACCEPTED",
+      "profile_sha256": "900703d6885b61e12f451f9c8ad9d954b03aa550a2be8835f61e0776765f75ac"
+    },
+    {
+      "prompt_id": "P60",
+      "profile_version": 1,
+      "canonical_prompt_hash": "060483d1fbd9b58a20ec095c6d09a0c6db9bf001034fe9b6469127c66e46d83b",
+      "acceptance_commit": "55148914364e2988bc6096b7c8d142eca3f62c28",
+      "direct_assignments": [
+        {
+          "capability_id": "execution.implementation",
+          "presence": "AWARE",
+          "ownership": "NONE",
+          "capability_relation": "ROUTES_TO",
+          "delivery_source": "ROUTED_OWNER",
+          "evidence_refs": [
+            "docs/prompts.json:P60"
+          ],
+          "rationale": "P60 routes to P07 for implementation execution"
+        }
+      ],
+      "inherited_sources": [
+        {
+          "source_id": "prompt-strength-shared-policy",
+          "source_version": "v1",
+          "source_hash": "e249da6706d86733cd03a046ef9e16552a3ae87dc8cc644281c5c1fd9c08c796"
+        }
+      ],
+      "semantic_dependency_fingerprint": "f427f5eefb1ae793aaa4fed8d25f9ce2fc41beeb23d938c6540c0a7fb3c0d317",
+      "evidence_refs": [
+        "docs/prompts.json:P60",
+        "harness/contracts/prompt-strength.v1.json"
+      ],
+      "profile_status": "ACCEPTED",
+      "profile_sha256": "51e5e6a5df62ff6e14626bd45dafc8c98d2aa43ccbdace2ce247998eea660603"
+    },
+    {
+      "prompt_id": "P61",
+      "profile_version": 1,
+      "canonical_prompt_hash": "e1fd6e7bbd236732d681d944c27a151c68e6410beb7acc72ae0f9c60ee31a1ab",
+      "acceptance_commit": "55148914364e2988bc6096b7c8d142eca3f62c28",
+      "direct_assignments": [
+        {
+          "capability_id": "execution.implementation",
+          "presence": "AWARE",
+          "ownership": "NONE",
+          "capability_relation": "ROUTES_TO",
+          "delivery_source": "ROUTED_OWNER",
+          "evidence_refs": [
+            "docs/prompts.json:P61"
+          ],
+          "rationale": "P61 routes to P07 for implementation execution"
+        }
+      ],
+      "inherited_sources": [
+        {
+          "source_id": "prompt-strength-shared-policy",
+          "source_version": "v1",
+          "source_hash": "e249da6706d86733cd03a046ef9e16552a3ae87dc8cc644281c5c1fd9c08c796"
+        }
+      ],
+      "semantic_dependency_fingerprint": "e379cb09e6ee53da87714c22e3d64beb17aa9c7e2743ff060d8ff2f6a7671a89",
+      "evidence_refs": [
+        "docs/prompts.json:P61",
+        "harness/contracts/prompt-strength.v1.json"
+      ],
+      "profile_status": "ACCEPTED",
+      "profile_sha256": "9204d9bdadd534400ad14f201f82abed57e8ea87f93e1fecfd189474b7a413a5"
+    }
+  ],
+  "profile_count": 62
 }

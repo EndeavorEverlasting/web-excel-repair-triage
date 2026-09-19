@@ -19,14 +19,14 @@ class SemanticCoverageContractTests(unittest.TestCase):
         """Main contract establishes all PSC invariants."""
         contract_path = ROOT / "harness" / "contracts" / "prompt-semantic-coverage.v1.json"
         contract = json.loads(contract_path.read_text(encoding="utf-8"))
-        
+
         self.assertEqual(contract["schema_version"], "prompt-semantic-coverage/v1")
         self.assertEqual(contract["contract_id"], "prompt-semantic-coverage")
-        
+
         invariants = contract["invariants"]
         self.assertIsInstance(invariants, list)
         self.assertGreaterEqual(len(invariants), 16)
-        
+
         psc_ids = {item["id"] for item in invariants}
         required_rules = {
             "PSC001",  # PROFILE_COVERAGE_COMPLETE
@@ -50,7 +50,7 @@ class SemanticCoverageContractTests(unittest.TestCase):
         """Capability catalog contract is valid JSON with expected structure."""
         catalog_path = ROOT / "harness" / "prompt-topology" / "semantic-capability-catalog.v1.json"
         catalog = json.loads(catalog_path.read_text(encoding="utf-8"))
-        
+
         self.assertEqual(catalog["schema_version"], "semantic-capability-catalog/v1")
         self.assertEqual(catalog["catalog_id"], "prompt-semantic-capability-catalog")
         self.assertIsInstance(catalog["capabilities"], list)
@@ -60,42 +60,48 @@ class SemanticCoverageContractTests(unittest.TestCase):
         """Profile schema defines required fields and enums correctly."""
         schema_path = ROOT / "harness" / "prompt-topology" / "prompt-capability-profile.schema.v1.json"
         schema = json.loads(schema_path.read_text(encoding="utf-8"))
-        
+
         self.assertEqual(schema["$schema"], "https://json-schema.org/draft/2020-12/schema")
         self.assertEqual(schema["type"], "object")
-        
+
         required = schema["required"]
         self.assertIn("prompt_id", required)
         self.assertIn("profile_version", required)
         self.assertIn("profile_status", required)
         self.assertIn("direct_assignments", required)
         self.assertIn("inherited_sources", required)
-        
+
         properties = schema["properties"]
         self.assertEqual(
             properties["profile_status"]["enum"],
             ["PROVISIONAL", "REVIEW_READY", "ACCEPTED", "RETIRED"]
         )
 
-    def test_profiles_contract_empty_until_sprint_1a(self) -> None:
-        """Sprint 0 establishes schema only; profile population is Sprint 1A."""
+    def test_profiles_contract_schema_valid(self) -> None:
+        """Profiles contract has valid schema and structure."""
         profiles_path = ROOT / "harness" / "prompt-topology" / "prompt-capability-profiles.v1.json"
         profiles = json.loads(profiles_path.read_text(encoding="utf-8"))
-        
+
         self.assertEqual(profiles["schema_version"], "prompt-capability-profiles/v1")
-        self.assertEqual(profiles["status"], "sprint0_floor")
-        self.assertEqual(profiles["profiles"], [])
-        self.assertFalse(profiles["baseline"]["strict_enforcement_active"])
+        self.assertIn("status", profiles)
+        self.assertIsInstance(profiles["profiles"], list)
+
+        # After Sprint 1A, profiles should be populated
+        if profiles["status"] == "sprint1a_baseline_accepted":
+            self.assertGreater(len(profiles["profiles"]), 0,
+                             "Sprint 1A baseline should have profiles")
+            self.assertTrue(profiles["baseline"]["strict_enforcement_active"],
+                          "Sprint 1A baseline should activate enforcement")
 
     def test_migrations_contract_empty_until_sprint_1a(self) -> None:
         """Sprint 0 establishes migration schema only; first migrations after baseline."""
         migrations_path = ROOT / "harness" / "prompt-topology" / "prompt-capability-migrations.v1.json"
         migrations = json.loads(migrations_path.read_text(encoding="utf-8"))
-        
+
         self.assertEqual(migrations["schema_version"], "prompt-capability-migrations/v1")
         self.assertEqual(migrations["status"], "sprint0_floor")
         self.assertEqual(migrations["migrations"], [])
-        
+
         kinds = migrations["migration_kinds"]
         self.assertIn("ADD", kinds)
         self.assertIn("STRENGTHEN", kinds)
@@ -123,7 +129,7 @@ class SemanticCoverageRuleShapeTests(unittest.TestCase):
                 }
             ]
         }
-        
+
         after_weakened = {
             "prompt_id": "P999",
             "profile_version": 2,
@@ -137,12 +143,12 @@ class SemanticCoverageRuleShapeTests(unittest.TestCase):
                 }
             ]
         }
-        
+
         # Prove structure represents detectable weakening
         before_presence = before["direct_assignments"][0]["presence"]
         after_presence = after_weakened["direct_assignments"][0]["presence"]
         presence_order = ["NONE", "AWARE", "SUPPORT", "REQUIRED"]
-        
+
         self.assertGreater(
             presence_order.index(before_presence),
             presence_order.index(after_presence),
@@ -164,17 +170,17 @@ class SemanticCoverageRuleShapeTests(unittest.TestCase):
                 }
             ]
         }
-        
+
         after_removed = {
             "prompt_id": "P998",
             "profile_version": 2,
             "direct_assignments": []  # Primary capability removed without transfer
         }
-        
+
         before_caps = {a["capability_id"] for a in before["direct_assignments"]}
         after_caps = {a["capability_id"] for a in after_removed["direct_assignments"]}
         lost_caps = before_caps - after_caps
-        
+
         self.assertTrue(lost_caps, "Fixture represents capability removal")
         self.assertIn("TEST_CAP_002", lost_caps)
 
@@ -196,7 +202,7 @@ class SemanticCoverageRuleShapeTests(unittest.TestCase):
                 }
             ]
         }
-        
+
         successor = {
             "prompt_id": "P996",
             "profile_version": 2,
@@ -210,11 +216,11 @@ class SemanticCoverageRuleShapeTests(unittest.TestCase):
                 }
             ]
         }
-        
+
         delta = retirement["capability_deltas"][0]
         self.assertIsNotNone(delta["transfer_target"])
         self.assertEqual(delta["transfer_target"], successor["prompt_id"])
-        
+
         successor_assignment = successor["direct_assignments"][0]
         self.assertEqual(successor_assignment["presence"], "REQUIRED")
         self.assertEqual(successor_assignment["ownership"], "PRIMARY")
@@ -234,10 +240,10 @@ class SemanticCoverageRuleShapeTests(unittest.TestCase):
                 }
             ]
         }
-        
+
         global_coverage_before = {"TEST_CAP_004": ["P995"]}
         global_coverage_after = {"TEST_CAP_004": []}  # Coverage hole
-        
+
         cap_id = "TEST_CAP_004"
         self.assertIn(cap_id, global_coverage_before)
         self.assertTrue(global_coverage_before[cap_id])
@@ -251,7 +257,7 @@ class SemanticCoverageRuleShapeTests(unittest.TestCase):
             "new_canonical_hash": "bbb222",
             "capability_migration": None  # Missing required disposition
         }
-        
+
         body_change_with_disposition = {
             "prompt_id": "P994",
             "old_canonical_hash": "aaa111",
@@ -261,7 +267,7 @@ class SemanticCoverageRuleShapeTests(unittest.TestCase):
                 "focused_proof": ["tests/test_prompt_semantic_coverage.py"]
             }
         }
-        
+
         self.assertNotEqual(
             body_change_without_disposition["old_canonical_hash"],
             body_change_without_disposition["new_canonical_hash"]
@@ -278,7 +284,7 @@ class SemanticCoverageRuleShapeTests(unittest.TestCase):
             "profile_sha256": "abc123...",
             "acceptance_commit": "25a2b6b6"
         }
-        
+
         generated_candidate = {
             "prompt_id": "P993",
             "profile_version": 1,  # Same version - attempting replacement
@@ -286,11 +292,11 @@ class SemanticCoverageRuleShapeTests(unittest.TestCase):
             "profile_sha256": "def456...",  # Different hash
             "acceptance_commit": None
         }
-        
+
         self.assertEqual(accepted_prior["profile_status"], "ACCEPTED")
         self.assertEqual(generated_candidate["profile_status"], "PROVISIONAL")
         self.assertIsNotNone(accepted_prior["acceptance_commit"])
-        
+
         # Attempting to replace ACCEPTED with same version is detectable
         self.assertEqual(accepted_prior["profile_version"], generated_candidate["profile_version"])
         self.assertNotEqual(accepted_prior["profile_sha256"], generated_candidate["profile_sha256"])
@@ -298,16 +304,196 @@ class SemanticCoverageRuleShapeTests(unittest.TestCase):
     def test_psc013_enforced_by_quality_history_validator(self) -> None:
         """PSC013 SOURCE_HISTORY_COMPLETE is enforced by updated quality history validator."""
         from scripts import validate_prompt_quality_history as quality
-        
+
         contract = quality._load_contract()
         errors = quality.audit_source_set_parity(contract)
-        
+
         # Should pass with docs/prompts.json now included
         self.assertEqual(errors, [])
-        
+
         # Protected sources must include base registry
         protected = {item["path"] for item in contract["canonical_body_sources"]}
         self.assertIn("docs/prompts.json", protected)
+
+
+class Sprint1ABaselineAcceptanceTests(unittest.TestCase):
+    """Sprint 1A: Baseline profile extraction and accepted matrix validation."""
+
+    def test_psc001_profile_coverage_complete(self) -> None:
+        """PSC001: Every current prompt has exactly one ACCEPTED profile."""
+        prompts_path = ROOT / "docs" / "prompts.json"
+        prompts = json.loads(prompts_path.read_text(encoding="utf-8"))
+
+        profiles_path = ROOT / "harness" / "prompt-topology" / "prompt-capability-profiles.v1.json"
+        profiles_data = json.loads(profiles_path.read_text(encoding="utf-8"))
+
+        profiles = profiles_data["profiles"]
+
+        # Count must match
+        self.assertEqual(len(prompts), len(profiles), "Profile count must equal prompt count")
+        self.assertEqual(len(prompts), 62, "Expected 62 canonical prompts")
+
+        # Every profile must be ACCEPTED
+        for profile in profiles:
+            self.assertEqual(profile["profile_status"], "ACCEPTED",
+                           f"Profile {profile['prompt_id']} must be ACCEPTED")
+
+        # Completeness flag must be true
+        self.assertEqual(profiles_data["baseline"]["completeness"], "complete")
+        self.assertTrue(profiles_data["baseline"]["strict_enforcement_active"])
+
+        # Every prompt ID must have exactly one profile
+        prompt_ids = {p["id"] for p in prompts}
+        profile_ids = {p["prompt_id"] for p in profiles}
+        self.assertEqual(prompt_ids, profile_ids, "Profile IDs must match prompt IDs exactly")
+
+    def test_psc002_profile_binds_canonical_prompt(self) -> None:
+        """PSC002: Accepted profile binds to exact prompt identity and canonical hash."""
+        profiles_path = ROOT / "harness" / "prompt-topology" / "prompt-capability-profiles.v1.json"
+        profiles_data = json.loads(profiles_path.read_text(encoding="utf-8"))
+
+        for profile in profiles_data["profiles"]:
+            # Must have prompt binding fields
+            self.assertIn("prompt_id", profile)
+            self.assertIn("canonical_prompt_hash", profile)
+            self.assertIn("acceptance_commit", profile)
+
+            # Prompt ID must be valid P## format
+            self.assertRegex(profile["prompt_id"], r"^P\d{2,4}$")
+
+            # Hash must be non-empty
+            self.assertTrue(profile["canonical_prompt_hash"],
+                          f"Profile {profile['prompt_id']} must bind to canonical prompt hash")
+
+            # Acceptance commit must be valid git SHA
+            self.assertRegex(profile["acceptance_commit"], r"^[a-f0-9]{7,40}$")
+
+    def test_psc003_known_capability_only(self) -> None:
+        """PSC003: Every assignment references the stable catalog."""
+        catalog_path = ROOT / "harness" / "prompt-topology" / "semantic-capability-catalog.v1.json"
+        catalog = json.loads(catalog_path.read_text(encoding="utf-8"))
+
+        known_capabilities = {cap["capability_id"] for cap in catalog["capabilities"]}
+
+        profiles_path = ROOT / "harness" / "prompt-topology" / "prompt-capability-profiles.v1.json"
+        profiles_data = json.loads(profiles_path.read_text(encoding="utf-8"))
+
+        for profile in profiles_data["profiles"]:
+            for assignment in profile["direct_assignments"]:
+                cap_id = assignment["capability_id"]
+                self.assertIn(cap_id, known_capabilities,
+                            f"Profile {profile['prompt_id']} references unknown capability {cap_id}")
+
+    def test_psc011_primary_required_have_evidence(self) -> None:
+        """PSC011: PRIMARY/REQUIRED assignments have evidence refs and rationale."""
+        profiles_path = ROOT / "harness" / "prompt-topology" / "prompt-capability-profiles.v1.json"
+        profiles_data = json.loads(profiles_path.read_text(encoding="utf-8"))
+
+        for profile in profiles_data["profiles"]:
+            for assignment in profile["direct_assignments"]:
+                ownership = assignment.get("ownership")
+                presence = assignment.get("presence")
+
+                if ownership == "PRIMARY" or presence == "REQUIRED":
+                    # Must have evidence
+                    self.assertIn("evidence_refs", assignment,
+                                f"Profile {profile['prompt_id']} assignment {assignment['capability_id']} "
+                                "must have evidence_refs")
+                    self.assertTrue(assignment["evidence_refs"],
+                                  f"Profile {profile['prompt_id']} assignment {assignment['capability_id']} "
+                                  "evidence_refs must not be empty")
+
+                    # Must have rationale
+                    self.assertIn("rationale", assignment,
+                                f"Profile {profile['prompt_id']} assignment {assignment['capability_id']} "
+                                "must have rationale")
+                    self.assertTrue(assignment["rationale"],
+                                  f"Profile {profile['prompt_id']} assignment {assignment['capability_id']} "
+                                  "rationale must not be empty")
+
+    def test_capability_catalog_populated(self) -> None:
+        """Capability catalog is populated with seed vocabulary."""
+        catalog_path = ROOT / "harness" / "prompt-topology" / "semantic-capability-catalog.v1.json"
+        catalog = json.loads(catalog_path.read_text(encoding="utf-8"))
+
+        self.assertEqual(catalog["status"], "sprint1a_baseline")
+        self.assertGreater(len(catalog["capabilities"]), 0, "Catalog must have capabilities")
+
+        # Verify required fields on each capability
+        for cap in catalog["capabilities"]:
+            self.assertIn("capability_id", cap)
+            self.assertIn("title", cap)
+            self.assertIn("definition", cap)
+            self.assertIn("class", cap)
+            self.assertIn("domain", cap)
+            self.assertIn("global_coverage_policy", cap)
+            self.assertIn("overlap_policy", cap)
+            self.assertIn("seed_source", cap)
+            self.assertIn("provenance", cap)
+
+    def test_derived_matrix_deterministic(self) -> None:
+        """Derived matrix can be reconstructed deterministically."""
+        matrix_path = ROOT / "artifacts" / "prompt-semantic-coverage" / "matrix.v1.json"
+        matrix = json.loads(matrix_path.read_text(encoding="utf-8"))
+
+        self.assertTrue(matrix["deterministic"])
+        self.assertEqual(matrix["prompt_count"], 62)
+        self.assertGreater(matrix["capability_count"], 0)
+
+        # Matrix must have one row per prompt
+        self.assertEqual(len(matrix["matrix"]), 62)
+
+        # Each row must have prompt_id
+        for row in matrix["matrix"]:
+            self.assertIn("prompt_id", row)
+            self.assertRegex(row["prompt_id"], r"^P\d{2,4}$")
+
+    def test_coverage_report_generated(self) -> None:
+        """Coverage report shows PRIMARY ownership distribution."""
+        coverage_path = ROOT / "artifacts" / "prompt-semantic-coverage" / "coverage-report.v1.json"
+        coverage_report = json.loads(coverage_path.read_text(encoding="utf-8"))
+
+        self.assertIn("coverage", coverage_report)
+        self.assertGreater(len(coverage_report["coverage"]), 0)
+
+        # Verify structure of coverage entries
+        for cap_id, data in coverage_report["coverage"].items():
+            self.assertIn("capability", data)
+            self.assertIn("policy", data)
+            self.assertIn("primary_owners", data)
+            self.assertIsInstance(data["primary_owners"], list)
+
+    def test_baseline_builder_script_executable(self) -> None:
+        """Baseline builder script exists and is executable."""
+        builder_path = ROOT / "scripts" / "build_prompt_semantic_baseline.py"
+        self.assertTrue(builder_path.exists(), "Baseline builder script must exist")
+
+        # Verify it has proper shebang
+        first_line = builder_path.read_text(encoding="utf-8").split("\n")[0]
+        self.assertTrue(first_line.startswith("#!"), "Builder must have shebang")
+
+    def test_primary_ownership_non_crowded(self) -> None:
+        """Primary ownership follows catalog overlap policies."""
+        catalog_path = ROOT / "harness" / "prompt-topology" / "semantic-capability-catalog.v1.json"
+        catalog = json.loads(catalog_path.read_text(encoding="utf-8"))
+
+        coverage_path = ROOT / "artifacts" / "prompt-semantic-coverage" / "coverage-report.v1.json"
+        coverage_report = json.loads(coverage_path.read_text(encoding="utf-8"))
+
+        # Build policy map
+        policies = {}
+        for cap in catalog["capabilities"]:
+            policies[cap["capability_id"]] = cap["overlap_policy"]
+
+        # Check PRIMARY crowding
+        for cap_id, data in coverage_report["coverage"].items():
+            primary_count = len(data["primary_owners"])
+            policy = policies.get(cap_id, "OVERLAP_EXPECTED")
+
+            if policy == "PRIMARY_CROWDING_FAIL":
+                self.assertLessEqual(primary_count, 1,
+                                   f"Capability {cap_id} has PRIMARY_CROWDING_FAIL policy "
+                                   f"but {primary_count} PRIMARY owners: {data['primary_owners']}")
 
 
 if __name__ == "__main__":
