@@ -11,10 +11,12 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any
 
-from scripts import build_prompt_kit_registry
-from scripts import evidence_spine_runtime
-
 ROOT = Path(__file__).resolve().parents[1]
+if str(ROOT) not in sys.path:
+    sys.path.insert(0, str(ROOT))
+
+from scripts import build_prompt_kit_registry  # noqa: E402
+from scripts import evidence_spine_runtime  # noqa: E402
 OPERANT_VERSION_PATH = ROOT / "OPERANT_VERSION"
 
 DECISION_SCHEMA = "prompt-kit.routing-decision/v1"
@@ -237,6 +239,8 @@ def _verify_route_receipt(
     by_id: dict[str, dict[str, Any]],
     registry_sha256: str,
     kit_version: str,
+    routing_request_event_id: str,
+    correlation_id: str,
 ) -> tuple[dict[str, Any], dict[str, str], dict[str, Any]]:
     if not isinstance(receipt, dict) or receipt.get("schema_version") != ROUTE_RECEIPT_SCHEMA:
         raise RoutingDecisionError("unsupported route receipt schema")
@@ -248,6 +252,8 @@ def _verify_route_receipt(
         "surface_id": receipt.get("surface_id"),
         "invocation_id": receipt.get("invocation_id"),
         "run_id": receipt.get("run_id"),
+        "routing_request_event_id": receipt.get("routing_request_event_id"),
+        "correlation_id": receipt.get("correlation_id"),
     }
     try:
         rebuilt = evidence_spine_runtime.build_route_receipt(route_input)
@@ -262,6 +268,14 @@ def _verify_route_receipt(
     if rebuilt.get("effective_destination") in {None, "", "unknown"}:
         raise RoutingDecisionError(
             "routing decision requires an authoritative effective destination"
+        )
+    if rebuilt.get("routing_request_event_id") != routing_request_event_id:
+        raise RoutingDecisionError(
+            "route receipt routing_request_event_id does not match routing request"
+        )
+    if rebuilt.get("correlation_id") != correlation_id:
+        raise RoutingDecisionError(
+            "route receipt correlation_id does not match routing request"
         )
 
     prompt_id = str(receipt.get("prompt_id") or "").upper()
@@ -312,6 +326,8 @@ def build_routing_decision(
         by_id=by_id,
         registry_sha256=registry_sha256,
         kit_version=kit_version,
+        routing_request_event_id=request["eventId"],
+        correlation_id=request["correlationId"],
     )
 
     if selected_ref["executionSurface"] != request["executionSurface"]:
@@ -321,9 +337,17 @@ def build_routing_decision(
 
     current_ref = _validate_prompt_ref(request.get("currentPrompt"), "routing request currentPrompt")
     route_action = "KEEP_CURRENT_PROMPT" if current_ref == selected_ref else "SWITCH_PROMPT"
+    destination = str(verified_receipt["effective_destination"])
+    destination_reason = f"route-destination:{destination}"
+    if len(destination_reason) > 96:
+        raise RoutingDecisionError(
+            "authoritative route destination is too long for frozen decision reasonCodes"
+        )
     reason_codes = [
         "current-registry-bound",
         "route-receipt-verified",
+        f"route-receipt:{verified_receipt['route_id']}",
+        destination_reason,
         "current-prompt-kept" if route_action == "KEEP_CURRENT_PROMPT" else "current-prompt-switched",
     ]
 
