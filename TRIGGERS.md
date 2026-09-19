@@ -40,6 +40,10 @@ A `file:///.../Temp/prompt-kit-browser-proof-<hex>/web/prompt-kit/index.html` pa
 
 Explicit written feedback and dislikes may create one bounded P115 work request after validation and deduplication. Raw likes and ordinary usage remain informational. P99 may derive only a coarse, privacy-bounded `operant_friction` receipt from a deterministic runtime failure or a repeated local pattern; that receipt becomes actionable only after the contract threshold is met. The router must reject raw session/navigation history, search or typed content, user identity, URLs/referrers, clipboard content, and prompt bodies. Local workers and remote SCM/CI adapters consume the same sanitized work-request semantics. The private bridge may sanitize and transport; it does not schedule or merge. A validated candidate leaves this capability and enters P105 / `pr-floor-integration`. No local infinite poller is authorized.
 
+### Prompt-strengthening proof sequencing
+
+When one request both changes canonical Prompt Kit wording/shared policy and asks for runtime-compliance proof, route the mutation through `prompt-language-change` first. The `skill-quality-unproven` proof route becomes eligible after an evaluable strengthened candidate exists; do not let both capabilities claim primary ownership simultaneously.
+
 ## Routing procedure
 
 1. Match concrete repository state and request language against `harness/triggers.v1.json`.
