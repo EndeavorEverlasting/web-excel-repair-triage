@@ -1,0 +1,349 @@
+#!/usr/bin/env python3
+"""Registry-bound Prompt Kit routing-decision compiler for the FM/ASB seam."""
+from __future__ import annotations
+
+import argparse
+import hashlib
+import json
+import re
+from datetime import datetime
+from pathlib import Path
+from typing import Any
+
+from scripts import build_prompt_kit_registry
+from scripts import evidence_spine_runtime
+
+ROOT = Path(__file__).resolve().parents[1]
+OPERANT_VERSION_PATH = ROOT / "OPERANT_VERSION"
+
+DECISION_SCHEMA = "prompt-kit.routing-decision/v1"
+REGISTRY_SCHEMA_VERSION = "ai-harness-prompt-registry/v1"
+ROUTE_RECEIPT_SCHEMA = "evidence-spine-route-receipt/v1"
+EVENT_RE = re.compile(r"^evt_[A-Za-z0-9][A-Za-z0-9._-]{7,95}$")
+CORR_RE = re.compile(r"^corr_[A-Za-z0-9][A-Za-z0-9._-]{7,95}$")
+SHA_RE = re.compile(r"^[a-f0-9]{64}$")
+PROMPT_ID_RE = re.compile(r"^P[0-9]{2,4}$")
+RFC3339_RE = re.compile(
+    r"^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?(?:Z|[+-]\d{2}:\d{2})$"
+)
+SIGNALS = {
+    "routing",
+    "interpretation",
+    "execution",
+    "progression",
+    "durability",
+    "premature-terminal",
+    "evidence-promotion",
+    "regression",
+    "environment",
+    "unknown",
+}
+PROMPT_REF_FIELDS = {
+    "id",
+    "kitVersion",
+    "registrySha256",
+    "promptSha256",
+    "executionSurface",
+}
+
+
+class RoutingDecisionError(ValueError):
+    pass
+
+
+def _canonical_sha256(value: Any) -> str:
+    payload = json.dumps(
+        value,
+        ensure_ascii=False,
+        sort_keys=True,
+        separators=(",", ":"),
+    ).encode("utf-8")
+    return hashlib.sha256(payload).hexdigest()
+
+
+def _idem_key(*parts: str) -> str:
+    digest = hashlib.sha256("|".join(parts).encode("utf-8")).hexdigest()
+    return f"idem_{digest}"
+
+
+def _require_rfc3339(value: Any, field: str) -> str:
+    if not isinstance(value, str) or not RFC3339_RE.fullmatch(value):
+        raise RoutingDecisionError(f"{field} must be an RFC3339 date-time")
+    try:
+        parsed = datetime.fromisoformat(value[:-1] + "+00:00" if value.endswith("Z") else value)
+    except ValueError as exc:
+        raise RoutingDecisionError(f"{field} must be an RFC3339 date-time") from exc
+    if parsed.utcoffset() is None:
+        raise RoutingDecisionError(f"{field} must include a timezone")
+    return value
+
+
+def _load_kit_version() -> str:
+    value = OPERANT_VERSION_PATH.read_text(encoding="utf-8").strip()
+    if not value or len(value) > 64:
+        raise RoutingDecisionError("OPERANT_VERSION is missing or invalid")
+    return value
+
+
+def _load_registry() -> tuple[list[dict[str, Any]], dict[str, dict[str, Any]], str, str]:
+    try:
+        prompts = build_prompt_kit_registry.load_prompt_kit_registry()
+    except SystemExit as exc:
+        raise RoutingDecisionError(f"canonical Prompt Kit registry failed to load: {exc}") from exc
+    if not isinstance(prompts, list) or not prompts:
+        raise RoutingDecisionError("canonical Prompt Kit registry is empty")
+    by_id: dict[str, dict[str, Any]] = {}
+    for record in prompts:
+        prompt_id = str(record.get("id") or "").strip().upper()
+        if not PROMPT_ID_RE.fullmatch(prompt_id):
+            raise RoutingDecisionError(f"invalid canonical prompt id: {prompt_id!r}")
+        if prompt_id in by_id:
+            raise RoutingDecisionError(f"duplicate canonical prompt id: {prompt_id}")
+        by_id[prompt_id] = record
+    return prompts, by_id, _canonical_sha256(prompts), _load_kit_version()
+
+
+def _prompt_ref(
+    record: dict[str, Any],
+    *,
+    registry_sha256: str,
+    kit_version: str,
+) -> dict[str, str]:
+    prompt_id = str(record["id"]).upper()
+    execution_surface = str(record.get("executionSurface") or "regular_ai_prompt")
+    if execution_surface not in {"regular_ai_prompt", "gnhf_launch_artifact"}:
+        raise RoutingDecisionError(
+            f"canonical prompt {prompt_id} has unsupported execution surface: {execution_surface}"
+        )
+    return {
+        "id": prompt_id,
+        "kitVersion": kit_version,
+        "registrySha256": registry_sha256,
+        "promptSha256": _canonical_sha256(record),
+        "executionSurface": execution_surface,
+    }
+
+
+def _validate_prompt_ref(value: Any, field: str) -> dict[str, Any] | None:
+    if value is None:
+        return None
+    if not isinstance(value, dict) or set(value) != PROMPT_REF_FIELDS:
+        raise RoutingDecisionError(f"{field} must be a complete promptRef object or null")
+    prompt_id = value.get("id")
+    if not isinstance(prompt_id, str) or not PROMPT_ID_RE.fullmatch(prompt_id):
+        raise RoutingDecisionError(f"{field}.id is invalid")
+    for digest_field in ("registrySha256", "promptSha256"):
+        digest = value.get(digest_field)
+        if not isinstance(digest, str) or not SHA_RE.fullmatch(digest):
+            raise RoutingDecisionError(f"{field}.{digest_field} must be a sha256 hex string")
+    kit_version = value.get("kitVersion")
+    if not isinstance(kit_version, str) or not (1 <= len(kit_version) <= 64):
+        raise RoutingDecisionError(f"{field}.kitVersion is invalid")
+    if value.get("executionSurface") not in {"regular_ai_prompt", "gnhf_launch_artifact"}:
+        raise RoutingDecisionError(f"{field}.executionSurface is invalid")
+    return dict(value)
+
+
+def _validate_routing_request(request: Any) -> dict[str, Any]:
+    if not isinstance(request, dict):
+        raise RoutingDecisionError("routing request must be an object")
+    if request.get("schema") != "prompt-kit.routing-request/v1":
+        raise RoutingDecisionError("unsupported routing request schema")
+    event_id = request.get("eventId")
+    correlation_id = request.get("correlationId")
+    if not isinstance(event_id, str) or not EVENT_RE.fullmatch(event_id):
+        raise RoutingDecisionError("routing request eventId is invalid")
+    if not isinstance(correlation_id, str) or not CORR_RE.fullmatch(correlation_id):
+        raise RoutingDecisionError("routing request correlationId is invalid")
+    _require_rfc3339(request.get("createdAt"), "routing request createdAt")
+
+    policy = request.get("routingPolicy")
+    if not isinstance(policy, dict):
+        raise RoutingDecisionError("routing request routingPolicy must be an object")
+    if policy.get("requireCurrentRegistry") is not True:
+        raise RoutingDecisionError("routing request must require the current registry")
+    if policy.get("crossSurfaceFallbackAllowed") is not False:
+        raise RoutingDecisionError("cross-surface fallback is forbidden")
+    max_candidates = policy.get("maxCandidates")
+    if not isinstance(max_candidates, int) or isinstance(max_candidates, bool) or not (1 <= max_candidates <= 3):
+        raise RoutingDecisionError("routing request maxCandidates must be 1..3")
+
+    signals = request.get("signals")
+    if not isinstance(signals, list) or len(signals) > 24:
+        raise RoutingDecisionError("routing request signals must be an array of <=24 entries")
+    if any(signal not in SIGNALS for signal in signals):
+        raise RoutingDecisionError("routing request contains an unknown signal")
+    if len(set(signals)) != len(signals):
+        raise RoutingDecisionError("routing request signals must be unique")
+
+    correction_events = request.get("correctionEvents")
+    if not isinstance(correction_events, list) or len(correction_events) > 24:
+        raise RoutingDecisionError("routing request correctionEvents must be an array of <=24 entries")
+
+    _validate_prompt_ref(request.get("currentPrompt"), "routing request currentPrompt")
+    return request
+
+
+def _verify_route_receipt(
+    receipt: Any,
+    *,
+    by_id: dict[str, dict[str, Any]],
+    registry_sha256: str,
+    kit_version: str,
+) -> tuple[dict[str, Any], dict[str, str], dict[str, Any]]:
+    if not isinstance(receipt, dict) or receipt.get("schema_version") != ROUTE_RECEIPT_SCHEMA:
+        raise RoutingDecisionError("unsupported route receipt schema")
+    route_input = {
+        "prompt_id": receipt.get("prompt_id"),
+        "prompt_revision": receipt.get("prompt_revision"),
+        "destination": receipt.get("destination"),
+        "provenance": receipt.get("provenance"),
+        "surface_id": receipt.get("surface_id"),
+        "invocation_id": receipt.get("invocation_id"),
+        "run_id": receipt.get("run_id"),
+    }
+    try:
+        rebuilt = evidence_spine_runtime.build_route_receipt(route_input)
+    except evidence_spine_runtime.ContinuationError as exc:
+        raise RoutingDecisionError(f"invalid route receipt: {exc}") from exc
+    if receipt != rebuilt:
+        raise RoutingDecisionError("route receipt identity or derived fields do not verify")
+
+    prompt_id = str(receipt.get("prompt_id") or "").upper()
+    record = by_id.get(prompt_id)
+    if record is None:
+        raise RoutingDecisionError(f"route receipt prompt is not in the current registry: {prompt_id}")
+    current_ref = _prompt_ref(
+        record,
+        registry_sha256=registry_sha256,
+        kit_version=kit_version,
+    )
+    if receipt.get("prompt_revision") != current_ref["promptSha256"]:
+        raise RoutingDecisionError(
+            f"route receipt prompt revision is stale for current registry: {prompt_id}"
+        )
+    return rebuilt, current_ref, record
+
+
+def _intervention(request: dict[str, Any]) -> str:
+    signals = set(request.get("signals") or [])
+    if signals & {"premature-terminal", "evidence-promotion", "regression", "durability"}:
+        return "REGROUND"
+    if request.get("correctionEvents"):
+        return "CRITIQUE"
+    return "CONTINUE"
+
+
+def _classification(request: dict[str, Any]) -> dict[str, Any]:
+    signals = request.get("signals") or []
+    return {
+        "outcomeClass": signals[0] if signals else "unknown",
+        "causeCandidates": ["unknown"],
+    }
+
+
+def build_routing_decision(
+    request: dict[str, Any],
+    route_receipt: dict[str, Any],
+    *,
+    created_at: str | None = None,
+) -> dict[str, Any]:
+    """Compile one current-registry-bound routing decision from a verified route receipt."""
+    request = _validate_routing_request(request)
+    prompts, by_id, registry_sha256, kit_version = _load_registry()
+    del prompts
+    verified_receipt, selected_ref, selected_record = _verify_route_receipt(
+        route_receipt,
+        by_id=by_id,
+        registry_sha256=registry_sha256,
+        kit_version=kit_version,
+    )
+
+    current_ref = _validate_prompt_ref(request.get("currentPrompt"), "routing request currentPrompt")
+    route_action = "KEEP_CURRENT_PROMPT" if current_ref == selected_ref else "SWITCH_PROMPT"
+    reason_codes = [
+        "current-registry-bound",
+        "route-receipt-verified",
+        "current-prompt-kept" if route_action == "KEEP_CURRENT_PROMPT" else "current-prompt-switched",
+    ]
+
+    decision_body: dict[str, Any] = {
+        "schema": DECISION_SCHEMA,
+        "correlationId": request["correlationId"],
+        "causationId": request["eventId"],
+        "createdAt": _require_rfc3339(
+            created_at if created_at is not None else request["createdAt"],
+            "routing decision createdAt",
+        ),
+        "producer": {
+            "system": "prompt-kit",
+            "component": "routing-engine",
+            "version": kit_version,
+        },
+        "routingRequestEventId": request["eventId"],
+        "registry": {
+            "schemaVersion": REGISTRY_SCHEMA_VERSION,
+            "kitVersion": kit_version,
+            "registrySha256": registry_sha256,
+        },
+        "decision": {
+            "intervention": _intervention(request),
+            "routeAction": route_action,
+            "primaryPrompt": selected_ref,
+            "alternates": [],
+            "reasonCodes": reason_codes,
+        },
+        "classification": _classification(request),
+        "requiredVariables": [],
+        "proofGate": str(selected_record.get("proofGate") or "").strip(),
+        "nextStep": str(selected_record.get("nextStep") or "").strip(),
+        "confidence": "MEDIUM",
+    }
+    if not decision_body["proofGate"] or not decision_body["nextStep"]:
+        raise RoutingDecisionError(
+            f"canonical prompt {selected_ref['id']} must define proofGate and nextStep"
+        )
+
+    semantic_payload = {
+        key: value
+        for key, value in decision_body.items()
+        if key not in {"eventId", "createdAt", "idempotency"}
+    }
+    semantic_sha256 = _canonical_sha256(semantic_payload)
+    decision_body["eventId"] = f"evt_route_dec_{semantic_sha256[:40]}"
+    decision_body["idempotency"] = {
+        "key": _idem_key(
+            DECISION_SCHEMA,
+            request["eventId"],
+            registry_sha256,
+        ),
+        "semanticSha256": semantic_sha256,
+    }
+
+    if verified_receipt["prompt_id"] != selected_ref["id"]:
+        raise RoutingDecisionError("verified route receipt prompt binding changed unexpectedly")
+    return decision_body
+
+
+def main(argv: list[str] | None = None) -> int:
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--request", required=True, type=Path)
+    parser.add_argument("--route-receipt", required=True, type=Path)
+    parser.add_argument("--created-at")
+    parser.add_argument("--output", type=Path)
+    args = parser.parse_args(argv)
+
+    request = json.loads(args.request.read_text(encoding="utf-8"))
+    receipt = json.loads(args.route_receipt.read_text(encoding="utf-8"))
+    decision = build_routing_decision(request, receipt, created_at=args.created_at)
+    payload = json.dumps(decision, indent=2, sort_keys=True) + "\n"
+    if args.output:
+        args.output.parent.mkdir(parents=True, exist_ok=True)
+        args.output.write_text(payload, encoding="utf-8")
+    else:
+        print(payload, end="")
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())
