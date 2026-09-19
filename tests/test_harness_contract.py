@@ -252,6 +252,118 @@ class HarnessContractTests(unittest.TestCase):
         self.assertFalse(safety["destructive_reset"])
         self.assertFalse(safety["embedded_credentials"])
 
+
+    def test_execution_boundary_use_case_routes_intent_first(self) -> None:
+        capabilities = self.load("harness/capabilities.v1.json")["capabilities"]
+        triggers = self.load("harness/triggers.v1.json")["triggers"]
+        workflows = self.load("harness/workflows.v1.json")["workflows"]
+        validators = {
+            item["id"]
+            for item in self.load("harness/validators.v1.json")["validators"]
+        }
+        intent = "agents stop at arbitrary boundaries instead of continuing"
+
+        matches = []
+        for capability in capabilities:
+            for use_case in capability.get("use_cases", []):
+                aliases = {
+                    str(alias).casefold()
+                    for alias in use_case.get("intent_aliases", [])
+                }
+                if intent.casefold() in aliases:
+                    matches.append((capability, use_case))
+
+        self.assertEqual(len(matches), 1)
+        capability, use_case = matches[0]
+        self.assertEqual(capability["id"], "harness-infrastructure-maintenance")
+        self.assertEqual(use_case["id"], "execution-boundary-continuation")
+
+        trigger = next(
+            item
+            for item in triggers
+            if item["id"] == use_case["primary_trigger_id"]
+        )
+        self.assertEqual(trigger["capability_id"], capability["id"])
+        self.assertIn(intent, trigger["intent_aliases"])
+
+        workflow = next(
+            item for item in workflows if item["id"] == use_case["workflow_id"]
+        )
+        self.assertEqual(trigger["workflow"], workflow["document"])
+        self.assertEqual(trigger["skill"], capability["skill"])
+        self.assertEqual(use_case["skill"], capability["skill"])
+
+        participants = {
+            item["role"]: item["path"] for item in use_case["participants"]
+        }
+        for role in (
+            "contract",
+            "taxonomy",
+            "prompt-semantics",
+            "implementation",
+            "shared-policy",
+            "evidence-artifact",
+            "validator",
+            "regression-test",
+        ):
+            self.assertIn(role, participants)
+            self.assertTrue((ROOT / participants[role]).is_file(), participants[role])
+
+        self.assertIn(
+            "harness/evals/execution-boundaries/boundary-regression-matrix.v1.json",
+            use_case["expected_artifacts"],
+        )
+        self.assertTrue(set(use_case["validator_ids"]).issubset(validators))
+
+    def test_execution_boundary_use_case_routes_implementation_first(self) -> None:
+        capabilities = self.load("harness/capabilities.v1.json")["capabilities"]
+        resource = "scripts/execution_boundary_engine.py"
+
+        owners = []
+        for capability in capabilities:
+            for use_case in capability.get("use_cases", []):
+                participant_paths = {
+                    item["path"] for item in use_case.get("participants", [])
+                }
+                if resource in participant_paths:
+                    owners.append((capability, use_case))
+
+        self.assertEqual(len(owners), 1)
+        capability, use_case = owners[0]
+        self.assertEqual(capability["id"], "harness-infrastructure-maintenance")
+        self.assertEqual(use_case["primary_trigger_id"], "harness-infrastructure-change")
+        self.assertIn(
+            "Agents stop at material or arbitrary boundaries",
+            use_case["originating_user_intent"],
+        )
+
+        related_paths = {
+            item["path"] for item in use_case["participants"]
+        }
+        for path in (
+            "harness/contracts/execution-boundary-enforcement.v1.json",
+            "harness/prompt-compilation/semantics/P07.json",
+            "registry/prompts/actionable-next-step-policy.v1.json",
+            "harness/evals/execution-boundaries/boundary-regression-matrix.v1.json",
+            "scripts/validate_execution_boundary_enforcement.py",
+            "tests/test_execution_boundary_enforcement_prompt.py",
+        ):
+            self.assertIn(path, related_paths)
+
+        for human_route in (
+            "harness/CONTEXT.md",
+            "CODEBASE_MAP.md",
+            "CAPABILITIES.md",
+            "TRIGGERS.md",
+            "WORKFLOW.md",
+        ):
+            self.assertIn(
+                "execution-boundary-continuation",
+                (ROOT / human_route).read_text(encoding="utf-8"),
+                human_route,
+            )
+
+
     def test_hooks_use_registered_profiles_and_staged_tree(self) -> None:
         validators = self.load("harness/validators.v1.json")
         self.assertEqual(
