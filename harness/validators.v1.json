@@ -404,10 +404,10 @@
     {
       "id": "prompt-runtime-compliance-receipt-audit",
       "class": "contract",
-      "command": "python scripts/validate_prompt_runtime_compliance_receipt.py --summary",
+      "command": "python scripts/validate_prompt_runtime_compliance_receipt.py harness/evals/runtime-compliance/contract-fixtures/pilot-receipt.positive.v1.json --summary",
       "blocking": true,
       "output": "process log",
-      "proof_ceiling": "Deterministic semantic validation of per-run receipts plus structural/count validation of pilot receipts; no external-agent runtime claim."
+      "proof_ceiling": "Deterministic structural/count validation of the tracked pilot receipt contract fixture; per-run semantic behavior is covered by prompt-runtime-compliance-tests; no external-agent runtime claim."
     },
     {
       "id": "prompt-runtime-compliance-tests",
