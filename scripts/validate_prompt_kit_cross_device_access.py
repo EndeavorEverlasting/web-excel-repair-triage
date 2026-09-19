@@ -477,7 +477,7 @@ def validate_repository_surfaces() -> None:
         "validator": "scripts/validate_prompt_kit_cross_device_access.py",
         "contract_tests": "tests/test_prompt_kit_cross_device_access.py",
         "workflow": ACQUISITION_WORKFLOW,
-        "harness_gate": "python3 scripts/validate_prompt_kit_cross_device_access.py --summary",
+        "harness_gate": "python scripts/validate_prompt_kit_cross_device_access.py --summary",
     }
     for key, value in expected_domain.items():
         if domain.get(key) != value:

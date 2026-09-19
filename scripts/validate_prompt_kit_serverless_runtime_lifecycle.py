@@ -93,13 +93,13 @@ REQUIRED_WORKFLOW_PATHS = {
     "tests/test_prompt_kit_serverless_runtime_lifecycle.py",
 }
 REQUIRED_WORKFLOW_COMMANDS = {
-    "python3 scripts/validate_prompt_kit_serverless_runtime_lifecycle.py --summary",
-    "python3 -m unittest tests.test_prompt_kit_serverless_runtime_lifecycle -v",
-    "python3 scripts/validate_prompt_kit_privacy_storage.py --summary",
-    "python3 -m unittest tests.test_prompt_kit_privacy_storage -v",
-    "python3 scripts/validate_prompt_kit_cross_device_access.py --summary",
-    "python3 -m unittest tests.test_prompt_kit_cross_device_access -v",
-    "python3 scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html --check",
+    "python scripts/validate_prompt_kit_serverless_runtime_lifecycle.py --summary",
+    "python -m unittest tests.test_prompt_kit_serverless_runtime_lifecycle -v",
+    "python scripts/validate_prompt_kit_privacy_storage.py --summary",
+    "python -m unittest tests.test_prompt_kit_privacy_storage -v",
+    "python scripts/validate_prompt_kit_cross_device_access.py --summary",
+    "python -m unittest tests.test_prompt_kit_cross_device_access -v",
+    "python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html --check",
 }
 
 
