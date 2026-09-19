@@ -106,7 +106,10 @@ def _source_violations(receipt: dict[str, Any]) -> list[dict[str, Any]]:
 
 def _regression_required_violations(receipt: dict[str, Any]) -> list[dict[str, Any]]:
     return [
-        row for row in _source_violations(receipt) if row.get("regression_required") is True
+        row
+        for row in receipt.get("violations", [])
+        if row.get("regression_required") is True
+        and row.get("status") != "INFORMATIONAL"
     ]
 
 
