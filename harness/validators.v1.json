@@ -408,6 +408,14 @@
       "blocking": true,
       "output": "process log",
       "proof_ceiling": "Deterministic semantic validation of the canonical contract receipt fixture; no external-agent runtime claim."
+    },
+    {
+      "id": "prompt-runtime-compliance-tests",
+      "class": "test",
+      "command": "python -m unittest tests.test_prompt_runtime_compliance_contract tests.test_prompt_runtime_compliance_fixtures tests.test_prompt_runtime_compliance_validator tests.test_prompt_runtime_compliance_runner tests.test_prompt_runtime_compliance_receipt_corpus tests.test_prompt_runtime_compliance_linkage -v",
+      "blocking": true,
+      "output": "process log",
+      "proof_ceiling": "Executable contract, fixture, semantic validator, pilot runner, receipt corpus, and regression-linkage proof; no external-agent runtime claim."
     }
   ],
   "profiles": {
@@ -453,6 +461,7 @@
       "repo-native-update-tests",
       "repo-native-update-parity",
       "prompt-runtime-compliance-receipt-audit",
+      "prompt-runtime-compliance-tests",
       "prompt-kit-header-contract",
       "prompt-kit-parity",
       "artifact-hygiene",
@@ -489,6 +498,7 @@
       "repo-native-update-tests",
       "repo-native-update-parity",
       "prompt-runtime-compliance-receipt-audit",
+      "prompt-runtime-compliance-tests",
       "prompt-kit-header-contract",
       "prompt-kit-parity",
       "artifact-hygiene",
@@ -552,6 +562,7 @@
       "repo-native-update-tests",
       "repo-native-update-parity",
       "prompt-runtime-compliance-receipt-audit",
+      "prompt-runtime-compliance-tests",
       "prompt-kit-header-contract",
       "prompt-kit-parity",
       "artifact-hygiene",
