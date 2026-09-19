@@ -127,6 +127,52 @@ class EvidenceSpineRuntimeTests(unittest.TestCase):
             with self.subTest(key=key), self.assertRaises(runtime.ContinuationError):
                 runtime.build_route_receipt({**base, key: value})
 
+    def test_route_receipt_accepts_shared_four_digit_prompt_id(self) -> None:
+        receipt = runtime.build_route_receipt(
+            {
+                "prompt_id": "P1000",
+                "prompt_revision": "rev-1",
+                "destination": "cursor-agent",
+                "provenance": "observed",
+                "surface_id": "prompt-kit",
+            }
+        )
+        self.assertEqual(receipt["prompt_id"], "P1000")
+
+    def test_route_receipt_rejects_unhashable_provenance_with_contract_error(self) -> None:
+        base = {
+            "prompt_id": "P07",
+            "prompt_revision": "rev-1",
+            "destination": "cursor-agent",
+            "surface_id": "prompt-kit",
+        }
+        for provenance in (["observed"], {"kind": "observed"}):
+            with self.subTest(provenance=provenance), self.assertRaises(runtime.ContinuationError):
+                runtime.build_route_receipt({**base, "provenance": provenance})
+
+    def test_route_receipt_bounds_all_allowed_text_fields(self) -> None:
+        base = {
+            "prompt_id": "P07",
+            "prompt_revision": "rev-1",
+            "destination": "cursor-agent",
+            "provenance": "observed",
+            "surface_id": "prompt-kit",
+            "invocation_id": "inv-1",
+            "run_id": "run-1",
+        }
+        invalid = [
+            {**base, "prompt_revision": "x" * 161},
+            {**base, "prompt_revision": "rev\nprivate"},
+            {**base, "surface_id": "surface with spaces"},
+            {**base, "destination": "raw workbook text with spaces"},
+            {**base, "destination": "x" * 161},
+            {**base, "invocation_id": "inv with spaces"},
+            {**base, "run_id": "run\nprivate"},
+        ]
+        for payload in invalid:
+            with self.subTest(payload=payload), self.assertRaises(runtime.ContinuationError):
+                runtime.build_route_receipt(payload)
+
     def test_route_receipt_fail_closed_shape_and_identity(self) -> None:
         valid = {
             "prompt_id": "P07",
