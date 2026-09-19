@@ -106,7 +106,8 @@ class EvidenceSpineRuntimeTests(unittest.TestCase):
         )
         self.assertFalse(receipt["authoritative"])
         self.assertEqual(receipt["destination_confidence"], "declared")
-        self.assertEqual(receipt["effective_destination"], "cursor-agent")
+        self.assertEqual(receipt["destination"], "cursor-agent")
+        self.assertEqual(receipt["effective_destination"], "unknown")
 
     def test_route_receipt_rejects_actor_identity_and_caller_fingerprint(self) -> None:
         base = {
