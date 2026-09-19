@@ -235,19 +235,19 @@ jobs:
               echo "The existing release PR head is deliberately not mutated by github-actions[bot]."
               echo "An external provider/agent must publish the staged candidate tree onto the existing PR head with a non-force convergence commit so pull_request checks execute under an externally authorized mutation."
               echo
-              echo "- existing PR: `$existing_url`"
-              echo "- target head: `$target_head`"
+              echo "- existing PR: \`$existing_url\`"
+              echo "- target head: \`$target_head\`"
             else
               echo "Repository Actions settings prohibit the workflow token from creating the first pull request, so creation is deliberately owned by an external provider/agent."
               echo
-              echo "- target head: `$target_head`"
+              echo "- target head: \`$target_head\`"
             fi
-            echo "- candidate branch: `$candidate_branch`"
-            echo "- candidate SHA: `$candidate_sha`"
-            echo "- candidate tree: `$candidate_tree_sha`"
-            echo "- base: `main`"
-            echo "- request artifact: `Outputs/operant-release-pr-request.json`"
-            echo "- body artifact: `Outputs/operant-release-pr.md`"
+            echo "- candidate branch: \`$candidate_branch\`"
+            echo "- candidate SHA: \`$candidate_sha\`"
+            echo "- candidate tree: \`$candidate_tree_sha\`"
+            echo "- base: \`main\`"
+            echo "- request artifact: \`Outputs/operant-release-pr-request.json\`"
+            echo "- body artifact: \`Outputs/operant-release-pr.md\`"
           } >> "$GITHUB_STEP_SUMMARY"
 
       - name: Upload Operant release PR publication request
