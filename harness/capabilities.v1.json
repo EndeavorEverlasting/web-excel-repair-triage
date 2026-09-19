@@ -91,6 +91,15 @@
             "harness/evals/PROMPT_RUNTIME_COMPLIANCE_PILOT_PLAN.md",
             "harness/evals/runtime-compliance/scripts/pilot.py",
             "scripts/validate_prompt_runtime_compliance_receipt.py"
+          ],
+          "reverse_entrypoints": [
+            "harness/evals/PROMPT_RUNTIME_COMPLIANCE_PILOT_PLAN.md",
+            "harness/evals/runtime-compliance/README.md",
+            "harness/evals/runtime-compliance/scripts/pilot.py",
+            "harness/evals/runtime-compliance/scripts/runtime_adapter.py",
+            "harness/evals/runtime-compliance/scripts/linkage.py",
+            "harness/evals/runtime-compliance/fixtures/receipt-corpus.v1.json",
+            "scripts/validate_prompt_runtime_compliance_receipt.py"
           ]
         }
       ]
