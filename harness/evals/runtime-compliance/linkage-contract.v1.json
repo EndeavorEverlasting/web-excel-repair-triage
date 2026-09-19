@@ -1,0 +1,82 @@
+{
+  "schema_version": "prompt-runtime-compliance-linkage-contract/v1",
+  "contract_id": "prompt-runtime-compliance-linkage",
+  "purpose": "Map validated runtime-compliance evidence into bounded P99 evidence references and P13/P94 regression routing without replacing either canonical owner.",
+  "inputs": {
+    "compliance_receipt": "prompt-runtime-compliance-receipt/v1",
+    "compliance_validation": "prompt-runtime-compliance-validation/v1"
+  },
+  "p99": {
+    "owner": "prompt-outcome-receipt/v1",
+    "evidence_schema_path": "harness/contracts/prompt-outcome-receipt.schema.v1.json#/$defs/evidence",
+    "evidence_kind": "validator",
+    "ref_prefix": "runtime-compliance:",
+    "authoritative_classification": false,
+    "result_mapping": {
+      "PASS": "SUCCESS",
+      "FAIL": "FAILURE",
+      "BLOCKED": "BLOCKED",
+      "INCONCLUSIVE": "UNKNOWN"
+    },
+    "failure_class_hints": {
+      "PRCR.BOUNDARY.": "progression",
+      "PRCR.TERMINAL.": "premature-terminal",
+      "PRCR.ACTION.NO_FALSE_PROOF_PROMOTION": "evidence-promotion",
+      "PRCR.PROOF.": "evidence-promotion",
+      "PRCR.REGRESSION.": "regression",
+      "PRCR.PRIVACY.": "execution",
+      "PRCR.MODEL.": "environment",
+      "PRCR.ACTION.": "execution",
+      "PRCR.REF.": "execution",
+      "PRCR.SEQUENCE.": "execution",
+      "PRCR.TIME.": "execution",
+      "PRCR.SCENARIO.": "interpretation",
+      "PRCR.COMPLIANCE.": "execution"
+    },
+    "default_failure_class_hint": "execution"
+  },
+  "regression": {
+    "canonical_contract": "harness/contracts/prompt-regression-safety.v1.json",
+    "systemic_threshold": 2,
+    "candidate_on_first_independent_occurrence": true,
+    "systemic_requires_independent_occurrences": true,
+    "recurring_process_owner": "P13",
+    "regression_design_owner": "P94",
+    "statuses": [
+      "NONE",
+      "CANDIDATE",
+      "SYSTEMIC"
+    ],
+    "occurrence_identity": [
+      "compliance_receipt_id",
+      "evidence_refs"
+    ],
+    "rule": "One independently evidenced occurrence remains CANDIDATE. Two or more independent same-family occurrences become SYSTEMIC and route to P13/P94."
+  },
+  "privacy": {
+    "raw_payload_copy_forbidden": true,
+    "persisted_fields": [
+      "compliance_receipt_id",
+      "scenario_id",
+      "validation_result",
+      "source_violation_ids",
+      "rule_ids",
+      "failure_class_hints",
+      "evidence_refs",
+      "regression_family"
+    ],
+    "forbidden_source_fields": [
+      "raw_prompt",
+      "raw_response",
+      "transcript",
+      "chain_of_thought",
+      "hidden_reasoning",
+      "api_key",
+      "credential",
+      "secret",
+      "token"
+    ],
+    "rule": "Linkage records persist identifiers, bounded enums, and evidence references only; violation messages and raw runtime payloads are not copied."
+  },
+  "proof_ceiling": "Linkage and recurrence routing proof only. This contract does not classify full P99 outcomes authoritatively, mutate the P99 schema, prove a regression repaired, or prove target runtime behavior."
+}
