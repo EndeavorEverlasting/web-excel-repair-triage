@@ -55,6 +55,8 @@ class EvidenceSpineRuntimeTests(unittest.TestCase):
             "surface_id": "prompt-kit",
             "invocation_id": "inv-42",
             "run_id": "run-7",
+            "routing_request_event_id": "evt_route_req_rrb03_0001",
+            "correlation_id": "corr_rrb03_route_decision_0001",
         }
         first = runtime.build_route_receipt(route)
         second = runtime.build_route_receipt(dict(reversed(list(route.items()))))
@@ -64,6 +66,30 @@ class EvidenceSpineRuntimeTests(unittest.TestCase):
         self.assertEqual(first["effective_destination"], "cursor-agent")
         self.assertEqual(first["route_id"], second["route_id"])
         self.assertEqual(first["semantic_sha256"], second["semantic_sha256"])
+
+    def test_route_receipt_request_correlation_participates_in_identity(self) -> None:
+        base = {
+            "prompt_id": "P07",
+            "prompt_revision": "rev-1",
+            "destination": "firstmate",
+            "provenance": "observed",
+            "surface_id": "fm-asb",
+            "routing_request_event_id": "evt_route_req_rrb03_0001",
+            "correlation_id": "corr_rrb03_route_decision_0001",
+        }
+        first = runtime.build_route_receipt(base)
+        second = runtime.build_route_receipt(
+            {**base, "correlation_id": "corr_rrb03_route_decision_0002"}
+        )
+        self.assertNotEqual(first["route_id"], second["route_id"])
+        self.assertEqual(
+            first["routing_request_event_id"],
+            "evt_route_req_rrb03_0001",
+        )
+        self.assertEqual(
+            first["correlation_id"],
+            "corr_rrb03_route_decision_0001",
+        )
 
     def test_route_receipt_inferred_destination_never_becomes_effective(self) -> None:
         receipt = runtime.build_route_receipt(
