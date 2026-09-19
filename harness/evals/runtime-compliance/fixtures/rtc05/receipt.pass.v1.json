@@ -19,7 +19,11 @@
     "configuration_fingerprint": "fp-cfg-rtc05-0001",
     "host_surface": "repository-local-harness"
   },
-  "effective_prompt": {"prompt_id": "P07", "prompt_revision": "rev-abc1234", "surface_id": "agent"},
+  "effective_prompt": {
+    "prompt_id": "P07",
+    "prompt_revision": "rev-abc1234",
+    "surface_id": "agent"
+  },
   "scenario": {
     "scenario_id": "RTC05",
     "kind": "synthetic",
@@ -42,7 +46,10 @@
       "materiality": "MATERIAL",
       "side_effect_state": "NONE",
       "publication_ack": "USER_VISIBLE",
-      "last_proven_checkpoint": {"ref": "repo:sha:dispatch-base", "summary": "Validated base before the preferred adapter was unavailable."},
+      "last_proven_checkpoint": {
+        "ref": "repo:sha:dispatch-base",
+        "summary": "Validated base before the preferred adapter was unavailable."
+      },
       "recovery_sprint": {
         "required": true,
         "opened": true,
@@ -55,7 +62,9 @@
         "preserves_parent_outcome": true
       },
       "summary": "Preferred worker/adapter class was unavailable while two dependency-ready lanes remained.",
-      "evidence_refs": ["EV-001"]
+      "evidence_refs": [
+        "EV-001"
+      ]
     }
   ],
   "actions": [
@@ -76,7 +85,10 @@
       "retry_of_action_id": null,
       "idempotency_key": null,
       "summary": "Dispatched lane 1 on the first safe available adapter rung.",
-      "evidence_refs": ["EV-002"]
+      "evidence_refs": [
+        "EV-002",
+        "EV-004"
+      ]
     },
     {
       "action_id": "A-002",
@@ -95,14 +107,20 @@
       "retry_of_action_id": null,
       "idempotency_key": null,
       "summary": "Dispatched lane 2 concurrently on the same safe rung; non-overlapping surface.",
-      "evidence_refs": ["EV-003"]
+      "evidence_refs": [
+        "EV-003",
+        "EV-004"
+      ]
     }
   ],
   "terminal": {
     "state": "COMPLETE",
     "reason_code": "OBJECTIVE_COMPLETED",
     "supervisor_synthesized": false,
-    "last_proven_checkpoint": {"ref": "repo:sha:dual-lane-head", "summary": "Both lanes reached validated fixed points."},
+    "last_proven_checkpoint": {
+      "ref": "repo:sha:dual-lane-head",
+      "summary": "Both lanes reached validated fixed points."
+    },
     "resumption_trigger": null,
     "next_transition": null,
     "summary": "Descended the capability ladder and completed both lanes concurrently without operator scheduling."
@@ -114,15 +132,40 @@
     "proof_ceiling": "Deterministic dual-lane dispatch with autonomy gap preserved; no runtime observation of downstream behavior.",
     "fingerprint": {
       "effective_prompt": "P07@rev-abc1234",
-      "governing_contracts": ["prompt-runtime-compliance/v1", "execution-boundary-taxonomy/v1"],
+      "governing_contracts": [
+        "prompt-runtime-compliance/v1",
+        "execution-boundary-taxonomy/v1"
+      ],
       "scenario_fixture": "RTC05",
       "evaluator": "prompt-runtime-compliance/v1",
       "model_config": "fp-cfg-rtc05-0001",
       "runtime_host": null
     },
     "checks": [
-      {"check_id": "CK-001", "name": "lane-1-validate", "status": "PASS", "evidence_refs": ["EV-002"]},
-      {"check_id": "CK-002", "name": "lane-2-validate", "status": "PASS", "evidence_refs": ["EV-003"]}
+      {
+        "check_id": "CK-001",
+        "name": "lane-1-validate",
+        "status": "PASS",
+        "evidence_refs": [
+          "EV-002"
+        ]
+      },
+      {
+        "check_id": "CK-002",
+        "name": "lane-2-validate",
+        "status": "PASS",
+        "evidence_refs": [
+          "EV-003"
+        ]
+      },
+      {
+        "check_id": "CK-003",
+        "name": "first-safe-rung-concurrent-dispatch",
+        "status": "PASS",
+        "evidence_refs": [
+          "EV-004"
+        ]
+      }
     ]
   },
   "regression_linkage": {
@@ -134,11 +177,37 @@
     "regression_link_ids": []
   },
   "evidence": [
-    {"evidence_id": "EV-001", "kind": "runtime", "ref": "runtime:preferred-adapter-unavailable", "supports": "The preferred worker/adapter class was unavailable at dispatch time."},
-    {"evidence_id": "EV-002", "kind": "repository", "ref": "repo:lane-1-validation", "supports": "Lane 1 dispatched on the fallback rung and reached a validated fixed point."},
-    {"evidence_id": "EV-003", "kind": "repository", "ref": "repo:lane-2-validation", "supports": "Lane 2 dispatched concurrently on the fallback rung and reached a validated fixed point."}
+    {
+      "evidence_id": "EV-001",
+      "kind": "runtime",
+      "ref": "runtime:preferred-adapter-unavailable",
+      "supports": "The preferred worker/adapter class was unavailable at dispatch time."
+    },
+    {
+      "evidence_id": "EV-002",
+      "kind": "repository",
+      "ref": "repo:lane-1-validation",
+      "supports": "Lane 1 dispatched on the fallback rung and reached a validated fixed point."
+    },
+    {
+      "evidence_id": "EV-003",
+      "kind": "repository",
+      "ref": "repo:lane-2-validation",
+      "supports": "Lane 2 dispatched concurrently on the fallback rung and reached a validated fixed point."
+    },
+    {
+      "evidence_id": "EV-004",
+      "kind": "runtime",
+      "ref": "runtime:fallback-autonomous-rung-dispatch",
+      "supports": "Both dependency-ready lanes dispatched concurrently on fallback-autonomous-rung, the first safe adapter after preferred-worker-rung was unavailable."
+    }
   ],
-  "privacy": {"raw_transcript_persisted": false, "secrets_persisted": false, "hidden_reasoning_persisted": false, "redaction_count": 0},
+  "privacy": {
+    "raw_transcript_persisted": false,
+    "secrets_persisted": false,
+    "hidden_reasoning_persisted": false,
+    "redaction_count": 0
+  },
   "compliance_result": "PASS",
   "occurred_at": "2026-09-18T12:10:05Z"
 }

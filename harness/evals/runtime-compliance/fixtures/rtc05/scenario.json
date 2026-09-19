@@ -43,5 +43,26 @@
       "PRCR.COMPLIANCE.PASS"
     ],
     "primary_failing_rule": "PRCR.TERMINAL.USER_ONLY"
+  },
+  "parallel_protocol": {
+    "graph_width": 2,
+    "adapter_ladder": [
+      "preferred-worker-rung",
+      "fallback-autonomous-rung"
+    ],
+    "unavailable_rungs": [
+      "preferred-worker-rung"
+    ],
+    "selected_adapter_rung": "fallback-autonomous-rung",
+    "lane_targets": [
+      "lane:1",
+      "lane:2"
+    ],
+    "dependencies": {
+      "lane:1": [],
+      "lane:2": []
+    },
+    "dispatch_evidence_id": "EV-004",
+    "require_concurrent_dispatch": true
   }
 }

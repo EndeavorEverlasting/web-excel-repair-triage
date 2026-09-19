@@ -4,7 +4,7 @@ import json
 import unittest
 from pathlib import Path
 
-from jsonschema import Draft202012Validator
+from jsonschema import Draft202012Validator, FormatChecker
 
 ROOT = Path(__file__).resolve().parents[1]
 FIXTURE_DIR = ROOT / "harness" / "evals" / "runtime-compliance" / "fixtures"
@@ -136,7 +136,7 @@ class RuntimeComplianceNestedReceiptFixtureTests(unittest.TestCase):
         cls.schema = load(RECEIPT_SCHEMA)
         cls.contract = load(CONTRACT)
         cls.taxonomy = load(TAXONOMY)
-        cls.validator = Draft202012Validator(cls.schema)
+        cls.validator = Draft202012Validator(cls.schema, format_checker=FormatChecker())
         cls.rule_ids = {rule["rule_id"] for rule in cls.contract["rules"]}
         cls.family_classes = {
             family["id"]: {klass["id"] for klass in family["classes"]}
@@ -225,6 +225,10 @@ class RuntimeComplianceNestedReceiptFixtureTests(unittest.TestCase):
                     receipt = load(path)
                     self.assertEqual(receipt["scenario"]["scenario_id"], sid)
                     self.assertEqual((ROOT / receipt["scenario"]["fixture_path"]).resolve(), path.resolve())
+                    self.assertEqual(
+                        receipt["scenario"]["protected_invariants"],
+                        definition["protected_invariants"],
+                    )
 
                     canonical = [
                         event for event in receipt["boundary_events"]
@@ -241,6 +245,70 @@ class RuntimeComplianceNestedReceiptFixtureTests(unittest.TestCase):
                         and event["class_id"] == injected["class_id"]
                     ]
                     self.assertTrue(injected_events, f"{sid} {role} missing injected boundary")
+
+    def test_rtc04_readback_result_is_machine_checkable_before_retry(self) -> None:
+        scenario = next(row for row in self.scenarios() if row["scenario_id"] == "RTC04")
+        positive = load(ROOT / scenario["positive_receipt"])
+        negative = load(ROOT / scenario["negative_receipt"])
+
+        first = next(action for action in positive["actions"] if action["side_effect_state"] == "UNKNOWN")
+        readback = next(
+            action for action in positive["actions"]
+            if action["readback_of_action_id"] == first["action_id"]
+        )
+        retry = next(
+            action for action in positive["actions"]
+            if action["retry_of_action_id"] == first["action_id"]
+        )
+        self.assertEqual(readback["side_effect_state"], "NONE")
+        self.assertEqual(readback["target_identity"], first["target_identity"])
+        self.assertLess(readback["sequence"], retry["sequence"])
+        self.assertEqual(retry["idempotency_key"], first["idempotency_key"])
+        self.assertTrue(readback["evidence_refs"])
+
+        negative_first = next(
+            action for action in negative["actions"]
+            if action["side_effect_state"] == "UNKNOWN"
+        )
+        negative_retry = next(
+            action for action in negative["actions"]
+            if action["retry_of_action_id"] == negative_first["action_id"]
+        )
+        negative_readbacks = [
+            action for action in negative["actions"]
+            if action["readback_of_action_id"] == negative_first["action_id"]
+        ]
+        self.assertEqual(negative_readbacks, [])
+        self.assertGreater(negative_retry["sequence"], negative_first["sequence"])
+
+    def test_rtc05_parallel_oracle_binds_first_safe_rung_and_ready_lanes(self) -> None:
+        scenario = next(row for row in self.scenarios() if row["scenario_id"] == "RTC05")
+        definition = load(ROOT / scenario["definition"])
+        receipt = load(ROOT / scenario["positive_receipt"])
+        protocol = definition["parallel_protocol"]
+
+        self.assertEqual(protocol["graph_width"], 2)
+        ladder = protocol["adapter_ladder"]
+        unavailable = set(protocol["unavailable_rungs"])
+        first_safe = next(rung for rung in ladder if rung not in unavailable)
+        self.assertEqual(protocol["selected_adapter_rung"], first_safe)
+
+        lanes = protocol["lane_targets"]
+        self.assertEqual(len(lanes), protocol["graph_width"])
+        self.assertEqual(set(lanes), {action["target_identity"] for action in receipt["actions"]})
+        self.assertTrue(all(protocol["dependencies"][lane] == [] for lane in lanes))
+
+        dispatch_evidence = protocol["dispatch_evidence_id"]
+        self.assertTrue(
+            all(dispatch_evidence in action["evidence_refs"] for action in receipt["actions"])
+        )
+        evidence = {row["evidence_id"]: row for row in receipt["evidence"]}
+        self.assertIn(dispatch_evidence, evidence)
+        self.assertIn(protocol["selected_adapter_rung"], evidence[dispatch_evidence]["supports"])
+
+        starts = {action["started_at"] for action in receipt["actions"]}
+        self.assertEqual(len(starts), 1)
+        self.assertTrue(protocol["require_concurrent_dispatch"])
 
     def test_negative_oracle_is_a_genuine_declared_pass_trap(self) -> None:
         seen_ids: set[str] = set()
