@@ -133,6 +133,29 @@ class RuntimeComplianceLinkageTests(unittest.TestCase):
         self.assertEqual(aggregate[0]["status"], "CANDIDATE")
         self.assertEqual(aggregate[0]["independent_occurrences"], 1)
 
+    def test_regression_required_routing_survives_repaired_or_not_applicable_result(self) -> None:
+        cases = (
+            ("PASS", "REPAIRED"),
+            ("NOT_APPLICABLE", "WAIVED_NOT_APPLICABLE"),
+        )
+        for result_value, status_value in cases:
+            with self.subTest(result=result_value, status=status_value):
+                receipt = make_regression_receipt(
+                    f"prcr/regression/{result_value.lower()}",
+                    evidence_id=f"EV-{result_value}",
+                    evidence_ref=f"artifact:regression-{result_value.lower()}",
+                )
+                violation = receipt["violations"][0]
+                violation["result"] = result_value
+                violation["status"] = status_value
+                validation = compliance_validator.validate_receipt(receipt)
+                record = linkage.build_linkage_record(receipt, validation)
+                self.assertEqual(record["regression"]["status"], "CANDIDATE")
+                self.assertEqual(
+                    record["regression"]["occurrences"][0]["compliance_receipt_id"],
+                    receipt["receipt_id"],
+                )
+
     def test_duplicate_incident_cannot_manufacture_systemic_status(self) -> None:
         receipt = make_regression_receipt(
             "prcr/regression/duplicate",
