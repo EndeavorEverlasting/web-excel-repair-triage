@@ -1,0 +1,54 @@
+{
+  "schema_version": "evidence-spine-route-receipt-cases/v1",
+  "purpose": "Directly executed Lane A route-receipt cases. Every case is consumed by tests/test_evidence_spine_route_receipt.py.",
+  "cases": [
+    {
+      "id": "observed-authoritative",
+      "input": {
+        "route_id": "route.case.observed",
+        "prompt_id": "P07",
+        "prompt_revision": "rev-1",
+        "source_surface": "agent-runtime",
+        "destination": "cursor-agent",
+        "provenance": "observed"
+      },
+      "expected": {
+        "provenance": "observed",
+        "authoritative": true,
+        "effective_destination": "cursor-agent"
+      }
+    },
+    {
+      "id": "inferred-not-promoted",
+      "input": {
+        "route_id": "route.case.inferred",
+        "prompt_id": "P07",
+        "prompt_revision": "rev-1",
+        "source_surface": "prompt-kit-ui",
+        "destination": "cursor-agent",
+        "provenance": "inferred"
+      },
+      "expected": {
+        "provenance": "inferred",
+        "authoritative": false,
+        "effective_destination": "unknown"
+      }
+    },
+    {
+      "id": "unknown-clipboard",
+      "input": {
+        "route_id": "route.case.unknown",
+        "prompt_id": "P56",
+        "prompt_revision": "rev-2",
+        "source_surface": "clipboard",
+        "destination": null,
+        "provenance": "unknown"
+      },
+      "expected": {
+        "provenance": "unknown",
+        "authoritative": false,
+        "effective_destination": "unknown"
+      }
+    }
+  ]
+}
