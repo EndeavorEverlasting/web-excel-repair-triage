@@ -60,6 +60,18 @@ jobs:
         run: |
           python -m unittest tests.test_skill_prompt_registry -v
           python -m unittest tests.test_actionable_prompt_registry -v
+      - name: Generate Prompt Kit candidate artifact
+        run: |
+          mkdir -p Outputs/prompt-kit-generated
+          python scripts/build_prompt_kit_registry.py --output Outputs/prompt-kit-generated/index.html
+          python scripts/build_prompt_kit_registry.py --output Outputs/prompt-kit-generated/index.html --check
+      - name: Upload generated Prompt Kit candidate
+        uses: actions/upload-artifact@v4
+        with:
+          name: prompt-kit-generated-${{ github.event.pull_request.head.sha || github.sha }}
+          path: Outputs/prompt-kit-generated/index.html
+          if-no-files-found: error
+          retention-days: 1
       - name: Validate checked-in combined Prompt Kit website
         run: |
           python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html --check
