@@ -21,6 +21,7 @@ REGISTRY_SCHEMA_VERSION = "ai-harness-prompt-registry/v1"
 ROUTE_RECEIPT_SCHEMA = "evidence-spine-route-receipt/v1"
 EVENT_RE = re.compile(r"^evt_[A-Za-z0-9][A-Za-z0-9._-]{7,95}$")
 CORR_RE = re.compile(r"^corr_[A-Za-z0-9][A-Za-z0-9._-]{7,95}$")
+GE_RE = re.compile(r"^ge_[A-Za-z0-9][A-Za-z0-9._-]{7,95}$")
 SHA_RE = re.compile(r"^[a-f0-9]{64}$")
 PROMPT_ID_RE = re.compile(r"^P[0-9]{2,4}$")
 WIRE_PROMPT_ID_RE = re.compile(r"^P[0-9]{2,3}$")
@@ -162,6 +163,19 @@ def _validate_routing_request(request: Any) -> dict[str, Any]:
         raise RoutingDecisionError("routing request correlationId is invalid")
     _require_rfc3339(request.get("createdAt"), "routing request createdAt")
 
+    observation_event_id = request.get("observationEventId")
+    if not isinstance(observation_event_id, str) or not EVENT_RE.fullmatch(observation_event_id):
+        raise RoutingDecisionError("routing request observationEventId is invalid")
+    if request.get("causationId") != observation_event_id:
+        raise RoutingDecisionError("routing request causationId must equal observationEventId")
+
+    mission = request.get("mission")
+    if not isinstance(mission, dict):
+        raise RoutingDecisionError("routing request mission must be an object")
+    grounding_episode_id = mission.get("groundingEpisodeId")
+    if not isinstance(grounding_episode_id, str) or not GE_RE.fullmatch(grounding_episode_id):
+        raise RoutingDecisionError("routing request groundingEpisodeId is invalid")
+
     execution_surface = request.get("executionSurface")
     if execution_surface not in {"regular_ai_prompt", "gnhf_launch_artifact"}:
         raise RoutingDecisionError("routing request executionSurface is invalid")
@@ -190,6 +204,29 @@ def _validate_routing_request(request: Any) -> dict[str, Any]:
         raise RoutingDecisionError("routing request correctionEvents must be an array of <=24 entries")
 
     _validate_prompt_ref(request.get("currentPrompt"), "routing request currentPrompt")
+
+    idempotency = request.get("idempotency")
+    if not isinstance(idempotency, dict):
+        raise RoutingDecisionError("routing request idempotency must be an object")
+    supplied_semantic = idempotency.get("semanticSha256")
+    if not isinstance(supplied_semantic, str) or not SHA_RE.fullmatch(supplied_semantic):
+        raise RoutingDecisionError("routing request idempotency.semanticSha256 is invalid")
+    semantic_payload = {
+        key: value
+        for key, value in request.items()
+        if key not in {"eventId", "createdAt", "idempotency"}
+    }
+    expected_semantic = _canonical_sha256(semantic_payload)
+    if supplied_semantic != expected_semantic:
+        raise RoutingDecisionError("routing request semanticSha256 does not verify")
+    expected_key = _idem_key(
+        "prompt-kit.routing-request/v1",
+        observation_event_id,
+        grounding_episode_id,
+        execution_surface,
+    )
+    if idempotency.get("key") != expected_key:
+        raise RoutingDecisionError("routing request idempotency key does not verify")
     return request
 
 
