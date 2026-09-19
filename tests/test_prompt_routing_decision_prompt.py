@@ -198,6 +198,19 @@ class PromptRoutingDecisionTests(unittest.TestCase):
                     self.route_receipt(),
                 )
 
+    def test_cross_surface_request_fails_closed_instead_of_falling_back(self) -> None:
+        request = self.request(executionSurface="gnhf_launch_artifact")
+        with self.assertRaisesRegex(
+            routing.RoutingDecisionError,
+            "cross-surface fallback is forbidden",
+        ):
+            routing.build_routing_decision(request, self.route_receipt())
+
+    def test_invalid_execution_surface_fails_closed(self) -> None:
+        request = self.request(executionSurface="shell")
+        with self.assertRaisesRegex(routing.RoutingDecisionError, "executionSurface is invalid"):
+            routing.build_routing_decision(request, self.route_receipt())
+
     def test_correction_without_recovery_signal_routes_to_critique(self) -> None:
         request = self.request(
             signals=["routing"],
