@@ -134,6 +134,12 @@ class PromptRuntimeComplianceValidatorTests(unittest.TestCase):
         )
         self.assertEqual(result["counts"]["FAIL"], 0)
         self.assertEqual(result["counts"]["UNKNOWN"], 0)
+        for row in result["findings"]:
+            self.assertEqual(
+                row["severity"],
+                validator.RULES[row["rule_id"]]["severity"],
+                row["rule_id"],
+            )
 
     def test_durable_negative_fixtures_fail_their_expected_rules(self) -> None:
         cases = (
