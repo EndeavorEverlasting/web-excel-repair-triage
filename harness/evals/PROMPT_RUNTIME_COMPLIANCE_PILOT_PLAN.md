@@ -749,18 +749,64 @@ Not part of the first slice:
 - Prompt Kit wording changes based only on synthetic pilot behavior;
 - provider-specific integrations beyond the minimum adapter needed to obtain real evidence.
 
+## Current execution checkpoint — 2026-09-19
+
+Refreshed provider floor for Sprint 4 continuation:
+
+- current default branch at lane creation: `main@ed3dd1e652d7b65f6250442d8f8a597db9e9fce0`;
+- Sprint 0 dispatch-manifest decoupling is integrated;
+- Sprint 1 contract/schema floor is integrated;
+- Sprint 2A semantic validator is integrated and its hardening regression suite is integrated through PR #572 / `ed3dd1e652d7b65f6250442d8f8a597db9e9fce0`;
+- Sprint 2B canonical RTC01..RTC05 receipt-oracle corpus is integrated through PR #578 / `5d9179de63d2dbf9d0efa47c665b4a27f933fc5f`;
+- Sprint 3A provider-neutral runner is integrated at `29bf333309916740b6172247c5d93e5e76f9ea81`;
+- Sprint 3B P99/P13/P94 linkage is integrated at `a23054d3d07b84d5720e91dd69625fefcb9a17f9`;
+- bidirectional runtime-compliance use-case routing is integrated through PR #581 / `bd542927eeb922c6c4d358b0c69d025c15476983`;
+- runtime routing proof hardening is integrated through PR #583 / `b428b5103467bd370d419d4973975985386abd6a`;
+- root harness manifest/validator commands already reach the runtime-compliance receipt audit and focused deterministic suite.
+
+Sprint 4 is therefore **partially integrated**, not pending from scratch.
+
+### Active Sprint 4 safe convergence lane
+
+Owned mutation surfaces:
+
+- `harness/test-floor.v1.json`;
+- `Outputs/prompt-parallel-dispatch/manifest.json`;
+- this canonical plan.
+
+Expected result:
+
+- all seven runtime-compliance deterministic regression modules are directly registered in the deterministic test floor, including the validator-hardening suite added by PR #572;
+- the active dispatch manifest describes the current Sprint 4 state instead of the superseded SSH/local-execution program;
+- the plan records the exact remaining shared-owner gates.
+
+Proof ceiling:
+
+- deterministic repository/harness integration only;
+- fake-adapter or plan-only execution never becomes observed external-agent compliance.
+
+### Remaining Sprint 4 owner gates
+
+- `harness/evals/repository-ai-evals.v1.json` remains BLOCKED by open PR #450, which still owns that shared P67 registry surface. Do not create a competing writer.
+- `.ai/WORK_QUEUE.md` remains BLOCKED by open PR #524. P66 indexing must occur only after that file is released.
+- `harness/manifest.v1.json`, `harness/validators.v1.json`, `scripts/validate_harness.py`, and `tests/test_harness_contract.py` are currently owned by open PR #584. Existing runtime-compliance registration on main is retained; do not race its Python-command normalization lane.
+- Sprint 5 remains BLOCKED / UNPROVEN_RUNTIME until a real external-agent adapter/configuration and observable provider/model identity are available.
+
 ## First executable next transition
 
-Owner: P07 / strategic-harness owner.
-
-Dependency: refreshed default branch and confirmation that the prompt-strength seed/global-manifest equality still exists.
+Owner: P07 runtime-compliance Sprint 4 coordinator.
 
 Action:
-- execute Sprint 0, removing only the permanent equality between historical prompt-strength seed and global active dispatch manifest while preserving independent validation of both.
+- complete and integrate the non-colliding Sprint 4 test-floor/dispatch/plan convergence lane;
+- after PR #450 releases `harness/evals/repository-ai-evals.v1.json`, reconcile the P67 suite registration on refreshed main;
+- after #584 resolves, re-read the root manifest/validator/harness surfaces and mutate them only if a proof-relevant gap remains;
+- then execute the canonical plan-only/fake-adapter dry run on the exact converged head and preserve `UNPROVEN_RUNTIME` honestly.
 
-Completion gate:
-- prompt-strength focused tests pass;
-- historical seed validates;
-- a different valid active dispatch manifest can validate without mutating the historical seed;
-- patch hygiene passes;
+Completion gate for the active safe lane:
+- deterministic test-floor contract passes with all seven runtime-compliance regression modules registered;
+- runtime-compliance focused tests pass;
+- dispatch manifest validates;
+- exact candidate patch hygiene and repository-required checks pass;
 - exact green candidate integrates into current default branch.
+
+The whole first runtime slice is not complete until the remaining Sprint 4 owner gates are reconciled or durably blocked and Sprint 5 is either OBSERVED for the exact five-scenario/model/config fingerprint or explicitly remains BLOCKED / UNPROVEN_RUNTIME at the real external gate.
