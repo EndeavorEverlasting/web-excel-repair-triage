@@ -163,6 +163,7 @@ class EvidenceSpineRuntimeTests(unittest.TestCase):
         invalid = [
             {**base, "prompt_revision": "x" * 161},
             {**base, "prompt_revision": "rev\nprivate"},
+            {**base, "prompt_revision": "rev-1\n"},
             {**base, "surface_id": "surface with spaces"},
             {**base, "destination": "raw workbook text with spaces"},
             {**base, "destination": "x" * 161},
