@@ -27,16 +27,17 @@ Material behavior changes require proof.
 Client-facing delivery uses **minimum sufficient explanation**: purpose, period, totals, attachment, consequence. Omit internal evidence mechanics, private allocation logic, singled-out edge cases, defensive caveats, invitation-to-question closings unless needed for recipient action.
 
 ### Provider degradation and merge continuity
-Actions minute/billing exhaustion, never-started checks for usage limits, review-bot/CI limits are expected degradation, NOT merge blockers. Continue via refresh base, exact-head validation, local proof (`.githooks/pre-push`, `scripts/validate_pr_merge_gate.py`), merge when authorized. Don't stop or ask to proceed. Real blockers: conflicts, draft, head-moved, failed validators, review, authority. See `harness/contracts/pr-merge-gate.v1.json`.
+Actions minute/billing exhaustion, never-started checks, review-bot/CI limits are expected degradation, NOT merge blockers. Continue via refresh base, exact-head validation, local proof (`.githooks/pre-push`, `scripts/validate_pr_merge_gate.py`), merge when authorized. Real blockers: conflicts, draft, head-moved, failed validators, review, authority. See `harness/contracts/pr-merge-gate.v1.json`.
 
 ## 6. Repository identity and product boundary
 The core product domain is **spreadsheet intelligence**. Web Excel compatibility, billing, roster/time evidence, triage are first-class.
 **AFK Agent Flow** is the operator-approved product identity, formerly Operant / Prompt Kit. Target: `UnderDeskDev/AFK-Agent-Flow`; unproven.
-Until cutover, legacy `operant` / `prompt-kit` paths remain authoritative compatibility surfaces and must not be silently moved. This repo may consume AFK Agent Flow through historical Operant release seams but must not become a competing authority; keep cross-repo dependencies explicit and versioned.
+Until cutover, legacy `operant` / `prompt-kit` paths remain authoritative compatibility surfaces and must not be silently moved. This repo may consume AFK Agent Flow through historical Operant release seams but must not become a competing authority; cross-repo dependencies explicit and versioned.
 
 ## 7. Progressive disclosure and binding domain law
-Orient: `AGENTS.md` → `harness/CONTEXT.md` → selected domain. Do **not** preload full harness/skills/history. Escalate context only for evidence, ownership.
+Orient: `AGENTS.md` → `harness/CONTEXT.md` → selected domain. Do **not** preload full harness/skills/history. Escalate context only for evidence.
 Bindings: `harness/specs/operator-delivery.md`; `harness/specs/prompt-operations.md`; `harness/specs/billing-artifact-safety.md`.
+Panels are agent transport; ingest/dispatch, not emit-and-wait.
 
 ### Repository-local `/teach` protocol
 `/teach <topic>` uses `.teach/`, repo truth, first principles, one mechanism + code exercise. VERIFIED/MASTERED requires demonstrated understanding. `/teach recap` resumes first weak frontier.

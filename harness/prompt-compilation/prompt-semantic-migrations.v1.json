@@ -37,6 +37,26 @@
         "tests/test_prompt_registry_expansion_regression_design_teach.py",
         "tests/test_prompt_quality_history.py"
       ]
+    },
+    {
+      "migration_id": "2026-09-19-agent-transport-panels-binding-law",
+      "path": "docs/prompts.json",
+      "from_git_blob_sha1": "0b5ff65078ab2bc0fdd70dd52a199e440ccbe6c7",
+      "to_git_blob_sha1": "aa4dd85a41f374db82d7800bc0ecdf78f62803cd",
+      "affected_prompt_ids": [
+        "P02",
+        "P04",
+        "P07",
+        "P59"
+      ],
+      "change_kind": "strengthening",
+      "effective_identity_change": "preserve_canonical",
+      "rationale": "Repository-wide binding law that copy/portability panels are agent transport, not human-only fallback. Agents can and must ingest and dispatch those prompts into workflows. Strengthens P02/P04/P07/P59 to make explicit that 'Copyable panels are machine-readable transport that agents must ingest and dispatch' rather than 'Human copy panels are portability/recovery fallback only'. Preserves prompt identities and parallel dispatch semantics while closing autonomy gap.",
+      "focused_tests": [
+        "tests/test_prompt_parallel_dispatch.py",
+        "tests/test_prompt_parallel_execution_contract.py",
+        "tests/test_p02_p07_autonomous_iteration.py"
+      ]
     }
   ]
 }

@@ -106,12 +106,15 @@
     "degraded_requires_autonomy_gap": true,
     "parallel_success_requires_observed_dispatch": true,
     "human_scheduler_allowed": false,
+    "panels_are_machine_ingestible": true,
+    "panel_emission_without_dispatch_is_incomplete": true,
     "shared_mutation_surface_requires_dependency_order": true,
     "deterministic_ready_lane_tiebreak": "lane_id_ascending",
     "prohibited_clean_fallback": "PARALLEL EXECUTION: unavailable",
     "executable_manifest_lane_status": "PLANNED",
     "blocked_manifest_lane_rule": "Preserve BLOCKED in the dispatch receipt without invoking its launch action.",
-    "terminal_manifest_lane_rule": "DISPATCHED, PASS, and FAIL are evidence states, not fresh launch instructions; run must reject them and require a refreshed manifest."
+    "terminal_manifest_lane_rule": "DISPATCHED, PASS, and FAIL are evidence states, not fresh launch instructions; run must reject them and require a refreshed manifest.",
+    "panel_transport_rule": "Portability/copy panels are machine transport for lane prompts. Agents must ingest panels and dispatch via the first available adapter (AgentSwitchboard, native subagents, argv runners, MCP surfaces). Human paste is incidental compatibility, not the primary path. Report AUTONOMY_GAP when all adapters are unavailable, do not idle waiting."
   },
   "proof_ceiling": "Validates a machine-readable dependency/collision/adapter/launch contract and can execute argv-addressable lanes in concurrent dependency waves. Runtime-tool adapters remain externally dispatched by the active agent runtime and require separate evidence receipts."
 }
