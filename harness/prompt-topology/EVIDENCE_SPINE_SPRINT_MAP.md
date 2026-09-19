@@ -53,7 +53,7 @@ A branch, PR, schema, passing local unit test, or static artifact never proves a
 
 - **PR #467/#477 own the integrated parallel-dispatch floor on `main`.** Do not duplicate its prompt-parallel-dispatch contract, launcher/adapter, tests, or generated Prompt Kit changes in another lane.
 - **P95 architecture owns the state-owner/identity decision** via integrated `EVIDENCE_SPINE_ARCHITECTURE.md`. Successors must not create a fourth route/usage/outcome event model or assert that one universal lifecycle envelope is required.
-- **PR #450 remains the donor/owner for routing-control-plane concepts.** Do not independently recreate its route receipt/schema before adapting only P95-preserved concepts.
+- **PR #450 is historical donor evidence for routing-control-plane concepts.** The current Lane A implementation owner is the thin route-receipt seam in `scripts/evidence_spine_runtime.py`; PR #596 is the bounded salvage/integration carrier. Do not revive #450's mutable router/state/eval-registry implementation.
 - **PR #431 remains the donor/owner for Prompt Finder observation concepts.** Do not independently recreate its observation corpus before adapting only P95-preserved concepts.
 - **Merged outcome semantics remain authoritative on `main`.** Do not fork P99/P115 outcome and recovery classification into a competing classifier.
 - **PR #466/current `main` owns local retention/cleanup.** Evidence/feedback work must use the canonical bounded lifecycle rather than create unbounded local history.
@@ -109,7 +109,7 @@ The P95 design must explicitly cover the human and agent paths without adding wo
 
 ### Wave 2 — Panel 3: Evidence Spine Runtime & Feedback-to-Ticket Convergence
 
-**Status:** INTEGRATED minimal runtime on `main` via #474 (collision matrix) and #475 (runtime adapters). Remaining #450/#431 donor salvage stays architecture-bounded.
+**Status:** INTEGRATED minimal runtime on `main` via #474 (collision matrix) and #475 (runtime adapters). Lane A route-receipt salvage is implemented through PR #596 using the existing runtime seam; #431 observation salvage remains architecture-bounded.
 
 **Goal:** execute only runtime/integration work admitted by P95, reconcile stale donor PRs instead of duplicating them, and deliver the smallest end-to-end flow from bounded prompt execution evidence to deterministic continuation/recovery and git-friendly recurring-defect work.
 
@@ -119,7 +119,7 @@ The P95 design must explicitly cover the human and agent paths without adding wo
 
 **Parallel lanes after P95 freezes interfaces:**
 
-- **Lane A — routing reconciliation:** salvage/adapt #450 semantics to the chosen lifecycle seam; do not redesign feedback/outcome semantics.
+- **Lane A — routing reconciliation:** current implementation is `scripts/evidence_spine_runtime.py::build_route_receipt`, carried by PR #596. It salvages only actor-neutral receipts, destination provenance, and deterministic idempotent identity from #450; it deliberately omits the stale mutable route-state engine and does not redesign feedback/outcome semantics.
 - **Lane B — observation reconciliation:** salvage/adapt #431 bounded observation semantics; do not create a new route or outcome classifier and do not store raw prompt/clipboard/transcript data.
 - **Lane C — corrective recurrence / finding / ticket bridge:** consume authoritative normalized outcome/correction evidence and produce git-friendly findings plus P115-compatible agent-ready work requests; do not own Prompt Finder capture UI or route transport.
 
@@ -167,7 +167,7 @@ These lanes may run concurrently only after exact file/schema ownership is reche
 
 ### Reconcile after P95
 
-- PR #450 routing control plane;
+- PR #450 routing control plane — historical donor only after Lane A salvage; do not wholesale merge;
 - PR #431 Prompt Finder observation corpus/usage-feedback work.
 
 ### Create only if P95 proves necessary
@@ -257,7 +257,7 @@ The following remain outside this three-panel map unless the P95 architecture or
 | --- | --- | --- | --- |
 | Parallel/autonomous dispatch floor | PR #467 / prompt operations | IMPLEMENTED on branch, not proven green/integrated on refreshed floor | refresh -> repair CI/reviews -> validate -> integrate main |
 | Evidence lifecycle ownership | P95 / Prompt Topology strategy | TRACKED, architecture artifact absent | design/prototype -> architecture PR -> integrate |
-| Routing control plane | PR #450 donor | IMPLEMENTED on stale branch only | P95 disposition -> reconcile or retire -> validate/integrate |
+| Routing control plane | Evidence Spine Lane A (`scripts/evidence_spine_runtime.py`), with PR #450 as historical donor | IMPLEMENTED/VALIDATED candidate via PR #596; stale #450 remains non-authoritative | integrate #596 -> verify current-main containment -> retire/supersede #450 |
 | Prompt Finder observation lane | PR #431 donor | IMPLEMENTED on stale/unmergeable branch only | P95 disposition -> reconcile or retire -> validate/integrate |
 | Outcome/correction semantics | P99/P115 on main | INTEGRATED | reuse; extend only through owned contracts |
 | Local evidence retention/privacy | serverless lifecycle on main | INTEGRATED implementation | reuse and prove new writes remain bounded |
