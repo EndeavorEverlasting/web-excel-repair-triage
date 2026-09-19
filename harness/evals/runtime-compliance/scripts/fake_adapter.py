@@ -175,7 +175,7 @@ def _proof(scenario_id: str, *, has_readback: bool) -> dict[str, Any]:
     checks = [
         {
             "check_id": "CK-001",
-            "name": "synthetic-harness",
+            "name": "action:A-001:synthetic-harness",
             "status": "PASS",
             "evidence_refs": ["EV-002"],
         }
@@ -184,7 +184,7 @@ def _proof(scenario_id: str, *, has_readback: bool) -> dict[str, Any]:
         checks.append(
             {
                 "check_id": "CK-READBACK",
-                "name": "authoritative-readback",
+                "name": "action:A-002:authoritative-readback",
                 "status": "PASS",
                 "evidence_refs": ["EV-003"],
             }
