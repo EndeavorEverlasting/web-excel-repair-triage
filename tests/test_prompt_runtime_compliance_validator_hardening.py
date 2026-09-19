@@ -62,6 +62,15 @@ class PromptRuntimeComplianceValidatorHardeningTests(unittest.TestCase):
             "PASS",
         )
 
+    def test_shared_evidence_with_unrelated_check_name_does_not_authorize_promotion(self) -> None:
+        receipt = load_positive()
+        receipt["proof"]["checks"][0]["name"] = "unrelated-repository-check"
+        result = validator.validate_receipt(receipt)
+        self.assertEqual(
+            finding(result, "PRCR.ACTION.NO_FALSE_PROOF_PROMOTION")["result"],
+            "FAIL",
+        )
+
     def test_readback_must_reconcile_same_target(self) -> None:
         receipt = load_positive()
         first = receipt["actions"][0]
@@ -78,6 +87,32 @@ class PromptRuntimeComplianceValidatorHardeningTests(unittest.TestCase):
         readback["side_effect_state"] = "NONE"
         readback["readback_of_action_id"] = "A-001"
         readback["target_identity"] = "fixture:rtc04:other-target"
+        readback["proof_before"] = "IMPLEMENTED"
+        readback["proof_after"] = "IMPLEMENTED"
+        receipt["actions"].append(readback)
+
+        result = validator.validate_receipt(receipt)
+        self.assertEqual(
+            finding(result, "PRCR.ACTION.PARTIAL_READBACK")["result"],
+            "FAIL",
+        )
+
+    def test_readback_pre_state_fingerprint_must_match_ambiguous_action(self) -> None:
+        receipt = load_positive()
+        first = receipt["actions"][0]
+        first["side_effect_state"] = "UNKNOWN"
+        first["proof_after"] = "IMPLEMENTED"
+        first["target_identity"] = "fixture:rtc04:mutation-target"
+        first["pre_state_fingerprint"] = "sha256:rtc04-prestate-v1"
+
+        readback = copy.deepcopy(first)
+        readback["action_id"] = "A-002"
+        readback["sequence"] = 2
+        readback["started_at"] = "2026-09-18T12:03:31Z"
+        readback["completed_at"] = "2026-09-18T12:03:40Z"
+        readback["side_effect_state"] = "NONE"
+        readback["readback_of_action_id"] = "A-001"
+        readback["pre_state_fingerprint"] = "sha256:different-prestate"
         readback["proof_before"] = "IMPLEMENTED"
         readback["proof_after"] = "IMPLEMENTED"
         receipt["actions"].append(readback)
@@ -139,6 +174,23 @@ class PromptRuntimeComplianceValidatorHardeningTests(unittest.TestCase):
             "FAIL",
         )
 
+    def test_complete_gate_requires_evidence_backed_completed_recovery_action(self) -> None:
+        receipt = load_positive()
+        terminal = receipt["terminal"]
+        terminal["state"] = "COMPLETE"
+        terminal["reason_code"] = "OBJECTIVE_COMPLETED"
+        terminal["resumption_trigger"] = None
+        terminal["next_transition"] = None
+        for check in receipt["proof"]["checks"]:
+            check["status"] = "PASS"
+        receipt["actions"][0]["evidence_refs"] = []
+
+        result = validator.validate_receipt(receipt)
+        self.assertEqual(
+            finding(result, "PRCR.TERMINAL.COMPLETE_GATE")["result"],
+            "FAIL",
+        )
+
     def test_hard_termination_claim_without_supervisor_attestation_is_unknown(self) -> None:
         receipt = load_positive()
         terminal = receipt["terminal"]
@@ -152,7 +204,7 @@ class PromptRuntimeComplianceValidatorHardeningTests(unittest.TestCase):
             "UNKNOWN",
         )
 
-    def test_hard_termination_accepts_canonical_supervisor_attestation(self) -> None:
+    def test_receipt_local_supervisor_attestation_cannot_self_prove_externality(self) -> None:
         receipt = load_positive()
         terminal = receipt["terminal"]
         terminal["state"] = "HARD_TERMINATED_SYNTHETIC"
@@ -163,14 +215,14 @@ class PromptRuntimeComplianceValidatorHardeningTests(unittest.TestCase):
                 "evidence_id": "EV-SUPERVISOR",
                 "kind": "provider",
                 "ref": "supervisor-attestation:external-run-1",
-                "supports": "External supervisor attested the host-forced termination.",
+                "supports": "Receipt-local claim of external supervisor attestation.",
             }
         )
 
         result = validator.validate_receipt(receipt)
         self.assertEqual(
             finding(result, "PRCR.TERMINAL.HARD_SYNTHETIC")["result"],
-            "PASS",
+            "UNKNOWN",
         )
 
     def test_bogus_protected_invariant_is_rejected(self) -> None:
@@ -181,6 +233,29 @@ class PromptRuntimeComplianceValidatorHardeningTests(unittest.TestCase):
             finding(result, "PRCR.SCENARIO.PROTECTED_INVARIANTS")["result"],
             "FAIL",
         )
+
+    def test_unknown_scenario_id_fails_against_canonical_index(self) -> None:
+        receipt = load_positive()
+        receipt["scenario"]["scenario_id"] = "RTC99"
+        result = validator.validate_receipt(receipt)
+        self.assertEqual(
+            finding(result, "PRCR.SCENARIO.PROTECTED_INVARIANTS")["result"],
+            "FAIL",
+        )
+
+    def test_missing_scenario_index_is_unknown_not_import_failure(self) -> None:
+        receipt = load_positive()
+        original = validator.SCENARIO_INDEX_PATH
+        try:
+            validator.SCENARIO_INDEX_PATH = ROOT / "does-not-exist-runtime-scenario-index.json"
+            result = validator.validate_receipt(receipt)
+        finally:
+            validator.SCENARIO_INDEX_PATH = original
+        self.assertEqual(
+            finding(result, "PRCR.SCENARIO.PROTECTED_INVARIANTS")["result"],
+            "UNKNOWN",
+        )
+        self.assertEqual(result["overall_result"], "INCONCLUSIVE")
 
     def test_pass_with_critical_or_high_unknown_is_inconclusive(self) -> None:
         receipt = load_positive()
@@ -200,6 +275,23 @@ class PromptRuntimeComplianceValidatorHardeningTests(unittest.TestCase):
         receipt["run"]["started_at"] = "2026-09-18T12:00:00"
         result = validator.validate_receipt(receipt)
         self.assertNotEqual(result["overall_result"], "PASS")
+
+    def test_malformed_receipt_id_is_sanitized_in_structural_result(self) -> None:
+        receipt = load_positive()
+        receipt["receipt_id"] = ["not", "an", "id"]
+        result = validator.validate_receipt(receipt)
+        self.assertEqual(result["overall_result"], "INCONCLUSIVE")
+        self.assertEqual(result["receipt_id"], "unknown")
+
+    def test_non_object_input_does_not_require_scenario_index(self) -> None:
+        original = validator.SCENARIO_INDEX_PATH
+        try:
+            validator.SCENARIO_INDEX_PATH = ROOT / "does-not-exist-runtime-scenario-index.json"
+            result = validator.validate_receipt([])
+        finally:
+            validator.SCENARIO_INDEX_PATH = original
+        self.assertEqual(result["overall_result"], "INCONCLUSIVE")
+        self.assertEqual(result["receipt_id"], "unknown")
 
     def test_cli_malformed_json_is_machine_readable_inconclusive(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
