@@ -15,6 +15,7 @@ if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
 from scripts import build_prompt_kit_registry as builder  # noqa: E402
+from scripts import prompt_registry_product_boundaries as boundaries  # noqa: E402
 
 CONTRACT_PATH = ROOT / "harness" / "contracts" / "prompt-quality-history.v1.json"
 PROMPT_ID_RE = re.compile(r"^P\d{2,4}$")
@@ -256,11 +257,65 @@ def audit_effective_identity(
     return errors
 
 
+def _derive_canonical_prompt_sources() -> set[str]:
+    """Derive the complete canonical prompt source set from product boundaries and builder."""
+    product_contract = boundaries.load_contract()
+    sources: set[str] = set()
+    
+    # Base registry
+    base_path = boundaries.base_registry(product_contract)
+    sources.add(base_path.relative_to(ROOT).as_posix())
+    
+    # Content registries
+    for path in boundaries.content_registries(product_contract):
+        sources.add(path.relative_to(ROOT).as_posix())
+    
+    # Legacy extension registries (composed from products)
+    for path in boundaries.legacy_extension_registries(product_contract):
+        sources.add(path.relative_to(ROOT).as_posix())
+    
+    # Prompt overrides
+    sources.add("registry/prompts/prompt-overrides.v1.json")
+    
+    return sources
+
+
+def audit_source_set_parity(contract: dict[str, Any]) -> list[str]:
+    """Enforce PSC013: source-history set parity is exact."""
+    errors: list[str] = []
+    
+    try:
+        canonical_sources = _derive_canonical_prompt_sources()
+    except Exception as exc:
+        errors.append(
+            f"PSC013: failed to derive canonical prompt source set: {exc}"
+        )
+        return errors
+    
+    protected_sources = {item["path"] for item in contract["canonical_body_sources"]}
+    
+    missing_from_history = sorted(canonical_sources - protected_sources)
+    if missing_from_history:
+        errors.append(
+            f"PSC013: canonical prompt sources are missing from history protection: {missing_from_history}"
+        )
+    
+    extra_in_history = sorted(protected_sources - canonical_sources)
+    if extra_in_history:
+        errors.append(
+            f"PSC013: history contract includes sources that are not canonical prompt sources: {extra_in_history}"
+        )
+    
+    return errors
+
+
 def validate() -> list[str]:
     contract = _load_contract()
     migrations = _load_migrations(contract)
-    return audit_source_history(contract, migrations) + audit_effective_identity(
-        contract, migrations
+    return (
+        audit_source_set_parity(contract)
+        + audit_source_history(contract, migrations)
+        + audit_effective_identity(contract, migrations)
     )
 
 

@@ -1,0 +1,17 @@
+{
+  "schema_version": "semantic-capability-catalog/v1",
+  "catalog_id": "prompt-semantic-capability-catalog",
+  "purpose": "Stable vocabulary of semantic capabilities that prompts may provide, with evidence requirements and overlap policies.",
+  "established_at": "2026-09-19",
+  "status": "sprint0_floor",
+  "seed_sources": [
+    "Prompt Strength shared execution dimensions",
+    "Registry useWhen/sprintRole/expectedOutput/proofGate metadata",
+    "Existing prompt-specific tests and contracts",
+    "Harness capabilities and use cases",
+    "Prompt Topology relationships (CO_USAGE, TRANSITION, SUBSTITUTION, COMPLEMENT)",
+    "Prompt Kit ontology evidence lineage"
+  ],
+  "capabilities": [],
+  "note": "Sprint 0 establishes the catalog schema only. Sprint 1A populates the capability vocabulary from seed sources and accepted prompt analysis."
+}
