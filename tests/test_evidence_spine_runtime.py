@@ -182,7 +182,7 @@ class EvidenceSpineRuntimeTests(unittest.TestCase):
             "surface_id": "prompt-kit",
         }
         invalid_cases = [
-            {**valid, "prompt_id": "P9999"},
+            {**valid, "prompt_id": "P10000"},
             {**valid, "prompt_revision": ""},
             {**valid, "surface_id": ""},
             {**valid, "provenance": "guessed"},
