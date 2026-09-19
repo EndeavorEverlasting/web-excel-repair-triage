@@ -3,15 +3,895 @@
   "catalog_id": "prompt-semantic-capability-catalog",
   "purpose": "Stable vocabulary of semantic capabilities that prompts may provide, with evidence requirements and overlap policies.",
   "established_at": "2026-09-19",
-  "status": "sprint0_floor",
+  "status": "sprint1a_baseline",
   "seed_sources": [
     "Prompt Strength shared execution dimensions",
     "Registry useWhen/sprintRole/expectedOutput/proofGate metadata",
     "Existing prompt-specific tests and contracts",
     "Harness capabilities and use cases",
-    "Prompt Topology relationships (CO_USAGE, TRANSITION, SUBSTITUTION, COMPLEMENT)",
-    "Prompt Kit ontology evidence lineage"
+    "Prompt Topology relationships",
+    "Core product domain (spreadsheet intelligence, billing)"
   ],
-  "capabilities": [],
-  "note": "Sprint 0 establishes the catalog schema only. Sprint 1A populates the capability vocabulary from seed sources and accepted prompt analysis."
+  "capabilities": [
+    {
+      "capability_id": "strength.canonical_identity",
+      "title": "Canonical Identity",
+      "definition": "Every executable representation preserves the canonical prompt's required obligations unless an explicit semantic migration authorizes replacement.",
+      "class": "strength.representation",
+      "domain": "execution_quality",
+      "aliases": [
+        "canonical",
+        "effective",
+        "compiled",
+        "identity",
+        "immutable",
+        "display/copy",
+        "generated site"
+      ],
+      "admissible_relations": [
+        "IMPLEMENTS",
+        "TESTS",
+        "GUARDS"
+      ],
+      "evidence_requirements": {
+        "primary_requires_proof": true,
+        "required_requires_proof": true,
+        "test_requires_fixture": true
+      },
+      "global_coverage_policy": "AT_LEAST_ONE_REQUIRED_OR_PRIMARY",
+      "overlap_policy": "OVERLAP_EXPECTED",
+      "seed_source": "harness/contracts/prompt-strength.v1.json:dimensions[canonical_identity]",
+      "provenance": "Prompt Strength shared execution dimension"
+    },
+    {
+      "capability_id": "strength.fresh_evidence_floor",
+      "title": "Fresh Evidence Floor",
+      "definition": "Refresh repository/provider truth and reconcile branch-sensitive evidence before mutation or emitted commands.",
+      "class": "strength.evidence",
+      "domain": "execution_quality",
+      "aliases": [
+        "refresh",
+        "stale",
+        "current head",
+        "provider truth",
+        "upstream identity"
+      ],
+      "admissible_relations": [
+        "IMPLEMENTS",
+        "TESTS",
+        "GUARDS"
+      ],
+      "evidence_requirements": {
+        "primary_requires_proof": true,
+        "required_requires_proof": true,
+        "test_requires_fixture": true
+      },
+      "global_coverage_policy": "AT_LEAST_ONE_REQUIRED_OR_PRIMARY",
+      "overlap_policy": "OVERLAP_EXPECTED",
+      "seed_source": "harness/contracts/prompt-strength.v1.json:dimensions[fresh_evidence_floor]",
+      "provenance": "Prompt Strength shared execution dimension"
+    },
+    {
+      "capability_id": "strength.scope_ownership",
+      "title": "Scope Ownership",
+      "definition": "Bounded scope constrains writes without shrinking reasoning depth; shared owners and forbidden surfaces remain explicit.",
+      "class": "strength.ownership",
+      "domain": "execution_quality",
+      "aliases": [
+        "scope",
+        "owner",
+        "writer",
+        "surface",
+        "ownership"
+      ],
+      "admissible_relations": [
+        "IMPLEMENTS",
+        "TESTS",
+        "GUARDS"
+      ],
+      "evidence_requirements": {
+        "primary_requires_proof": true,
+        "required_requires_proof": true,
+        "test_requires_fixture": true
+      },
+      "global_coverage_policy": "AT_LEAST_ONE_REQUIRED_OR_PRIMARY",
+      "overlap_policy": "OVERLAP_EXPECTED",
+      "seed_source": "harness/contracts/prompt-strength.v1.json:dimensions[scope_ownership]",
+      "provenance": "Prompt Strength shared execution dimension"
+    },
+    {
+      "capability_id": "strength.fixed_point_continuation",
+      "title": "Fixed Point Continuation",
+      "definition": "A first pass or first green is a checkpoint; continue while authorized progress-bearing work can materially reduce a required gap.",
+      "class": "strength.execution",
+      "domain": "execution_quality",
+      "aliases": [
+        "first pass",
+        "first green",
+        "continue",
+        "remaining",
+        "stop"
+      ],
+      "admissible_relations": [
+        "IMPLEMENTS",
+        "TESTS",
+        "GUARDS"
+      ],
+      "evidence_requirements": {
+        "primary_requires_proof": true,
+        "required_requires_proof": true,
+        "test_requires_fixture": true
+      },
+      "global_coverage_policy": "AT_LEAST_ONE_REQUIRED_OR_PRIMARY",
+      "overlap_policy": "OVERLAP_EXPECTED",
+      "seed_source": "harness/contracts/prompt-strength.v1.json:dimensions[fixed_point_continuation]",
+      "provenance": "Prompt Strength shared execution dimension"
+    },
+    {
+      "capability_id": "strength.exhaustive_compute_depth",
+      "title": "Exhaustive Compute Depth",
+      "definition": "Exhaustive mode spends decision-relevant safe compute across acceptance, hypothesis, adversarial, validation, and residual-proof surfaces.",
+      "class": "strength.execution",
+      "domain": "execution_quality",
+      "aliases": [
+        "compute",
+        "broader",
+        "adversarial",
+        "tokens",
+        "tool calls"
+      ],
+      "admissible_relations": [
+        "IMPLEMENTS",
+        "TESTS",
+        "GUARDS"
+      ],
+      "evidence_requirements": {
+        "primary_requires_proof": true,
+        "required_requires_proof": true,
+        "test_requires_fixture": true
+      },
+      "global_coverage_policy": "OPTIONAL",
+      "overlap_policy": "OVERLAP_EXPECTED",
+      "seed_source": "harness/contracts/prompt-strength.v1.json:dimensions[exhaustive_compute_depth]",
+      "provenance": "Prompt Strength shared execution dimension"
+    },
+    {
+      "capability_id": "strength.parallel_dispatch",
+      "title": "Parallel Dispatch",
+      "definition": "When graph width is at least two and safe capacity exists, independent lanes are actually launched concurrently and rejoined.",
+      "class": "strength.orchestration",
+      "domain": "execution_quality",
+      "aliases": [
+        "parallel",
+        "dispatch",
+        "lane",
+        "concurrent",
+        "serial"
+      ],
+      "admissible_relations": [
+        "IMPLEMENTS",
+        "TESTS",
+        "GUARDS"
+      ],
+      "evidence_requirements": {
+        "primary_requires_proof": true,
+        "required_requires_proof": true,
+        "test_requires_fixture": true
+      },
+      "global_coverage_policy": "AT_LEAST_ONE_REQUIRED_OR_PRIMARY",
+      "overlap_policy": "OVERLAP_EXPECTED",
+      "seed_source": "harness/contracts/prompt-strength.v1.json:dimensions[parallel_dispatch]",
+      "provenance": "Prompt Strength shared execution dimension"
+    },
+    {
+      "capability_id": "strength.capability_ladder",
+      "title": "Capability Ladder",
+      "definition": "Failure of one worker adapter class does not imply global absence; continue through the evidenced adapter ladder before degradation.",
+      "class": "strength.orchestration",
+      "domain": "execution_quality",
+      "aliases": [
+        "adapter",
+        "rung",
+        "unavailable",
+        "degraded"
+      ],
+      "admissible_relations": [
+        "IMPLEMENTS",
+        "TESTS",
+        "GUARDS"
+      ],
+      "evidence_requirements": {
+        "primary_requires_proof": true,
+        "required_requires_proof": true,
+        "test_requires_fixture": true
+      },
+      "global_coverage_policy": "AT_LEAST_ONE_REQUIRED_OR_PRIMARY",
+      "overlap_policy": "OVERLAP_EXPECTED",
+      "seed_source": "harness/contracts/prompt-strength.v1.json:dimensions[capability_ladder]",
+      "provenance": "Prompt Strength shared execution dimension"
+    },
+    {
+      "capability_id": "strength.lane_isolation",
+      "title": "Lane Isolation",
+      "definition": "Concurrent writers own isolated branches/worktrees/workspaces and non-Git shared resources are serialized or separately allocated.",
+      "class": "strength.ownership",
+      "domain": "execution_quality",
+      "aliases": [
+        "worktree",
+        "writer",
+        "shared resource",
+        "sibling",
+        "lane"
+      ],
+      "admissible_relations": [
+        "IMPLEMENTS",
+        "TESTS",
+        "GUARDS"
+      ],
+      "evidence_requirements": {
+        "primary_requires_proof": true,
+        "required_requires_proof": true,
+        "test_requires_fixture": true
+      },
+      "global_coverage_policy": "AT_LEAST_ONE_REQUIRED_OR_PRIMARY",
+      "overlap_policy": "OVERLAP_EXPECTED",
+      "seed_source": "harness/contracts/prompt-strength.v1.json:dimensions[lane_isolation]",
+      "provenance": "Prompt Strength shared execution dimension"
+    },
+    {
+      "capability_id": "strength.local_proof_continuity",
+      "title": "Local Proof Continuity",
+      "definition": "Hosted CI/provider limits do not terminalize locally executable proof; local proof remains typed and does not impersonate hosted proof.",
+      "class": "strength.validation",
+      "domain": "execution_quality",
+      "aliases": [
+        "local",
+        "hosted",
+        "actions",
+        "provider"
+      ],
+      "admissible_relations": [
+        "IMPLEMENTS",
+        "TESTS",
+        "GUARDS"
+      ],
+      "evidence_requirements": {
+        "primary_requires_proof": true,
+        "required_requires_proof": true,
+        "test_requires_fixture": true
+      },
+      "global_coverage_policy": "AT_LEAST_ONE_REQUIRED_OR_PRIMARY",
+      "overlap_policy": "OVERLAP_EXPECTED",
+      "seed_source": "harness/contracts/prompt-strength.v1.json:dimensions[local_proof_continuity]",
+      "provenance": "Prompt Strength shared execution dimension"
+    },
+    {
+      "capability_id": "strength.evidence_state_integrity",
+      "title": "Evidence State Integrity",
+      "definition": "PLANNED, IMPLEMENTED, VALIDATED, INTEGRATED, DEPLOYED, and OBSERVED remain distinct and cannot be silently promoted.",
+      "class": "strength.evidence",
+      "domain": "execution_quality",
+      "aliases": [
+        "proof",
+        "state",
+        "deployed",
+        "observed",
+        "before state"
+      ],
+      "admissible_relations": [
+        "IMPLEMENTS",
+        "TESTS",
+        "GUARDS"
+      ],
+      "evidence_requirements": {
+        "primary_requires_proof": true,
+        "required_requires_proof": true,
+        "test_requires_fixture": true
+      },
+      "global_coverage_policy": "AT_LEAST_ONE_REQUIRED_OR_PRIMARY",
+      "overlap_policy": "OVERLAP_EXPECTED",
+      "seed_source": "harness/contracts/prompt-strength.v1.json:dimensions[evidence_state_integrity]",
+      "provenance": "Prompt Strength shared execution dimension"
+    },
+    {
+      "capability_id": "strength.failure_diagnosis_retry",
+      "title": "Failure Diagnosis Retry",
+      "definition": "Failed validation is diagnosed, repaired within scope, and rerun; failed or skipped checks cannot be converted into completion.",
+      "class": "strength.validation",
+      "domain": "execution_quality",
+      "aliases": [
+        "fail",
+        "repair",
+        "rerun",
+        "diagnosis",
+        "verify"
+      ],
+      "admissible_relations": [
+        "IMPLEMENTS",
+        "TESTS",
+        "GUARDS"
+      ],
+      "evidence_requirements": {
+        "primary_requires_proof": true,
+        "required_requires_proof": true,
+        "test_requires_fixture": true
+      },
+      "global_coverage_policy": "AT_LEAST_ONE_REQUIRED_OR_PRIMARY",
+      "overlap_policy": "OVERLAP_EXPECTED",
+      "seed_source": "harness/contracts/prompt-strength.v1.json:dimensions[failure_diagnosis_retry]",
+      "provenance": "Prompt Strength shared execution dimension"
+    },
+    {
+      "capability_id": "strength.mainline_convergence",
+      "title": "Mainline Convergence",
+      "definition": "A green owned branch/PR is intermediate evidence; integrate into the refreshed default branch when all merge gates are satisfied.",
+      "class": "strength.integration",
+      "domain": "execution_quality",
+      "aliases": [
+        "merge",
+        "default branch",
+        "mainline",
+        "converge",
+        "integration"
+      ],
+      "admissible_relations": [
+        "IMPLEMENTS",
+        "TESTS",
+        "GUARDS"
+      ],
+      "evidence_requirements": {
+        "primary_requires_proof": true,
+        "required_requires_proof": true,
+        "test_requires_fixture": true
+      },
+      "global_coverage_policy": "AT_LEAST_ONE_REQUIRED_OR_PRIMARY",
+      "overlap_policy": "OVERLAP_EXPECTED",
+      "seed_source": "harness/contracts/prompt-strength.v1.json:dimensions[mainline_convergence]",
+      "provenance": "Prompt Strength shared execution dimension"
+    },
+    {
+      "capability_id": "strength.plan_durability",
+      "title": "Plan Durability",
+      "definition": "Material execution plans live in tracked repository/provider state before handoff; chat alone is provisional.",
+      "class": "strength.durability",
+      "domain": "execution_quality",
+      "aliases": [
+        "plan",
+        "tracked",
+        "chat",
+        "repository state",
+        "handoff"
+      ],
+      "admissible_relations": [
+        "IMPLEMENTS",
+        "TESTS",
+        "GUARDS"
+      ],
+      "evidence_requirements": {
+        "primary_requires_proof": true,
+        "required_requires_proof": true,
+        "test_requires_fixture": true
+      },
+      "global_coverage_policy": "AT_LEAST_ONE_REQUIRED_OR_PRIMARY",
+      "overlap_policy": "OVERLAP_EXPECTED",
+      "seed_source": "harness/contracts/prompt-strength.v1.json:dimensions[plan_durability]",
+      "provenance": "Prompt Strength shared execution dimension"
+    },
+    {
+      "capability_id": "strength.proof_relevance_freshness",
+      "title": "Proof Relevance Freshness",
+      "definition": "Proof freshness depends on proof-relevant identity/revision inputs rather than repository HEAD equality alone.",
+      "class": "strength.evidence",
+      "domain": "execution_quality",
+      "aliases": [
+        "proof-relevant",
+        "fingerprint",
+        "head moved",
+        "changed",
+        "rerun"
+      ],
+      "admissible_relations": [
+        "IMPLEMENTS",
+        "TESTS",
+        "GUARDS"
+      ],
+      "evidence_requirements": {
+        "primary_requires_proof": true,
+        "required_requires_proof": true,
+        "test_requires_fixture": true
+      },
+      "global_coverage_policy": "AT_LEAST_ONE_REQUIRED_OR_PRIMARY",
+      "overlap_policy": "OVERLAP_EXPECTED",
+      "seed_source": "harness/contracts/prompt-strength.v1.json:dimensions[proof_relevance_freshness]",
+      "provenance": "Prompt Strength shared execution dimension"
+    },
+    {
+      "capability_id": "strength.quiescence",
+      "title": "Quiescence",
+      "definition": "Repeated identical external blockers with unchanged proof-relevance inputs enter a durable blocked state instead of creating churn.",
+      "class": "strength.execution",
+      "domain": "execution_quality",
+      "aliases": [
+        "blocker",
+        "quiescence",
+        "unchanged",
+        "churn",
+        "stop"
+      ],
+      "admissible_relations": [
+        "IMPLEMENTS",
+        "TESTS",
+        "GUARDS"
+      ],
+      "evidence_requirements": {
+        "primary_requires_proof": true,
+        "required_requires_proof": true,
+        "test_requires_fixture": true
+      },
+      "global_coverage_policy": "AT_LEAST_ONE_REQUIRED_OR_PRIMARY",
+      "overlap_policy": "OVERLAP_EXPECTED",
+      "seed_source": "harness/contracts/prompt-strength.v1.json:dimensions[quiescence]",
+      "provenance": "Prompt Strength shared execution dimension"
+    },
+    {
+      "capability_id": "strength.residual_compute_sweep",
+      "title": "Residual Compute Sweep",
+      "definition": "Before fixed-point closeout, explicitly sweep for still-unspent authorized actions that could materially improve correctness or proof.",
+      "class": "strength.execution",
+      "domain": "execution_quality",
+      "aliases": [
+        "residual",
+        "remaining",
+        "broader",
+        "unspent"
+      ],
+      "admissible_relations": [
+        "IMPLEMENTS",
+        "TESTS",
+        "GUARDS"
+      ],
+      "evidence_requirements": {
+        "primary_requires_proof": true,
+        "required_requires_proof": true,
+        "test_requires_fixture": true
+      },
+      "global_coverage_policy": "OPTIONAL",
+      "overlap_policy": "OVERLAP_EXPECTED",
+      "seed_source": "harness/contracts/prompt-strength.v1.json:dimensions[residual_compute_sweep]",
+      "provenance": "Prompt Strength shared execution dimension"
+    },
+    {
+      "capability_id": "strength.upstream_provenance",
+      "title": "Upstream Provenance",
+      "definition": "Upstream skills are pinned reference evidence; mechanics are extracted with provenance and routed to existing canonical owners before new prompt identities.",
+      "class": "strength.research",
+      "domain": "execution_quality",
+      "aliases": [
+        "upstream",
+        "source",
+        "pin",
+        "donor",
+        "provenance"
+      ],
+      "admissible_relations": [
+        "IMPLEMENTS",
+        "TESTS",
+        "GUARDS"
+      ],
+      "evidence_requirements": {
+        "primary_requires_proof": true,
+        "required_requires_proof": true,
+        "test_requires_fixture": true
+      },
+      "global_coverage_policy": "AT_LEAST_ONE_REQUIRED_OR_PRIMARY",
+      "overlap_policy": "OVERLAP_EXPECTED",
+      "seed_source": "harness/contracts/prompt-strength.v1.json:dimensions[upstream_provenance]",
+      "provenance": "Prompt Strength shared execution dimension"
+    },
+    {
+      "capability_id": "strength.actionable_continuation",
+      "title": "Actionable Continuation",
+      "definition": "Next action is dependency-aware, executable, owner-assigned, and advances the next unproven state rather than narrating status.",
+      "class": "strength.closeout",
+      "domain": "execution_quality",
+      "aliases": [
+        "next",
+        "action",
+        "continue",
+        "implementation",
+        "progress-bearing",
+        "stop"
+      ],
+      "admissible_relations": [
+        "IMPLEMENTS",
+        "TESTS",
+        "GUARDS"
+      ],
+      "evidence_requirements": {
+        "primary_requires_proof": true,
+        "required_requires_proof": true,
+        "test_requires_fixture": true
+      },
+      "global_coverage_policy": "AT_LEAST_ONE_REQUIRED_OR_PRIMARY",
+      "overlap_policy": "OVERLAP_EXPECTED",
+      "seed_source": "harness/contracts/prompt-strength.v1.json:dimensions[actionable_continuation]",
+      "provenance": "Prompt Strength shared execution dimension"
+    },
+    {
+      "capability_id": "strength.runtime_tool_truthfulness",
+      "title": "Runtime Tool Truthfulness",
+      "definition": "Repository CLIs may validate runtime-tool dispatch records but may not impersonate unavailable tools or fabricate observed parallelism.",
+      "class": "strength.orchestration",
+      "domain": "execution_quality",
+      "aliases": [
+        "runtime",
+        "tool",
+        "serial",
+        "receipt",
+        "fabricate"
+      ],
+      "admissible_relations": [
+        "IMPLEMENTS",
+        "TESTS",
+        "GUARDS"
+      ],
+      "evidence_requirements": {
+        "primary_requires_proof": true,
+        "required_requires_proof": true,
+        "test_requires_fixture": true
+      },
+      "global_coverage_policy": "AT_LEAST_ONE_REQUIRED_OR_PRIMARY",
+      "overlap_policy": "OVERLAP_EXPECTED",
+      "seed_source": "harness/contracts/prompt-strength.v1.json:dimensions[runtime_tool_truthfulness]",
+      "provenance": "Prompt Strength shared execution dimension"
+    },
+    {
+      "capability_id": "strength.review_freshness",
+      "title": "Review Freshness",
+      "definition": "Review state is bound to the current head and authoritative review surfaces; capped loops return exact residuals rather than silent success.",
+      "class": "strength.integration",
+      "domain": "execution_quality",
+      "aliases": [
+        "review",
+        "stale",
+        "current head",
+        "check",
+        "summary"
+      ],
+      "admissible_relations": [
+        "IMPLEMENTS",
+        "TESTS",
+        "GUARDS"
+      ],
+      "evidence_requirements": {
+        "primary_requires_proof": true,
+        "required_requires_proof": true,
+        "test_requires_fixture": true
+      },
+      "global_coverage_policy": "AT_LEAST_ONE_REQUIRED_OR_PRIMARY",
+      "overlap_policy": "OVERLAP_EXPECTED",
+      "seed_source": "harness/contracts/prompt-strength.v1.json:dimensions[review_freshness]",
+      "provenance": "Prompt Strength shared execution dimension"
+    },
+    {
+      "capability_id": "strength.before_state_evidence",
+      "title": "Before State Evidence",
+      "definition": "Safely reproducible bugs capture a before-state and bind runtime evidence to exact revision/environment before the repair.",
+      "class": "strength.validation",
+      "domain": "execution_quality",
+      "aliases": [
+        "before-state",
+        "before state",
+        "capture",
+        "artifact",
+        "bug"
+      ],
+      "admissible_relations": [
+        "IMPLEMENTS",
+        "TESTS",
+        "GUARDS"
+      ],
+      "evidence_requirements": {
+        "primary_requires_proof": true,
+        "required_requires_proof": true,
+        "test_requires_fixture": true
+      },
+      "global_coverage_policy": "AT_LEAST_ONE_REQUIRED_OR_PRIMARY",
+      "overlap_policy": "OVERLAP_EXPECTED",
+      "seed_source": "harness/contracts/prompt-strength.v1.json:dimensions[before_state_evidence]",
+      "provenance": "Prompt Strength shared execution dimension"
+    },
+    {
+      "capability_id": "governance.install",
+      "title": "Install Governance Contract",
+      "definition": "Establish repository agent governance doctrine defining operating principles, precedence, sprint declaration, completion standards, and forbidden behaviors.",
+      "class": "governance.setup",
+      "domain": "repository_governance",
+      "aliases": [
+        "governance",
+        "doctrine",
+        "agent rules",
+        "operating principles"
+      ],
+      "admissible_relations": [
+        "IMPLEMENTS",
+        "TESTS"
+      ],
+      "evidence_requirements": {
+        "primary_requires_proof": true,
+        "required_requires_proof": true
+      },
+      "global_coverage_policy": "EXACTLY_ONE_PRIMARY",
+      "overlap_policy": "PRIMARY_CROWDING_FAIL",
+      "seed_source": "docs/prompts.json:P00",
+      "provenance": "Registry useWhen/sprintRole analysis"
+    },
+    {
+      "capability_id": "harness.build",
+      "title": "Build Operational Harness",
+      "definition": "Construct repository harness infrastructure including validators, contracts, workflows, and required checks.",
+      "class": "harness.setup",
+      "domain": "repository_infrastructure",
+      "aliases": [
+        "harness",
+        "infrastructure",
+        "validator",
+        "contract"
+      ],
+      "admissible_relations": [
+        "IMPLEMENTS",
+        "TESTS"
+      ],
+      "evidence_requirements": {
+        "primary_requires_proof": true,
+        "required_requires_proof": true
+      },
+      "global_coverage_policy": "AT_LEAST_ONE_PRIMARY",
+      "overlap_policy": "OVERLAP_ALLOWED_WITH_RATIONALE",
+      "seed_source": "docs/prompts.json:P01",
+      "provenance": "Registry useWhen/sprintRole analysis"
+    },
+    {
+      "capability_id": "prompt.identity",
+      "title": "Prompt Identity and Topology",
+      "definition": "Manage prompt identity allocation, similarity analysis, topology relationships, admission gates, and strengthen-before-add discipline.",
+      "class": "prompt.topology",
+      "domain": "prompt_management",
+      "aliases": [
+        "prompt identity",
+        "P79",
+        "topology",
+        "admission",
+        "prior art"
+      ],
+      "admissible_relations": [
+        "IMPLEMENTS",
+        "ROUTES_TO",
+        "TESTS"
+      ],
+      "evidence_requirements": {
+        "primary_requires_proof": true,
+        "required_requires_proof": true
+      },
+      "global_coverage_policy": "EXACTLY_ONE_PRIMARY",
+      "overlap_policy": "PRIMARY_CROWDING_FAIL",
+      "seed_source": "harness/contracts/prompt-strength.v1.json:supporting_owners",
+      "provenance": "Prompt Topology canonical owner"
+    },
+    {
+      "capability_id": "prompt.quality_history",
+      "title": "Prompt Quality History Protection",
+      "definition": "Protect canonical prompt source history from silent drift, validate source set completeness, and track semantic migrations.",
+      "class": "prompt.quality",
+      "domain": "prompt_management",
+      "aliases": [
+        "quality history",
+        "source history",
+        "prompt migration",
+        "PSC013"
+      ],
+      "admissible_relations": [
+        "IMPLEMENTS",
+        "TESTS",
+        "GUARDS"
+      ],
+      "evidence_requirements": {
+        "primary_requires_proof": true,
+        "required_requires_proof": true
+      },
+      "global_coverage_policy": "AT_LEAST_ONE_PRIMARY",
+      "overlap_policy": "PRIMARY_CROWDING_WARNING",
+      "seed_source": "harness/contracts/prompt-quality-history.v1.json",
+      "provenance": "Prompt Quality History contract"
+    },
+    {
+      "capability_id": "prompt.semantic_coverage",
+      "title": "Semantic Capability Coverage",
+      "definition": "Track versioned per-prompt capability profiles, enforce non-weakening rules, validate lifecycle transitions, and prevent silent coverage loss.",
+      "class": "prompt.semantic",
+      "domain": "prompt_management",
+      "aliases": [
+        "semantic coverage",
+        "capability profile",
+        "PSC",
+        "non-weakening"
+      ],
+      "admissible_relations": [
+        "IMPLEMENTS",
+        "TESTS",
+        "GUARDS"
+      ],
+      "evidence_requirements": {
+        "primary_requires_proof": true,
+        "required_requires_proof": true
+      },
+      "global_coverage_policy": "AT_LEAST_ONE_PRIMARY",
+      "overlap_policy": "PRIMARY_CROWDING_FAIL",
+      "seed_source": "harness/contracts/prompt-semantic-coverage.v1.json",
+      "provenance": "Sprint 0 contract floor"
+    },
+    {
+      "capability_id": "spreadsheet.repair",
+      "title": "Spreadsheet Repair and Triage",
+      "definition": "Diagnose and repair corrupted Excel/Web Excel workbooks, triage damage, recover data, and validate repair outcomes.",
+      "class": "spreadsheet.operations",
+      "domain": "spreadsheet_intelligence",
+      "aliases": [
+        "excel repair",
+        "workbook repair",
+        "corruption",
+        "triage"
+      ],
+      "admissible_relations": [
+        "IMPLEMENTS",
+        "ROUTES_TO",
+        "TESTS"
+      ],
+      "evidence_requirements": {
+        "primary_requires_proof": true,
+        "required_requires_proof": false
+      },
+      "global_coverage_policy": "AT_LEAST_ONE_PRIMARY",
+      "overlap_policy": "OVERLAP_EXPECTED",
+      "seed_source": "AGENTS.md:repository_identity",
+      "provenance": "Core product domain"
+    },
+    {
+      "capability_id": "billing.evidence",
+      "title": "Billing Evidence and Time Tracking",
+      "definition": "Process roster/time evidence, allocate billing artifacts, protect private workbook data, and generate client-facing deliverables.",
+      "class": "billing.operations",
+      "domain": "spreadsheet_intelligence",
+      "aliases": [
+        "billing",
+        "roster",
+        "time tracking",
+        "allocation"
+      ],
+      "admissible_relations": [
+        "IMPLEMENTS",
+        "TESTS",
+        "GUARDS"
+      ],
+      "evidence_requirements": {
+        "primary_requires_proof": true,
+        "required_requires_proof": true
+      },
+      "global_coverage_policy": "AT_LEAST_ONE_PRIMARY",
+      "overlap_policy": "OVERLAP_ALLOWED_WITH_RATIONALE",
+      "seed_source": "AGENTS.md:repository_identity",
+      "provenance": "Core product domain"
+    },
+    {
+      "capability_id": "regression.safety",
+      "title": "Regression Safety and Retained Fixtures",
+      "definition": "Capture safely reproducible bugs, retain regression fixtures, bind runtime evidence, and enforce recurring-defect repair obligations.",
+      "class": "regression.safety",
+      "domain": "quality_assurance",
+      "aliases": [
+        "regression",
+        "P94",
+        "fixture",
+        "before-state"
+      ],
+      "admissible_relations": [
+        "IMPLEMENTS",
+        "TESTS",
+        "GUARDS"
+      ],
+      "evidence_requirements": {
+        "primary_requires_proof": true,
+        "required_requires_proof": true
+      },
+      "global_coverage_policy": "AT_LEAST_ONE_PRIMARY",
+      "overlap_policy": "PRIMARY_CROWDING_WARNING",
+      "seed_source": "harness/contracts/prompt-regression-safety.v1.json",
+      "provenance": "Regression safety contract"
+    },
+    {
+      "capability_id": "parallel.dispatch",
+      "title": "Parallel Lane Dispatch",
+      "definition": "Launch independent lanes concurrently when graph width ≥2 and capacity exists, manage lane isolation, and prove actual parallelism.",
+      "class": "orchestration.parallel",
+      "domain": "execution_orchestration",
+      "aliases": [
+        "parallel",
+        "dispatch",
+        "concurrent",
+        "lane",
+        "width"
+      ],
+      "admissible_relations": [
+        "IMPLEMENTS",
+        "ROUTES_TO",
+        "TESTS"
+      ],
+      "evidence_requirements": {
+        "primary_requires_proof": true,
+        "required_requires_proof": true
+      },
+      "global_coverage_policy": "AT_LEAST_ONE_PRIMARY",
+      "overlap_policy": "OVERLAP_ALLOWED_WITH_RATIONALE",
+      "seed_source": "harness/contracts/prompt-parallel-dispatch.v1.json",
+      "provenance": "Parallel dispatch contract"
+    },
+    {
+      "capability_id": "execution.implementation",
+      "title": "Implementation Execution",
+      "definition": "Execute bounded implementation sprints with evidence-first discipline, owned scope isolation, and completion-gate enforcement.",
+      "class": "execution.core",
+      "domain": "execution_orchestration",
+      "aliases": [
+        "P07",
+        "implementation",
+        "sprint",
+        "bounded",
+        "execution"
+      ],
+      "admissible_relations": [
+        "IMPLEMENTS",
+        "TESTS"
+      ],
+      "evidence_requirements": {
+        "primary_requires_proof": true,
+        "required_requires_proof": true
+      },
+      "global_coverage_policy": "EXACTLY_ONE_PRIMARY",
+      "overlap_policy": "PRIMARY_CROWDING_FAIL",
+      "seed_source": "harness/contracts/prompt-strength.v1.json:supporting_owners.implementation_execution",
+      "provenance": "P07 canonical owner"
+    },
+    {
+      "capability_id": "process.recurring",
+      "title": "Recurring Process Hardening",
+      "definition": "Harden recurring operational processes, capture workflow patterns, enforce discipline consistency, and prevent process drift.",
+      "class": "process.operations",
+      "domain": "process_management",
+      "aliases": [
+        "P13",
+        "recurring",
+        "process",
+        "workflow",
+        "hardening"
+      ],
+      "admissible_relations": [
+        "IMPLEMENTS",
+        "TESTS"
+      ],
+      "evidence_requirements": {
+        "primary_requires_proof": true,
+        "required_requires_proof": true
+      },
+      "global_coverage_policy": "EXACTLY_ONE_PRIMARY",
+      "overlap_policy": "PRIMARY_CROWDING_FAIL",
+      "seed_source": "harness/contracts/prompt-strength.v1.json:supporting_owners.recurring_process",
+      "provenance": "P13 canonical owner"
+    }
+  ],
+  "baseline_acceptance": {
+    "commit": "55148914364e2988bc6096b7c8d142eca3f62c28",
+    "prompt_count": 62,
+    "capability_count": 32,
+    "reason": "Sprint 1A baseline seeded from Prompt Strength, registry metadata, and product domain evidence"
+  }
 }
