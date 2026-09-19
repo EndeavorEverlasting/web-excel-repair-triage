@@ -1,0 +1,96 @@
+{
+  "schema_version": "prompt-semantic-coverage/v1",
+  "contract_id": "prompt-semantic-coverage",
+  "purpose": "Protect Prompt Kit behavior across ADD, EDIT/STRENGTHEN, and RETIRE by making each prompt's accepted semantic capabilities versioned repository truth.",
+  "baseline": {
+    "status": "contract_floor_established",
+    "established_at": "2026-09-19",
+    "reason": "Sprint 0 floor: schemas and PSC rules established; baseline profile matrix population is Sprint 1A.",
+    "completeness_required_for_strict_enforcement": false
+  },
+  "catalog": "harness/prompt-topology/semantic-capability-catalog.v1.json",
+  "profiles": "harness/prompt-topology/prompt-capability-profiles.v1.json",
+  "migrations": "harness/prompt-topology/prompt-capability-migrations.v1.json",
+  "profile_schema": "harness/prompt-topology/prompt-capability-profile.schema.v1.json",
+  "invariants": [
+    {
+      "id": "PSC001",
+      "rule": "PROFILE_COVERAGE_COMPLETE — every current prompt has exactly one ACCEPTED profile before strict enforcement may activate."
+    },
+    {
+      "id": "PSC002",
+      "rule": "PROFILE_BINDS_CANONICAL_PROMPT — accepted profile binds to exact prompt identity and canonical record hash."
+    },
+    {
+      "id": "PSC003",
+      "rule": "KNOWN_CAPABILITY_ONLY — every assignment references the stable catalog."
+    },
+    {
+      "id": "PSC004",
+      "rule": "REQUIRED_PRESENCE_NON_WEAKENING — REQUIRED may not fall to SUPPORT/AWARE/NONE without an explicit accepted migration."
+    },
+    {
+      "id": "PSC005",
+      "rule": "PRIMARY_OWNERSHIP_NON_WEAKENING — PRIMARY may not fall to SECONDARY/NONE unless responsibility is explicitly transferred or intentionally retired with coverage proof."
+    },
+    {
+      "id": "PSC006",
+      "rule": "TRANSFER_EQUAL_OR_STRONGER — a transfer is accepted only when successor coverage is equal-or-stronger for the protected capability and required proof exists."
+    },
+    {
+      "id": "PSC007",
+      "rule": "RETIRE_NO_COVERAGE_HOLE — retirement fails if it produces an uncovered previously protected capability."
+    },
+    {
+      "id": "PSC008",
+      "rule": "ADD_REQUIRES_DISTINCT_RESIDUAL — P79 cannot ADD when topology/profile overlap shows an existing owner can absorb the use case without a reviewed distinct residual."
+    },
+    {
+      "id": "PSC009",
+      "rule": "BODY_CHANGE_REQUIRES_PROFILE_DISPOSITION — any changed canonical prompt body must have a capability migration or an exact no-capability-change attestation bound to focused proof."
+    },
+    {
+      "id": "PSC010",
+      "rule": "SAME_AGENT_RESCORING_CANNOT_RESET_PRIOR — generated/proposed candidate profiles cannot replace accepted history."
+    },
+    {
+      "id": "PSC011",
+      "rule": "NEW_PRIMARY_OR_REQUIRED_REQUIRES_PROOF — strengthening claims need evidence, not just a higher self-assigned rating."
+    },
+    {
+      "id": "PSC012",
+      "rule": "GLOBAL_PRIMARY_CROWDING_REVIEW — unexpected multiple PRIMARY owners trigger configured warning/fail policy."
+    },
+    {
+      "id": "PSC013",
+      "rule": "SOURCE_HISTORY_COMPLETE — every canonical prompt body source, including docs/prompts.json, is covered by Prompt Quality History."
+    },
+    {
+      "id": "PSC014",
+      "rule": "LIFECYCLE_TRANSITION_ATOMIC — ADD/STRENGTHEN/RETIRE cannot leave registry, profile, migration, generated site, or required semantic proof mutually inconsistent."
+    },
+    {
+      "id": "PSC015",
+      "rule": "SOURCE_AND_CAPABILITY_MIGRATION_LINK — body-changing profile transitions must reference the matching Prompt Quality History semantic migration and agree on source hashes/affected IDs."
+    },
+    {
+      "id": "PSC016",
+      "rule": "INHERITED_SOURCE_INTEGRITY — shared policy/compiler capability inheritance is versioned by source identity/revision; dependent matrix cells cannot remain accepted against a changed inherited source without revalidation."
+    }
+  ],
+  "capability_cell_model": {
+    "presence": ["NONE", "AWARE", "SUPPORT", "REQUIRED"],
+    "ownership": ["NONE", "SECONDARY", "PRIMARY"],
+    "capability_relation": ["IMPLEMENTS", "ROUTES_TO", "TESTS", "GUARDS", "FORBIDDEN"],
+    "delivery_source": ["CANONICAL_BODY", "SHARED_POLICY", "COMPILER_OVERLAY", "ROUTED_OWNER", "TEST_GUARD"]
+  },
+  "lifecycle_operations": ["ADD", "STRENGTHEN", "NO_CAPABILITY_CHANGE", "INTENTIONAL_CHANGE", "TRANSFER", "RETIRE", "RESTORE"],
+  "profile_statuses": ["PROVISIONAL", "REVIEW_READY", "ACCEPTED", "RETIRED"],
+  "authority_boundaries": {
+    "prompt_identity_admission": "P79 Prompt Topology",
+    "text_history": "Prompt Quality History",
+    "global_execution_strength": "Prompt Strength",
+    "runtime_compliance": "Runtime Compliance (downstream evidence)",
+    "semantic_profiles": "Prompt Semantic Coverage (this contract)"
+  }
+}

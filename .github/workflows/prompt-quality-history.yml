@@ -4,6 +4,7 @@ on:
   pull_request:
     paths:
       - ".github/workflows/prompt-quality-history.yml"
+      - "docs/prompts.json"
       - "harness/contracts/prompt-quality-history.v1.json"
       - "harness/prompt-compilation/prompt-semantic-migrations.v1.json"
       - "harness/prompt-compilation/semantics/**"
@@ -17,6 +18,7 @@ on:
     branches: [main]
     paths:
       - ".github/workflows/prompt-quality-history.yml"
+      - "docs/prompts.json"
       - "harness/contracts/prompt-quality-history.v1.json"
       - "harness/prompt-compilation/prompt-semantic-migrations.v1.json"
       - "harness/prompt-compilation/semantics/**"
