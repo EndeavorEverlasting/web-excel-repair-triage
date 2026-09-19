@@ -6,7 +6,7 @@ TRACKED / PLANNED / NOT YET IMPLEMENTED
 
 Repository: `EndeavorEverlasting/web-excel-repair-triage`
 
-Planning floor: `main@ed3dd1e652d7b65f6250442d8f8a597db9e9fce0`
+Planning floor refreshed through: `main@42c53fa6445d39aa74dabdfeec4eb45bfa5d7a4d`
 
 Primary owners:
 
@@ -635,7 +635,7 @@ This semantic-coverage plan therefore preserves the intended lane graph here unt
 
 ### PR #584
 
-Current state at planning: open/diverged.
+Current state after refresh: open and mergeable; head `ee0c89d58139300e251b5187ad189e91b6d808c7`.
 
 Owns shared:
 
@@ -650,13 +650,13 @@ Sprint 2 must refresh/reconcile #584 before modifying those surfaces. Do not sta
 
 ### PR #570
 
-Current state at planning: open, current-head branch ahead of main, but reconciled to one runtime-compliance severity regression file only.
+Current state after refresh: merged on 2026-09-19 as part of current main.
 
-No current semantic-coverage shared-file collision.
+No remaining semantic-coverage shared-file collision.
 
 ### PR #524
 
-Current state at planning: open but 491 commits behind current main and merge-conflicted.
+Current state after refresh: open and merge-conflicted/diverged from current main; remains a stale shared-file owner for `.ai/WORK_QUEUE.md`.
 
 Still changes `.ai/WORK_QUEUE.md`.
 
@@ -666,7 +666,7 @@ Do not write the P66 ledger path from this program while #524 remains an unresol
 
 ### PR #544
 
-Current state at planning: open/diverged; owns observatory + root harness files.
+Current state after refresh: open and currently non-mergeable/diverged; owns observatory + root harness files.
 
 No semantic-profile mutation overlap, but Sprint 2 must refresh shared harness ownership before convergence.
 
