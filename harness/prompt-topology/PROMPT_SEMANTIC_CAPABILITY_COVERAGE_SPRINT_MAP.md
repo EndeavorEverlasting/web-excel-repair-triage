@@ -102,6 +102,8 @@ Semantic Coverage Validator
 
 The new semantic-coverage layer is canonical governance metadata, not generated prompt text.
 
+It also composes with `prompt-kit-ontology-evidence/v1`. Where evidence/history records already exist, profile evidence references should reuse the repository chain `capability -> skill -> implementation/prompt -> invocation/run -> evidence -> proof ceiling` rather than creating a second runtime/evidence-history store.
+
 Recommended canonical tracked owners:
 
 - `harness/contracts/prompt-semantic-coverage.v1.json`
@@ -127,9 +129,20 @@ Each prompt/capability assignment must separate:
 
 - **presence**: `NONE | AWARE | SUPPORT | REQUIRED`
 - **ownership**: `NONE | SECONDARY | PRIMARY`
-- **relation**: `IMPLEMENTS | ROUTES_TO | TESTS | GUARDS | FORBIDDEN`
+- **capability_relation**: `IMPLEMENTS | ROUTES_TO | TESTS | GUARDS | FORBIDDEN`
 - **evidence_refs**: one or more repository-owned proof references for material assignments
 - **rationale**: short bounded explanation for PRIMARY/REQUIRED/FORBIDDEN assignments
+
+`capability_relation` describes how one prompt relates to one capability; it is **not** a new prompt-to-prompt topology edge vocabulary.
+
+Prompt-to-prompt behavioral relationships must reuse the executable Prompt Topology reserved channels:
+
+- `CO_USAGE`
+- `TRANSITION`
+- `SUBSTITUTION`
+- `COMPLEMENT`
+
+A semantic-coverage implementation may derive or validate those channels from accepted profiles, but must not introduce competing synonyms for the same prompt-to-prompt concepts.
 
 The familiar display label may project:
 
@@ -161,6 +174,14 @@ Suggested global coverage policies:
 - `AT_LEAST_ONE_REQUIRED_OR_PRIMARY`
 - `OPTIONAL`
 - `EXACTLY_ONE_PRIMARY`
+
+Evidence lineage rules:
+
+- a prompt profile may identify the prompt as the capability implementation locator;
+- static repository proof may reference focused tests/contracts directly;
+- observed/runtime evidence should reference existing ontology-evidence/proof receipts when available;
+- preference, critique, or feedback records do not automatically prove a capability assignment;
+- candidate inference is evidence input only and cannot mutate accepted profile history.
 
 Suggested overlap policies:
 
@@ -259,7 +280,7 @@ Required sequence:
 2. registered external prior-art;
 3. distinct residual proof;
 4. candidate semantic profile;
-5. capability-overlap/coverage simulation;
+5. capability-overlap/coverage simulation plus existing Prompt Topology CO_USAGE/SUBSTITUTION/COMPLEMENT evidence;
 6. identity allocation through `prompt_registry_ops.py`;
 7. ADD capability migration;
 8. quality-history source migration;
@@ -291,8 +312,8 @@ Before removal:
 
 1. load accepted profile;
 2. enumerate every PRIMARY/REQUIRED capability;
-3. calculate current alternate owners;
-4. require successor transfer for coverage that would otherwise disappear;
+3. calculate current alternate owners and existing SUBSTITUTION/COMPLEMENT topology edges;
+4. require successor transfer for coverage that would otherwise disappear, recording TRANSITION/SUBSTITUTION relationships through the existing topology vocabulary;
 5. run global coverage simulation;
 6. scan discovery/routing/topology/test references;
 7. write RETIRE migration + tombstone profile;
@@ -316,7 +337,8 @@ Bootstrap pipeline:
    - registry `useWhen`, `sprintRole`, `expectedOutput`, `proofGate`;
    - existing prompt-specific tests;
    - existing harness capabilities/use cases;
-   - topology relationships;
+   - topology relationships, including reserved CO_USAGE/TRANSITION/SUBSTITUTION/COMPLEMENT channels;
+   - existing ontology-evidence capability lineage;
    - reviewed retrospective evidence;
 3. emit **PROVISIONAL** profile proposals only;
 4. attach evidence refs to every proposed PRIMARY/REQUIRED assignment;
