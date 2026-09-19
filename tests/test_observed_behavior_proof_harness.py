@@ -80,6 +80,60 @@ class ObservedBehaviorProofHarnessTests(unittest.TestCase):
         receipt["claims"][0]["required_evidence_class"] = "production_observed"
         self.assertTrue(any("requires production_observed" in e for e in MOD.validate(receipt)))
 
+    def test_deployment_or_acceptance_labels_are_not_runtime_evidence_classes(self):
+        for evidence_class in ("deployment_confirmed", "operator_accepted"):
+            receipt = self.base_receipt()
+            receipt["evidence_class"] = evidence_class
+            errors = MOD.validate(receipt)
+            self.assertTrue(any("unknown evidence_class" in e for e in errors), evidence_class)
+
+    def test_manifest_defines_non_promotion_runtime_boundary(self):
+        manifest = json.loads(
+            (ROOT / "harness" / "observed-proof" / "manifest.v1.json").read_text(
+                encoding="utf-8"
+            )
+        )
+        boundary = manifest["proof_boundary"]
+        self.assertEqual(
+            boundary["repository_or_ci_classes"],
+            ["source", "build", "synthetic"],
+        )
+        self.assertEqual(
+            boundary["observed_classes"],
+            [
+                "browser_runtime_observed",
+                "target_runtime_observed",
+                "production_observed",
+            ],
+        )
+        self.assertTrue(boundary["target_runtime_pass_requires_actual_interaction"])
+        self.assertTrue(boundary["installed_or_deployed_is_not_observed"])
+        self.assertTrue(boundary["operator_acceptance_is_separate"])
+        self.assertEqual(
+            boundary["inaccessible_runtime_disposition"],
+            "UNKNOWN_OR_UNPROVEN_WITH_EXACT_GATE",
+        )
+        self.assertIn(
+            "validated_or_integrated_or_installed_or_deployed_to_observed",
+            boundary["non_promotions"],
+        )
+        self.assertIn(
+            "observed_runtime_to_operator_acceptance",
+            boundary["non_promotions"],
+        )
+
+    def test_contract_names_deployment_and_operator_acceptance_boundaries(self):
+        contract = (ROOT / "harness" / "observed-proof" / "CONTRACT.md").read_text(
+            encoding="utf-8"
+        )
+        for phrase in (
+            "VALIDATED`, `INTEGRATED`, `INSTALLED`, and `DEPLOYED` are not aliases for `OBSERVED`",
+            "does not prove that the host loaded it, invoked it, or produced the required behavior",
+            "Runtime observation and operator acceptance are separate contracts",
+            "UNKNOWN`/`UNPROVEN` with the exact access or execution gate",
+        ):
+            self.assertIn(phrase, contract)
+
     def test_missing_artifact_is_rejected(self):
         receipt = self.base_receipt()
         receipt["subject"]["artifact"]["path"] = "does/not/exist.html"
