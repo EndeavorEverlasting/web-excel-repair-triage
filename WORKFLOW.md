@@ -87,6 +87,8 @@ Static success does not prove a specific browser menu, PWA installation, Termux/
 **Capability:** `harness-infrastructure-maintenance`
 **Skill:** `.ai/skills/harness-infrastructure-maintenance/SKILL.md`
 
+**Execution-boundary subroute:** When the operator reports that an agent stops at a material/arbitrary boundary, fails to report why it stopped, or treats classification as a stopping condition, resolve `harness/capabilities.v1.json` → capability `harness-infrastructure-maintenance` → use case `execution-boundary-continuation`. That record owns the forward and reverse participant edges to the execution-boundary contract/taxonomy, P07 semantics, engine, shared policy, regression artifact, and focused proof. Load those participants on demand; do not preload unrelated harness domains.
+
 1. Preserve occupied or dirty work and create an isolated harness branch/worktree.
 2. Inspect all canonical harness files before inventing new names or contracts.
 3. Repair the canonical owner. Do not create a competing map, registry, validator, hook, report, or command-delivery surface.
@@ -170,7 +172,7 @@ Audit every canonical and effective prompt. Require equal canonical, effective, 
 
 Define the eval contract and baseline, add positive/negative/near-miss/boundary/malformed/regression cases, reproduce weaknesses, implement the smallest valid repair, and measure performance, calls, context, retries, cost, and tokens when available. Accept efficiency changes only after correctness, safety, and routing gates remain green.
 
-For the registered `prompt-strengthening-runtime-compliance` use case, enter through the canonical plan, pilot runner, or semantic validator listed by `harness/capabilities.v1.json`; load the rest of the runtime-compliance participants only after that hook is selected. The expected artifact ID is `prompt-runtime-compliance-evidence`, resolved through `harness/artifacts.v1.json` to `Outputs/repository-ai-evals/runtime-compliance/`; observed external-agent behavior remains a separate proof gate.
+For use case `prompt-strengthening-runtime-compliance`, enter through the plan, pilot runner, or semantic validator registered by `harness/capabilities.v1.json`; load the remaining participants on demand. Resolve artifact ID `prompt-runtime-compliance-evidence` through `harness/artifacts.v1.json`, and keep observed external-agent behavior separate from repository proof.
 
 ### H. Prompt Kit browser-proof scratch cleanup
 
