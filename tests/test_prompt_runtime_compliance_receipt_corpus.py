@@ -6,6 +6,8 @@ from pathlib import Path
 
 from jsonschema import Draft202012Validator, FormatChecker
 
+from scripts import validate_prompt_runtime_compliance_receipt as semantic_validator
+
 ROOT = Path(__file__).resolve().parents[1]
 FIXTURES = ROOT / "harness" / "evals" / "runtime-compliance" / "fixtures"
 CORPUS = FIXTURES / "receipt-corpus.v1.json"
@@ -62,6 +64,25 @@ class RuntimeComplianceReceiptCorpusTests(unittest.TestCase):
         self.assertEqual(set(self.canonical), set(EXPECTED_IDS))
         self.assertFalse((FIXTURES / "scenario-index.v1.json").exists())
 
+        self.assertEqual(self.corpus["receipt_schema"], self.schema["schema_version"])
+        self.assertEqual(self.corpus["semantic_contract"], self.contract["schema_version"])
+        self.assertEqual(self.corpus["boundary_taxonomy"], self.taxonomy["schema_version"])
+        for key in (
+            "canonical_scenario_index",
+            "receipt_schema_path",
+            "semantic_contract_path",
+            "boundary_taxonomy_path",
+        ):
+            self.assertTrue((ROOT / self.corpus[key]).is_file(), self.corpus[key])
+
+        for row in self.scenarios():
+            directory = ROOT / row["directory"]
+            self.assertTrue(directory.is_dir(), row["directory"])
+            for key in ("definition", "positive_receipt", "negative_receipt"):
+                artifact = ROOT / row[key]
+                self.assertTrue(artifact.is_file(), row[key])
+                self.assertEqual(artifact.parent, directory, row[key])
+
     def test_definitions_bind_exactly_to_canonical_rule_ownership(self) -> None:
         for row in self.scenarios():
             sid = row["scenario_id"]
@@ -112,6 +133,14 @@ class RuntimeComplianceReceiptCorpusTests(unittest.TestCase):
                     self.assertNotIn(receipt["receipt_id"], seen)
                     seen.add(receipt["receipt_id"])
 
+                    semantic_result = semantic_validator.validate_receipt(receipt)
+                    expected_semantic = "PASS" if role == "positive_receipt" else "FAIL"
+                    self.assertEqual(
+                        semantic_result["overall_result"],
+                        expected_semantic,
+                        (sid, role, semantic_result),
+                    )
+
                     canonical_events = [
                         event
                         for event in receipt["boundary_events"]
@@ -155,6 +184,18 @@ class RuntimeComplianceReceiptCorpusTests(unittest.TestCase):
                     definition["negative"]["primary_failing_rule"],
                     failing,
                 )
+                semantic_result = semantic_validator.validate_receipt(negative)
+                by_rule = {
+                    finding["rule_id"]: finding
+                    for finding in semantic_result["findings"]
+                }
+                self.assertEqual(semantic_result["overall_result"], "FAIL")
+                for rule_id in failing:
+                    self.assertEqual(
+                        by_rule[rule_id]["result"],
+                        "FAIL",
+                        (sid, rule_id, by_rule[rule_id]),
+                    )
 
     def test_positive_proof_promotions_are_action_addressed(self) -> None:
         ranks = {
@@ -184,15 +225,17 @@ class RuntimeComplianceReceiptCorpusTests(unittest.TestCase):
                     action=action["action_id"],
                 ):
                     action_refs = set(action["evidence_refs"])
+                    expected_name = (
+                        f"action:{action['action_id']}:proof:"
+                        f"{before}->{after}"
+                    )
                     matches = [
                         check
                         for check in passing
-                        if check["name"].startswith(
-                            f"action:{action['action_id']}:"
-                        )
+                        if check["name"] == expected_name
                         and action_refs.intersection(check["evidence_refs"])
                     ]
-                    self.assertTrue(matches)
+                    self.assertEqual(len(matches), 1, expected_name)
 
     def test_rtc04_oracle_proves_absence_before_retry_machine_readably(self) -> None:
         row = next(
@@ -262,6 +305,10 @@ class RuntimeComplianceReceiptCorpusTests(unittest.TestCase):
             {action["started_at"] for action in actions},
             {actions[0]["started_at"]},
         )
+        lane_ids = [action["target_identity"].split("@", 1)[0] for action in actions]
+        self.assertEqual(set(lane_ids), set(protocol["required_lane_ids"]))
+        self.assertEqual(len(lane_ids), len(set(lane_ids)))
+        self.assertEqual(len({action["target_identity"] for action in actions}), len(actions))
         for action in actions:
             self.assertIn(
                 f"group:{protocol['concurrent_group_id']}",

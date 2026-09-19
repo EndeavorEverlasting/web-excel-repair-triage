@@ -163,7 +163,7 @@
     "checks": [
       {
         "check_id": "CK-001",
-        "name": "action:A-002:authoritative-readback:mutation-absent",
+        "name": "action:A-002:proof:IMPLEMENTED->VALIDATED",
         "status": "PASS",
         "evidence_refs": [
           "EV-002"

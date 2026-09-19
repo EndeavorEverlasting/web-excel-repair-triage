@@ -150,7 +150,7 @@
       },
       {
         "check_id": "CK-002",
-        "name": "action:A-002:phase2-validate",
+        "name": "action:A-002:proof:IMPLEMENTED->VALIDATED",
         "status": "PASS",
         "evidence_refs": [
           "EV-002"

@@ -45,5 +45,6 @@
       "positive_receipt": "harness/evals/runtime-compliance/fixtures/rtc05/receipt.pass.v1.json",
       "negative_receipt": "harness/evals/runtime-compliance/fixtures/rtc05/receipt.fail.v1.json"
     }
-  ]
+  ],
+  "boundary_taxonomy_path": "harness/contracts/execution-boundary-taxonomy.v1.json"
 }

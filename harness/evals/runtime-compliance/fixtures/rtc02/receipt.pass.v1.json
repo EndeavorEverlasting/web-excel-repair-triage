@@ -142,7 +142,7 @@
     "checks": [
       {
         "check_id": "CK-001",
-        "name": "action:A-001:authoritative-state-refresh",
+        "name": "action:A-001:proof:IMPLEMENTED->VALIDATED",
         "status": "PASS",
         "evidence_refs": [
           "EV-001"
@@ -150,7 +150,7 @@
       },
       {
         "check_id": "CK-002",
-        "name": "action:A-002:ancestor-containment",
+        "name": "action:A-002:proof:VALIDATED->INTEGRATED",
         "status": "PASS",
         "evidence_refs": [
           "EV-002"
