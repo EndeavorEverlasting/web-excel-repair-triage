@@ -46,6 +46,111 @@ class EvidenceSpineRuntimeTests(unittest.TestCase):
         routed = runtime.classify_route_destination(destination=None, provenance="unknown")
         self.assertEqual(routed["effective_destination"], "unknown")
 
+    def test_route_receipt_observed_destination_is_authoritative_and_stable(self) -> None:
+        route = {
+            "prompt_id": "P07",
+            "prompt_revision": "sha256:abc123",
+            "destination": "cursor-agent",
+            "provenance": "observed",
+            "surface_id": "prompt-kit",
+            "invocation_id": "inv-42",
+            "run_id": "run-7",
+        }
+        first = runtime.build_route_receipt(route)
+        second = runtime.build_route_receipt(dict(reversed(list(route.items()))))
+        self.assertEqual(first["schema_version"], "evidence-spine-route-receipt/v1")
+        self.assertTrue(first["authoritative"])
+        self.assertEqual(first["destination_confidence"], "authoritative")
+        self.assertEqual(first["effective_destination"], "cursor-agent")
+        self.assertEqual(first["route_id"], second["route_id"])
+        self.assertEqual(first["semantic_sha256"], second["semantic_sha256"])
+
+    def test_route_receipt_inferred_destination_never_becomes_effective(self) -> None:
+        receipt = runtime.build_route_receipt(
+            {
+                "prompt_id": "P115",
+                "prompt_revision": "rev-1",
+                "destination": "opencode",
+                "provenance": "inferred",
+                "surface_id": "agent-runtime",
+            }
+        )
+        self.assertFalse(receipt["authoritative"])
+        self.assertEqual(receipt["destination_confidence"], "inferred")
+        self.assertEqual(receipt["destination"], "opencode")
+        self.assertEqual(receipt["effective_destination"], "unknown")
+
+    def test_route_receipt_unknown_supports_zero_metadata_destination(self) -> None:
+        receipt = runtime.build_route_receipt(
+            {
+                "prompt_id": "P07",
+                "prompt_revision": "rev-clipboard",
+                "destination": None,
+                "provenance": "unknown",
+                "surface_id": "clipboard",
+            }
+        )
+        self.assertFalse(receipt["authoritative"])
+        self.assertEqual(receipt["destination_confidence"], "unknown")
+        self.assertEqual(receipt["effective_destination"], "unknown")
+
+    def test_route_receipt_declared_destination_is_non_authoritative(self) -> None:
+        receipt = runtime.build_route_receipt(
+            {
+                "prompt_id": "P07",
+                "prompt_revision": "rev-declared",
+                "destination": "cursor-agent",
+                "provenance": "declared",
+                "surface_id": "manual-launch",
+            }
+        )
+        self.assertFalse(receipt["authoritative"])
+        self.assertEqual(receipt["destination_confidence"], "declared")
+        self.assertEqual(receipt["effective_destination"], "cursor-agent")
+
+    def test_route_receipt_rejects_actor_identity_and_caller_fingerprint(self) -> None:
+        base = {
+            "prompt_id": "P07",
+            "prompt_revision": "rev-1",
+            "destination": "cursor-agent",
+            "provenance": "observed",
+            "surface_id": "prompt-kit",
+        }
+        for key, value in (
+            ("user_id", "person-1"),
+            ("session_id", "session-1"),
+            ("request_fingerprint", "caller-controlled"),
+            ("idempotency_key", "caller-controlled"),
+            ("raw_prompt", "private text"),
+        ):
+            with self.subTest(key=key), self.assertRaises(runtime.ContinuationError):
+                runtime.build_route_receipt({**base, key: value})
+
+    def test_route_receipt_fail_closed_shape_and_identity(self) -> None:
+        valid = {
+            "prompt_id": "P07",
+            "prompt_revision": "rev-1",
+            "destination": "cursor-agent",
+            "provenance": "observed",
+            "surface_id": "prompt-kit",
+        }
+        invalid_cases = [
+            {**valid, "prompt_id": "P9999"},
+            {**valid, "prompt_revision": ""},
+            {**valid, "surface_id": ""},
+            {**valid, "provenance": "guessed"},
+            {**valid, "destination": None},
+            {**valid, "provenance": "unknown"},
+            {**valid, "invocation_id": ""},
+        ]
+        for payload in invalid_cases:
+            with self.subTest(payload=payload), self.assertRaises(runtime.ContinuationError):
+                runtime.build_route_receipt(payload)
+
+        changed = runtime.build_route_receipt({**valid, "destination": "opencode"})
+        original = runtime.build_route_receipt(valid)
+        self.assertNotEqual(original["route_id"], changed["route_id"])
+
     def test_observation_rejects_raw_clipboard(self) -> None:
         result = runtime.accept_observation_event(
             {"kind": "copy", "prompt_id": "P07", "clipboard": "SECRET"}
