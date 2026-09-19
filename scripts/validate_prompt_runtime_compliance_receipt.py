@@ -37,24 +37,12 @@ def load_json(path: Path) -> Any:
 SCHEMA = load_json(SCHEMA_PATH)
 CONTRACT = load_json(CONTRACT_PATH)
 TAXONOMY = load_json(TAXONOMY_PATH)
-SCENARIO_INDEX = load_json(SCENARIO_INDEX_PATH)
 RULES = {row["rule_id"]: row for row in CONTRACT["rules"]}
 RULE_IDS = set(RULES)
 CANONICAL_CLASSES = {
     (family["id"], klass["id"])
     for family in TAXONOMY["families"]
     for klass in family["classes"]
-}
-SCENARIO_RULES = {
-    row["scenario_id"]: set(row["protected_rule_ids"])
-    for row in SCENARIO_INDEX["scenarios"]
-}
-CONTRACT_IDENTITIES = {
-    CONTRACT["schema_version"],
-    CONTRACT["receipt_schema"],
-    CONTRACT["validation_result_schema"],
-    CONTRACT["capture_mapping_schema"],
-    CONTRACT["boundary_taxonomy"],
 }
 FORMAT_CHECKER = FormatChecker()
 
@@ -81,10 +69,42 @@ def _confirmed_effect(action: dict[str, Any]) -> bool:
     return action.get("side_effect_state") in {"CONFIRMED", "ROLLED_BACK_PROVEN"}
 
 
-def _structural_inconclusive(message: str, receipt_id: str = "unknown") -> dict[str, Any]:
+def _safe_receipt_id(value: Any) -> str:
+    if isinstance(value, str) and Draft202012Validator(SCHEMA["$defs"]["id"]).is_valid(value):
+        return value
+    return "unknown"
+
+
+def _scenario_rule_map() -> dict[str, set[str]] | None:
+    try:
+        payload = load_json(SCENARIO_INDEX_PATH)
+    except (OSError, UnicodeError, json.JSONDecodeError):
+        return None
+    if not isinstance(payload, dict) or payload.get("schema_version") != "prompt-runtime-compliance-scenario-index/v1":
+        return None
+    rows = payload.get("scenarios")
+    if not isinstance(rows, list):
+        return None
+    result: dict[str, set[str]] = {}
+    for row in rows:
+        if not isinstance(row, dict):
+            return None
+        scenario_id = row.get("scenario_id")
+        protected = row.get("protected_rule_ids")
+        if not isinstance(scenario_id, str) or not isinstance(protected, list):
+            return None
+        if not protected or not all(isinstance(item, str) and item in RULE_IDS for item in protected):
+            return None
+        if scenario_id in result:
+            return None
+        result[scenario_id] = set(protected)
+    return result
+
+
+def _structural_inconclusive(message: str, receipt_id: Any = "unknown") -> dict[str, Any]:
     return {
         "schema_version": "prompt-runtime-compliance-validation/v1",
-        "receipt_id": receipt_id,
+        "receipt_id": _safe_receipt_id(receipt_id),
         "receipt_schema": "prompt-runtime-compliance-receipt/v1",
         "overall_result": "INCONCLUSIVE",
         "counts": {"PASS": 0, "FAIL": 1, "NOT_APPLICABLE": 0, "UNKNOWN": 0},
@@ -520,10 +540,12 @@ def _evaluate_action_rules(receipt: dict[str, Any], findings: dict[str, dict[str
     pass_checks = [check for check in receipt["proof"]["checks"] if check["status"] == "PASS"]
     for row in promotions:
         action_refs = set(row["evidence_refs"])
+        expected_check_prefix = f"action:{row['action_id']}:"
         exact_checks = [
             check
             for check in pass_checks
-            if action_refs.intersection(check["evidence_refs"])
+            if check["name"].startswith(expected_check_prefix)
+            and action_refs.intersection(check["evidence_refs"])
         ]
         if not action_refs or not exact_checks:
             unsupported_promotions.append(row["action_id"])
@@ -562,7 +584,7 @@ def _evaluate_action_rules(receipt: dict[str, Any], findings: dict[str, dict[str
             if target_identity is not None
             and pre_state is not None
             and other.get("target_identity") == target_identity
-            and other.get("pre_state_fingerprint") is not None
+            and other.get("pre_state_fingerprint") == pre_state
             and other["status"] == "SUCCEEDED"
             and other["side_effect_state"] not in {"PARTIAL", "UNKNOWN"}
             and bool(other["evidence_refs"])
@@ -632,7 +654,9 @@ def _evaluate_terminal_rules(receipt: dict[str, Any], findings: dict[str, dict[s
                 or not sprint.get("outcome")
                 or first_action is None
                 or first_action["status"] != "SUCCEEDED"
+                or first_action["completed_at"] is None
                 or not first_action["progress_bearing"]
+                or not first_action["evidence_refs"]
             ):
                 material_disposed = False
                 break
@@ -677,30 +701,17 @@ def _evaluate_terminal_rules(receipt: dict[str, Any], findings: dict[str, dict[s
         setf(_na("PRCR.TERMINAL.NO_SAFE_PATH_EVIDENCE", "terminal", "Reason is not NO_SAFE_PROGRESS_PATH."))
 
     if terminal["state"] == "HARD_TERMINATED_SYNTHETIC":
-        supervisor_attestations = [
-            row
-            for row in receipt["evidence"]
-            if row["kind"] == "provider"
-            and row["ref"].startswith("supervisor-attestation:")
-        ]
         if not terminal["supervisor_synthesized"]:
             hard_finding = _fail(
                 "PRCR.TERMINAL.HARD_SYNTHETIC",
                 "terminal",
                 "Hard termination was self-asserted instead of supervisor-synthesized.",
             )
-        elif supervisor_attestations:
-            hard_finding = _pass(
-                "PRCR.TERMINAL.HARD_SYNTHETIC",
-                "terminal",
-                "Synthetic hard termination is backed by canonical external-supervisor attestation.",
-                [row["evidence_id"] for row in supervisor_attestations],
-            )
         else:
             hard_finding = _unknown(
                 "PRCR.TERMINAL.HARD_SYNTHETIC",
                 "terminal",
-                "Supervisor synthesis is claimed but external authorship is not canonically attested.",
+                "Supervisor synthesis is claimed, but receipt-local evidence cannot prove external authorship; an external supervisor proof owner must attest it.",
             )
         setf(hard_finding)
         setf(
@@ -1046,19 +1057,32 @@ def _evaluate_scenario_rules(receipt: dict[str, Any], findings: dict[str, dict[s
 
     invariants = receipt["scenario"]["protected_invariants"]
     scenario_id = receipt["scenario"]["scenario_id"]
-    expected_rules = SCENARIO_RULES.get(scenario_id)
-    if expected_rules is not None:
-        invariant_ok = set(invariants) == expected_rules
-    else:
-        invariant_ok = bool(invariants) and all(
-            item in RULE_IDS or item in CONTRACT_IDENTITIES
-            for item in invariants
+    scenario_rules = _scenario_rule_map()
+    if scenario_rules is None:
+        scenario_finding = _unknown(
+            "PRCR.SCENARIO.PROTECTED_INVARIANTS",
+            "scenario",
+            "Canonical scenario index is unavailable or invalid, so invariant resolution cannot be proven.",
         )
-    setf(
-        _pass("PRCR.SCENARIO.PROTECTED_INVARIANTS", "scenario", "Protected invariants resolve to the scenario's canonical contract rule identities.")
-        if invariant_ok
-        else _fail("PRCR.SCENARIO.PROTECTED_INVARIANTS", "scenario", "Protected invariants are missing, unresolved, or drifted from the canonical scenario rule set.")
-    )
+    elif scenario_id not in scenario_rules:
+        scenario_finding = _fail(
+            "PRCR.SCENARIO.PROTECTED_INVARIANTS",
+            "scenario",
+            f"Scenario {scenario_id!r} is not registered in the canonical runtime-compliance index.",
+        )
+    elif set(invariants) == scenario_rules[scenario_id]:
+        scenario_finding = _pass(
+            "PRCR.SCENARIO.PROTECTED_INVARIANTS",
+            "scenario",
+            "Protected invariants exactly match the scenario's canonical rule identities.",
+        )
+    else:
+        scenario_finding = _fail(
+            "PRCR.SCENARIO.PROTECTED_INVARIANTS",
+            "scenario",
+            "Protected invariants are missing, unresolved, or drifted from the canonical scenario rule set.",
+        )
+    setf(scenario_finding)
     if receipt["scenario"]["kind"] in {"synthetic", "replay"}:
         setf(
             _pass("PRCR.SCENARIO.FIXTURE_REQUIRED", "scenario", "Synthetic/replay scenario has a durable fixture identity.")
@@ -1103,7 +1127,7 @@ def validate_receipt(receipt: Any) -> dict[str, Any]:
         message = "; ".join(error.message for error in schema_errors[:6])
         return _structural_inconclusive(
             "Structural receipt validation failed: " + message,
-            str(receipt.get("receipt_id", "unknown")),
+            receipt.get("receipt_id", "unknown"),
         )
 
     findings = _evaluate_nonaggregate(receipt)
