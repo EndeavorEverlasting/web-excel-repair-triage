@@ -55,7 +55,11 @@
     "tests/test_ux_design_prompt_suite.py",
     "tests/test_hh_ticket_tracking_prompt.py",
     "tests/test_execution_boundary_enforcement_prompt.py",
-    "tests/test_privacy_preserving_failure_observatory_prompt.py"
+    "tests/test_privacy_preserving_failure_observatory_prompt.py",
+    "tests/test_prompt_runtime_compliance_validator.py",
+    "tests/test_prompt_runtime_compliance_runner.py",
+    "tests/test_prompt_runtime_compliance_receipt_corpus.py",
+    "tests/test_prompt_runtime_compliance_linkage.py"
   ],
   "prompt_semantic_test_globs": [
     "tests/test_*_prompt.py",
