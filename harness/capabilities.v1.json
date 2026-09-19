@@ -31,7 +31,7 @@
     },
     {
       "id": "skill-evaluation",
-      "version": "1.0.0",
+      "version": "1.1.0",
       "status": "canonical",
       "skill": ".ai/skills/skill-evaluation/SKILL.md",
       "trigger_ids": [
@@ -56,7 +56,87 @@
         "kind": "prompt",
         "prompt_id": "P62"
       },
-      "proof_ceiling": "Depends on the eval lanes actually executed; static, model, runtime, and production proof must remain distinct."
+      "proof_ceiling": "Depends on the eval lanes actually executed; static, model, runtime, and production proof must remain distinct.",
+      "use_cases": [
+        {
+          "id": "prompt-strengthening-runtime-compliance",
+          "originating_user_intent": "Strengthen Prompt Kit execution behavior and prove execution-boundary continuation, proof-state, regression, and runtime-compliance behavior through the existing P67 pilot without inventing a new prompt identity.",
+          "intent_aliases": [
+            "prompt strengthening sprint",
+            "prove strengthened Prompt Kit execution behavior",
+            "runtime compliance for Prompt Kit execution contracts",
+            "verify prompt execution-boundary continuation proof-state and regression behavior"
+          ],
+          "primary_trigger_id": "skill-quality-unproven",
+          "workflow_id": "skill-evaluation",
+          "skill": ".ai/skills/skill-evaluation/SKILL.md",
+          "participants": [
+            {
+              "role": "plan",
+              "path": "harness/evals/PROMPT_RUNTIME_COMPLIANCE_PILOT_PLAN.md"
+            },
+            {
+              "role": "operator-map",
+              "path": "harness/evals/runtime-compliance/README.md"
+            },
+            {
+              "role": "contract",
+              "path": "harness/contracts/prompt-runtime-compliance.v1.json"
+            },
+            {
+              "role": "receipt-schema",
+              "path": "harness/contracts/prompt-runtime-compliance-receipt.schema.v1.json"
+            },
+            {
+              "role": "implementation",
+              "path": "harness/evals/runtime-compliance/scripts/pilot.py"
+            },
+            {
+              "role": "runtime-adapter",
+              "path": "harness/evals/runtime-compliance/scripts/runtime_adapter.py"
+            },
+            {
+              "role": "linkage",
+              "path": "harness/evals/runtime-compliance/scripts/linkage.py"
+            },
+            {
+              "role": "evidence-artifact",
+              "path": "harness/evals/runtime-compliance/fixtures/receipt-corpus.v1.json"
+            },
+            {
+              "role": "validator",
+              "path": "scripts/validate_prompt_runtime_compliance_receipt.py"
+            },
+            {
+              "role": "regression-test-validator",
+              "path": "tests/test_prompt_runtime_compliance_validator.py"
+            },
+            {
+              "role": "regression-test-runner",
+              "path": "tests/test_prompt_runtime_compliance_runner.py"
+            },
+            {
+              "role": "regression-test-corpus",
+              "path": "tests/test_prompt_runtime_compliance_receipt_corpus.py"
+            },
+            {
+              "role": "regression-test-linkage",
+              "path": "tests/test_prompt_runtime_compliance_linkage.py"
+            }
+          ],
+          "expected_artifacts": [
+            "prompt-runtime-compliance-evidence",
+            "Outputs/repository-ai-evals/runtime-compliance/pilot-receipt.json"
+          ],
+          "artifact_ids": [
+            "prompt-runtime-compliance-evidence"
+          ],
+          "validator_ids": [
+            "prompt-runtime-compliance-receipt-audit"
+          ],
+          "proof_ceiling": "Bidirectional repository routing plus deterministic runtime-compliance contract, runner, fixture, linkage, and receipt-validation proof on the tested commit; observed external-agent behavior remains a separate runtime gate."
+        }
+      ]
     },
     {
       "id": "skill-factoring",
