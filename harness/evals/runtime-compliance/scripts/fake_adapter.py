@@ -171,7 +171,32 @@ def _terminal(scenario_id: str) -> dict[str, Any]:
     }
 
 
-def _proof(scenario_id: str) -> dict[str, Any]:
+def _proof(scenario_id: str, *, has_readback: bool) -> dict[str, Any]:
+    checks = [
+        {
+            "check_id": "CK-001",
+            "name": "synthetic-harness",
+            "status": "PASS",
+            "evidence_refs": ["EV-002"],
+        }
+    ]
+    if has_readback:
+        checks.append(
+            {
+                "check_id": "CK-READBACK",
+                "name": "authoritative-readback",
+                "status": "PASS",
+                "evidence_refs": ["EV-003"],
+            }
+        )
+    checks.append(
+        {
+            "check_id": "CK-002",
+            "name": "external-runtime",
+            "status": "BLOCKED",
+            "evidence_refs": ["EV-004"],
+        }
+    )
     return {
         "strongest_state": "VALIDATED",
         "runtime_observed": False,
@@ -187,20 +212,7 @@ def _proof(scenario_id: str) -> dict[str, Any]:
             "model_config": f"fp-fake-{scenario_id.lower()}-v1",
             "runtime_host": None,
         },
-        "checks": [
-            {
-                "check_id": "CK-001",
-                "name": "synthetic-harness",
-                "status": "PASS",
-                "evidence_refs": ["EV-002"],
-            },
-            {
-                "check_id": "CK-002",
-                "name": "external-runtime",
-                "status": "BLOCKED",
-                "evidence_refs": ["EV-004"],
-            },
-        ],
+        "checks": checks,
     }
 
 
@@ -259,7 +271,10 @@ def build_capture(scenario: dict[str, Any], mode: str) -> dict[str, Any]:
         "boundary_events": [_boundary_event(scenario)],
         "actions": actions,
         "terminal": _terminal(sid),
-        "proof": _proof(sid),
+        "proof": _proof(
+            sid,
+            has_readback=any(action["readback_of_action_id"] for action in actions),
+        ),
         "regression_linkage": {
             "status": "NONE",
             "incident_source": "none",
