@@ -114,6 +114,23 @@ class SysAdminSuitePromptRegistryTests(unittest.TestCase):
                 encoding="utf-8",
             )
 
+            # Sprint 2: Remove semantic migrations from sandbox
+            # The test rebases to a historical state by removing prompts, which invalidates
+            # the existing migration chain. Since this is a sandbox test without git history,
+            # clear migrations to allow fresh lifecycle operations.
+            migrations_path = sandbox / "harness" / "prompt-compilation" / "prompt-semantic-migrations.v1.json"
+            if migrations_path.exists():
+                migrations_data = json.loads(migrations_path.read_text(encoding="utf-8"))
+                # Remove migrations for the spec-architecture-prompts registry
+                migrations_data["migrations"] = [
+                    m for m in migrations_data.get("migrations", [])
+                    if m.get("path") != source_rel
+                ]
+                migrations_path.write_text(
+                    json.dumps(migrations_data, indent=2, ensure_ascii=False) + "\n",
+                    encoding="utf-8",
+                )
+
             inspect_proc = subprocess.run(
                 [sys.executable, "scripts/prompt_registry_ops.py", "inspect"],
                 cwd=sandbox,
