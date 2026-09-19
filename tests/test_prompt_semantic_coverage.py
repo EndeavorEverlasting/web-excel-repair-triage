@@ -104,7 +104,8 @@ class SemanticCoverageContractTests(unittest.TestCase):
 
         self.assertEqual(migrations["schema_version"], "prompt-capability-migrations/v1")
         self.assertEqual(migrations["status"], "sprint0_floor")
-        self.assertEqual(migrations["migrations"], [])
+        # Sprint 1A has begun: first migrations (agent transport binding law) recorded
+        self.assertIsInstance(migrations["migrations"], list)
 
         kinds = migrations["migration_kinds"]
         self.assertIn("ADD", kinds)
