@@ -39,6 +39,19 @@ def pilot_receipt() -> dict:
     }
 
 
+def pilot_run(run_id: str = "fixture-pilot-rtc01", scenario_id: str = "RTC01") -> dict:
+    return {
+        "run_id": run_id,
+        "scenario_id": scenario_id,
+        "disposition": "VALID",
+        "compliance_result": "PASS",
+        "validation_result": "PASS",
+        "runtime_observed": False,
+        "receipt_path": f"runs/{run_id}/receipt.json",
+        "validation_path": f"runs/{run_id}/validation.json",
+    }
+
+
 class PromptRuntimeComplianceValidatorTests(unittest.TestCase):
     def test_pilot_receipt_schema_is_supported_by_registered_artifact_validator(self) -> None:
         artifacts = json.loads((ROOT / "harness" / "artifacts.v1.json").read_text(encoding="utf-8"))
@@ -50,6 +63,45 @@ class PromptRuntimeComplianceValidatorTests(unittest.TestCase):
         result = validator.validate_pilot_receipt(pilot_receipt())
         self.assertEqual(result["overall_result"], "PASS")
         self.assertEqual(result["receipt_schema"], artifact["schema"])
+
+    def test_registered_audit_targets_pilot_contract_fixture(self) -> None:
+        validators = json.loads((ROOT / "harness" / "validators.v1.json").read_text(encoding="utf-8"))
+        audit = next(
+            item for item in validators["validators"]
+            if item["id"] == "prompt-runtime-compliance-receipt-audit"
+        )
+        self.assertIn("pilot-receipt.positive.v1.json", audit["command"])
+
+    def test_pilot_receipt_rejects_duplicate_run_and_scenario_ids(self) -> None:
+        for duplicate_field in ("run_id", "scenario_id"):
+            with self.subTest(field=duplicate_field):
+                first = pilot_run()
+                second = pilot_run(
+                    run_id="fixture-pilot-rtc02",
+                    scenario_id="RTC02",
+                )
+                second[duplicate_field] = first[duplicate_field]
+                receipt = pilot_receipt()
+                receipt.update(
+                    planned_runs=2,
+                    valid_runs=2,
+                    runs=[first, second],
+                )
+                result = validator.validate_pilot_receipt(receipt)
+                self.assertEqual(result["overall_result"], "FAIL")
+                self.assertIn(
+                    f"{duplicate_field} values must be unique",
+                    result["findings"][0]["message"],
+                )
+
+    def test_pilot_receipt_rejects_unknown_validation_result(self) -> None:
+        receipt = pilot_receipt()
+        run = pilot_run()
+        run["validation_result"] = "SUCCESS"
+        receipt.update(planned_runs=1, valid_runs=1, runs=[run])
+        result = validator.validate_pilot_receipt(receipt)
+        self.assertEqual(result["overall_result"], "FAIL")
+        self.assertIn("validation_result must be a canonical result", result["findings"][0]["message"])
 
     def test_pilot_receipt_count_mismatch_fails_closed(self) -> None:
         receipt = pilot_receipt()
