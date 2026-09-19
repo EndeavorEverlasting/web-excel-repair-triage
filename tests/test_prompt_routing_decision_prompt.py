@@ -141,11 +141,11 @@ class PromptRoutingDecisionTests(unittest.TestCase):
         self.assertEqual(decision["decision"]["primaryPrompt"], self.prompt_ref)
         self.assertEqual(decision["decision"]["intervention"], "REGROUND")
         self.assertIn(
-            f"route-receipt:{receipt['route_id']}",
+            receipt["route_id"],
             decision["decision"]["reasonCodes"],
         )
         self.assertIn(
-            "route-destination:firstmate",
+            "destination-firstmate",
             decision["decision"]["reasonCodes"],
         )
         self.assertEqual(decision["classification"]["outcomeClass"], "evidence-promotion")
@@ -276,11 +276,11 @@ class PromptRoutingDecisionTests(unittest.TestCase):
             second["idempotency"]["semanticSha256"],
         )
         self.assertIn(
-            f"route-receipt:{first_receipt['route_id']}",
+            first_receipt["route_id"],
             first["decision"]["reasonCodes"],
         )
         self.assertIn(
-            f"route-receipt:{second_receipt['route_id']}",
+            second_receipt["route_id"],
             second["decision"]["reasonCodes"],
         )
 
@@ -326,6 +326,14 @@ class PromptRoutingDecisionTests(unittest.TestCase):
                     self.request(routingPolicy=policy),
                     self.route_receipt(),
                 )
+
+    def test_route_destination_must_fit_frozen_reason_code_wire_shape(self) -> None:
+        receipt = self.route_receipt(destination="agent/runtime")
+        with self.assertRaisesRegex(
+            routing.RoutingDecisionError,
+            "frozen decision reasonCodes",
+        ):
+            routing.build_routing_decision(self.request(), receipt)
 
     def test_cross_surface_request_fails_closed_instead_of_falling_back(self) -> None:
         request = self.request(executionSurface="gnhf_launch_artifact")
