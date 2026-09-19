@@ -2,7 +2,7 @@
 
 **Status:** TRACKED / WAVES 0–2 INTEGRATED ON MAIN / PLANNING MAP INTEGRATED VIA #471
 **Repository:** `EndeavorEverlasting/web-excel-repair-triage`
-**Planning floor:** refreshed `main@86edababd71117afbaffad92b7ef2ee4ae9426a7` (provider refresh 2026-09-14)
+**Planning floor:** refreshed `main@d63c04429a21ab4b491c4f3499c75454a518daf3` (provider refresh 2026-09-19)
 **Canonical strategic predecessor:** `harness/prompt-topology/POST_PHASE_C_STRATEGIC_SCOUT.md`
 **Required P95 architecture output:** `harness/prompt-topology/EVIDENCE_SPINE_ARCHITECTURE.md` (INTEGRATED via #473)
 
@@ -119,7 +119,7 @@ The P95 design must explicitly cover the human and agent paths without adding wo
 
 **Parallel lanes after P95 freezes interfaces:**
 
-- **Lane A — routing reconciliation:** current implementation is `scripts/evidence_spine_runtime.py::build_route_receipt`, carried by PR #596. It salvages only actor-neutral receipts, destination provenance, and deterministic idempotent identity from #450; it deliberately omits the stale mutable route-state engine and does not redesign feedback/outcome semantics.
+- **Lane A — routing reconciliation:** route receipt ownership is integrated on `main` through PR #596 as `scripts/evidence_spine_runtime.py::build_route_receipt`; it salvages only actor-neutral receipts, destination provenance, and deterministic idempotent identity from #450. The RRB-03 decision successor is `scripts/prompt_routing_decision.py`, which consumes a verified current-revision route receipt plus the canonical merged Prompt Kit registry and emits `prompt-kit.routing-decision/v1` without mutable route state. Prompt dispatch remains an AgentSwitchboard producer responsibility after this decision seam integrates.
 - **Lane B — observation reconciliation:** salvage/adapt #431 bounded observation semantics; do not create a new route or outcome classifier and do not store raw prompt/clipboard/transcript data.
 - **Lane C — corrective recurrence / finding / ticket bridge:** consume authoritative normalized outcome/correction evidence and produce git-friendly findings plus P115-compatible agent-ready work requests; do not own Prompt Finder capture UI or route transport.
 
@@ -255,9 +255,9 @@ The following remain outside this three-panel map unless the P95 architecture or
 
 | Contract | Owner | Current planning status | Required transition |
 | --- | --- | --- | --- |
-| Parallel/autonomous dispatch floor | PR #467 / prompt operations | IMPLEMENTED on branch, not proven green/integrated on refreshed floor | refresh -> repair CI/reviews -> validate -> integrate main |
-| Evidence lifecycle ownership | P95 / Prompt Topology strategy | TRACKED, architecture artifact absent | design/prototype -> architecture PR -> integrate |
-| Routing control plane | Evidence Spine Lane A (`scripts/evidence_spine_runtime.py`), with PR #450 as historical donor | IMPLEMENTED/VALIDATED candidate via PR #596; stale #450 remains non-authoritative | integrate #596 -> verify current-main containment -> retire/supersede #450 |
+| Parallel/autonomous dispatch floor | PR #467/#477 / prompt operations | INTEGRATED on main | reuse; do not duplicate in RRB-03 |
+| Evidence lifecycle ownership | P95 / Prompt Topology strategy | INTEGRATED via #473 | preserve adapter-only ownership; no universal event bus |
+| Routing control plane | Evidence Spine Lane A + RRB-03 decision seam | Route receipts INTEGRATED via #596 / `2d26e7e`; registry-bound decision compiler IMPLEMENTED on `feat/rrb03-routing-decision-r2-20260919` | focused regression + deterministic floor -> exact-head review -> integrate decision seam -> hand off `asb.prompt-dispatch/v1` production to AgentSwitchboard |
 | Prompt Finder observation lane | PR #431 donor | IMPLEMENTED on stale/unmergeable branch only | P95 disposition -> reconcile or retire -> validate/integrate |
 | Outcome/correction semantics | P99/P115 on main | INTEGRATED | reuse; extend only through owned contracts |
 | Local evidence retention/privacy | serverless lifecycle on main | INTEGRATED implementation | reuse and prove new writes remain bounded |
@@ -268,13 +268,13 @@ The following remain outside this three-panel map unless the P95 architecture or
 
 ## First executable continuation
 
-**Owner:** Panel 1 / PR #467 repair lane.
+**Owner:** RRB-03 Prompt Kit routing-decision lane.
 
-**Dependency:** refreshed current `main` and exact refreshed PR #467 head.
+**Dependency:** current `main` contains PR #596 / `2d26e7e` route-receipt salvage and the canonical merged Prompt Kit registry remains loadable through `scripts/build_prompt_kit_registry.py::load_prompt_kit_registry`.
 
-**Action:** refresh provider/local truth, preserve dirty or separately owned work, reproduce the current P07 metadata/proof and autonomous-dispatch review failures, repair the existing owner rather than open a duplicate implementation, then run focused validators/tests and repository deterministic/freshness gates.
+**Action:** validate `scripts/prompt_routing_decision.py` with `tests/test_prompt_routing_decision_prompt.py` and the registered deterministic floor, reconcile exact-head review/CI, and integrate the registry-bound decision seam. Then refresh AgentSwitchboard and compile `asb.prompt-dispatch/v1` only from the integrated decision; Prompt Kit must not impersonate the AgentSwitchboard dispatch producer.
 
-**Completion gate:** exact repaired #467 head is green, current review gaps are dispositioned, and safe authorized mainline integration is completed and verified; otherwise record the exact remaining review/check/protection blocker.
+**Completion gate:** the exact decision candidate is green, review-complete, merged to current `main`, and current-main content proves current-registry binding plus route-receipt verification; the successor AgentSwitchboard dispatch phase then owns durable-inbox message construction without crew scheduling or automatic rollover.
 
 ## Durability rule
 
