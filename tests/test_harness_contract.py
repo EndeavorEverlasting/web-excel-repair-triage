@@ -502,6 +502,13 @@ class HarnessContractTests(unittest.TestCase):
         self.assertEqual(language_trigger["capability_id"], "prompt-language-audit")
         self.assertEqual(proof_trigger["capability_id"], "skill-evaluation")
 
+    def test_workflow_validation_profiles_resolve(self) -> None:
+        workflows = self.load("harness/workflows.v1.json")["workflows"]
+        profiles = self.load("harness/validators.v1.json")["profiles"]
+        for workflow in workflows:
+            with self.subTest(workflow=workflow["id"]):
+                self.assertIn(workflow["validation_profile"], profiles)
+
     def test_hooks_use_registered_profiles_and_staged_tree(self) -> None:
         validators = self.load("harness/validators.v1.json")
         self.assertEqual(
