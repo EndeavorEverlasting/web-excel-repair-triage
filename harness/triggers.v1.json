@@ -44,7 +44,10 @@
         "routing quality is unproven",
         "regression safety is unproven",
         "performance or token use is unmeasured",
-        "known skill weakness lacks a reproducer"
+        "known skill weakness lacks a reproducer",
+        "prompt strengthening sprint needs executable proof rather than prose-only confidence",
+        "strengthened Prompt Kit execution behavior needs runtime-compliance evaluation",
+        "prompt execution-boundary, continuation, proof-state, or regression behavior is unproven"
       ],
       "forbidden_conditions": [
         "request is only cosmetic skill wording",
