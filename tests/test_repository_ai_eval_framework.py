@@ -33,6 +33,8 @@ class RepositoryAIEvalFrameworkTests(unittest.TestCase):
             {"deterministic", "synthetic", "model_runtime", "human_review"},
         )
         self.assertEqual(self.by_id["prompt-finder-routing"]["layer"], "deterministic")
+        self.assertEqual(self.by_id["prompt-route-control-plane"]["layer"], "deterministic")
+        self.assertTrue(self.by_id["prompt-route-control-plane"]["blocking"])
         self.assertEqual(self.by_id["prompt-language-actionability"]["layer"], "deterministic")
         self.assertEqual(self.by_id["p123-source-proof-boundary"]["layer"], "synthetic")
         self.assertEqual(self.by_id["p67-hallucination-diagnosis"]["layer"], "model_runtime")
