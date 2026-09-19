@@ -133,9 +133,23 @@ class SpecArchitecturePromptRegistryTests(unittest.TestCase):
             "profile": "spec-architecture",
             "color": "Cyan",
             "semantic_profile": {
-                "capabilities": [
-                    {"id": "prompt-registry-test", "level": "PRIMARY", "rationale": "Test fixture for prompt registry operations", "evidence_refs": ["test_spec_architecture_prompt_registry.py"]}
-                ]
+                "direct_assignments": [
+                    {
+                        "capability_id": "execution.implementation",
+                        "presence": "AWARE",
+                        "ownership": "NONE",
+                        "capability_relation": "ROUTES_TO",
+                        "delivery_source": "ROUTED_OWNER",
+                        "evidence_refs": ["tests/test_spec_architecture_prompt_registry.py"],
+                        "rationale": "Dry-run fixture routes implementation to the existing P07 owner.",
+                    }
+                ],
+                "evidence_refs": ["tests/test_spec_architecture_prompt_registry.py"],
+                "distinct_residual": {
+                    "summary": "Exercise the low-friction registry helper without claiming duplicate execution ownership.",
+                    "evidence_refs": ["tests/test_spec_architecture_prompt_registry.py"],
+                    "reviewed_against": ["P07"],
+                },
             },
         }
         result = prompt_registry_ops.add_prompt(
