@@ -114,6 +114,12 @@
         "push or PR state",
         "next executable command",
         "resolved use-case route"
+      ],
+      "capability_ids": [
+        "harness-infrastructure-maintenance"
+      ],
+      "use_case_ids": [
+        "execution-boundary-continuation"
       ]
     },
     {
