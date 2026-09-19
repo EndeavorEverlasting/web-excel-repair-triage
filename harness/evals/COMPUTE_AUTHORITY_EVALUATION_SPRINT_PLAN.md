@@ -308,7 +308,7 @@ Provider-backed model-runtime execution remains separately typed from CI/static 
 
 **Proof ceiling now:** IMPLEMENTED / VALIDATED / INTEGRATED / DEPLOYED for Gen2 harness artifacts; `UNPROVEN_RUNTIME` for real external-agent pilot effectiveness; Sprint 3 is dependency-gated and NOT STARTED.
 
-**NEXT ACTION:** execute AgentSwitchboard ADP-01 (OpenCode capability/readiness) then ADP-02 (canonical adapter + config generator) from §16 adapter phase map. Do not ask the operator to invent an adapter JSON. ADP-02 must produce the repository-owned executable/config generator after both ADP-00 and ADP-01 are green. ADP-00 (Triage neutral-capture authority) is already INTEGRATED.
+**NEXT ACTION:** execute ADP-03 (synthetic interoperability) from §16 adapter phase map. ADP-00 (Triage neutral-capture authority) is INTEGRATED via PR #598 @ 0733897c. ADP-01 (OpenCode capability/readiness) is INTEGRATED via ASB #318 @ 138253d. ADP-02 (canonical adapter + config generator) is INTEGRATED via ASB #321 @ 352640136e320a91f85999bf81af2f734fa23016.
 
 ## 15. Generation versioning
 
@@ -356,9 +356,9 @@ Before any observed Gen2 pilot:
 | Phase | Owner | Depends on | Completion gate | Status |
 | --- | --- | --- | --- | --- |
 | ADP-00 Neutral capture authority | Triage P67 | Gen2 integrated | versioned neutral capture + evaluator annotation derivation; negative self-rating and positive neutral fixtures green | INTEGRATED |
-| ADP-01 OpenCode capability/readiness | AgentSwitchboard | current ASB main | exact installed/upstream noninteractive/structured-event/config/plugin/provider identity capabilities proven or one typed blocker | (pending) |
-| ADP-02 Canonical adapter + config generator | AgentSwitchboard | ADP-00 + ADP-01 | P67 placeholder invocation writes one privacy-bounded neutral result; timeout/nonzero/missing-result fail closed | (blocked on ADP-01) |
-| ADP-03 Synthetic interoperability | ASB + Triage seam | ADP-02 | action/validation/subagent/parallel/error paths covered; no raw-text/gold leakage; cross-repo consumer contract green | (blocked on ADP-02) |
+| ADP-01 OpenCode capability/readiness | AgentSwitchboard | current ASB main | exact installed/upstream noninteractive/structured-event/config/plugin/provider identity capabilities proven or one typed blocker | INTEGRATED ASB #318 @ 138253d |
+| ADP-02 Canonical adapter + config generator | AgentSwitchboard | ADP-00 + ADP-01 | P67 placeholder invocation writes one privacy-bounded neutral result; timeout/nonzero/missing-result fail closed | INTEGRATED ASB #321 @ 352640136e320a91f85999bf81af2f734fa23016 |
+| ADP-03 Synthetic interoperability | ASB + Triage seam | ADP-02 | action/validation/subagent/parallel/error paths covered; no raw-text/gold leakage; cross-repo consumer contract green | (pending) |
 | ADP-04 Observed adapter smoke | authorized provider runtime | ADP-03 | TC01 control/treatment pair same provider/agent/model; optional TC06 pair only with real >=2 worker capacity; no effectiveness verdict | (blocked on ADP-03) |
 | ADP-05 Gen2 16-run pilot | P67 model-runtime | ADP-04 | 16 classified paired runs, stable pair identity, zero forbidden escape/gold leakage, valid pilot aggregate/fixture disposition | (blocked on ADP-04) |
 | ADP-06 Sprint 3 handoff | P67 convergence | ADP-05 | existing 48-valid-run/blinded-decision dependency gate opens without changing frozen Gen2 treatment or thresholds | (blocked on ADP-05) |
