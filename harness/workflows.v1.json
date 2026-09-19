@@ -233,7 +233,10 @@
         "unmeasured efficiency claims"
       ],
       "entry_points": [
-        "Prompt Kit P62"
+        "Prompt Kit P62",
+        "harness/evals/PROMPT_RUNTIME_COMPLIANCE_PILOT_PLAN.md",
+        "harness/evals/runtime-compliance/scripts/pilot.py",
+        "scripts/validate_prompt_runtime_compliance_receipt.py"
       ],
       "validation_profile": "target-repository",
       "failure_policy": "Reproduce the weakness, repair the smallest owned boundary, and rerun correctness before accepting efficiency changes.",
