@@ -69,7 +69,8 @@
     "tests/test_*_prompts.py",
     "tests/test_*_prompt_registry.py",
     "tests/test_*_prompt_suite.py",
-    "tests/test_prompt_registry_*.py"
+    "tests/test_prompt_registry_*.py",
+    "tests/test_prompt_runtime_compliance_*.py"
   ],
   "prompt_semantic_test_excludes": [
     "tests/test_skill_prompt_registry.py"
