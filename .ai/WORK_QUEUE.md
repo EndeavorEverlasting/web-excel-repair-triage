@@ -314,4 +314,3 @@ Canonical terminal action: none; no safe actionable work remains
 - **Last proof:** artifact:`docs/plans/FIRSTMATE_ASB_PROMPT_KIT_VISION_OWNER_MAP.md` created on branch; planning floor pinned; awaiting commit/push/PR
 - **Next action:** commit, push, open PR, run local proof, merge if gates pass
 - **Updated:** 2026-09-19T21:54:00Z
-
