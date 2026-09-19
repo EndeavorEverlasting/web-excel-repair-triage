@@ -13,6 +13,7 @@ Human-facing Operant releases. Git commit/artifact identity remains the forensic
 ### Fixes / performance
 
 - fix(prompt-kit): route artifact creation to P56 (`8760e100`)
+- fix(harness): normalize python→python3 across validators and hooks (#584) (`25a2b6b6`)
 
 ## 0.9.0 - 2026-09-18
 
