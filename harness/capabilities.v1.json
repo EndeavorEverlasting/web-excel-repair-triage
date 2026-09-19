@@ -132,8 +132,7 @@
             "prompt-runtime-compliance-evidence"
           ],
           "validator_ids": [
-            "prompt-runtime-compliance-receipt-audit",
-            "prompt-runtime-compliance-tests"
+            "prompt-runtime-compliance-receipt-audit"
           ],
           "proof_ceiling": "Bidirectional repository routing plus deterministic runtime-compliance contract, runner, fixture, linkage, and receipt-validation proof on the tested commit; observed external-agent behavior remains a separate runtime gate."
         }
