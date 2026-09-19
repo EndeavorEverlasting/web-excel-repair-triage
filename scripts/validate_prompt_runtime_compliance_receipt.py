@@ -1128,6 +1128,8 @@ def validate_pilot_receipt(receipt: dict[str, Any]) -> dict[str, Any]:
         errors.append("pilot receipt runs must be an array")
         runs = []
     else:
+        run_ids: list[str] = []
+        scenario_ids: list[str] = []
         for index, row in enumerate(runs):
             if not isinstance(row, dict):
                 errors.append(f"pilot receipt run {index} must be an object")
@@ -1136,19 +1138,34 @@ def validate_pilot_receipt(receipt: dict[str, Any]) -> dict[str, Any]:
             if disposition not in {"VALID", "INVALID"}:
                 errors.append(f"pilot receipt run {index} has invalid disposition")
                 continue
-            for field in ("run_id", "scenario_id"):
+            for field, identities in (
+                ("run_id", run_ids),
+                ("scenario_id", scenario_ids),
+            ):
                 value = row.get(field)
                 if not isinstance(value, str) or not value.strip():
                     errors.append(f"pilot receipt run {index} requires {field}")
+                else:
+                    identities.append(value)
             if disposition == "VALID":
                 if not isinstance(row.get("runtime_observed"), bool):
                     errors.append(f"pilot receipt run {index} requires runtime_observed")
-                for field in ("receipt_path", "validation_path", "validation_result"):
+                for field in ("receipt_path", "validation_path"):
                     value = row.get(field)
                     if not isinstance(value, str) or not value.strip():
                         errors.append(f"pilot receipt run {index} requires {field}")
+                for field in ("compliance_result", "validation_result"):
+                    value = row.get(field)
+                    if value not in {"PASS", "FAIL", "BLOCKED", "INCONCLUSIVE"}:
+                        errors.append(
+                            f"pilot receipt run {index} {field} must be a canonical result"
+                        )
             elif not isinstance(row.get("invalid_code"), str) or not row["invalid_code"].strip():
                 errors.append(f"pilot receipt run {index} requires invalid_code")
+        if len(run_ids) != len(set(run_ids)):
+            errors.append("pilot receipt run_id values must be unique")
+        if len(scenario_ids) != len(set(scenario_ids)):
+            errors.append("pilot receipt scenario_id values must be unique")
 
     if len(counts) == len(count_fields):
         executed = counts["valid_runs"] + counts["invalid_runs"]
