@@ -16,6 +16,7 @@ Then choose one domain. Do not eagerly read every root contract, every skill, th
 | Task | 30,000-foot owner | 15,000-foot detail only when needed |
 |---|---|---|
 | Harness/spec structure, context bloat | `CODEBASE_MAP.md` | harness-infrastructure skill + selected contract/validator |
+| Agent stops at a material/arbitrary boundary; boundary-to-sprint routing | `CODEBASE_MAP.md` → `TRIGGERS.md` (`harness-infrastructure-change`) | capability use case `execution-boundary-continuation` + existing harness-infrastructure workflow/skill |
 | Artifact creation / derivation | `harness/artifact-derivation/CODEBASE_MAP.md` | artifact-derivation skill + create-new-from-source contract |
 | Repo-native codegen | `harness/repo-native-update/CODEBASE_MAP.md` | contract + `scripts/run_repo_native_update.py` |
 | Artifact alias/download handoff | `harness/artifact-handoff/CODEBASE_MAP.md` | share-alias skill + share-alias-download contract |

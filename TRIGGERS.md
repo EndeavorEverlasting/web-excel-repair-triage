@@ -6,7 +6,7 @@ This file describes deterministic routing into repository skills and capabilitie
 
 | Trigger ID | Route when | Capability | Do not route when |
 |---|---|---|---|
-| `harness-infrastructure-change` | Maps, workflow/artifact/validator registries, completeness checks, hooks, skills, reports, or ownership are missing, stale, disconnected, or failing. | `harness-infrastructure-maintenance` | The task changes `AGENTS.md`, implements product behavior only, requires secrets, or requests destructive cleanup. |
+| `harness-infrastructure-change` | Maps, workflow/artifact/validator registries, completeness checks, hooks, skills, reports, ownership, or execution-boundary continuation routing are missing, stale, disconnected, or failing; includes reports that agents stop at arbitrary/material boundaries instead of continuing. | `harness-infrastructure-maintenance` | The task changes `AGENTS.md`, implements product behavior only, requires secrets, or requests destructive cleanup. |
 | `repository-hook-installation-needed` | Tracked hooks need activation/verification, or an external agent/provider hook must be reconciled with repository hook ownership. | `repository-hook-integration` | Global Git config, ambiguous linked-worktree mutation, silent replacement of another hook owner, or unproved provider-hook behavior would result. |
 | `prompt-language-change` | Prompt registry, actionability policy, builder, or generated Prompt Kit language changes; or a full language pass is requested. | `prompt-language-audit` | The request is only to read an existing validated report. |
 | `lazy-next-action-report` | Empty, placeholder, observation-only, PR/status/log-only, optional-only, or generic next actions are suspected. | `prompt-language-audit` | No canonical registry/effective builder exists; route to repository intake first. |
@@ -15,6 +15,10 @@ This file describes deterministic routing into repository skills and capabilitie
 | `technician-needs-latest-prompt-kit` | A user needs to open/use the Prompt Kit in a browser, install it on a phone/tablet, launch the Windows stable local app, obtain a source snapshot, or create/update an editable checkout for edit/commit/push work. | `technician-prompt-kit-acquisition` | Destructive Git cleanup or credential automation is proposed; or an editable checkout update is unsafe because the checkout is dirty, divergent, non-main, or has the wrong origin. |
 | `prompt-kit-browser-proof-temp-path` | An operator supplies a `prompt-kit-browser-proof-*` path under OS Temp or asks to classify/remove detached Prompt Kit browser-proof scratch. | `prompt-kit-browser-proof-scratch-cleanup` | The real request is browser-site data/Favorites deletion, broad Temp cleanup, canonical-repo cleanup, or durable evidence deletion. |
 | `prompt-kit-actionable-feedback` | Accepted written feedback, a dislike, or an accepted privacy-bounded Operant friction receipt has an unconsumed actionable signal. | `prompt-kit-feedback-afk-routing` | The signal is like/raw-usage-only, below the friction threshold, malformed/sensitive/already consumed, requires a second scheduler, or the only remaining gate is P105 promotion. |
+
+## Execution-boundary continuation routing rule
+
+The intent aliases `agents stop at arbitrary boundaries instead of continuing`, `turn arbitrary boundaries into bounded sprints`, `why did the agent stop without reporting the boundary`, and `classification became a stopping condition` route through the existing `harness-infrastructure-change` trigger. From there select capability `harness-infrastructure-maintenance`, use case `execution-boundary-continuation`, and workflow `harness-infrastructure`. Do not create a second boundary capability or taxonomy merely to route this complaint; follow the use-case participant edges to the current contract, engine, policy, artifact, and focused proof.
 
 ## Repository hook integration routing rule
 

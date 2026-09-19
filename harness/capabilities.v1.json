@@ -120,7 +120,7 @@
     },
     {
       "id": "harness-infrastructure-maintenance",
-      "version": "1.2.0",
+      "version": "1.3.0",
       "status": "canonical",
       "skill": ".ai/skills/harness-infrastructure-maintenance/SKILL.md",
       "trigger_ids": [
@@ -142,7 +142,10 @@
         "focused operator reports including harness/reports/PROMPT_KIT_ORDER_NAVIGATION.md",
         ".githooks/",
         ".github/workflows/harness-contract.yml",
-        "existing harness failures, product-gap evidence, PR state, merge intent, and merge authority"
+        "existing harness failures, product-gap evidence, PR state, merge intent, and merge authority",
+        "harness/contracts/execution-boundary-enforcement.v1.json",
+        "harness/contracts/execution-boundary-taxonomy.v1.json",
+        "harness/evals/execution-boundaries/boundary-regression-matrix.v1.json"
       ],
       "outputs": [
         "tracked canonical harness repairs",
@@ -157,7 +160,65 @@
         "kind": "script",
         "path": "scripts/validate_harness.py"
       },
-      "proof_ceiling": "Static repository, contract, source-gap, and CI harness proof on the tested commit; actual provider merges, product runtime, browser/mobile ergonomics, GUI, protected-target, and production proof remain separate."
+      "proof_ceiling": "Static repository, contract, source-gap, and CI harness proof on the tested commit; actual provider merges, product runtime, browser/mobile ergonomics, GUI, protected-target, and production proof remain separate.",
+      "use_cases": [
+        {
+          "id": "execution-boundary-continuation",
+          "originating_user_intent": "Agents stop at material or arbitrary boundaries instead of reporting the boundary, preserving the requested outcome, and continuing through the smallest bounded recovery sprint.",
+          "intent_aliases": [
+            "agents stop at arbitrary boundaries instead of continuing",
+            "turn arbitrary boundaries into bounded sprints",
+            "why did the agent stop without reporting the boundary",
+            "classification became a stopping condition"
+          ],
+          "primary_trigger_id": "harness-infrastructure-change",
+          "workflow_id": "harness-infrastructure",
+          "skill": ".ai/skills/harness-infrastructure-maintenance/SKILL.md",
+          "participants": [
+            {
+              "role": "contract",
+              "path": "harness/contracts/execution-boundary-enforcement.v1.json"
+            },
+            {
+              "role": "taxonomy",
+              "path": "harness/contracts/execution-boundary-taxonomy.v1.json"
+            },
+            {
+              "role": "prompt-semantics",
+              "path": "harness/prompt-compilation/semantics/P07.json"
+            },
+            {
+              "role": "implementation",
+              "path": "scripts/execution_boundary_engine.py"
+            },
+            {
+              "role": "shared-policy",
+              "path": "registry/prompts/actionable-next-step-policy.v1.json"
+            },
+            {
+              "role": "evidence-artifact",
+              "path": "harness/evals/execution-boundaries/boundary-regression-matrix.v1.json"
+            },
+            {
+              "role": "validator",
+              "path": "scripts/validate_execution_boundary_enforcement.py"
+            },
+            {
+              "role": "regression-test",
+              "path": "tests/test_execution_boundary_enforcement_prompt.py"
+            }
+          ],
+          "expected_artifacts": [
+            "typed primary_recovery_sprint decision from scripts/execution_boundary_engine.py",
+            "harness/evals/execution-boundaries/boundary-regression-matrix.v1.json"
+          ],
+          "validator_ids": [
+            "execution-boundary-enforcement-audit",
+            "execution-boundary-enforcement-tests"
+          ],
+          "proof_ceiling": "Bidirectional repository routing plus deterministic execution-boundary contract/engine/regression proof on the tested commit; downstream model/host obedience and hard-termination supervision remain runtime proof."
+        }
+      ]
     },
     {
       "id": "prompt-kit-browser-proof-scratch-cleanup",
