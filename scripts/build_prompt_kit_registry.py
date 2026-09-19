@@ -638,6 +638,7 @@ def build_ontology_model(prompts: list[dict[str, Any]]) -> dict[str, Any]:
         trigger_ids = source.get("trigger_ids", [])
         inputs = source.get("inputs", [])
         outputs = source.get("outputs", [])
+        use_cases = source.get("use_cases", [])
         if not skill or not operation or not proof_ceiling:
             raise SystemExit(
                 f"Capability {capability_id} must define skill, operation, and proof_ceiling"
@@ -647,6 +648,10 @@ def build_ontology_model(prompts: list[dict[str, Any]]) -> dict[str, Any]:
         if not isinstance(trigger_ids, list) or not isinstance(inputs, list) or not isinstance(outputs, list):
             raise SystemExit(
                 f"Capability {capability_id} trigger_ids, inputs, and outputs must be arrays"
+            )
+        if not isinstance(use_cases, list) or any(not isinstance(item, dict) for item in use_cases):
+            raise SystemExit(
+                f"Capability {capability_id} use_cases must be an array of objects"
             )
         kind = str(implementation.get("kind", "")).strip()
         if not kind:
@@ -662,6 +667,7 @@ def build_ontology_model(prompts: list[dict[str, Any]]) -> dict[str, Any]:
             "inputs": list(inputs),
             "outputs": list(outputs),
             "implementation": dict(implementation),
+            "use_cases": [dict(item) for item in use_cases],
             "proof_ceiling": proof_ceiling,
         }
         capabilities.append(normalized)
