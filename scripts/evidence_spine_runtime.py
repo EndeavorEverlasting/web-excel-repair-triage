@@ -35,8 +35,12 @@ class ContinuationError(ValueError):
 def _require_short_text(value: Any, field: str) -> str:
     if not isinstance(value, str):
         raise ContinuationError(f"{field} must be a string")
+    if len(value) > MAX_SHORT_TEXT or not SHORT_TEXT_RE.fullmatch(value):
+        raise ContinuationError(
+            f"{field} must be 1..{MAX_SHORT_TEXT} characters without CR/LF"
+        )
     normalized = value.strip()
-    if not normalized or len(normalized) > MAX_SHORT_TEXT or not SHORT_TEXT_RE.fullmatch(normalized):
+    if not normalized:
         raise ContinuationError(
             f"{field} must be 1..{MAX_SHORT_TEXT} characters without CR/LF"
         )
