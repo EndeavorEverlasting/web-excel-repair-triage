@@ -130,6 +130,7 @@ Each prompt/capability assignment must separate:
 - **presence**: `NONE | AWARE | SUPPORT | REQUIRED`
 - **ownership**: `NONE | SECONDARY | PRIMARY`
 - **capability_relation**: `IMPLEMENTS | ROUTES_TO | TESTS | GUARDS | FORBIDDEN`
+- **delivery_source**: `CANONICAL_BODY | SHARED_POLICY | COMPILER_OVERLAY | ROUTED_OWNER | TEST_GUARD`
 - **evidence_refs**: one or more repository-owned proof references for material assignments
 - **rationale**: short bounded explanation for PRIMARY/REQUIRED/FORBIDDEN assignments
 
@@ -143,6 +144,14 @@ Prompt-to-prompt behavioral relationships must reuse the executable Prompt Topol
 - `COMPLEMENT`
 
 A semantic-coverage implementation may derive or validate those channels from accepted profiles, but must not introduce competing synonyms for the same prompt-to-prompt concepts.
+
+Direct versus inherited semantics:
+
+- direct assignments are owned by the prompt profile;
+- shared-policy/compiler assignments may be referenced through versioned inherited-source records instead of copied N times across every prompt;
+- the derived matrix expands those inherited sources so every prompt still receives a complete visible cell;
+- a shared source revision change invalidates/revalidates every dependent derived cell without pretending each prompt body changed;
+- PRIMARY ownership should normally remain with the canonical direct owner even when many prompts inherit REQUIRED behavior from a shared source.
 
 The familiar display label may project:
 
@@ -203,7 +212,9 @@ Required fields include:
 - `profile_sha256`
 - canonical prompt record hash / source identity
 - acceptance commit/revision
-- assignment list
+- direct assignment list
+- inherited semantic-source identity/revision list
+- semantic dependency fingerprint
 - evidence references
 - profile status
 - prior profile reference when version > 1
@@ -222,6 +233,8 @@ A proposal generator may suggest assignments, but may never overwrite an ACCEPTE
 ## Capability migration contract
 
 Every lifecycle transition after baseline acceptance must be explicit.
+
+Body-changing capability migrations must cross-reference the corresponding `prompt-semantic-migrations/v1` source-history transition instead of becoming an independent competing record. The two ledgers must agree on prompt IDs and source hashes.
 
 Migration kinds:
 
@@ -267,6 +280,8 @@ Initial semantic rules:
 - **PSC012 GLOBAL_PRIMARY_CROWDING_REVIEW** — unexpected multiple PRIMARY owners trigger configured warning/fail policy.
 - **PSC013 SOURCE_HISTORY_COMPLETE** — every canonical prompt body source, including `docs/prompts.json`, is covered by Prompt Quality History.
 - **PSC014 LIFECYCLE_TRANSITION_ATOMIC** — ADD/STRENGTHEN/RETIRE cannot leave registry, profile, migration, generated site, or required semantic proof mutually inconsistent.
+- **PSC015 SOURCE_AND_CAPABILITY_MIGRATION_LINK** — body-changing profile transitions must reference the matching Prompt Quality History semantic migration and agree on source hashes/affected IDs.
+- **PSC016 INHERITED_SOURCE_INTEGRITY** — shared policy/compiler capability inheritance is versioned by source identity/revision; dependent matrix cells cannot remain accepted against a changed inherited source without revalidation.
 
 ## Lifecycle semantics
 
@@ -295,8 +310,8 @@ A candidate highly overlapping an existing PRIMARY owner defaults to STRENGTHEN/
 Before changing text:
 
 1. load the accepted profile as immutable prior;
-2. bind the candidate prompt hash;
-3. compute declared capability deltas;
+2. bind the candidate prompt hash plus inherited semantic-source fingerprint;
+3. compute declared direct/inherited capability deltas;
 4. run every proof attached to protected PRIMARY/REQUIRED assignments;
 5. reject unexplained downgrade;
 6. require migration when responsibility changes;
@@ -333,7 +348,7 @@ Bootstrap pipeline:
 
 1. load every canonical prompt through Prompt Topology canonical records;
 2. seed candidate capability vocabulary from:
-   - Prompt Strength dimensions;
+   - Prompt Strength dimensions as inherited/shared obligations where appropriate, not falsely attributed direct ownership;
    - registry `useWhen`, `sprintRole`, `expectedOutput`, `proofGate`;
    - existing prompt-specific tests;
    - existing harness capabilities/use cases;
@@ -734,11 +749,12 @@ Mutation cases:
 5. ADD near-duplicate profile without distinct residual => FAIL.
 6. ADD distinct capability residual => PASS admission gate.
 7. prompt body changes but no capability disposition => FAIL.
-8. prompt body changes with NO_CAPABILITY_CHANGE + focused proof => PASS.
-9. generated proposal attempts to overwrite ACCEPTED prior => FAIL.
-10. new PRIMARY claim with no evidence => FAIL.
-11. unexpected PRIMARY crowding => WARN/FAIL per catalog policy.
-12. prompt source missing from history source set => FAIL.
+8. prompt body changes with NO_CAPABILITY_CHANGE + focused proof + matching source-history migration => PASS.
+9. shared policy revision changes while inherited profile fingerprint remains stale => FAIL/revalidation required.
+10. generated proposal attempts to overwrite ACCEPTED prior => FAIL.
+11. new PRIMARY claim with no evidence => FAIL.
+12. unexpected PRIMARY crowding => WARN/FAIL per catalog policy.
+13. prompt source missing from history source set => FAIL.
 
 ### Convergence
 
