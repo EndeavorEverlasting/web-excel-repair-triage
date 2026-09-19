@@ -189,7 +189,9 @@ def build_route_receipt(route: dict[str, Any]) -> dict[str, Any]:
         "provenance": classified["provenance"],
         "destination_confidence": confidence,
         "authoritative": classified["authoritative"],
-        "effective_destination": classified["effective_destination"],
+        "effective_destination": (
+            classified["effective_destination"] if classified["authoritative"] else "unknown"
+        ),
         "invocation_id": route.get("invocation_id"),
         "run_id": route.get("run_id"),
     }
