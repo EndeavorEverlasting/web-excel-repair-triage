@@ -7,6 +7,7 @@ import hashlib
 import json
 import re
 import sys
+import tempfile
 from datetime import datetime
 from pathlib import Path
 from typing import Any
@@ -43,6 +44,18 @@ SIGNALS = {
     "regression",
     "environment",
     "unknown",
+}
+CORRECTION_KINDS = {
+    "corrective_repeat_request",
+    "explicit_correction",
+    "restate_context",
+    "restate_constraint",
+    "reroute_owner",
+    "reenumerate_work",
+    "manual_workaround",
+    "manual_context_transfer",
+    "restart_conversation",
+    "abandon",
 }
 PROMPT_REF_FIELDS = {
     "id",
@@ -198,14 +211,31 @@ def _validate_routing_request(request: Any) -> dict[str, Any]:
     signals = request.get("signals")
     if not isinstance(signals, list) or len(signals) > 24:
         raise RoutingDecisionError("routing request signals must be an array of <=24 entries")
-    if any(signal not in SIGNALS for signal in signals):
-        raise RoutingDecisionError("routing request contains an unknown signal")
+    if any(not isinstance(signal, str) or signal not in SIGNALS for signal in signals):
+        raise RoutingDecisionError("routing request contains an invalid signal")
     if len(set(signals)) != len(signals):
         raise RoutingDecisionError("routing request signals must be unique")
 
     correction_events = request.get("correctionEvents")
     if not isinstance(correction_events, list) or len(correction_events) > 24:
         raise RoutingDecisionError("routing request correctionEvents must be an array of <=24 entries")
+    for index, event in enumerate(correction_events):
+        if not isinstance(event, dict):
+            raise RoutingDecisionError(
+                f"routing request correctionEvents[{index}] must be an object"
+            )
+        if set(event) != {"kind", "corrective"}:
+            raise RoutingDecisionError(
+                f"routing request correctionEvents[{index}] must contain only kind and corrective"
+            )
+        if event.get("kind") not in CORRECTION_KINDS:
+            raise RoutingDecisionError(
+                f"routing request correctionEvents[{index}].kind is invalid"
+            )
+        if event.get("corrective") is not True:
+            raise RoutingDecisionError(
+                f"routing request correctionEvents[{index}].corrective must be true"
+            )
 
     _validate_prompt_ref(request.get("currentPrompt"), "routing request currentPrompt")
 
@@ -430,18 +460,25 @@ def main(argv: list[str] | None = None) -> int:
             output_path.parent.mkdir(parents=True, exist_ok=True)
             if output_path.exists():
                 output_path.unlink()
-            temp_output = output_path.with_name(output_path.name + ".tmp")
-            if temp_output.exists():
-                temp_output.unlink()
 
         request = json.loads(request_path.read_text(encoding="utf-8"))
         receipt = json.loads(receipt_path.read_text(encoding="utf-8"))
         decision = build_routing_decision(request, receipt, created_at=args.created_at)
         payload = json.dumps(decision, indent=2, sort_keys=True) + "\n"
         if output_path is not None:
-            assert temp_output is not None
-            temp_output.write_text(payload, encoding="utf-8")
+            with tempfile.NamedTemporaryFile(
+                mode="w",
+                encoding="utf-8",
+                dir=output_path.parent,
+                prefix=f".{output_path.name}.",
+                suffix=".tmp",
+                delete=False,
+            ) as handle:
+                handle.write(payload)
+                handle.flush()
+                temp_output = Path(handle.name)
             temp_output.replace(output_path)
+            temp_output = None
         else:
             print(payload, end="")
         return 0
