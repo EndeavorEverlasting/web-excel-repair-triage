@@ -112,16 +112,16 @@ Canonical terminal action: none; no safe actionable work remains
 - **Status:** READY
 - **Priority:** P1
 - **Owner:** P67 / skill-evaluation
-- **Branch / PR:** main; Sprint 1 integrated by PR #464; Sprint 2 runtime-harness implementation not yet integrated
+- **Branch / PR:** main; Sprint 1+2+Gen2+ADP-00 INTEGRATED; observed pilot UNPROVEN_RUNTIME
 - **Scope:** build and execute the bounded paired A/B evaluation that measures whether the strengthened Prompt Kit compute-authority contract increases decision-relevant useful compute, defect/contract discovery, evidence honesty, parallelism when available, and fixed-point quality without widening mutation scope or rewarding endless churn
-- **Forbidden:** changing Prompt Kit treatment behavior inside the frozen study; duplicating the P67 eval framework or skill-evaluation identity; modifying separately owned #450/#431/#462/#242 surfaces outside an explicit reconciliation; secrets/private transcripts/personal data; promoting static proof to observed external-agent effectiveness
-- **Dependencies:** Sprint 1 integrated by PR #464 / merge `43b1953092b518fe3a76b5fe0bfab179f730e849`; Sprint 2 consumes that immutable fixture floor; Sprint 3 must reconcile open PR #450 before touching shared P67 registry/test files
+- **Forbidden:** changing Prompt Kit treatment behavior inside the frozen study; duplicating the P67 eval framework or skill-evaluation identity; modifying separately owned #431/#462/#242 surfaces outside an explicit reconciliation; secrets/private transcripts/personal data; promoting static proof to observed external-agent effectiveness
+- **Dependencies:** Sprint 1 integrated by PR #464 / merge `43b1953092b518fe3a76b5fe0bfab179f730e849`; Sprint 2 integrated by PR #530 / merge `300d949fdcf79bbac018440a85052302d575bd2c`; Gen2 generation support by PR #557 / merge `e0038eec048af029f6f27bb2f0dc70f875e09e06`; ADP-00 neutral capture authority by PR #598 / merge `0733897c0bde4bd0dc48e8aab9b043e9e62bc7aa`; Sprint 3 must reconcile #450-owner collision surfaces (PR #450 CLOSED not merged); #596 salvaged stateless route receipts
 - **References:** `harness/evals/COMPUTE_AUTHORITY_EVALUATION_SPRINT_PLAN.md`, `harness/evals/compute-authority/manifest.json`, `harness/evals/compute-authority/README.md`, `harness/evals/repository-ai-evals.v1.json`, `.ai/skills/skill-evaluation/SKILL.md`, `harness/contracts/prompt-outcome-receipt.schema.v1.json`
 - **Acceptance gate:** three-sprint program completes its deterministic gold-fixture floor, 16-run paired pilot, shared-registry reconciliation, 48 valid-run main study, blinded scoring and mechanical thresholds; observed effectiveness is promoted only when exact runtime evidence satisfies the canonical plan
 - **Gate:** Sprint 2 repository/runtime-harness implementation is SAFE & EXECUTABLE; provider credentials or an accessible external-agent runtime may block only the observed pilot and must remain `UNPROVEN_RUNTIME` rather than a synthetic PASS
-- **Last proof:** merge:43b1953092b518fe3a76b5fe0bfab179f730e849 integrated PR #464 Compute-Authority Sprint 1; artifact:harness/evals/compute-authority/manifest.json artifact:harness/evals/compute-authority/fixtures/index.v1.json artifact:harness/evals/compute-authority/scripts/validate_fixtures.py
-- **Next action:** Build Sprint 2 from `harness/evals/COMPUTE_AUTHORITY_EVALUATION_SPRINT_PLAN.md`: add the immutable condition resolver, disposable-run isolation, provider-neutral adapter/capture seam, paired-order pilot runner, invalid-run receipts, and focused tests without editing #450-owned shared P67 registry files; validate and integrate the deterministic harness before attempting external runs
-- **Updated:** 2026-09-14T13:06:00-04:00
+- **Last proof:** merge:43b1953092b518fe3a76b5fe0bfab179f730e849 integrated PR #464 Compute-Authority Sprint 1; merge:300d949fdcf79bbac018440a85052302d575bd2c integrated PR #530 Sprint 2 runtime harness; merge:e0038eec048af029f6f27bb2f0dc70f875e09e06 integrated PR #557 Gen2 generation support; merge:0733897c0bde4bd0dc48e8aab9b043e9e62bc7aa integrated PR #598 ADP-00 neutral capture authority; artifact:harness/evals/compute-authority/runtime/adapter-contract.v2.json present on refreshed default branch
+- **Next action:** Execute ADP-01 (AgentSwitchboard OpenCode capability/readiness) then ADP-02 (canonical adapter + config generator) from `harness/evals/COMPUTE_AUTHORITY_EVALUATION_SPRINT_PLAN.md` §16 adapter phase map; observed pilot remains gated on ADP-05
+- **Updated:** 2026-09-19T21:24:00Z
 
 ## TRQ-008 — Execute Prompt Execution Evidence Spine sprint map
 
@@ -253,16 +253,48 @@ Canonical terminal action: none; no safe actionable work remains
 
 ## TRQ-016 — Prompt Compilation Sprint 6 Compute Mode observed browser proof
 
-- **Status:** CLAIMED
+- **Status:** DONE
 - **Priority:** P1
 - **Owner:** test/prompt-compilation-compute-mode-browser-proof-20260916
-- **Branch / PR:** test/prompt-compilation-compute-mode-browser-proof-20260916 / #524
+- **Branch / PR:** main / #524 merged
 - **Scope:** close the explicit Sprint 4 Compute Mode runtime proof gap with an exact-head Playwright journey covering product default, persisted user default, per-prompt override, explicit run override, and effective P07 clipboard content; register the proof in the existing observed-behavior harness and preserve Sprint 6 plan continuity
 - **Forbidden:** changing Compute Mode semantics or precedence merely to make proof pass; new Evidence Spine events or lifecycle ownership; PR #450/#431 donor work; mutating TRQ-007 frozen identities; raw conversation/transcript persistence; automatic improvement promotion/merge; hand-editing generated Prompt Kit HTML
 - **Dependencies:** TRQ-013 DONE; TRQ-014 DONE; observed-behavior proof harness present on current main; refreshed floor includes #521 outcome receipts without overlapping Prompt Compilation/browser-proof mutations
 - **References:** `harness/prompt-compilation/PROMPT_COMPILATION_SPRINT_MAP.md`, `tests/prompt_kit_compute_mode_browser_proof.py`, `harness/observed-proof/manifest.v1.json`, `.github/workflows/prompt-kit-observed-browser-proof.yml`, `tests/test_observed_behavior_proof_harness.py`
 - **Acceptance gate:** exact PR head passes deterministic observed-proof/Compute Mode tests and generated-site parity; Chromium journey emits a valid `browser_runtime_observed` receipt proving run > prompt > user > product precedence and compiled P07 clipboard output; required PR checks/reviews are green; exact validated head integrates to current default branch with containment proof
-- **Gate:** exact-head PR CI + observed-browser receipt + integration pending
-- **Last proof:** tracked:PR #524 opened from current-main-reconciled branch; artifact:tests/prompt_kit_compute_mode_browser_proof.py; artifact:harness/prompt-compilation/PROMPT_COMPILATION_SPRINT_MAP.md Sprint 6
-- **Next action:** reconcile PR #524 onto refreshed main 0733897c; execute exact-head observed-browser proof; repair any in-scope runtime failure without weakening Compute Mode semantics; integrate only after receipt validation and required checks are green
-- **Updated:** 2026-09-19T21:07:00Z
+- **Gate:** none
+- **Last proof:** commit:e88c04a92caed75f26a94a6945f59dbf71cef8fa; merge:3644dd3bdf2f89dccfb07f554f753c93c917e65e integrated PR #524; workflow:35302530685 prompt-kit-observed-browser-proof SUCCESS with `browser_runtime_observed` receipt proving precedence and compiled P07 clipboard (resolveCopyContent fix); workflow:35302530687 deterministic-test-floor SUCCESS; workflow:35302530692 operational-harness SUCCESS; artifact:tests/prompt_kit_compute_mode_browser_proof.py and Sprint 6 on refreshed default branch
+- **Next action:** none; no safe actionable work remains
+- **Updated:** 2026-09-19T21:24:00Z
+
+## TRQ-017 — Prompt Semantic Capability Coverage program
+
+- **Status:** DONE
+- **Priority:** P1
+- **Owner:** P79 + Prompt Topology + Prompt Quality History + Prompt Strength
+- **Branch / PR:** main / #588 #591 #592 #594 merged
+- **Scope:** protect Prompt Kit behavior across ADD, EDIT/STRENGTHEN, and RETIRE by making each prompt's accepted semantic capabilities versioned repository truth; add canonical prompt-by-capability matrix as a deterministic projection of versioned profiles; detect when a change preserves syntax/ID/generated-site parity while silently removing existing behavior; integrate Sprint 1A baseline semantic capability profiles, Sprint 1B semantic diff validator + lifecycle engine, and Sprint 2 semantic coverage lifecycle + required checks
+- **Forbidden:** replacing Prompt Kit identity/Prompt Strength/Prompt Quality History; letting generated topology artifacts become prompt-registry authority; unrelated prompt behavior mutation; secrets; hand-editing generated Prompt Kit output
+- **Dependencies:** P79 prompt identity/admission/topology; P13 recurring-process hardening; P94 retained regression interpretation; Prompt Quality History canonical prompt text/history; Prompt Strength global shared execution-strength floor; planning floor `main@42c53fa6445d39aa74dabdfeec4eb45bfa5d7a4d`
+- **References:** `harness/prompt-topology/PROMPT_SEMANTIC_CAPABILITY_COVERAGE_SPRINT_MAP.md`, `harness/prompt-topology/semantic-capability-catalog.v1.json`, `harness/contracts/prompt-semantic-coverage.v1.json`, `scripts/validate_prompt_semantic_coverage.py`, `tests/test_prompt_semantic_coverage.py`, `.ai/skills/prompt-semantic-coverage/SKILL.md`
+- **Acceptance gate:** Sprint 1A baseline semantic capability profiles and accepted matrix integrated; Sprint 1B semantic diff validator + lifecycle engine integrated; Sprint 2 semantic coverage lifecycle + required checks integrated; validator detects when a change preserves syntax/ID/generated-site parity while silently removing existing capability; deterministic matrix projection validated; focused tests + operational harness + repository work ledger + diff hygiene pass; exact validated heads integrate to current default branch
+- **Gate:** none
+- **Last proof:** merge:66064394fe0632c6abecf16f23fe9b20bd94e654 integrated PR #592 Sprint 1B semantic diff validator + lifecycle engine; merge:92d077ca1f46d4ea7ece85b5f20ff1e0fa01e9e7 integrated PR #591 Sprint 1A baseline semantic capability profiles and accepted matrix; merge:7ecbf642a04ad92d8b17f17f40ad1c4fb0cc1c22 integrated PR #594 Sprint 2 semantic coverage lifecycle + required checks; workflow:35287857041 deterministic-test-floor SUCCESS; workflow:35287857045 operational-harness SUCCESS; artifact:harness/prompt-topology/PROMPT_SEMANTIC_CAPABILITY_COVERAGE_SPRINT_MAP.md present on refreshed default branch
+- **Next action:** none; no safe actionable work remains
+- **Updated:** 2026-09-19T21:24:00Z
+
+## TRQ-018 — Prompt Runtime Compliance Sprint 4 deterministic floor convergence
+
+- **Status:** DONE
+- **Priority:** P1
+- **Owner:** runtime-compliance-sprint4-safe-convergence-20260919
+- **Branch / PR:** main / #585 merged
+- **Scope:** converge runtime-compliance Sprint 4 deterministic floor onto refreshed main containing #524 browser proof; reconcile resolveCopyContent precedence fix from #524 without duplicate ownership; preserve frozen Gen1 treatment; keep validator/pilot UNPROVEN_RUNTIME honest; preserve runtime-compliance planning authority; integrate exact validated head to current default branch
+- **Forbidden:** changing frozen Gen1 treatment prompt identity; claiming OBSERVED effectiveness from deterministic floor alone; weakening runtime-compliance validator; absorbing separately-owned browser-proof or compute-authority surfaces; product runtime behavior mutation outside reconciliation scope; secrets
+- **Dependencies:** TRQ-016 DONE (PR #524 merged); runtime-compliance Sprint 1-3 on main; `resolveCopyContent` precedence fix from #524 must be reconciled; refreshed floor `main@3644dd3bdf2f89dccfb07f554f753c93c917e65e`
+- **References:** `harness/evals/PROMPT_RUNTIME_COMPLIANCE_PILOT_PLAN.md`, `harness/evals/compute-authority/scripts/runtime_adapter.py`, `tests/test_compute_authority_runtime_harness.py`, `scripts/validate_prompt_runtime_compliance_receipt.py`
+- **Acceptance gate:** Sprint 4 floor integrates without weakening; resolveCopyContent precedence reconciled; validator detects negative/ambiguous/pending cases; Gen1 frozen treatment preserved; focused Sprint 4 tests + runtime-compliance validator + deterministic floor + operational harness green; exact validated head integrates to current default branch
+- **Gate:** none
+- **Last proof:** merge:d63c04426d7f65e39d30819a0cc5a48ba51b3bb1 integrated PR #585 runtime-compliance Sprint 4 safe convergence; workflow:35302530688 deterministic-test-floor SUCCESS; workflow:35302530689 prompt-runtime-compliance SUCCESS; workflow:35302530692 operational-harness SUCCESS; local:python -m unittest tests.test_compute_authority_runtime_harness (3 OK); artifact:harness/evals/PROMPT_RUNTIME_COMPLIANCE_PILOT_PLAN.md present on refreshed default branch
+- **Next action:** none; no safe actionable work remains
+- **Updated:** 2026-09-19T21:24:00Z
