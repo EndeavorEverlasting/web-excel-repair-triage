@@ -65,9 +65,23 @@ class OperantExternalResourceTests(unittest.TestCase):
             "color": "Teal",
             "category": "standard",
             "semantic_profile": {
-                "capabilities": [
-                    {"id": "external-prior-art-test", "level": "PRIMARY", "rationale": "Test fixture for external prior-art gate", "evidence_refs": ["test_operant_external_resources.py"]}
-                ]
+                "direct_assignments": [
+                    {
+                        "capability_id": "execution.implementation",
+                        "presence": "AWARE",
+                        "ownership": "NONE",
+                        "capability_relation": "ROUTES_TO",
+                        "delivery_source": "ROUTED_OWNER",
+                        "evidence_refs": ["tests/test_operant_external_resources.py"],
+                        "rationale": "Synthetic ADD fixture routes execution to the existing P07 owner.",
+                    }
+                ],
+                "evidence_refs": ["tests/test_operant_external_resources.py"],
+                "distinct_residual": {
+                    "summary": "Exercise external prior-art admission without claiming a duplicate implementation owner.",
+                    "evidence_refs": ["tests/test_operant_external_resources.py"],
+                    "reviewed_against": ["P07"],
+                },
             },
         }
 
