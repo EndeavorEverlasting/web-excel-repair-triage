@@ -20,7 +20,7 @@
     {
       "id": "repository-work-ledger-audit",
       "class": "contract",
-      "command": "python scripts/validate_repository_work_ledger.py --summary",
+      "command": "python3 scripts/validate_repository_work_ledger.py --summary",
       "blocking": true,
       "output": "process log",
       "proof_ceiling": "Static/current repository work-ledger continuity and disposition proof."
@@ -28,7 +28,7 @@
     {
       "id": "repository-work-ledger-tests",
       "class": "test",
-      "command": "python -m unittest tests.test_repository_work_ledger -v",
+      "command": "python3 -m unittest tests.test_repository_work_ledger -v",
       "blocking": true,
       "output": "process log",
       "proof_ceiling": "Executable repository work-ledger regression proof."
@@ -452,6 +452,7 @@
       "repo-native-update-audit",
       "repo-native-update-tests",
       "repo-native-update-parity",
+      "prompt-runtime-compliance-receipt-audit",
       "prompt-kit-header-contract",
       "prompt-kit-parity",
       "artifact-hygiene",
