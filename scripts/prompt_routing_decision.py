@@ -157,6 +157,10 @@ def _validate_routing_request(request: Any) -> dict[str, Any]:
         raise RoutingDecisionError("routing request correlationId is invalid")
     _require_rfc3339(request.get("createdAt"), "routing request createdAt")
 
+    execution_surface = request.get("executionSurface")
+    if execution_surface not in {"regular_ai_prompt", "gnhf_launch_artifact"}:
+        raise RoutingDecisionError("routing request executionSurface is invalid")
+
     policy = request.get("routingPolicy")
     if not isinstance(policy, dict):
         raise RoutingDecisionError("routing request routingPolicy must be an object")
@@ -258,6 +262,11 @@ def build_routing_decision(
         registry_sha256=registry_sha256,
         kit_version=kit_version,
     )
+
+    if selected_ref["executionSurface"] != request["executionSurface"]:
+        raise RoutingDecisionError(
+            "selected prompt execution surface does not match routing request; cross-surface fallback is forbidden"
+        )
 
     current_ref = _validate_prompt_ref(request.get("currentPrompt"), "routing request currentPrompt")
     route_action = "KEEP_CURRENT_PROMPT" if current_ref == selected_ref else "SWITCH_PROMPT"
