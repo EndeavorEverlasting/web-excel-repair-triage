@@ -222,6 +222,8 @@ class HarnessContractTests(unittest.TestCase):
         capabilities = self.load("harness/capabilities.v1.json")["capabilities"]
         triggers = self.load("harness/triggers.v1.json")["triggers"]
         workflows = self.load("harness/workflows.v1.json")["workflows"]
+        artifacts = self.load("harness/artifacts.v1.json")["artifacts"]
+        validators = self.load("harness/validators.v1.json")["validators"]
 
         capability = next(
             item for item in capabilities if item["id"] == "skill-evaluation"
@@ -242,10 +244,24 @@ class HarnessContractTests(unittest.TestCase):
         self.assertTrue(
             set(hook["workflow_entrypoints"]).issubset(set(workflow["entry_points"]))
         )
-        self.assertEqual(
-            hook["expected_artifact"],
-            "Outputs/repository-ai-evals/runtime-compliance/pilot-receipt.json",
+        artifact = next(
+            item for item in artifacts if item["id"] == hook["expected_artifact_id"]
         )
+        self.assertEqual(
+            artifact["canonical_path"],
+            "Outputs/repository-ai-evals/runtime-compliance/",
+        )
+        self.assertIn(artifact["validator"], hook["validator_ids"])
+        validator_by_id = {item["id"]: item for item in validators}
+        self.assertEqual(
+            set(hook["validator_ids"]),
+            {
+                "prompt-runtime-compliance-receipt-audit",
+                "prompt-runtime-compliance-tests",
+            },
+        )
+        for validator_id in hook["validator_ids"]:
+            self.assertIn(validator_id, validator_by_id)
         self.assertIn(
             "scripts/validate_prompt_runtime_compliance_receipt.py",
             hook["proof_resources"],
