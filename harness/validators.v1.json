@@ -4,7 +4,7 @@
     {
       "id": "harness-completeness",
       "class": "contract",
-      "command": "python scripts/validate_harness.py --report Outputs/harness-completeness-report.json",
+      "command": "python3 scripts/validate_harness.py --report Outputs/harness-completeness-report.json",
       "blocking": true,
       "output": "Outputs/harness-completeness-report.json",
       "proof_ceiling": "Static completeness, routing, registry, hook, acquisition, and connected-contract proof."
@@ -12,7 +12,7 @@
     {
       "id": "harness-contract-tests",
       "class": "test",
-      "command": "python -m unittest tests.test_harness_contract -v",
+      "command": "python3 -m unittest tests.test_harness_contract -v",
       "blocking": true,
       "output": "process log",
       "proof_ceiling": "Executable regression proof for registered harness contracts."
@@ -36,7 +36,7 @@
     {
       "id": "prompt-kit-cross-device-access-audit",
       "class": "contract",
-      "command": "python scripts/validate_prompt_kit_cross_device_access.py --summary",
+      "command": "python3 scripts/validate_prompt_kit_cross_device_access.py --summary",
       "blocking": true,
       "output": "process log",
       "proof_ceiling": "Static Prompt Kit cross-device access contract proof."
@@ -44,7 +44,7 @@
     {
       "id": "prompt-kit-cross-device-access-tests",
       "class": "test",
-      "command": "python -m unittest tests.test_prompt_kit_cross_device_access -v",
+      "command": "python3 -m unittest tests.test_prompt_kit_cross_device_access -v",
       "blocking": true,
       "output": "process log",
       "proof_ceiling": "Executable Prompt Kit cross-device access regression proof."
@@ -52,7 +52,7 @@
     {
       "id": "prompt-kit-freshness-guidance-audit",
       "class": "contract",
-      "command": "python scripts/validate_prompt_kit_freshness_guidance.py --summary",
+      "command": "python3 scripts/validate_prompt_kit_freshness_guidance.py --summary",
       "blocking": true,
       "output": "process log",
       "proof_ceiling": "Static Prompt Kit freshness guidance contract proof."
@@ -60,7 +60,7 @@
     {
       "id": "prompt-kit-freshness-guidance-tests",
       "class": "test",
-      "command": "python -m unittest tests.test_prompt_kit_freshness_guidance -v",
+      "command": "python3 -m unittest tests.test_prompt_kit_freshness_guidance -v",
       "blocking": true,
       "output": "process log",
       "proof_ceiling": "Executable Prompt Kit freshness guidance regression proof."
@@ -68,7 +68,7 @@
     {
       "id": "pr-merge-gate-audit",
       "class": "contract",
-      "command": "python scripts/validate_pr_merge_gate.py --summary",
+      "command": "python3 scripts/validate_pr_merge_gate.py --summary",
       "blocking": true,
       "output": "process log",
       "proof_ceiling": "Static PR merge-gate contract proof."
@@ -76,7 +76,7 @@
     {
       "id": "pr-merge-gate-tests",
       "class": "test",
-      "command": "python -m unittest tests.test_pr_merge_gate -v",
+      "command": "python3 -m unittest tests.test_pr_merge_gate -v",
       "blocking": true,
       "output": "process log",
       "proof_ceiling": "Executable PR merge-gate regression proof."
@@ -84,7 +84,7 @@
     {
       "id": "artifact-handoff-harness-audit",
       "class": "contract",
-      "command": "python scripts/validate_artifact_handoff_harness.py --summary",
+      "command": "python3 scripts/validate_artifact_handoff_harness.py --summary",
       "blocking": true,
       "output": "process log",
       "proof_ceiling": "Static artifact handoff harness completeness proof."
@@ -92,7 +92,7 @@
     {
       "id": "artifact-handoff-harness-tests",
       "class": "test",
-      "command": "python -m unittest tests.test_artifact_handoff_harness -v",
+      "command": "python3 -m unittest tests.test_artifact_handoff_harness -v",
       "blocking": true,
       "output": "process log",
       "proof_ceiling": "Executable artifact handoff harness regression proof."
@@ -100,7 +100,7 @@
     {
       "id": "artifact-derivation-harness-audit",
       "class": "contract",
-      "command": "python scripts/validate_artifact_derivation_harness.py --summary",
+      "command": "python3 scripts/validate_artifact_derivation_harness.py --summary",
       "blocking": true,
       "output": "process log",
       "proof_ceiling": "Static artifact derivation harness completeness proof."
@@ -108,7 +108,7 @@
     {
       "id": "artifact-derivation-harness-tests",
       "class": "test",
-      "command": "python -m unittest tests.test_artifact_derivation_harness -v",
+      "command": "python3 -m unittest tests.test_artifact_derivation_harness -v",
       "blocking": true,
       "output": "process log",
       "proof_ceiling": "Executable artifact derivation harness regression proof."
@@ -116,7 +116,7 @@
     {
       "id": "prompt-kit-interaction-contract-tests",
       "class": "test",
-      "command": "python -m unittest tests.test_prompt_kit_interactions_contract -v",
+      "command": "python3 -m unittest tests.test_prompt_kit_interactions_contract -v",
       "blocking": true,
       "output": "process log",
       "proof_ceiling": "Interaction contract and static fixture proof."
@@ -124,7 +124,7 @@
     {
       "id": "prompt-kit-interaction-audit",
       "class": "contract",
-      "command": "python scripts/validate_prompt_kit_interactions.py --output Outputs/prompt-kit-interaction-audit.json --summary",
+      "command": "python3 scripts/validate_prompt_kit_interactions.py --output Outputs/prompt-kit-interaction-audit.json --summary",
       "blocking": true,
       "output": "Outputs/prompt-kit-interaction-audit.json",
       "proof_ceiling": "Static contract audit; non-strict mode may retain a product implementation gap."
@@ -132,7 +132,7 @@
     {
       "id": "prompt-kit-discovery-audit",
       "class": "contract",
-      "command": "python scripts/validate_prompt_kit_discovery.py --summary",
+      "command": "python3 scripts/validate_prompt_kit_discovery.py --summary",
       "blocking": true,
       "output": "process log",
       "proof_ceiling": "Static prompt discovery and registration proof."
@@ -140,7 +140,7 @@
     {
       "id": "prompt-kit-discovery-tests",
       "class": "test",
-      "command": "python -m unittest tests.test_prompt_kit_discovery -v",
+      "command": "python3 -m unittest tests.test_prompt_kit_discovery -v",
       "blocking": true,
       "output": "process log",
       "proof_ceiling": "Executable prompt discovery regression proof."
@@ -148,7 +148,7 @@
     {
       "id": "prompt-language-contract-tests",
       "class": "test",
-      "command": "python -m unittest tests.test_prompt_language_audit -v",
+      "command": "python3 -m unittest tests.test_prompt_language_audit -v",
       "blocking": true,
       "output": "process log",
       "proof_ceiling": "Prompt-language policy and mutation-fixture proof."
@@ -156,7 +156,7 @@
     {
       "id": "prompt-language-audit",
       "class": "contract",
-      "command": "python scripts/evaluate_prompt_language.py --output Outputs/prompt-language-audit.json --summary",
+      "command": "python3 scripts/evaluate_prompt_language.py --output Outputs/prompt-language-audit.json --summary",
       "blocking": true,
       "output": "Outputs/prompt-language-audit.json",
       "proof_ceiling": "Exhaustive static prompt-language coverage and disposition proof."
@@ -164,7 +164,7 @@
     {
       "id": "skill-prompt-registry-tests",
       "class": "test",
-      "command": "python -m unittest tests.test_skill_prompt_registry -v",
+      "command": "python3 -m unittest tests.test_skill_prompt_registry -v",
       "blocking": true,
       "output": "process log",
       "proof_ceiling": "Skill prompt registry identity and integration proof."
@@ -172,7 +172,7 @@
     {
       "id": "prompt-kit-responsive-layout-audit",
       "class": "contract",
-      "command": "python scripts/validate_prompt_kit_layout_harness.py --summary",
+      "command": "python3 scripts/validate_prompt_kit_layout_harness.py --summary",
       "blocking": true,
       "output": "process log",
       "proof_ceiling": "Static responsive-layout harness and contract completeness proof; no browser geometry proof."
@@ -180,7 +180,7 @@
     {
       "id": "prompt-kit-responsive-layout-tests",
       "class": "test",
-      "command": "python -m unittest tests.test_prompt_kit_layout_harness -v",
+      "command": "python3 -m unittest tests.test_prompt_kit_layout_harness -v",
       "blocking": true,
       "output": "process log",
       "proof_ceiling": "Executable responsive-layout harness regression proof; strict browser geometry remains separate."
@@ -188,7 +188,7 @@
     {
       "id": "prompt-kit-header-contract",
       "class": "test",
-      "command": "python tests/test_prompt_kit_header_contract.py",
+      "command": "python3 tests/test_prompt_kit_header_contract.py",
       "blocking": true,
       "output": "process log",
       "proof_ceiling": "Checked-in Prompt Kit header contract proof."
@@ -196,7 +196,7 @@
     {
       "id": "prompt-kit-ui-format-alignment-audit",
       "class": "contract",
-      "command": "python scripts/validate_prompt_kit_ui_format_alignment.py --summary",
+      "command": "python3 scripts/validate_prompt_kit_ui_format_alignment.py --summary",
       "blocking": true,
       "output": "Outputs/prompt-kit-ui-format-alignment.json",
       "proof_ceiling": "Static catalog/deferred-ledger proof that Prompt Kit controls stay in the formatting sequence."
@@ -204,7 +204,7 @@
     {
       "id": "prompt-kit-ui-format-alignment-tests",
       "class": "test",
-      "command": "python -m unittest tests.test_prompt_kit_ui_format_alignment -v",
+      "command": "python3 -m unittest tests.test_prompt_kit_ui_format_alignment -v",
       "blocking": true,
       "output": "process log",
       "proof_ceiling": "Executable regression for alignment gate, forbidden-class fail-closed, and deferred coercion."
@@ -212,7 +212,7 @@
     {
       "id": "prompt-kit-parity",
       "class": "build",
-      "command": "python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html --check",
+      "command": "python3 scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html --check",
       "blocking": true,
       "output": "web/prompt-kit/index.html",
       "proof_ceiling": "Deterministic source-to-generated-site parity."
@@ -220,7 +220,7 @@
     {
       "id": "staged-artifact-hygiene",
       "class": "lint",
-      "command": "python scripts/validate_staged_artifacts.py",
+      "command": "python3 scripts/validate_staged_artifacts.py",
       "blocking": true,
       "output": "process log",
       "proof_ceiling": "Path-only staged-index proof for generated/runtime, binary, secret-like, and machine-local artifact policy."
@@ -228,7 +228,7 @@
     {
       "id": "artifact-hygiene",
       "class": "lint",
-      "command": "python -m triage.gitignore_hygiene",
+      "command": "python3 -m triage.gitignore_hygiene",
       "blocking": true,
       "output": "process log",
       "proof_ceiling": "Tracked and ignored artifact-path policy proof."
@@ -252,7 +252,7 @@
     {
       "id": "prompt-kit-browser-proof-cleanup-completeness",
       "class": "contract",
-      "command": "python scripts/validate_prompt_kit_browser_proof_cleanup.py --summary",
+      "command": "python3 scripts/validate_prompt_kit_browser_proof_cleanup.py --summary",
       "blocking": true,
       "output": "process log",
       "proof_ceiling": "Static focused cleanup-harness completeness and safety-marker proof."
@@ -260,7 +260,7 @@
     {
       "id": "prompt-kit-browser-proof-cleanup-tests",
       "class": "test",
-      "command": "python -m unittest tests.test_prompt_kit_browser_proof_cleanup_harness -v",
+      "command": "python3 -m unittest tests.test_prompt_kit_browser_proof_cleanup_harness -v",
       "blocking": true,
       "output": "process log",
       "proof_ceiling": "Executable focused cleanup contract regression proof."
@@ -276,7 +276,7 @@
     {
       "id": "app-harness-validation",
       "class": "contract",
-      "command": "python scripts/validate_app_harness.py --output Outputs/app-harness-validation.json",
+      "command": "python3 scripts/validate_app_harness.py --output Outputs/app-harness-validation.json",
       "blocking": true,
       "output": "Outputs/app-harness-validation.json",
       "proof_ceiling": "Exact-head offline/synthetic harness readiness with explicit requirement classes and honest optional skips; no application/runtime proof."
@@ -284,7 +284,7 @@
     {
       "id": "prompt-kit-feedback-afk-routing-audit",
       "class": "contract",
-      "command": "python scripts/validate_prompt_kit_feedback_afk_routing.py --summary",
+      "command": "python3 scripts/validate_prompt_kit_feedback_afk_routing.py --summary",
       "blocking": true,
       "output": "process log",
       "proof_ceiling": "Static feedback-AFK ownership, privacy, scheduler, workflow, and promotion-boundary proof."
@@ -292,7 +292,7 @@
     {
       "id": "prompt-kit-feedback-afk-routing-tests",
       "class": "test",
-      "command": "python -m unittest tests.test_prompt_kit_feedback_afk_routing -v",
+      "command": "python3 -m unittest tests.test_prompt_kit_feedback_afk_routing -v",
       "blocking": true,
       "output": "process log",
       "proof_ceiling": "Executable one-shot classification, dedupe, work-request, and routing-boundary regression proof."
@@ -300,7 +300,7 @@
     {
       "id": "prompt-outcome-receipt-audit",
       "class": "contract",
-      "command": "python scripts/validate_prompt_outcome_receipts.py --summary",
+      "command": "python3 scripts/validate_prompt_outcome_receipts.py --summary",
       "blocking": true,
       "output": "process log",
       "proof_ceiling": "Static and fixture proof for outcome classification, grounding-episode correction events, divergence math, privacy bounds, and P99/P115 ownership."
@@ -308,7 +308,7 @@
     {
       "id": "prompt-outcome-receipt-tests",
       "class": "test",
-      "command": "python -m unittest tests.test_prompt_outcome_receipt_prompt -v",
+      "command": "python3 -m unittest tests.test_prompt_outcome_receipt_prompt -v",
       "blocking": true,
       "output": "process log",
       "proof_ceiling": "Executable regression proof that ordinary prompt reuse is neutral while episode-scoped corrective actions drive bounded intervention."
@@ -316,7 +316,7 @@
     {
       "id": "operant-product-identity-audit",
       "class": "contract",
-      "command": "python scripts/validate_operant_product_identity.py --summary",
+      "command": "python3 scripts/validate_operant_product_identity.py --summary",
       "blocking": true,
       "output": "process log",
       "proof_ceiling": "Static product identity, transition authority, compatibility-path, governance, and generated-brand proof."
@@ -324,7 +324,7 @@
     {
       "id": "operant-product-identity-tests",
       "class": "test",
-      "command": "python -m unittest tests.test_operant_product_identity -v",
+      "command": "python3 -m unittest tests.test_operant_product_identity -v",
       "blocking": true,
       "output": "process log",
       "proof_ceiling": "Executable regression proof for Operant identity, transition authority, and generated visible-brand invariants."
@@ -332,7 +332,7 @@
     {
       "id": "operant-external-resource-audit",
       "class": "contract",
-      "command": "python scripts/validate_operant_external_resources.py --summary",
+      "command": "python3 scripts/validate_operant_external_resources.py --summary",
       "blocking": true,
       "output": "process log",
       "proof_ceiling": "Static/current tracked resource projection, source pin, coverage routing, size-budget, lazy-load, and generated-site containment proof."
@@ -340,7 +340,7 @@
     {
       "id": "operant-external-resource-tests",
       "class": "test",
-      "command": "python -m unittest tests.test_operant_external_resources -v",
+      "command": "python3 -m unittest tests.test_operant_external_resources -v",
       "blocking": true,
       "output": "process log",
       "proof_ceiling": "Executable deterministic resource projection and lazy-loading regression proof."
@@ -348,7 +348,7 @@
     {
       "id": "execution-boundary-enforcement-audit",
       "class": "contract",
-      "command": "python scripts/validate_execution_boundary_enforcement.py --summary",
+      "command": "python3 scripts/validate_execution_boundary_enforcement.py --summary",
       "blocking": true,
       "output": "process log",
       "proof_ceiling": "Static architecture, taxonomy, executable regression-matrix, and shared Prompt Kit boundary-inheritance proof."
@@ -356,7 +356,7 @@
     {
       "id": "execution-boundary-enforcement-tests",
       "class": "test",
-      "command": "python -m unittest tests.test_execution_boundary_enforcement_prompt -v",
+      "command": "python3 -m unittest tests.test_execution_boundary_enforcement_prompt -v",
       "blocking": true,
       "output": "process log",
       "proof_ceiling": "Executable boundary state-machine, recovery, supervisor, and negative-control regression proof."
@@ -364,7 +364,7 @@
     {
       "id": "privacy-failure-observatory-audit",
       "class": "contract",
-      "command": "python scripts/validate_privacy_preserving_failure_observatory.py",
+      "command": "python3 scripts/validate_privacy_preserving_failure_observatory.py",
       "blocking": true,
       "output": "process log",
       "proof_ceiling": "Static local-only observatory, hook allowlist, privacy diode, and no-network contract proof."
@@ -372,7 +372,7 @@
     {
       "id": "privacy-failure-observatory-tests",
       "class": "test",
-      "command": "python -m unittest tests.test_privacy_preserving_failure_observatory_prompt -v",
+      "command": "python3 -m unittest tests.test_privacy_preserving_failure_observatory_prompt -v",
       "blocking": true,
       "output": "process log",
       "proof_ceiling": "Executable zero-content state, provenance, hard-stop, persistence, and privacy-canary regression proof."
@@ -380,7 +380,7 @@
     {
       "id": "repo-native-update-audit",
       "class": "contract",
-      "command": "python scripts/validate_repo_native_update_harness.py --summary",
+      "command": "python3 scripts/validate_repo_native_update_harness.py --summary",
       "blocking": true,
       "output": "process log",
       "proof_ceiling": "Static completeness for the repository-native update harness, owned canary surface, and local CLI entrypoints."
@@ -388,7 +388,7 @@
     {
       "id": "repo-native-update-tests",
       "class": "test",
-      "command": "python -m unittest tests.test_repo_native_update -v",
+      "command": "python3 -m unittest tests.test_repo_native_update -v",
       "blocking": true,
       "output": "process log",
       "proof_ceiling": "Executable fail-closed path ownership, malformed-input rejection, drift detection, and idempotent generate/--check proof."
@@ -396,7 +396,7 @@
     {
       "id": "repo-native-update-parity",
       "class": "contract",
-      "command": "python scripts/run_repo_native_update.py generate --surface canary-constants --check",
+      "command": "python3 scripts/run_repo_native_update.py generate --surface canary-constants --check",
       "blocking": true,
       "output": "Outputs/repo-native-update/receipt.json",
       "proof_ceiling": "Generated canary surface matches canonical input with a reviewable receipt; local CLI only."
@@ -404,7 +404,7 @@
     {
       "id": "prompt-runtime-compliance-receipt-audit",
       "class": "contract",
-      "command": "python scripts/validate_prompt_runtime_compliance_receipt.py --summary",
+      "command": "python3 scripts/validate_prompt_runtime_compliance_receipt.py --summary",
       "blocking": true,
       "output": "process log",
       "proof_ceiling": "Deterministic semantic validation of the canonical contract receipt fixture; no external-agent runtime claim."

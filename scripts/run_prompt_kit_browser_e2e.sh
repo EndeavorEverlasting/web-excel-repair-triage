@@ -6,7 +6,7 @@ TMP="$(mktemp -d)"
 cleanup(){ if [[ -n "${SERVER_PID:-}" ]]; then kill "$SERVER_PID" 2>/dev/null || true; fi; rm -rf "$TMP"; }
 trap cleanup EXIT
 cd "$ROOT"
-python -m http.server "$PORT" --bind 127.0.0.1 --directory web >"$TMP/server.log" 2>&1 &
+python3 -m http.server "$PORT" --bind 127.0.0.1 --directory web >"$TMP/server.log" 2>&1 &
 SERVER_PID=$!
 for _ in $(seq 1 30); do curl -fsS "http://127.0.0.1:${PORT}/prompt-kit/index.html" >/dev/null && break; sleep 1; done
 CHROME="$(command -v google-chrome || command -v chromium || command -v chromium-browser || true)"

@@ -667,6 +667,34 @@ class HarnessContractTests(unittest.TestCase):
             ).resolve(),
         )
 
+    def test_validator_commands_use_python3_not_bare_python(self) -> None:
+        """Ensure all validator commands use 'python3' instead of bare 'python'.
+
+        Bare 'python' may not exist on python3-only systems (e.g., Ubuntu 22.04+
+        without python-is-python3 package). All validator commands should use
+        'python3' explicitly for portability. Commands like 'git', 'pwsh', etc.
+        are excluded from this check.
+        """
+        validators = self.load("harness/validators.v1.json")
+        failing = []
+        for validator in validators["validators"]:
+            command = validator["command"]
+            # Skip non-python commands (git, pwsh, etc.)
+            if not any(py in command for py in ["python", "python3"]):
+                continue
+            # Check if command starts with bare 'python ' (not python3)
+            tokens = command.split()
+            if tokens and tokens[0] == "python":
+                failing.append(
+                    f"{validator['id']}: command starts with bare 'python' "
+                    f"instead of 'python3': {command}"
+                )
+        self.assertEqual(
+            failing,
+            [],
+            "Validator commands must use 'python3' instead of bare 'python':\n"
+            + "\n".join(failing),
+        )
 
 if __name__ == "__main__":
     unittest.main()

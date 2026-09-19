@@ -164,11 +164,11 @@ PRE_COMMIT_SNAPSHOT_VALIDATOR_IDS = (
     "harness-contract-tests",
 )
 PRE_COMMIT_ADAPTER_GATES = (
-    "python scripts/validate_staged_artifacts.py",
+    "python3 scripts/validate_staged_artifacts.py",
     "git diff --cached --check",
 )
 PRE_COMMIT_PROFILE_RUNNER = (
-    "python scripts/run_validator_profile.py --profile pre_commit_snapshot"
+    "python3 scripts/run_validator_profile.py --profile pre_commit_snapshot"
 )
 PRE_COMMIT_PROFILE_REPORT = '--report "$PROFILE_REPORT"'
 REQUIRED_CAPABILITY_IDS = {
@@ -199,25 +199,25 @@ REQUIRED_TRIGGER_IDS = {
     "repo-native-generated-surface-drift",
 }
 PROTECTED_PATHS = ("Candidates/", "Active/")
-PRE_PUSH_PROFILE_RUNNER = "python scripts/run_validator_profile.py --profile pre_push"
+PRE_PUSH_PROFILE_RUNNER = "python3 scripts/run_validator_profile.py --profile pre_push"
 PRE_PUSH_PROFILE_REPORT = '--report "$PROFILE_REPORT"'
 PRE_PUSH_PRESERVED_COMMANDS = (
-    "python scripts/validate_repository_work_ledger.py --summary",
-    "python -m unittest tests.test_repository_work_ledger -v",
-    "python scripts/validate_prompt_kit_cross_device_access.py --summary",
-    "python -m unittest tests.test_prompt_kit_cross_device_access -v",
-    "python scripts/validate_prompt_kit_freshness_guidance.py --summary",
-    "python -m unittest tests.test_prompt_kit_freshness_guidance -v",
-    "python scripts/validate_pr_merge_gate.py --summary",
-    "python -m unittest tests.test_pr_merge_gate -v",
-    "python scripts/validate_prompt_kit_release_identity.py",
-    "python -m unittest tests.test_prompt_kit_release_identity -v",
-    "python scripts/validate_prompt_kit_order_navigation.py",
-    "python -m unittest tests.test_prompt_kit_order_navigation_contract -v",
-    "python scripts/validate_artifact_handoff_harness.py --summary",
-    "python -m unittest tests.test_artifact_handoff_harness -v",
-    "python scripts/validate_artifact_derivation_harness.py --summary",
-    "python -m unittest tests.test_artifact_derivation_harness -v",
+    "python3 scripts/validate_repository_work_ledger.py --summary",
+    "python3 -m unittest tests.test_repository_work_ledger -v",
+    "python3 scripts/validate_prompt_kit_cross_device_access.py --summary",
+    "python3 -m unittest tests.test_prompt_kit_cross_device_access -v",
+    "python3 scripts/validate_prompt_kit_freshness_guidance.py --summary",
+    "python3 -m unittest tests.test_prompt_kit_freshness_guidance -v",
+    "python3 scripts/validate_pr_merge_gate.py --summary",
+    "python3 -m unittest tests.test_pr_merge_gate -v",
+    "python3 scripts/validate_prompt_kit_release_identity.py",
+    "python3 -m unittest tests.test_prompt_kit_release_identity -v",
+    "python3 scripts/validate_prompt_kit_order_navigation.py",
+    "python3 -m unittest tests.test_prompt_kit_order_navigation_contract -v",
+    "python3 scripts/validate_artifact_handoff_harness.py --summary",
+    "python3 -m unittest tests.test_artifact_handoff_harness -v",
+    "python3 scripts/validate_artifact_derivation_harness.py --summary",
+    "python3 -m unittest tests.test_artifact_derivation_harness -v",
 )
 
 
@@ -394,7 +394,7 @@ def validate_manifest() -> dict[str, Any]:
         payload.get("validation_order"), "manifest.validation_order", minimum=8
     )
     if validation_order[0] != (
-        "python scripts/validate_harness.py "
+        "python3 scripts/validate_harness.py "
         "--report Outputs/harness-completeness-report.json"
     ):
         raise HarnessValidationError(
