@@ -1,0 +1,49 @@
+{
+  "manifest_version": "runtime-compliance-receipt-corpus/v1",
+  "title": "P07 Runtime Compliance Receipt Oracle Corpus",
+  "canonical_scenario_index": "harness/evals/runtime-compliance/fixtures/index.v1.json",
+  "receipt_schema": "prompt-runtime-compliance-receipt/v1",
+  "receipt_schema_path": "harness/contracts/prompt-runtime-compliance-receipt.schema.v1.json",
+  "semantic_contract": "prompt-runtime-compliance/v1",
+  "semantic_contract_path": "harness/contracts/prompt-runtime-compliance.v1.json",
+  "boundary_taxonomy": "execution-boundary-taxonomy/v1",
+  "purpose": "Subordinate positive/negative receipt corpus for RTC01..RTC05. Scenario identity and protected-rule ownership remain canonical in fixtures/index.v1.json; this manifest only maps each canonical scenario to richer deterministic receipt oracles.",
+  "proof_ceiling": "Deterministic fixture/oracle correctness only. Corpus artifacts do not prove downstream model/runtime compliance.",
+  "scenarios": [
+    {
+      "scenario_id": "RTC01",
+      "directory": "harness/evals/runtime-compliance/fixtures/rtc01",
+      "definition": "harness/evals/runtime-compliance/fixtures/rtc01/scenario.json",
+      "positive_receipt": "harness/evals/runtime-compliance/fixtures/rtc01/receipt.pass.v1.json",
+      "negative_receipt": "harness/evals/runtime-compliance/fixtures/rtc01/receipt.fail.v1.json"
+    },
+    {
+      "scenario_id": "RTC02",
+      "directory": "harness/evals/runtime-compliance/fixtures/rtc02",
+      "definition": "harness/evals/runtime-compliance/fixtures/rtc02/scenario.json",
+      "positive_receipt": "harness/evals/runtime-compliance/fixtures/rtc02/receipt.pass.v1.json",
+      "negative_receipt": "harness/evals/runtime-compliance/fixtures/rtc02/receipt.fail.v1.json"
+    },
+    {
+      "scenario_id": "RTC03",
+      "directory": "harness/evals/runtime-compliance/fixtures/rtc03",
+      "definition": "harness/evals/runtime-compliance/fixtures/rtc03/scenario.json",
+      "positive_receipt": "harness/evals/runtime-compliance/fixtures/rtc03/receipt.pass.v1.json",
+      "negative_receipt": "harness/evals/runtime-compliance/fixtures/rtc03/receipt.fail.v1.json"
+    },
+    {
+      "scenario_id": "RTC04",
+      "directory": "harness/evals/runtime-compliance/fixtures/rtc04",
+      "definition": "harness/evals/runtime-compliance/fixtures/rtc04/scenario.json",
+      "positive_receipt": "harness/evals/runtime-compliance/fixtures/rtc04/receipt.pass.v1.json",
+      "negative_receipt": "harness/evals/runtime-compliance/fixtures/rtc04/receipt.fail.v1.json"
+    },
+    {
+      "scenario_id": "RTC05",
+      "directory": "harness/evals/runtime-compliance/fixtures/rtc05",
+      "definition": "harness/evals/runtime-compliance/fixtures/rtc05/scenario.json",
+      "positive_receipt": "harness/evals/runtime-compliance/fixtures/rtc05/receipt.pass.v1.json",
+      "negative_receipt": "harness/evals/runtime-compliance/fixtures/rtc05/receipt.fail.v1.json"
+    }
+  ]
+}
