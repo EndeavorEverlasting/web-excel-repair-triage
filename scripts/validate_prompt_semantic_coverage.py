@@ -13,6 +13,10 @@ from pathlib import Path
 from typing import Any
 
 ROOT = Path(__file__).resolve().parents[1]
+if str(ROOT) not in sys.path:
+    sys.path.insert(0, str(ROOT))
+
+from scripts import build_prompt_kit_registry as prompt_registry  # noqa: E402
 
 # Presence and ownership strength orderings for non-weakening checks
 PRESENCE_ORDER = ["NONE", "AWARE", "SUPPORT", "REQUIRED"]
@@ -62,6 +66,69 @@ def _compute_semantic_dependency_fingerprint(profile: dict[str, Any]) -> str:
     inherited = json.dumps(profile.get("inherited_sources", []), sort_keys=True)
     combined = direct + inherited
     return hashlib.sha256(combined.encode('utf-8')).hexdigest()
+
+
+def compute_canonical_prompt_hash(prompt: dict[str, Any]) -> str:
+    """Hash the canonical semantic record exactly as the accepted Sprint 1A baseline does."""
+    projection = {
+        "id": prompt.get("id", ""),
+        "name": prompt.get("name", ""),
+        "copyContent": prompt.get("copyContent", ""),
+        "sprintRole": prompt.get("sprintRole", ""),
+        "useWhen": prompt.get("useWhen", ""),
+    }
+    canonical = json.dumps(projection, sort_keys=True, separators=(",", ":"))
+    return hashlib.sha256(canonical.encode("utf-8")).hexdigest()
+
+
+def _load_canonical_prompt_records() -> tuple[dict[str, dict[str, Any]], set[str]]:
+    """Load raw canonical prompt records without effective/shared-policy decoration."""
+    base = _load_json(prompt_registry.BASE_REGISTRY)
+    if not isinstance(base, list):
+        raise ValueError("Base prompt registry must be a JSON array")
+
+    rows: list[dict[str, Any]] = [row for row in base if isinstance(row, dict)]
+    base_ids = {str(row.get("id", "")).strip() for row in rows if row.get("id")}
+
+    for path in prompt_registry.EXTENSION_REGISTRIES:
+        payload = _load_json(path)
+        if not isinstance(payload, dict) or not isinstance(payload.get("prompts"), list):
+            raise ValueError(f"Prompt extension has invalid shape: {path}")
+        rows.extend(row for row in payload["prompts"] if isinstance(row, dict))
+
+    by_id: dict[str, dict[str, Any]] = {}
+    for row in rows:
+        prompt_id = str(row.get("id", "")).strip()
+        if not prompt_id:
+            continue
+        if prompt_id in by_id:
+            raise ValueError(f"Duplicate canonical prompt id: {prompt_id}")
+        by_id[prompt_id] = row
+    return by_id, base_ids
+
+
+def check_psc002_profile_matches_canonical_record(
+    profile: dict[str, Any],
+    canonical_record: dict[str, Any] | None,
+) -> list[str]:
+    """Fail closed when an ACCEPTED profile no longer binds the current canonical prompt."""
+    if profile.get("profile_status") != "ACCEPTED":
+        return []
+
+    prompt_id = str(profile.get("prompt_id", "")).strip()
+    if canonical_record is None:
+        return [
+            f"PSC002 PROFILE_BINDS_CANONICAL_PROMPT: ACCEPTED profile {prompt_id} has no current canonical prompt record"
+        ]
+
+    expected = compute_canonical_prompt_hash(canonical_record)
+    observed = str(profile.get("canonical_prompt_hash", "")).strip()
+    if observed != expected:
+        return [
+            f"PSC009 BODY_CHANGE_REQUIRES_PROFILE_DISPOSITION: {prompt_id} canonical body changed "
+            "without an accepted profile/migration transition"
+        ]
+    return []
 
 
 def check_psc001_profile_coverage_complete(profiles_data: dict[str, Any], canonical_prompt_count: int) -> list[str]:
@@ -503,51 +570,78 @@ def validate_migration(
     return errors
 
 
+def validate_repository_state() -> list[str]:
+    """Return all semantic-coverage violations for the current repository state."""
+    errors: list[str] = []
+
+    # Load every canonical owner up front so missing/garbled inputs fail closed.
+    _load_contract()
+    catalog = _load_catalog()
+    profiles_data = _load_profiles()
+    migrations_data = _load_migrations()
+    canonical_records, base_prompt_ids = _load_canonical_prompt_records()
+
+    profiles = profiles_data.get("profiles", [])
+    migrations = migrations_data.get("migrations", [])
+    if not isinstance(profiles, list) or not isinstance(migrations, list):
+        raise ValueError("Semantic profiles and migrations must be arrays")
+
+    # PSC001: the accepted Sprint 1A floor must continue to cover every base prompt.
+    errors.extend(check_psc001_profile_coverage_complete(profiles_data, len(base_prompt_ids)))
+    accepted_profiles = [p for p in profiles if p.get("profile_status") == "ACCEPTED"]
+    accepted_ids = {str(p.get("prompt_id", "")).strip() for p in accepted_profiles}
+    missing_base = sorted(base_prompt_ids - accepted_ids)
+    if missing_base:
+        errors.append(
+            "PSC001 PROFILE_COVERAGE_COMPLETE: base prompts missing ACCEPTED profiles: "
+            + ", ".join(missing_base)
+        )
+
+    # Current ACCEPTED profiles are live regression priors. They must bind exact raw
+    # canonical prompt records; direct registry edits therefore cannot bypass PSC009.
+    for profile in accepted_profiles:
+        prompt_id = str(profile.get("prompt_id", "")).strip()
+        errors.extend(check_psc002_profile_binds_canonical_prompt(profile))
+        errors.extend(
+            check_psc002_profile_matches_canonical_record(
+                profile,
+                canonical_records.get(prompt_id),
+            )
+        )
+        errors.extend(check_psc003_known_capability_only(profile, catalog))
+        errors.extend(check_psc011_new_primary_or_required_requires_proof(profile))
+        errors.extend(check_psc016_inherited_source_integrity(profile))
+
+    # Validate append-only lifecycle migrations.
+    for migration in migrations:
+        errors.extend(validate_migration(migration, catalog, profiles))
+
+    # PSC010: candidate/provisional re-scoring cannot reset an accepted prior.
+    profile_by_id: dict[str, list[dict[str, Any]]] = {}
+    for profile in profiles:
+        prompt_id = str(profile.get("prompt_id", "")).strip()
+        if prompt_id:
+            profile_by_id.setdefault(prompt_id, []).append(profile)
+
+    for pid_profiles in profile_by_id.values():
+        accepted = [p for p in pid_profiles if p.get("profile_status") == "ACCEPTED"]
+        provisional = [p for p in pid_profiles if p.get("profile_status") == "PROVISIONAL"]
+        for accepted_profile in accepted:
+            for provisional_profile in provisional:
+                errors.extend(
+                    check_psc010_same_agent_rescoring_cannot_reset_prior(
+                        accepted_profile,
+                        provisional_profile,
+                    )
+                )
+
+    return errors
+
+
 def validate() -> int:
     """Main validation entry point."""
-    errors = []
-
     try:
-        contract = _load_contract()
-        catalog = _load_catalog()
-        profiles_data = _load_profiles()
-        migrations_data = _load_migrations()
-
-        profiles = profiles_data.get("profiles", [])
-        migrations = migrations_data.get("migrations", [])
-
-        # PSC001: Profile coverage complete (informational for now, strict after Sprint 1A)
-        # Note: We don't have canonical prompt count here, so skip for fixtures
-
-        # Validate each profile
-        for profile in profiles:
-            if profile.get("profile_status") == "ACCEPTED":
-                errors.extend(check_psc002_profile_binds_canonical_prompt(profile))
-                errors.extend(check_psc003_known_capability_only(profile, catalog))
-                errors.extend(check_psc011_new_primary_or_required_requires_proof(profile))
-                errors.extend(check_psc016_inherited_source_integrity(profile))
-
-        # Validate migrations
-        for migration in migrations:
-            errors.extend(validate_migration(migration, catalog, profiles))
-
-        # Check for profile replacement attempts (PSC010)
-        profile_by_id: dict[str, list[dict[str, Any]]] = {}
-        for profile in profiles:
-            pid = profile.get("prompt_id")
-            if pid:
-                if pid not in profile_by_id:
-                    profile_by_id[pid] = []
-                profile_by_id[pid].append(profile)
-
-        for pid, pid_profiles in profile_by_id.items():
-            accepted = [p for p in pid_profiles if p.get("profile_status") == "ACCEPTED"]
-            provisional = [p for p in pid_profiles if p.get("profile_status") == "PROVISIONAL"]
-
-            for acc_profile in accepted:
-                for prov_profile in provisional:
-                    errors.extend(check_psc010_same_agent_rescoring_cannot_reset_prior(acc_profile, prov_profile))
-
+        errors = validate_repository_state()
     except Exception as exc:
         print(f"ERROR: Validation failed with exception: {exc}", file=sys.stderr)
         return 1
