@@ -67,6 +67,53 @@ class EvidenceSpineRuntimeTests(unittest.TestCase):
         self.assertEqual(first["route_id"], second["route_id"])
         self.assertEqual(first["semantic_sha256"], second["semantic_sha256"])
 
+    def test_uncorrelated_route_receipt_preserves_legacy_identity_projection(self) -> None:
+        route = {
+            "prompt_id": "P07",
+            "prompt_revision": "rev-legacy",
+            "destination": "cursor-agent",
+            "provenance": "observed",
+            "surface_id": "prompt-kit",
+            "invocation_id": None,
+            "run_id": None,
+        }
+        receipt = runtime.build_route_receipt(route)
+        legacy_semantic = {
+            "prompt_id": "P07",
+            "prompt_revision": "rev-legacy",
+            "surface_id": "prompt-kit",
+            "destination": "cursor-agent",
+            "provenance": "observed",
+            "destination_confidence": "authoritative",
+            "authoritative": True,
+            "effective_destination": "cursor-agent",
+            "invocation_id": None,
+            "run_id": None,
+        }
+        expected = runtime._fingerprint(legacy_semantic)
+        self.assertEqual(receipt["semantic_sha256"], expected)
+        self.assertEqual(receipt["route_id"], f"route_{expected}")
+        self.assertNotIn("routing_request_event_id", receipt)
+        self.assertNotIn("correlation_id", receipt)
+
+    def test_route_receipt_rejects_partial_request_correlation(self) -> None:
+        base = {
+            "prompt_id": "P07",
+            "prompt_revision": "rev-1",
+            "destination": "firstmate",
+            "provenance": "observed",
+            "surface_id": "fm-asb",
+        }
+        for field, value in (
+            ("routing_request_event_id", "evt_route_req_rrb03_0001"),
+            ("correlation_id", "corr_rrb03_route_decision_0001"),
+        ):
+            with self.subTest(field=field), self.assertRaisesRegex(
+                runtime.ContinuationError,
+                "must be supplied together",
+            ):
+                runtime.build_route_receipt({**base, field: value})
+
     def test_route_receipt_request_correlation_participates_in_identity(self) -> None:
         base = {
             "prompt_id": "P07",
