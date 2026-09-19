@@ -120,8 +120,8 @@ Canonical terminal action: none; no safe actionable work remains
 - **Acceptance gate:** three-sprint program completes its deterministic gold-fixture floor, 16-run paired pilot, shared-registry reconciliation, 48 valid-run main study, blinded scoring and mechanical thresholds; observed effectiveness is promoted only when exact runtime evidence satisfies the canonical plan
 - **Gate:** Sprint 2 repository/runtime-harness implementation is SAFE & EXECUTABLE; provider credentials or an accessible external-agent runtime may block only the observed pilot and must remain `UNPROVEN_RUNTIME` rather than a synthetic PASS
 - **Last proof:** merge:43b1953092b518fe3a76b5fe0bfab179f730e849 integrated PR #464 Compute-Authority Sprint 1; merge:300d949fdcf79bbac018440a85052302d575bd2c integrated PR #530 Sprint 2 runtime harness; merge:e0038eec048af029f6f27bb2f0dc70f875e09e06 integrated PR #557 Gen2 generation support; merge:0733897c0bde4bd0dc48e8aab9b043e9e62bc7aa integrated PR #598 ADP-00 neutral capture authority; artifact:harness/evals/compute-authority/runtime/adapter-contract.v2.json present on refreshed default branch
-- **Next action:** Execute ADP-03 (synthetic interoperability) from `harness/evals/COMPUTE_AUTHORITY_EVALUATION_SPRINT_PLAN.md` §16 adapter phase map; ADP-01/02 INTEGRATED; observed pilot remains gated on ADP-05
-- **Updated:** 2026-09-19T21:24:00Z
+- **Next action:** Execute ADP-04 (observed adapter smoke) from `harness/evals/COMPUTE_AUTHORITY_EVALUATION_SPRINT_PLAN.md` §16 adapter phase map when operator provider auth and workstation access are available; ADP-01/02/03 INTEGRATED; ADP-04 blocked on operator provider authentication/workstation configuration; observed pilot remains gated on ADP-05
+- **Updated:** 2026-09-19T21:50:00Z
 
 ## TRQ-008 — Execute Prompt Execution Evidence Spine sprint map
 
