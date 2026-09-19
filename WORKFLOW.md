@@ -170,7 +170,7 @@ Audit every canonical and effective prompt. Require equal canonical, effective, 
 
 Define the eval contract and baseline, add positive/negative/near-miss/boundary/malformed/regression cases, reproduce weaknesses, implement the smallest valid repair, and measure performance, calls, context, retries, cost, and tokens when available. Accept efficiency changes only after correctness, safety, and routing gates remain green.
 
-For the registered `prompt-strengthening-runtime-compliance` use case, enter through the canonical plan, pilot runner, or semantic validator listed by `harness/capabilities.v1.json`; load the rest of the runtime-compliance participants only after that hook is selected. The expected aggregate artifact is `Outputs/repository-ai-evals/runtime-compliance/pilot-receipt.json`, while observed external-agent behavior remains a separate proof gate.
+For the registered `prompt-strengthening-runtime-compliance` use case, enter through the canonical plan, pilot runner, or semantic validator listed by `harness/capabilities.v1.json`; load the rest of the runtime-compliance participants only after that hook is selected. The expected artifact ID is `prompt-runtime-compliance-evidence`, resolved through `harness/artifacts.v1.json` to `Outputs/repository-ai-evals/runtime-compliance/`; observed external-agent behavior remains a separate proof gate.
 
 ### H. Prompt Kit browser-proof scratch cleanup
 
