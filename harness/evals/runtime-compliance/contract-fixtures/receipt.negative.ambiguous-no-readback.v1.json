@@ -28,10 +28,10 @@
     "scenario_id": "RTC04",
     "kind": "synthetic",
     "protected_invariants": [
-      "read-after-write",
-      "action sequencing",
-      "no duplicate side effects",
-      "proof honesty"
+      "PRCR.ACTION.PARTIAL_READBACK",
+      "PRCR.REF.RESOLVES",
+      "PRCR.ACTION.NO_FALSE_PROOF_PROMOTION",
+      "PRCR.BOUNDARY.CHECKPOINT_REQUIRED"
     ],
     "fixture_path": "harness/evals/runtime-compliance/contract-fixtures/receipt.negative.ambiguous-no-readback.v1.json"
   },

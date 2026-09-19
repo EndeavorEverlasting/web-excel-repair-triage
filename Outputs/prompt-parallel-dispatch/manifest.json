@@ -1,84 +1,93 @@
 {
   "schema_version": "prompt-parallel-dispatch/v1",
-  "run_id": "ssh-local-execution-bridge-floor-20260918",
-  "graph_width": 2,
-  "parallel_disposition": "DEGRADED",
-  "autonomy_gap": "Current coordinator has no repository-local autonomous worker or networked local checkout: native subagents are unavailable; AgentSwitchboard/FirstMate operational worker is not yet implemented; the connected GitHub provider is not an independent coding worker; hosted CI is not a substitute for the Actions-off target; and the isolated container cannot resolve GitHub. Build the thin AgentSwitchboard local worker adapter after the evidence floor is recovered.",
+  "run_id": "runtime-compliance-sprint4-convergence-20260919",
+  "graph_width": 1,
+  "parallel_disposition": "NOT_APPLICABLE",
+  "autonomy_gap": null,
   "lanes": [
     {
-      "lane_id": "lane-ssh-current-prior-art",
-      "mission": "Re-evaluate the stale PR #399 SSH transport use case against the current Prompt Kit registry and registered upstream prior-art before any prompt identity recovery.",
+      "lane_id": "lane-runtime-compliance-sprint4-safe-convergence",
+      "mission": "Register the Prompt Runtime Compliance deterministic suite in the repository test floor, rotate the active dispatch state to the current Sprint 4 convergence, and persist the current plan checkpoint without racing shared owners.",
       "dependencies": [],
-      "owned_mutation_surfaces": [],
+      "owned_mutation_surfaces": [
+        "harness/test-floor.v1.json",
+        "Outputs/prompt-parallel-dispatch/manifest.json",
+        "harness/evals/PROMPT_RUNTIME_COMPLIANCE_PILOT_PLAN.md"
+      ],
       "forbidden_surfaces": [
-        "registry/prompts/management-operations-prompts.v1.json",
-        "manual prompt id/seq/copySheet allocation",
-        "web/prompt-kit/index.html",
-        "PR #399 branch mutation before current owner disposition"
+        "harness/evals/repository-ai-evals.v1.json while PR #450 is open",
+        ".ai/WORK_QUEUE.md while PR #524 is open",
+        "harness/manifest.v1.json while PR #584 is open",
+        "harness/validators.v1.json while PR #584 is open",
+        "scripts/validate_harness.py while PR #584 is open",
+        "tests/test_harness_contract.py while PR #584 is open",
+        "Prompt Kit prompt bodies or generated site",
+        "external runtime evidence or provider credentials"
       ],
       "adapter": {
-        "kind": "repo_runner",
-        "rung": 2
+        "kind": "connected_provider",
+        "rung": 3
       },
       "launch": {
-        "mode": "argv",
-        "argv": [
-          "python",
-          "scripts/prompt_registry_ops.py",
-          "prior-art",
-          "--query",
-          "repository SSH transport authentication existing repository convert HTTPS host trust git ls-remote push dry-run setup usage"
-        ],
-        "cwd": ".",
-        "timeout_seconds": 300
+        "mode": "runtime_tool",
+        "tool": "GitHub",
+        "operation": "sprint4_safe_convergence",
+        "arguments": {
+          "repository": "EndeavorEverlasting/web-excel-repair-triage",
+          "base_sha": "42c53fa6445d39aa74dabdfeec4eb45bfa5d7a4d",
+          "proof_ceiling": "Repository deterministic/harness convergence only; external-agent compliance remains unobserved."
+        }
       },
       "expected_artifacts": [
-        "current prior-art receipt with all_registered_sources_searched=true",
-        "owner disposition: STRENGTHEN existing owner or distinct residual for current helper admission"
+        "deterministic test-floor registration for all seven runtime-compliance regression modules",
+        "active dispatch manifest bound to the current Sprint 4 state",
+        "canonical plan checkpoint naming integrated floors and exact remaining owner blockers"
       ],
       "validation": [
-        "python scripts/prompt_registry_ops.py prior-art --query \"repository SSH transport authentication existing repository convert HTTPS host trust git ls-remote push dry-run setup usage\""
+        "python3 -m pytest tests/test_deterministic_test_floor.py tests/test_prompt_runtime_compliance_contract.py tests/test_prompt_runtime_compliance_fixtures.py tests/test_prompt_runtime_compliance_validator.py tests/test_prompt_runtime_compliance_validator_hardening.py tests/test_prompt_runtime_compliance_runner.py tests/test_prompt_runtime_compliance_receipt_corpus.py tests/test_prompt_runtime_compliance_linkage.py -q",
+        "python3 scripts/prompt_parallel_dispatch.py validate --manifest Outputs/prompt-parallel-dispatch/manifest.json",
+        "python3 scripts/run_deterministic_test_floor.py --summary"
       ],
-      "convergence_owner": "P04 SSH/local-execution bridge coordinator",
-      "status": "BLOCKED"
+      "convergence_owner": "P07 runtime-compliance Sprint 4 coordinator",
+      "status": "PLANNED"
     },
     {
-      "lane_id": "lane-local-proof-floor",
-      "mission": "Prove the current repository-local proof registry/runner and provider-degradation contract are executable before designing any new operational bridge authority.",
-      "dependencies": [],
-      "owned_mutation_surfaces": [],
+      "lane_id": "lane-runtime-compliance-p67-eval-registry",
+      "mission": "Register the runtime-compliance suite in the shared P67 repository AI evaluation registry after its existing owner releases the surface.",
+      "dependencies": [
+        "lane-runtime-compliance-sprint4-safe-convergence"
+      ],
+      "owned_mutation_surfaces": [
+        "harness/evals/repository-ai-evals.v1.json"
+      ],
       "forbidden_surfaces": [
-        "harness/repository-actions.v1.json mutation",
-        "scripts/run_repository_action.py mutation",
-        "runtime-compliance adapter identity changes",
-        "new CI fallback implementation"
+        "PR #450 mutation or overwrite",
+        "P67 routing identities outside a refreshed reconciliation",
+        "Prompt Kit treatment behavior",
+        "observed external-agent proof promotion"
       ],
       "adapter": {
-        "kind": "repo_runner",
-        "rung": 2
+        "kind": "connected_provider",
+        "rung": 3
       },
       "launch": {
-        "mode": "argv",
-        "argv": [
-          "python",
-          "-m",
-          "unittest",
-          "tests.test_repository_actions",
-          "tests.test_repository_local_proof_continuity_prompt",
-          "-v"
-        ],
-        "cwd": ".",
-        "timeout_seconds": 600
+        "mode": "runtime_tool",
+        "tool": "GitHub",
+        "operation": "reconcile_p67_eval_registry_after_owner_release",
+        "arguments": {
+          "repository": "EndeavorEverlasting/web-excel-repair-triage",
+          "blocking_pr": 450,
+          "target": "harness/evals/repository-ai-evals.v1.json"
+        }
       },
       "expected_artifacts": [
-        "process receipt proving current repository action/local-proof contract tests",
-        "confirmed canonical action ids including prompt-kit-build-proof and current proof ceiling"
+        "one canonical runtime-compliance P67 suite registration with deterministic contract command and separate runtime proof ceiling"
       ],
       "validation": [
-        "python -m unittest tests.test_repository_actions tests.test_repository_local_proof_continuity_prompt -v",
-        "python scripts/run_repository_action.py --list"
+        "python3 scripts/validate_harness.py",
+        "python3 -m unittest tests.test_repository_ai_eval_framework -v"
       ],
-      "convergence_owner": "P04 SSH/local-execution bridge coordinator",
+      "convergence_owner": "P67 / skill-evaluation",
       "status": "BLOCKED"
     }
   ]
