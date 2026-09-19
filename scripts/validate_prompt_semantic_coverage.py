@@ -52,6 +52,15 @@ def _load_migrations() -> dict[str, Any]:
     return _load_json(migrations_path)
 
 
+def _load_quality_history_migrations() -> dict[str, Any]:
+    """Load Prompt Quality History semantic source migrations used by PSC015."""
+    path = ROOT / "harness" / "prompt-compilation" / "prompt-semantic-migrations.v1.json"
+    payload = _load_json(path)
+    if payload.get("schema_version") != "prompt-semantic-migrations/v1":
+        raise ValueError("unsupported Prompt Quality History semantic migration schema")
+    return payload
+
+
 def _compute_profile_hash(profile: dict[str, Any]) -> str:
     """Compute SHA256 hash of a profile for integrity verification."""
     # Exclude the hash field itself and create canonical JSON
@@ -579,6 +588,7 @@ def validate_repository_state() -> list[str]:
     catalog = _load_catalog()
     profiles_data = _load_profiles()
     migrations_data = _load_migrations()
+    quality_migrations_data = _load_quality_history_migrations()
     canonical_records, base_prompt_ids = _load_canonical_prompt_records()
 
     profiles = profiles_data.get("profiles", [])
@@ -613,8 +623,47 @@ def validate_repository_state() -> list[str]:
         errors.extend(check_psc016_inherited_source_integrity(profile))
 
     # Validate append-only lifecycle migrations.
+    quality_by_id = {
+        str(row.get("migration_id", "")): row
+        for row in quality_migrations_data.get("migrations", [])
+        if isinstance(row, dict)
+    }
+    lifecycle_kinds = {
+        "ADD",
+        "STRENGTHEN",
+        "NO_CAPABILITY_CHANGE",
+        "INTENTIONAL_CHANGE",
+        "TRANSFER",
+        "RETIRE",
+        "RESTORE",
+    }
     for migration in migrations:
         errors.extend(validate_migration(migration, catalog, profiles))
+        if migration.get("migration_kind") not in lifecycle_kinds:
+            continue
+        source_id = str(migration.get("source_history_migration_id", "")).strip()
+        source = quality_by_id.get(source_id)
+        if source is None:
+            errors.append(
+                f"PSC015 SOURCE_AND_CAPABILITY_MIGRATION_LINK: {migration.get('migration_id')} "
+                "does not reference an existing Prompt Quality History migration"
+            )
+            continue
+        prompt_id = str(migration.get("prompt_id", "")).strip()
+        if prompt_id not in source.get("affected_prompt_ids", []):
+            errors.append(
+                f"PSC015 SOURCE_AND_CAPABILITY_MIGRATION_LINK: {migration.get('migration_id')} "
+                f"prompt {prompt_id} is absent from source-history migration {source_id}"
+            )
+        for cap_field, source_field in (
+            ("source_history_from_git_blob_sha1", "from_git_blob_sha1"),
+            ("source_history_to_git_blob_sha1", "to_git_blob_sha1"),
+        ):
+            if migration.get(cap_field) != source.get(source_field):
+                errors.append(
+                    f"PSC015 SOURCE_AND_CAPABILITY_MIGRATION_LINK: {migration.get('migration_id')} "
+                    f"{cap_field} disagrees with source-history migration {source_id}"
+                )
 
     # PSC010: candidate/provisional re-scoring cannot reset an accepted prior.
     profile_by_id: dict[str, list[dict[str, Any]]] = {}
