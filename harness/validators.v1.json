@@ -416,6 +416,22 @@
       "blocking": true,
       "output": "process log",
       "proof_ceiling": "Executable contract, fixture, semantic validator, pilot runner, receipt corpus, and regression-linkage proof; no external-agent runtime claim."
+    },
+    {
+      "id": "prompt-semantic-coverage-audit",
+      "class": "contract",
+      "command": "python3 scripts/validate_prompt_semantic_coverage.py",
+      "blocking": true,
+      "output": "process log",
+      "proof_ceiling": "Static semantic coverage PSC001-PSC016 enforcement, profile integrity, capability catalog consistency, and migration chain proof."
+    },
+    {
+      "id": "prompt-semantic-coverage-tests",
+      "class": "test",
+      "command": "python3 -m unittest tests.test_prompt_semantic_coverage tests.test_prompt_semantic_validator_1b -v",
+      "blocking": true,
+      "output": "process log",
+      "proof_ceiling": "Executable semantic coverage validator regression proof with positive and negative lifecycle fixtures."
     }
   ],
   "profiles": {
@@ -462,6 +478,8 @@
       "repo-native-update-parity",
       "prompt-runtime-compliance-receipt-audit",
       "prompt-runtime-compliance-tests",
+      "prompt-semantic-coverage-audit",
+      "prompt-semantic-coverage-tests",
       "prompt-kit-header-contract",
       "prompt-kit-parity",
       "artifact-hygiene",
@@ -499,6 +517,8 @@
       "repo-native-update-parity",
       "prompt-runtime-compliance-receipt-audit",
       "prompt-runtime-compliance-tests",
+      "prompt-semantic-coverage-audit",
+      "prompt-semantic-coverage-tests",
       "prompt-kit-header-contract",
       "prompt-kit-parity",
       "artifact-hygiene",
@@ -563,6 +583,8 @@
       "repo-native-update-parity",
       "prompt-runtime-compliance-receipt-audit",
       "prompt-runtime-compliance-tests",
+      "prompt-semantic-coverage-audit",
+      "prompt-semantic-coverage-tests",
       "prompt-kit-header-contract",
       "prompt-kit-parity",
       "artifact-hygiene",

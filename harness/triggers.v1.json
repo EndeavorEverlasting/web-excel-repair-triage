@@ -216,6 +216,25 @@
       ]
     },
     {
+      "id": "prompt-semantic-lifecycle-change",
+      "capability_id": "prompt-semantic-coverage",
+      "skill": ".ai/skills/prompt-semantic-coverage/SKILL.md",
+      "workflow": "WORKFLOW.md#j-prompt-semantic-coverage",
+      "conditions": [
+        "canonical prompt body added, edited, or removed",
+        "prompt semantic migration changes",
+        "profile, catalog, or migration file changes",
+        "retirement or admission requested",
+        "P79 ADD/EDIT/RETIRE operation"
+      ],
+      "forbidden_conditions": [
+        "generated-site-only rebuild",
+        "documentation-only change",
+        "runtime observation with no canonical prompt mutation",
+        "unrelated registry metadata presentation changes proven semantically inert"
+      ]
+    },
+    {
       "id": "repo-native-generated-surface-drift",
       "capability_id": "repo-native-update",
       "skill": ".ai/skills/repo-native-update/SKILL.md",

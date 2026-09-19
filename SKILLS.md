@@ -30,6 +30,7 @@ Skills own repeatable procedure and judgment. Code, schemas, registries, manifes
 | Prompt Kit browser-proof cleanup | browser-proof scratch cleanup | `.ai/skills/prompt-kit-browser-proof-cleanup/SKILL.md` |
 | Prompt Kit responsive layout | Prompt Kit overlap/responsive layout work | `.ai/skills/prompt-kit-responsive-layout/SKILL.md` |
 | Prompt Kit feedback AFK routing | turn accepted explicit feedback or privacy-bounded P99-derived Operant friction into one bounded P115 work request without merge authority | `.ai/skills/prompt-kit-feedback-afk-routing/SKILL.md` |
+| Prompt semantic coverage | enforce PSC rules for prompt ADD/EDIT/RETIRE, protect semantic capabilities, prevent silent degradation | `.ai/skills/prompt-semantic-coverage/SKILL.md` |
 | Operant external resource intake | discover/refresh approved open-source skills and route existing coverage before prompt gaps | `.ai/skills/operant-external-resource-intake/SKILL.md` |
 | Repository-native update | generate declared owned code surfaces from pinned JSON via local CLI | `.ai/skills/repo-native-update/SKILL.md` |
 
