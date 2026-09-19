@@ -645,6 +645,10 @@ def validate_capabilities_and_triggers() -> tuple[dict[str, Any], dict[str, Any]
     if not isinstance(capabilities, list) or not capabilities:
         raise HarnessValidationError("capability registry contains no capabilities")
     capability_by_id: dict[str, dict[str, Any]] = {}
+    use_case_hooks: list[tuple[str, dict[str, Any]]] = []
+    hook_ids: set[str] = set()
+    reverse_resource_owner: dict[str, str] = {}
+    intent_owner: dict[str, str] = {}
     for capability in capabilities:
         if not isinstance(capability, dict):
             raise HarnessValidationError("capability entry must be an object")
@@ -670,6 +674,71 @@ def validate_capabilities_and_triggers() -> tuple[dict[str, Any], dict[str, Any]
             raise HarnessValidationError(f"unsupported capability implementation kind: {kind}")
         if not str(capability.get("proof_ceiling", "")).strip():
             raise HarnessValidationError(f"capability lacks proof_ceiling: {capability_id}")
+
+        hooks = capability.get("use_case_hooks", [])
+        if hooks is None:
+            hooks = []
+        if not isinstance(hooks, list):
+            raise HarnessValidationError(
+                f"capability use_case_hooks must be a list: {capability_id}"
+            )
+        for hook in hooks:
+            if not isinstance(hook, dict):
+                raise HarnessValidationError(
+                    f"use-case hook must be an object: {capability_id}"
+                )
+            hook_id = str(hook.get("id", "")).strip()
+            if not hook_id or hook_id in hook_ids:
+                raise HarnessValidationError(
+                    f"duplicate or empty use-case hook ID: {hook_id}"
+                )
+            hook_ids.add(hook_id)
+            use_case_hooks.append((capability_id, hook))
+            for field in ("trigger_id", "workflow_id", "expected_artifact", "proof_ceiling"):
+                if not isinstance(hook.get(field), str) or not hook[field].strip():
+                    raise HarnessValidationError(
+                        f"use-case hook {hook_id} is missing {field}"
+                    )
+            aliases = require_string_list(
+                hook.get("intent_aliases"),
+                f"use_case_hook.{hook_id}.intent_aliases",
+            )
+            implementation_resources = require_string_list(
+                hook.get("implementation_resources"),
+                f"use_case_hook.{hook_id}.implementation_resources",
+            )
+            proof_resources = require_string_list(
+                hook.get("proof_resources"),
+                f"use_case_hook.{hook_id}.proof_resources",
+            )
+            for alias in aliases:
+                key = alias.casefold().strip()
+                previous = intent_owner.get(key)
+                if previous is not None and previous != hook_id:
+                    raise HarnessValidationError(
+                        f"use-case intent alias has duplicate primary ownership: "
+                        f"{alias!r} -> {previous}, {hook_id}"
+                    )
+                intent_owner[key] = hook_id
+            for relative_path in implementation_resources + proof_resources:
+                require_file(relative_path)
+                require_tracked(relative_path)
+                previous = reverse_resource_owner.get(relative_path)
+                if previous is not None and previous != hook_id:
+                    raise HarnessValidationError(
+                        f"use-case resource has ambiguous reverse ownership: "
+                        f"{relative_path} -> {previous}, {hook_id}"
+                    )
+                reverse_resource_owner[relative_path] = hook_id
+            expected_artifact = str(hook["expected_artifact"])
+            if not (
+                expected_artifact.startswith("Outputs/")
+                or expected_artifact.startswith("CI:")
+            ):
+                raise HarnessValidationError(
+                    f"use-case hook expected artifact is not a runtime/CI surface: "
+                    f"{hook_id} -> {expected_artifact}"
+                )
     if set(capability_by_id) != REQUIRED_CAPABILITY_IDS:
         raise HarnessValidationError(f"capability IDs drifted: {sorted(capability_by_id)}")
 
@@ -680,6 +749,7 @@ def validate_capabilities_and_triggers() -> tuple[dict[str, Any], dict[str, Any]
     if not isinstance(triggers, list) or not triggers:
         raise HarnessValidationError("trigger registry contains no triggers")
     trigger_ids: set[str] = set()
+    trigger_by_id: dict[str, dict[str, Any]] = {}
     for trigger in triggers:
         if not isinstance(trigger, dict):
             raise HarnessValidationError("trigger entry must be an object")
@@ -687,6 +757,7 @@ def validate_capabilities_and_triggers() -> tuple[dict[str, Any], dict[str, Any]
         if not trigger_id or trigger_id in trigger_ids:
             raise HarnessValidationError(f"duplicate or empty trigger ID: {trigger_id}")
         trigger_ids.add(trigger_id)
+        trigger_by_id[trigger_id] = trigger
         capability_id = str(trigger.get("capability_id", ""))
         if capability_id not in capability_by_id:
             raise HarnessValidationError(
@@ -714,6 +785,45 @@ def validate_capabilities_and_triggers() -> tuple[dict[str, Any], dict[str, Any]
             raise HarnessValidationError(
                 f"capability trigger list drifted: {capability_id} "
                 f"registered={sorted(registered)} actual={sorted(actual)}"
+            )
+
+    workflow_payload = load_json(WORKFLOWS_PATH)
+    workflow_by_id = {
+        str(workflow.get("id", "")): workflow
+        for workflow in workflow_payload.get("workflows", [])
+        if isinstance(workflow, dict)
+    }
+    for capability_id, hook in use_case_hooks:
+        hook_id = str(hook["id"])
+        trigger_id = str(hook["trigger_id"])
+        trigger = trigger_by_id.get(trigger_id)
+        if trigger is None:
+            raise HarnessValidationError(
+                f"use-case hook references unknown trigger: {hook_id} -> {trigger_id}"
+            )
+        if trigger.get("capability_id") != capability_id:
+            raise HarnessValidationError(
+                f"use-case hook trigger owner drifted: {hook_id} -> {trigger_id}"
+            )
+        workflow_id = str(hook["workflow_id"])
+        workflow = workflow_by_id.get(workflow_id)
+        if workflow is None:
+            raise HarnessValidationError(
+                f"use-case hook references unknown workflow: {hook_id} -> {workflow_id}"
+            )
+        if trigger.get("workflow") != workflow.get("document"):
+            raise HarnessValidationError(
+                f"use-case hook trigger/workflow route drifted: "
+                f"{hook_id} -> {trigger_id} -> {workflow_id}"
+            )
+        workflow_entry_points = set(workflow.get("entry_points", []))
+        missing_entry_points = sorted(
+            set(hook["implementation_resources"]) - workflow_entry_points
+        )
+        if missing_entry_points:
+            raise HarnessValidationError(
+                f"use-case hook implementation is not workflow-discoverable: "
+                f"{hook_id} missing={missing_entry_points}"
             )
     return capability_payload, trigger_payload
 
