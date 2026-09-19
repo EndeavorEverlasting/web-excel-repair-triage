@@ -2,6 +2,12 @@
 
 Human-facing Operant releases. Git commit/artifact identity remains the forensic freshness proof.
 
+## 0.11.0 - 2026-09-19
+
+### Features / breaking pre-1.0 changes
+
+- feat(harness): Sprint 2 — P79 semantic coverage lifecycle + required checks (#594) (`7ecbf642`)
+
 ## 0.10.1 - 2026-09-19
 
 ### Fixes / performance
