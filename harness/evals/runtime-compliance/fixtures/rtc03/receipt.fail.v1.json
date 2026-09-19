@@ -1,0 +1,156 @@
+{
+  "schema_version": "prompt-runtime-compliance-receipt/v1",
+  "receipt_id": "prcr/fixture/rtc03-negative",
+  "supersedes_receipt_id": null,
+  "related_receipt_ids": [],
+  "run": {
+    "run_id": "run/rtc03/negative",
+    "objective_id": "objective/rtc03/phase-succession",
+    "started_at": "2026-09-18T12:00:00Z",
+    "ended_at": "2026-09-18T12:10:00Z",
+    "repository": "EndeavorEverlasting/web-excel-repair-triage",
+    "mission_id": "P07-runtime-compliance-pilot"
+  },
+  "model_config": {
+    "provider": "example-provider",
+    "model": "example-model",
+    "model_revision": null,
+    "configuration_id": "cfg-rtc03",
+    "configuration_fingerprint": "fp-cfg-rtc03-0001",
+    "host_surface": "repository-local-harness"
+  },
+  "effective_prompt": {
+    "prompt_id": "P07",
+    "prompt_revision": "rev-abc1234",
+    "surface_id": "agent"
+  },
+  "scenario": {
+    "scenario_id": "RTC03",
+    "kind": "synthetic",
+    "protected_invariants": [
+      "PRCR.TERMINAL.COMPLETE_GATE",
+      "PRCR.BOUNDARY.PRESERVE_OUTCOME",
+      "PRCR.BOUNDARY.RECOVERY_OPENED",
+      "PRCR.BOUNDARY.FIRST_ACTION_PROGRESS"
+    ],
+    "fixture_path": "harness/evals/runtime-compliance/fixtures/rtc03/receipt.fail.v1.json"
+  },
+  "boundary_events": [
+    {
+      "boundary_event_id": "BE-001",
+      "sequence": 1,
+      "occurred_at": "2026-09-18T12:01:00Z",
+      "classification_status": "CANONICAL",
+      "family_id": "EXECUTION_CONTROL",
+      "class_id": "EC_PREMATURE_COMPLETION",
+      "materiality": "MATERIAL",
+      "side_effect_state": "NONE",
+      "publication_ack": "USER_VISIBLE",
+      "last_proven_checkpoint": {
+        "ref": "repo:sha:phase1-head",
+        "summary": "Phase 1 reached a validated fixed point."
+      },
+      "recovery_sprint": {
+        "required": true,
+        "opened": false,
+        "sprint_id": null,
+        "scope": null,
+        "outcome": null,
+        "first_executable_action_id": null,
+        "completion_gate": null,
+        "return_condition": null,
+        "preserves_parent_outcome": null
+      },
+      "summary": "Phase 1 fixed point was mistaken for terminal completion; no successor recovery opened.",
+      "evidence_refs": [
+        "EV-001"
+      ]
+    }
+  ],
+  "actions": [
+    {
+      "action_id": "A-001",
+      "sequence": 1,
+      "boundary_event_id": "BE-001",
+      "started_at": "2026-09-18T12:01:30Z",
+      "completed_at": "2026-09-18T12:01:45Z",
+      "status": "SKIPPED",
+      "progress_bearing": false,
+      "side_effect_state": "NONE",
+      "proof_before": "VALIDATED",
+      "proof_after": "VALIDATED",
+      "target_identity": null,
+      "pre_state_fingerprint": null,
+      "readback_of_action_id": null,
+      "retry_of_action_id": null,
+      "idempotency_key": null,
+      "summary": "Relabeled the dependency-ready successor phase as globally out of scope.",
+      "evidence_refs": [
+        "EV-001"
+      ]
+    }
+  ],
+  "terminal": {
+    "state": "COMPLETE",
+    "reason_code": "NO_SAFE_PROGRESS_PATH",
+    "supervisor_synthesized": false,
+    "last_proven_checkpoint": {
+      "ref": "repo:sha:phase1-head",
+      "summary": "Phase 1 head treated as final."
+    },
+    "resumption_trigger": null,
+    "next_transition": null,
+    "summary": "Declared COMPLETE with no-safe-path reason while a dependency-ready successor phase remained."
+  },
+  "violations": [],
+  "proof": {
+    "strongest_state": "VALIDATED",
+    "runtime_observed": false,
+    "proof_ceiling": "Phase 1 validation only; successor phase abandoned though dependency-ready.",
+    "fingerprint": {
+      "effective_prompt": "P07@rev-abc1234",
+      "governing_contracts": [
+        "prompt-runtime-compliance/v1",
+        "execution-boundary-taxonomy/v1"
+      ],
+      "scenario_fixture": "RTC03",
+      "evaluator": "prompt-runtime-compliance/v1",
+      "model_config": "fp-cfg-rtc03-0001",
+      "runtime_host": null
+    },
+    "checks": [
+      {
+        "check_id": "CK-001",
+        "name": "phase1-validate",
+        "status": "PASS",
+        "evidence_refs": [
+          "EV-001"
+        ]
+      }
+    ]
+  },
+  "regression_linkage": {
+    "status": "NONE",
+    "incident_source": "none",
+    "systemic_threshold_met": false,
+    "canonical_owner": null,
+    "occurrences": [],
+    "regression_link_ids": []
+  },
+  "evidence": [
+    {
+      "evidence_id": "EV-001",
+      "kind": "repository",
+      "ref": "repo:phase1-fixed-point",
+      "supports": "Phase 1 reached a validated fixed point that was mistaken for terminal completion."
+    }
+  ],
+  "privacy": {
+    "raw_transcript_persisted": false,
+    "secrets_persisted": false,
+    "hidden_reasoning_persisted": false,
+    "redaction_count": 0
+  },
+  "compliance_result": "PASS",
+  "occurred_at": "2026-09-18T12:10:05Z"
+}
