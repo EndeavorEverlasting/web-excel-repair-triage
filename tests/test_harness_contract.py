@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import copy
 import json
 import subprocess
 import sys
@@ -251,6 +252,344 @@ class HarnessContractTests(unittest.TestCase):
         self.assertFalse(safety["force_push"])
         self.assertFalse(safety["destructive_reset"])
         self.assertFalse(safety["embedded_credentials"])
+
+
+    def test_execution_boundary_use_case_routes_intent_first(self) -> None:
+        capabilities = self.load("harness/capabilities.v1.json")["capabilities"]
+        triggers = self.load("harness/triggers.v1.json")["triggers"]
+        workflows = self.load("harness/workflows.v1.json")["workflows"]
+        validators = {
+            item["id"]
+            for item in self.load("harness/validators.v1.json")["validators"]
+        }
+        intent = "agents stop at arbitrary boundaries instead of continuing"
+
+        matches = []
+        for capability in capabilities:
+            for use_case in capability.get("use_cases", []):
+                aliases = {
+                    str(alias).casefold()
+                    for alias in use_case.get("intent_aliases", [])
+                }
+                if intent.casefold() in aliases:
+                    matches.append((capability, use_case))
+
+        self.assertEqual(len(matches), 1)
+        capability, use_case = matches[0]
+        self.assertEqual(capability["id"], "harness-infrastructure-maintenance")
+        self.assertEqual(use_case["id"], "execution-boundary-continuation")
+
+        trigger = next(
+            item
+            for item in triggers
+            if item["id"] == use_case["primary_trigger_id"]
+        )
+        self.assertEqual(trigger["capability_id"], capability["id"])
+        self.assertIn(intent, trigger["intent_aliases"])
+
+        workflow = next(
+            item for item in workflows if item["id"] == use_case["workflow_id"]
+        )
+        self.assertEqual(trigger["workflow"], workflow["document"])
+        self.assertIn(capability["id"], workflow["capability_ids"])
+        self.assertIn(use_case["id"], workflow["use_case_ids"])
+        self.assertEqual(trigger["skill"], capability["skill"])
+        self.assertEqual(use_case["skill"], capability["skill"])
+
+        participants = {
+            item["role"]: item["path"] for item in use_case["participants"]
+        }
+        for role in (
+            "contract",
+            "taxonomy",
+            "prompt-semantics",
+            "implementation",
+            "shared-policy",
+            "evidence-artifact",
+            "validator",
+            "regression-test",
+        ):
+            self.assertIn(role, participants)
+            self.assertTrue((ROOT / participants[role]).is_file(), participants[role])
+
+        self.assertIn(
+            "harness/evals/execution-boundaries/boundary-regression-matrix.v1.json",
+            use_case["expected_artifacts"],
+        )
+        self.assertTrue(set(use_case["validator_ids"]).issubset(validators))
+
+    def test_execution_boundary_use_case_routes_implementation_first(self) -> None:
+        capabilities = self.load("harness/capabilities.v1.json")["capabilities"]
+        resource = "scripts/execution_boundary_engine.py"
+
+        owners = []
+        for capability in capabilities:
+            for use_case in capability.get("use_cases", []):
+                participant_paths = {
+                    item["path"] for item in use_case.get("participants", [])
+                }
+                if resource in participant_paths:
+                    owners.append((capability, use_case))
+
+        self.assertEqual(len(owners), 1)
+        capability, use_case = owners[0]
+        self.assertEqual(capability["id"], "harness-infrastructure-maintenance")
+        self.assertEqual(use_case["primary_trigger_id"], "harness-infrastructure-change")
+        self.assertIn(
+            "Agents stop at material or arbitrary boundaries",
+            use_case["originating_user_intent"],
+        )
+
+        related_paths = {
+            item["path"] for item in use_case["participants"]
+        }
+        for path in (
+            "harness/contracts/execution-boundary-enforcement.v1.json",
+            "harness/prompt-compilation/semantics/P07.json",
+            "registry/prompts/actionable-next-step-policy.v1.json",
+            "harness/evals/execution-boundaries/boundary-regression-matrix.v1.json",
+            "scripts/validate_execution_boundary_enforcement.py",
+            "tests/test_execution_boundary_enforcement_prompt.py",
+        ):
+            self.assertIn(path, related_paths)
+
+        for human_route in (
+            "harness/CONTEXT.md",
+            "CODEBASE_MAP.md",
+            "CAPABILITIES.md",
+            "TRIGGERS.md",
+            "WORKFLOW.md",
+        ):
+            self.assertIn(
+                "execution-boundary-continuation",
+                (ROOT / human_route).read_text(encoding="utf-8"),
+                human_route,
+            )
+
+
+    def test_runtime_compliance_use_case_routes_intent_first(self) -> None:
+        capabilities = self.load("harness/capabilities.v1.json")["capabilities"]
+        triggers = self.load("harness/triggers.v1.json")["triggers"]
+        workflows = self.load("harness/workflows.v1.json")["workflows"]
+        artifacts = {
+            item["id"]: item
+            for item in self.load("harness/artifacts.v1.json")["artifacts"]
+        }
+        validators = {
+            item["id"]
+            for item in self.load("harness/validators.v1.json")["validators"]
+        }
+        intent = "prompt strengthening sprint"
+
+        matches = []
+        for capability in capabilities:
+            for use_case in capability.get("use_cases", []):
+                aliases = {
+                    str(alias).casefold()
+                    for alias in use_case.get("intent_aliases", [])
+                }
+                if intent.casefold() in aliases:
+                    matches.append((capability, use_case))
+
+        self.assertEqual(len(matches), 1)
+        capability, use_case = matches[0]
+        self.assertEqual(capability["id"], "skill-evaluation")
+        self.assertEqual(use_case["id"], "prompt-strengthening-runtime-compliance")
+
+        trigger = next(
+            item
+            for item in triggers
+            if item["id"] == use_case["primary_trigger_id"]
+        )
+        workflow = next(
+            item for item in workflows if item["id"] == use_case["workflow_id"]
+        )
+        self.assertEqual(trigger["capability_id"], capability["id"])
+        self.assertIn(intent, trigger["intent_aliases"])
+        self.assertIn(use_case["id"], trigger["use_case_ids"])
+        self.assertEqual(trigger["workflow"], workflow["document"])
+        self.assertIn(capability["id"], workflow["capability_ids"])
+        self.assertIn(use_case["id"], workflow["use_case_ids"])
+
+        participant_paths = {
+            item["path"] for item in use_case["participants"]
+        }
+        for path in (
+            "harness/evals/PROMPT_RUNTIME_COMPLIANCE_PILOT_PLAN.md",
+            "harness/evals/runtime-compliance/scripts/pilot.py",
+            "scripts/validate_prompt_runtime_compliance_receipt.py",
+        ):
+            self.assertIn(path, participant_paths)
+            self.assertIn(path, workflow["entry_points"])
+
+        self.assertEqual(use_case["artifact_ids"], ["prompt-runtime-compliance-evidence"])
+        artifact = artifacts["prompt-runtime-compliance-evidence"]
+        self.assertEqual(
+            artifact["primary_artifact"],
+            "Outputs/repository-ai-evals/runtime-compliance/pilot-receipt.json",
+        )
+        self.assertEqual(
+            artifact["schema"],
+            "prompt-runtime-compliance-pilot-receipt/v1",
+        )
+        self.assertEqual(
+            artifact["schema_owner"],
+            "harness/evals/runtime-compliance/scripts/pilot.py",
+        )
+        self.assertIn(artifact["validator"], use_case["validator_ids"])
+        self.assertTrue(set(use_case["validator_ids"]).issubset(validators))
+        validator_registry = self.load("harness/validators.v1.json")
+        self.assertIn(
+            "prompt-runtime-compliance-receipt-audit",
+            validator_registry["profiles"]["required_checks"],
+        )
+        self.assertEqual(workflow["validation_profile"], "required_checks")
+        self.assertTrue(
+            set(use_case["validator_ids"]).issubset(
+                set(validator_registry["profiles"][workflow["validation_profile"]])
+            )
+        )
+
+    def test_runtime_compliance_test_validator_is_blocking(self) -> None:
+        validators = self.load("harness/validators.v1.json")
+        by_id = {item["id"]: item for item in validators["validators"]}
+        test_id = "prompt-runtime-compliance-tests"
+        self.assertIn(test_id, by_id)
+        command = by_id[test_id]["command"]
+        for module in (
+            "tests.test_prompt_runtime_compliance_contract",
+            "tests.test_prompt_runtime_compliance_fixtures",
+            "tests.test_prompt_runtime_compliance_validator",
+            "tests.test_prompt_runtime_compliance_runner",
+            "tests.test_prompt_runtime_compliance_receipt_corpus",
+            "tests.test_prompt_runtime_compliance_linkage",
+        ):
+            self.assertIn(module, command)
+        for profile in ("required_checks", "harness", "pre_push"):
+            self.assertIn(test_id, validators["profiles"][profile])
+
+    def test_use_case_artifact_ids_null_fails_closed(self) -> None:
+        capabilities = self.load("harness/capabilities.v1.json")
+        mutated = copy.deepcopy(capabilities)
+        skill_eval = next(item for item in mutated["capabilities"] if item["id"] == "skill-evaluation")
+        use_case = next(item for item in skill_eval["use_cases"] if item["id"] == "prompt-strengthening-runtime-compliance")
+        use_case["artifact_ids"] = None
+        original = validate_harness.load_json
+
+        def load_json(path: Path) -> dict:
+            if Path(path) == validate_harness.CAPABILITIES_PATH:
+                return mutated
+            return original(path)
+
+        with mock.patch.object(validate_harness, "load_json", side_effect=load_json):
+            with self.assertRaisesRegex(validate_harness.HarnessValidationError, "artifact_ids"):
+                validate_harness.validate_capabilities_and_triggers()
+
+    def test_declared_reverse_backlinks_reject_unknown_ids(self) -> None:
+        base_triggers = self.load("harness/triggers.v1.json")
+        base_workflows = self.load("harness/workflows.v1.json")
+        cases = []
+
+        triggers = copy.deepcopy(base_triggers)
+        trigger = next(item for item in triggers["triggers"] if item["id"] == "skill-quality-unproven")
+        trigger["use_case_ids"].append("missing-use-case")
+        cases.append((validate_harness.TRIGGERS_PATH, triggers, "trigger references unknown use cases"))
+
+        workflows = copy.deepcopy(base_workflows)
+        workflow = next(item for item in workflows["workflows"] if item["id"] == "skill-evaluation")
+        workflow["use_case_ids"].append("missing-use-case")
+        cases.append((validate_harness.WORKFLOWS_PATH, workflows, "workflow references unknown use cases"))
+
+        workflows = copy.deepcopy(base_workflows)
+        workflow = next(item for item in workflows["workflows"] if item["id"] == "skill-evaluation")
+        workflow["capability_ids"].append("missing-capability")
+        cases.append((validate_harness.WORKFLOWS_PATH, workflows, "workflow references unknown capabilities"))
+
+        original = validate_harness.load_json
+        for target_path, payload, message in cases:
+            with self.subTest(message=message):
+                def load_json(path: Path, *, _target=target_path, _payload=payload) -> dict:
+                    if Path(path) == _target:
+                        return _payload
+                    return original(path)
+
+                with mock.patch.object(validate_harness, "load_json", side_effect=load_json):
+                    with self.assertRaisesRegex(validate_harness.HarnessValidationError, message):
+                        validate_harness.validate_capabilities_and_triggers()
+
+    def test_runtime_compliance_use_case_routes_implementation_first(self) -> None:
+        capabilities = self.load("harness/capabilities.v1.json")["capabilities"]
+
+        for resource in (
+            "harness/evals/runtime-compliance/scripts/pilot.py",
+            "scripts/validate_prompt_runtime_compliance_receipt.py",
+        ):
+            owners = []
+            for capability in capabilities:
+                for use_case in capability.get("use_cases", []):
+                    participant_paths = {
+                        item["path"] for item in use_case.get("participants", [])
+                    }
+                    if resource in participant_paths:
+                        owners.append((capability, use_case))
+
+            self.assertEqual(len(owners), 1, resource)
+            capability, use_case = owners[0]
+            self.assertEqual(capability["id"], "skill-evaluation")
+            self.assertEqual(
+                use_case["id"],
+                "prompt-strengthening-runtime-compliance",
+            )
+            self.assertEqual(
+                use_case["primary_trigger_id"],
+                "skill-quality-unproven",
+            )
+            self.assertIn(
+                "Strengthen Prompt Kit execution behavior",
+                use_case["originating_user_intent"],
+            )
+            self.assertEqual(
+                use_case["validator_ids"],
+                ["prompt-runtime-compliance-receipt-audit"],
+            )
+
+    def test_prompt_language_mutation_precedes_runtime_proof(self) -> None:
+        triggers = self.load("harness/triggers.v1.json")["triggers"]
+        proof_trigger = next(
+            item for item in triggers if item["id"] == "skill-quality-unproven"
+        )
+        language_trigger = next(
+            item for item in triggers if item["id"] == "prompt-language-change"
+        )
+        exclusion = (
+            "canonical prompt wording or shared policy still needs mutation before an "
+            "evaluable strengthened candidate exists; route prompt-language-change first, "
+            "then return for runtime proof"
+        )
+        self.assertIn(exclusion, proof_trigger["forbidden_conditions"])
+        self.assertEqual(language_trigger["capability_id"], "prompt-language-audit")
+        self.assertEqual(proof_trigger["capability_id"], "skill-evaluation")
+
+    def test_operational_harness_installs_pinned_test_dependencies(self) -> None:
+        workflow = (ROOT / ".github/workflows/harness-contract.yml").read_text(
+            encoding="utf-8"
+        )
+        self.assertIn(
+            "python -m pip install -r requirements-test-floor.txt",
+            workflow,
+        )
+        self.assertIn("requirements-test-floor.txt", workflow)
+        requirements = (ROOT / "requirements-test-floor.txt").read_text(
+            encoding="utf-8"
+        )
+        self.assertIn("jsonschema==", requirements)
+
+    def test_workflow_validation_profiles_resolve(self) -> None:
+        workflows = self.load("harness/workflows.v1.json")["workflows"]
+        profiles = self.load("harness/validators.v1.json")["profiles"]
+        for workflow in workflows:
+            with self.subTest(workflow=workflow["id"]):
+                self.assertIn(workflow["validation_profile"], profiles)
 
     def test_hooks_use_registered_profiles_and_staged_tree(self) -> None:
         validators = self.load("harness/validators.v1.json")

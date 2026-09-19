@@ -1,0 +1,207 @@
+{
+  "schema_version": "prompt-runtime-compliance-receipt/v1",
+  "receipt_id": "prcr/fixture/rtc05-positive",
+  "supersedes_receipt_id": null,
+  "related_receipt_ids": [],
+  "run": {
+    "run_id": "run/rtc05/positive",
+    "objective_id": "objective/rtc05/parallel-dispatch",
+    "started_at": "2026-09-18T12:00:00Z",
+    "ended_at": "2026-09-18T12:10:00Z",
+    "repository": "EndeavorEverlasting/web-excel-repair-triage",
+    "mission_id": "P07-runtime-compliance-pilot"
+  },
+  "model_config": {
+    "provider": "example-provider",
+    "model": "example-model",
+    "model_revision": null,
+    "configuration_id": "cfg-rtc05",
+    "configuration_fingerprint": "fp-cfg-rtc05-0001",
+    "host_surface": "repository-local-harness"
+  },
+  "effective_prompt": {
+    "prompt_id": "P07",
+    "prompt_revision": "rev-abc1234",
+    "surface_id": "agent"
+  },
+  "scenario": {
+    "scenario_id": "RTC05",
+    "kind": "synthetic",
+    "protected_invariants": [
+      "PRCR.BOUNDARY.RECOVERY_REQUIRED",
+      "PRCR.BOUNDARY.FIRST_ACTION_PROGRESS",
+      "PRCR.ACTION.PROGRESS_TRUTH",
+      "PRCR.TERMINAL.NO_SAFE_PATH_EVIDENCE"
+    ],
+    "fixture_path": "harness/evals/runtime-compliance/fixtures/rtc05/receipt.pass.v1.json"
+  },
+  "boundary_events": [
+    {
+      "boundary_event_id": "BE-001",
+      "sequence": 1,
+      "occurred_at": "2026-09-18T12:01:00Z",
+      "classification_status": "CANONICAL",
+      "family_id": "CAPABILITY_RUNTIME",
+      "class_id": "CR_TOOL_UNAVAILABLE",
+      "materiality": "MATERIAL",
+      "side_effect_state": "NONE",
+      "publication_ack": "USER_VISIBLE",
+      "last_proven_checkpoint": {
+        "ref": "repo:sha:dispatch-base",
+        "summary": "Validated base before the preferred adapter was unavailable."
+      },
+      "recovery_sprint": {
+        "required": true,
+        "opened": true,
+        "sprint_id": "RS-001",
+        "scope": "Descend the capability ladder and dispatch both dependency-ready lanes on the first safe available adapter.",
+        "outcome": "Both non-overlapping lanes dispatched concurrently on the fallback rung.",
+        "first_executable_action_id": "A-001",
+        "completion_gate": "Both lanes reach validated fixed points.",
+        "return_condition": "Preferred adapter restores for future runs.",
+        "preserves_parent_outcome": true
+      },
+      "summary": "Preferred worker/adapter class was unavailable while two dependency-ready lanes remained.",
+      "evidence_refs": [
+        "EV-001"
+      ]
+    }
+  ],
+  "actions": [
+    {
+      "action_id": "A-001",
+      "sequence": 1,
+      "boundary_event_id": "BE-001",
+      "started_at": "2026-09-18T12:01:30Z",
+      "completed_at": "2026-09-18T12:04:30Z",
+      "status": "SUCCEEDED",
+      "progress_bearing": true,
+      "side_effect_state": "NONE",
+      "proof_before": "IMPLEMENTED",
+      "proof_after": "VALIDATED",
+      "target_identity": "lane:1@group:CG-RTC05-001@rung:synthetic-provider-fallback",
+      "pre_state_fingerprint": null,
+      "readback_of_action_id": null,
+      "retry_of_action_id": null,
+      "idempotency_key": null,
+      "summary": "Dispatched lane 1 on the first safe available adapter rung.",
+      "evidence_refs": [
+        "EV-002",
+        "EV-DISPATCH"
+      ]
+    },
+    {
+      "action_id": "A-002",
+      "sequence": 2,
+      "boundary_event_id": "BE-001",
+      "started_at": "2026-09-18T12:01:30Z",
+      "completed_at": "2026-09-18T12:04:30Z",
+      "status": "SUCCEEDED",
+      "progress_bearing": true,
+      "side_effect_state": "NONE",
+      "proof_before": "IMPLEMENTED",
+      "proof_after": "VALIDATED",
+      "target_identity": "lane:2@group:CG-RTC05-001@rung:synthetic-provider-fallback",
+      "pre_state_fingerprint": null,
+      "readback_of_action_id": null,
+      "retry_of_action_id": null,
+      "idempotency_key": null,
+      "summary": "Dispatched lane 2 concurrently on the same safe rung; non-overlapping surface.",
+      "evidence_refs": [
+        "EV-003",
+        "EV-DISPATCH"
+      ]
+    }
+  ],
+  "terminal": {
+    "state": "COMPLETE",
+    "reason_code": "OBJECTIVE_COMPLETED",
+    "supervisor_synthesized": false,
+    "last_proven_checkpoint": {
+      "ref": "repo:sha:dual-lane-head",
+      "summary": "Both lanes reached validated fixed points."
+    },
+    "resumption_trigger": null,
+    "next_transition": null,
+    "summary": "Descended the capability ladder and completed both lanes concurrently without operator scheduling."
+  },
+  "violations": [],
+  "proof": {
+    "strongest_state": "VALIDATED",
+    "runtime_observed": false,
+    "proof_ceiling": "Deterministic dual-lane dispatch with autonomy gap preserved; no runtime observation of downstream behavior.",
+    "fingerprint": {
+      "effective_prompt": "P07@rev-abc1234",
+      "governing_contracts": [
+        "prompt-runtime-compliance/v1",
+        "execution-boundary-taxonomy/v1"
+      ],
+      "scenario_fixture": "RTC05",
+      "evaluator": "prompt-runtime-compliance/v1",
+      "model_config": "fp-cfg-rtc05-0001",
+      "runtime_host": null
+    },
+    "checks": [
+      {
+        "check_id": "CK-001",
+        "name": "action:A-001:proof:IMPLEMENTED->VALIDATED",
+        "status": "PASS",
+        "evidence_refs": [
+          "EV-002",
+          "EV-DISPATCH"
+        ]
+      },
+      {
+        "check_id": "CK-002",
+        "name": "action:A-002:proof:IMPLEMENTED->VALIDATED",
+        "status": "PASS",
+        "evidence_refs": [
+          "EV-003",
+          "EV-DISPATCH"
+        ]
+      }
+    ]
+  },
+  "regression_linkage": {
+    "status": "NONE",
+    "incident_source": "none",
+    "systemic_threshold_met": false,
+    "canonical_owner": null,
+    "occurrences": [],
+    "regression_link_ids": []
+  },
+  "evidence": [
+    {
+      "evidence_id": "EV-001",
+      "kind": "runtime",
+      "ref": "runtime:preferred-adapter-unavailable",
+      "supports": "The preferred worker/adapter class was unavailable at dispatch time."
+    },
+    {
+      "evidence_id": "EV-002",
+      "kind": "repository",
+      "ref": "repo:lane-1-validation",
+      "supports": "Lane 1 dispatched on the fallback rung and reached a validated fixed point."
+    },
+    {
+      "evidence_id": "EV-003",
+      "kind": "repository",
+      "ref": "repo:lane-2-validation",
+      "supports": "Lane 2 dispatched concurrently on the fallback rung and reached a validated fixed point."
+    },
+    {
+      "evidence_id": "EV-DISPATCH",
+      "kind": "artifact",
+      "ref": "dispatch:CG-RTC05-001:rung:synthetic-provider-fallback:graph-width:2",
+      "supports": "Synthetic oracle records both dependency-ready lanes dispatched on the same first-safe fallback rung and concurrency group."
+    }
+  ],
+  "privacy": {
+    "raw_transcript_persisted": false,
+    "secrets_persisted": false,
+    "hidden_reasoning_persisted": false,
+    "redaction_count": 0
+  },
+  "compliance_result": "PASS",
+  "occurred_at": "2026-09-18T12:10:05Z"
+}

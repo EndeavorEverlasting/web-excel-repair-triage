@@ -122,6 +122,19 @@
       "naming": "Stable deterministic donor-to-Operant coverage ledger.",
       "tracking_policy": "Tracked maintenance input. REVIEW_ADD_PROMPT routes to P79; it is not prompt publication authority.",
       "proof_ceiling": "Deterministic lexical coverage classification and maintenance routing only; strategic prompt quality remains separate."
+    },
+    {
+      "id": "prompt-runtime-compliance-evidence",
+      "kind": "runtime",
+      "canonical_path": "Outputs/repository-ai-evals/runtime-compliance/",
+      "producer": "python harness/evals/runtime-compliance/scripts/pilot.py --summary",
+      "validator": "prompt-runtime-compliance-receipt-audit",
+      "naming": "Stable pilot-plan.json and pilot-receipt.json plus runs/<run-id>/{scenario,run,receipt,validation}.json.",
+      "tracking_policy": "Gitignored runtime evidence or CI artifact; observed external-agent receipts remain sanitized and proof-scoped rather than tracked as canonical source truth.",
+      "proof_ceiling": "Repository contract, fixture, runner, linkage, and deterministic receipt-validation proof unless an exact external-agent run is independently observed.",
+      "primary_artifact": "Outputs/repository-ai-evals/runtime-compliance/pilot-receipt.json",
+      "schema": "prompt-runtime-compliance-pilot-receipt/v1",
+      "schema_owner": "harness/evals/runtime-compliance/scripts/pilot.py"
     }
   ]
 }

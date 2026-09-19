@@ -111,6 +111,19 @@
     document.head.appendChild(style);
   }
 
+  function useCaseSummary(item) {
+    var cases = Array.isArray(item && item.use_cases) ? item.use_cases : [];
+    if (!cases.length) return 'none registered';
+    return cases.map(function (useCase) {
+      var aliases = Array.isArray(useCase.intent_aliases) ? useCase.intent_aliases.join(', ') : '';
+      return [
+        useCase.id || 'unnamed-use-case',
+        useCase.originating_user_intent || '',
+        aliases ? 'aliases: ' + aliases : ''
+      ].filter(Boolean).join(' · ');
+    }).join(' | ');
+  }
+
   function implementationLocator(implementation) {
     if (!implementation) return 'unregistered';
     if (implementation.prompt_id) return implementation.prompt_id;
@@ -228,6 +241,7 @@
       '<div class="ontology-row"><span class="ontology-label">Skill</span><span class="ontology-value">' + esc(item.skill) + '</span></div>' +
       '<div class="ontology-row"><span class="ontology-label">Implements</span><span class="ontology-value">' + esc(implementation.kind || 'unregistered') + ' · ' + esc(locator) + promptControl + '</span></div>' +
       '<div class="ontology-row"><span class="ontology-label">Triggers</span><span class="ontology-value">' + esc((item.trigger_ids || []).join(', ') || 'none registered') + '</span></div>' +
+      '<div class="ontology-row"><span class="ontology-label">Use cases</span><span class="ontology-value">' + esc(useCaseSummary(item)) + '</span></div>' +
       '<div class="ontology-proof"><span class="ontology-label">Proof ceiling</span><br>' + esc(item.proof_ceiling || 'No proof ceiling registered') + '</div></article>';
   }
 
@@ -251,7 +265,7 @@
 
   function renderCapabilities(query) {
     var items = model.capabilities.filter(function (item) {
-      return containsQuery([item.id, item.operation, item.skill, JSON.stringify(item.implementation || {}), (item.trigger_ids || []).join(' '), item.proof_ceiling || ''], query);
+      return containsQuery([item.id, item.operation, item.skill, JSON.stringify(item.implementation || {}), JSON.stringify(item.use_cases || []), (item.trigger_ids || []).join(' '), item.proof_ceiling || ''], query);
     });
     body.innerHTML = '<div class="ontology-note"><strong>Capability answers:</strong> “What operation can I rely on, and where is its boundary?” Implementation details are shown as relationships rather than treated as the capability itself.</div>' +
       (items.length ? '<div class="ontology-grid">' + items.map(function (item) { return capabilityCard(item, false); }).join('') + '</div>' : '<div class="ontology-empty">No matching capabilities.</div>');
