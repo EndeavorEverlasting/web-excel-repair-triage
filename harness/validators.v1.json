@@ -20,7 +20,7 @@
     {
       "id": "repository-work-ledger-audit",
       "class": "contract",
-      "command": "python scripts/validate_repository_work_ledger.py --summary",
+      "command": "python3 scripts/validate_repository_work_ledger.py --summary",
       "blocking": true,
       "output": "process log",
       "proof_ceiling": "Static/current repository work-ledger continuity and disposition proof."
@@ -28,7 +28,7 @@
     {
       "id": "repository-work-ledger-tests",
       "class": "test",
-      "command": "python -m unittest tests.test_repository_work_ledger -v",
+      "command": "python3 -m unittest tests.test_repository_work_ledger -v",
       "blocking": true,
       "output": "process log",
       "proof_ceiling": "Executable repository work-ledger regression proof."
@@ -400,6 +400,22 @@
       "blocking": true,
       "output": "Outputs/repo-native-update/receipt.json",
       "proof_ceiling": "Generated canary surface matches canonical input with a reviewable receipt; local CLI only."
+    },
+    {
+      "id": "prompt-runtime-compliance-receipt-audit",
+      "class": "contract",
+      "command": "python scripts/validate_prompt_runtime_compliance_receipt.py harness/evals/runtime-compliance/contract-fixtures/pilot-receipt.positive.v1.json --summary",
+      "blocking": true,
+      "output": "process log",
+      "proof_ceiling": "Deterministic structural/count validation of the tracked pilot receipt contract fixture; per-run semantic behavior is covered by prompt-runtime-compliance-tests; no external-agent runtime claim."
+    },
+    {
+      "id": "prompt-runtime-compliance-tests",
+      "class": "test",
+      "command": "python -m unittest tests.test_prompt_runtime_compliance_contract tests.test_prompt_runtime_compliance_fixtures tests.test_prompt_runtime_compliance_validator tests.test_prompt_runtime_compliance_runner tests.test_prompt_runtime_compliance_receipt_corpus tests.test_prompt_runtime_compliance_linkage -v",
+      "blocking": true,
+      "output": "process log",
+      "proof_ceiling": "Executable contract, fixture, semantic validator, pilot runner, receipt corpus, and regression-linkage proof; no external-agent runtime claim."
     }
   ],
   "profiles": {
@@ -444,6 +460,8 @@
       "repo-native-update-audit",
       "repo-native-update-tests",
       "repo-native-update-parity",
+      "prompt-runtime-compliance-receipt-audit",
+      "prompt-runtime-compliance-tests",
       "prompt-kit-header-contract",
       "prompt-kit-parity",
       "artifact-hygiene",
@@ -479,6 +497,8 @@
       "repo-native-update-audit",
       "repo-native-update-tests",
       "repo-native-update-parity",
+      "prompt-runtime-compliance-receipt-audit",
+      "prompt-runtime-compliance-tests",
       "prompt-kit-header-contract",
       "prompt-kit-parity",
       "artifact-hygiene",
@@ -541,6 +561,8 @@
       "repo-native-update-audit",
       "repo-native-update-tests",
       "repo-native-update-parity",
+      "prompt-runtime-compliance-receipt-audit",
+      "prompt-runtime-compliance-tests",
       "prompt-kit-header-contract",
       "prompt-kit-parity",
       "artifact-hygiene",

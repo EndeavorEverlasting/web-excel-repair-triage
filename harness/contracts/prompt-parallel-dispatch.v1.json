@@ -8,27 +8,41 @@
     {
       "rung": 1,
       "kind": "native_agent",
-      "launch_modes": ["runtime_tool", "argv"]
+      "launch_modes": [
+        "runtime_tool",
+        "argv"
+      ]
     },
     {
       "rung": 2,
       "kind": "repo_runner",
-      "launch_modes": ["argv", "runtime_tool"]
+      "launch_modes": [
+        "argv",
+        "runtime_tool"
+      ]
     },
     {
       "rung": 3,
       "kind": "connected_provider",
-      "launch_modes": ["runtime_tool", "argv"]
+      "launch_modes": [
+        "runtime_tool",
+        "argv"
+      ]
     },
     {
       "rung": 4,
       "kind": "ci_job",
-      "launch_modes": ["argv", "runtime_tool"]
+      "launch_modes": [
+        "argv",
+        "runtime_tool"
+      ]
     },
     {
       "rung": 5,
       "kind": "local_process",
-      "launch_modes": ["argv"]
+      "launch_modes": [
+        "argv"
+      ]
     }
   ],
   "parallel_dispositions": [
@@ -66,11 +80,22 @@
   ],
   "launch_modes": {
     "argv": {
-      "required": ["mode", "argv"],
-      "optional": ["cwd", "timeout_seconds"]
+      "required": [
+        "mode",
+        "argv"
+      ],
+      "optional": [
+        "cwd",
+        "timeout_seconds"
+      ]
     },
     "runtime_tool": {
-      "required": ["mode", "tool", "operation", "arguments"],
+      "required": [
+        "mode",
+        "tool",
+        "operation",
+        "arguments"
+      ],
       "rule": "The active agent runtime must perform the named tool/API invocation and preserve returned evidence in a receipt; the repository CLI validates but cannot impersonate unavailable runtime tools."
     }
   },
@@ -83,7 +108,10 @@
     "human_scheduler_allowed": false,
     "shared_mutation_surface_requires_dependency_order": true,
     "deterministic_ready_lane_tiebreak": "lane_id_ascending",
-    "prohibited_clean_fallback": "PARALLEL EXECUTION: unavailable"
+    "prohibited_clean_fallback": "PARALLEL EXECUTION: unavailable",
+    "executable_manifest_lane_status": "PLANNED",
+    "blocked_manifest_lane_rule": "Preserve BLOCKED in the dispatch receipt without invoking its launch action.",
+    "terminal_manifest_lane_rule": "DISPATCHED, PASS, and FAIL are evidence states, not fresh launch instructions; run must reject them and require a refreshed manifest."
   },
   "proof_ceiling": "Validates a machine-readable dependency/collision/adapter/launch contract and can execute argv-addressable lanes in concurrent dependency waves. Runtime-tool adapters remain externally dispatched by the active agent runtime and require separate evidence receipts."
 }

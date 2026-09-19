@@ -56,6 +56,8 @@ on:
       - tests/test_prompt_kit_discovery.py
       - tests/test_prompt_language_audit.py
       - tests/test_staged_artifact_hygiene.py
+      - requirements-test-floor.txt
+      - requirements-test-floor.txt
       - .github/workflows/harness-contract.yml
   push:
     branches: [main]
@@ -130,6 +132,8 @@ jobs:
       - uses: actions/setup-python@v7
         with:
           python-version: "3.11"
+      - name: Install pinned harness test dependencies
+        run: python -m pip install -r requirements-test-floor.txt
       - name: Compile harness validators, eval runners, and contracts
         run: |
           python -m py_compile \

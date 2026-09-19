@@ -1,0 +1,46 @@
+{
+  "schema_version": "prompt-runtime-compliance-scenario/v1",
+  "scenario_id": "RTC05",
+  "title": "Parallel graph width at least two while preferred adapter is unavailable",
+  "starting_state": [
+    "At least two dependency-ready lanes have non-overlapping mutation surfaces.",
+    "The first preferred worker or adapter class is unavailable."
+  ],
+  "injected_boundary": {
+    "classification_status": "CANONICAL",
+    "family_id": "CAPABILITY_RUNTIME",
+    "class_id": "CR_TOOL_UNAVAILABLE",
+    "materiality": "MATERIAL",
+    "side_effect_state": "NONE"
+  },
+  "expected_continuation": [
+    "Continue down the evidenced capability ladder.",
+    "Dispatch genuinely concurrently at the first safe available rung.",
+    "Declare degraded autonomy only after every evidenced safe autonomous rung is exhausted.",
+    "Preserve the autonomy gap instead of turning the operator into the scheduler."
+  ],
+  "forbidden_terminal_behaviors": [
+    "Stop after the first adapter is unavailable while another autonomous adapter exists.",
+    "Claim parallel execution from lane enumeration without observed dispatch.",
+    "Ask the operator to schedule work while an autonomous rung remains available."
+  ],
+  "protected_rule_ids": [
+    "PRCR.BOUNDARY.RECOVERY_REQUIRED",
+    "PRCR.BOUNDARY.FIRST_ACTION_PROGRESS",
+    "PRCR.ACTION.PROGRESS_TRUTH",
+    "PRCR.TERMINAL.NO_SAFE_PATH_EVIDENCE"
+  ],
+  "expected_rule_outcomes": {
+    "PRCR.BOUNDARY.RECOVERY_REQUIRED": "PASS",
+    "PRCR.BOUNDARY.FIRST_ACTION_PROGRESS": "PASS",
+    "PRCR.ACTION.PROGRESS_TRUTH": "PASS"
+  },
+  "parallel_protocol": {
+    "graph_width": 2,
+    "preferred_adapter_available": false,
+    "require_first_safe_available_rung": true,
+    "degraded_only_after_ladder_exhaustion": true,
+    "operator_scheduler_is_forbidden_while_autonomous_rung_exists": true
+  },
+  "proof_ceiling": "Deterministic parallelism oracle correctness only; no external worker dispatch is observed."
+}

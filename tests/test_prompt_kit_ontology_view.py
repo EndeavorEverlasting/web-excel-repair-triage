@@ -57,7 +57,25 @@ class PromptKitOntologyViewTests(unittest.TestCase):
             with self.subTest(capability=capability_id):
                 self.assertEqual(actual[capability_id]["skill"], source["skill"])
                 self.assertEqual(actual[capability_id]["implementation"], source["implementation"])
+                self.assertEqual(actual[capability_id]["use_cases"], source.get("use_cases", []))
                 self.assertEqual(actual[capability_id]["proof_ceiling"], source["proof_ceiling"])
+
+    def test_runtime_compliance_use_case_is_embedded_in_ontology_and_visible(self) -> None:
+        model = builder.build_ontology_model(builder.load_prompt_kit_registry())
+        capability = next(
+            item for item in model["capabilities"] if item["id"] == "skill-evaluation"
+        )
+        use_case = next(
+            item
+            for item in capability["use_cases"]
+            if item["id"] == "prompt-strengthening-runtime-compliance"
+        )
+        self.assertIn("prompt strengthening sprint", use_case["intent_aliases"])
+        html = builder.render()
+        self.assertIn("prompt-strengthening-runtime-compliance", html)
+        self.assertIn("prompt strengthening sprint", html)
+        self.assertIn("Use cases", html)
+        self.assertIn("JSON.stringify(item.use_cases || [])", html)
 
     def test_skill_inventory_matches_actual_skill_files(self) -> None:
         model = builder.build_ontology_model(builder.load_prompt_kit_registry())
