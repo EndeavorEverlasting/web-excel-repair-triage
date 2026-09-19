@@ -290,6 +290,8 @@ class HarnessContractTests(unittest.TestCase):
             item for item in workflows if item["id"] == use_case["workflow_id"]
         )
         self.assertEqual(trigger["workflow"], workflow["document"])
+        self.assertIn(capability["id"], workflow["capability_ids"])
+        self.assertIn(use_case["id"], workflow["use_case_ids"])
         self.assertEqual(trigger["skill"], capability["skill"])
         self.assertEqual(use_case["skill"], capability["skill"])
 
