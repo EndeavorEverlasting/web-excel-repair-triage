@@ -104,7 +104,7 @@ class HarnessContractTests(unittest.TestCase):
         )
         self.assertEqual(
             contract["harness_gate"],
-            "python scripts/validate_prompt_kit_cross_device_access.py --summary",
+            "python3 scripts/validate_prompt_kit_cross_device_access.py --summary",
         )
         self.assertEqual(validate_prompt_kit_cross_device_access.main([]), 0)
 
