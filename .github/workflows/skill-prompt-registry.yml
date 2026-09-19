@@ -36,7 +36,7 @@ on:
       - .github/workflows/skill-prompt-registry.yml
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
   skill-prompts-and-generators:
@@ -44,7 +44,8 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          persist-credentials: false
+          ref: ${{ github.event.pull_request.head.ref }}
+          persist-credentials: true
           fetch-depth: 0
       - uses: actions/setup-python@v5
         with:
@@ -64,8 +65,10 @@ jobs:
         if: ${{ always() }}
         run: |
           mkdir -p Outputs/prompt-kit-generated
-          python scripts/build_prompt_kit_registry.py --output Outputs/prompt-kit-generated/index.html
-          python scripts/build_prompt_kit_registry.py --output Outputs/prompt-kit-generated/index.html --check
+          python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html
+          python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html --check
+          cp web/prompt-kit/index.html Outputs/prompt-kit-generated/index.html
+          touch Outputs/prompt-kit-generated/generation-succeeded
       - name: Upload generated Prompt Kit candidate
         if: ${{ always() }}
         uses: actions/upload-artifact@v4
@@ -74,6 +77,24 @@ jobs:
           path: Outputs/prompt-kit-generated/index.html
           if-no-files-found: error
           retention-days: 1
+      - name: Commit generated Prompt Kit and restore transient adapter
+        if: ${{ always() }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -f Outputs/prompt-kit-generated/generation-succeeded
+          git fetch --no-tags origin +refs/heads/main:refs/remotes/origin/main
+          git checkout origin/main -- .github/workflows/skill-prompt-registry.yml
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add web/prompt-kit/index.html .github/workflows/skill-prompt-registry.yml
+          git diff --cached --check
+          if git diff --cached --quiet; then
+            echo "No generated Prompt Kit change to commit."
+            exit 0
+          fi
+          git commit -m "build(prompt-kit): refresh generated site"
+          git push origin HEAD:${{ github.event.pull_request.head.ref }}
       - name: Validate checked-in combined Prompt Kit website
         run: |
           python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html --check
