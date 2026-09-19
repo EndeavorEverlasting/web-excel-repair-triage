@@ -298,3 +298,20 @@ Canonical terminal action: none; no safe actionable work remains
 - **Last proof:** merge:d63c04426d7f65e39d30819a0cc5a48ba51b3bb1 integrated PR #585 runtime-compliance Sprint 4 safe convergence; workflow:35302530688 deterministic-test-floor SUCCESS; workflow:35302530689 prompt-runtime-compliance SUCCESS; workflow:35302530692 operational-harness SUCCESS; local:python -m unittest tests.test_compute_authority_runtime_harness (3 OK); artifact:harness/evals/PROMPT_RUNTIME_COMPLIANCE_PILOT_PLAN.md present on refreshed default branch
 - **Next action:** none; no safe actionable work remains
 - **Updated:** 2026-09-19T21:24:00Z
+
+## TRQ-019 — FirstMate + AgentSwitchboard + Prompt Kit durable vision & owner map
+
+- **Status:** READY
+- **Priority:** P1
+- **Owner:** vision-map-firstmate-asb-prompt-kit-20260919
+- **Branch / PR:** `cursor/firstmate-asb-prompt-kit-vision-map-5b39` / PR pending
+- **Scope:** persist canonical one-page vision + owner/phase map under Triage plan conventions so Agent Flow family and peers share one durable authority surface; state completion definition (FirstMate parallel with ASB consuming Prompt Kit panels/manifests as machine inputs); paint proven/unproven boundaries; map authority (Triage doctrine, ASB consumer, FirstMate crew runtime); index collision ledger and phase ladder with honest gates
+- **Forbidden:** claiming live dual-path complete or live lane dispatch PASS without observed runtime evidence; mutating ASB repo, FirstMate product, g3 live-dispatch surfaces, generated Prompt Kit HTML, SSH sprint map, or #320 deliverables
+- **Dependencies:** ASB #320 merged @ `a483853d`; ADP-01/02/03 INTEGRATED; planning floor `main@b87ad29ea0e78fddb1f26b1f0a10b6efd2c94adb`
+- **References:** `docs/plans/FIRSTMATE_ASB_PROMPT_KIT_VISION_OWNER_MAP.md`, `docs/plans/SSH_LOCAL_EXECUTION_BRIDGE_SPRINT_MAP.md`, `harness/evals/COMPUTE_AUTHORITY_EVALUATION_SPRINT_PLAN.md`, ASB-ADR-2026-09-FIRSTMATE-CREW-RUNTIME
+- **Acceptance gate:** vision map tracked under `docs/plans/`; states NOT complete and no live dual-dual claim; owner/phase map separates g3 ASB-link mutation lane from FirstMate-parallel and vision-map; collision ledger explicit; phase ladder honest (TRACKED PLAN current state); PR opened with exact planning-floor SHA; local proof + merge-gate pass; merge when gates allow
+- **Gate:** none
+- **Last proof:** artifact:`docs/plans/FIRSTMATE_ASB_PROMPT_KIT_VISION_OWNER_MAP.md` created on branch; planning floor pinned; awaiting commit/push/PR
+- **Next action:** commit, push, open PR, run local proof, merge if gates pass
+- **Updated:** 2026-09-19T21:54:00Z
+
