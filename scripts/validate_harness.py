@@ -145,6 +145,7 @@ REQUIRED_VALIDATOR_IDS = {
     "repo-native-update-tests",
     "repo-native-update-parity",
     "prompt-runtime-compliance-receipt-audit",
+    "prompt-runtime-compliance-tests",
 }
 PRE_COMMIT_SNAPSHOT_PROFILE = "pre_commit_snapshot"
 PRE_COMMIT_SNAPSHOT_VALIDATOR_IDS = (
@@ -789,13 +790,11 @@ def validate_capabilities_and_triggers() -> tuple[dict[str, Any], dict[str, Any]
                 use_case.get("validator_ids"),
                 f"use_case.{use_case_id}.validator_ids",
             )
-            artifact_ids = use_case.get("artifact_ids", [])
-            if artifact_ids is not None:
-                require_string_list(
-                    artifact_ids,
-                    f"use_case.{use_case_id}.artifact_ids",
-                    minimum=0,
-                )
+            artifact_ids = require_string_list(
+                use_case.get("artifact_ids", []),
+                f"use_case.{use_case_id}.artifact_ids",
+                minimum=0,
+            )
 
     if set(capability_by_id) != REQUIRED_CAPABILITY_IDS:
         raise HarnessValidationError(f"capability IDs drifted: {sorted(capability_by_id)}")
@@ -836,10 +835,16 @@ def validate_capabilities_and_triggers() -> tuple[dict[str, Any], dict[str, Any]
                 f"trigger.{trigger_id}.intent_aliases",
             )
         if "use_case_ids" in trigger:
-            require_string_list(
+            declared_use_cases = require_string_list(
                 trigger.get("use_case_ids"),
                 f"trigger.{trigger_id}.use_case_ids",
             )
+            unknown_use_cases = sorted(set(declared_use_cases) - use_case_ids)
+            if unknown_use_cases:
+                raise HarnessValidationError(
+                    f"trigger references unknown use cases: "
+                    f"{trigger_id} -> {unknown_use_cases}"
+                )
 
     if trigger_ids != REQUIRED_TRIGGER_IDS:
         raise HarnessValidationError(f"trigger IDs drifted: {sorted(trigger_ids)}")
@@ -865,6 +870,31 @@ def validate_capabilities_and_triggers() -> tuple[dict[str, Any], dict[str, Any]
         for workflow in workflows
         if isinstance(workflow, dict)
     }
+    for workflow_id, workflow in workflow_by_id.items():
+        if "use_case_ids" in workflow:
+            declared_use_cases = require_string_list(
+                workflow.get("use_case_ids"),
+                f"workflow.{workflow_id}.use_case_ids",
+            )
+            unknown_use_cases = sorted(set(declared_use_cases) - use_case_ids)
+            if unknown_use_cases:
+                raise HarnessValidationError(
+                    f"workflow references unknown use cases: "
+                    f"{workflow_id} -> {unknown_use_cases}"
+                )
+        if "capability_ids" in workflow:
+            declared_capabilities = require_string_list(
+                workflow.get("capability_ids"),
+                f"workflow.{workflow_id}.capability_ids",
+            )
+            unknown_capabilities = sorted(
+                set(declared_capabilities) - set(capability_by_id)
+            )
+            if unknown_capabilities:
+                raise HarnessValidationError(
+                    f"workflow references unknown capabilities: "
+                    f"{workflow_id} -> {unknown_capabilities}"
+                )
     artifact_payload = load_json(ARTIFACTS_PATH)
     artifact_by_id = {
         str(item.get("id", "")): item
