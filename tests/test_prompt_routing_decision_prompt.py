@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import copy
+from concurrent.futures import ThreadPoolExecutor
 import hashlib
 import json
 import subprocess
@@ -295,6 +296,37 @@ class PromptRoutingDecisionTests(unittest.TestCase):
         with self.assertRaisesRegex(routing.RoutingDecisionError, "do not verify"):
             routing.build_routing_decision(self.request(), receipt)
 
+    def test_unhashable_or_unknown_signals_fail_closed(self) -> None:
+        for signals in (
+            [["routing"]],
+            [{"kind": "routing"}],
+            ["not-a-signal"],
+        ):
+            with self.subTest(signals=signals), self.assertRaisesRegex(
+                routing.RoutingDecisionError,
+                "invalid signal",
+            ):
+                routing.build_routing_decision(
+                    self.request(signals=signals),
+                    self.route_receipt(),
+                )
+
+    def test_correction_events_must_be_explicit_corrective_evidence(self) -> None:
+        invalid_events = (
+            [{"kind": "explicit_correction", "corrective": False}],
+            [{"kind": "informational", "corrective": True}],
+            [{"kind": "explicit_correction", "corrective": True, "note": "extra"}],
+            ["not-an-object"],
+        )
+        for correction_events in invalid_events:
+            with self.subTest(correctionEvents=correction_events), self.assertRaises(
+                routing.RoutingDecisionError
+            ):
+                routing.build_routing_decision(
+                    self.request(correctionEvents=correction_events),
+                    self.route_receipt(),
+                )
+
     def test_routing_request_tamper_seal_rejects_post_builder_mutation(self) -> None:
         request = self.request()
         request["signals"] = ["routing"]
@@ -401,6 +433,70 @@ class PromptRoutingDecisionTests(unittest.TestCase):
                 2,
             )
             self.assertFalse(output_path.exists())
+
+    def test_cli_unique_temp_path_never_aliases_dot_tmp_input(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            request_path = root / "decision.json.tmp"
+            receipt_path = root / "receipt.json"
+            output_path = root / "decision.json"
+            request_text = json.dumps(self.request())
+            request_path.write_text(request_text, encoding="utf-8")
+            receipt_path.write_text(json.dumps(self.route_receipt()), encoding="utf-8")
+            self.assertEqual(
+                routing.main(
+                    [
+                        "--request",
+                        str(request_path),
+                        "--route-receipt",
+                        str(receipt_path),
+                        "--output",
+                        str(output_path),
+                    ]
+                ),
+                0,
+            )
+            self.assertEqual(request_path.read_text(encoding="utf-8"), request_text)
+            self.assertTrue(output_path.is_file())
+            self.assertEqual(
+                json.loads(output_path.read_text(encoding="utf-8"))["schema"],
+                "prompt-kit.routing-decision/v1",
+            )
+
+    def test_concurrent_cli_runs_use_distinct_temp_files(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            output_path = root / "decision.json"
+            invocations = []
+            for index in range(2):
+                request_path = root / f"request-{index}.json"
+                receipt_path = root / f"receipt-{index}.json"
+                request = self.request()
+                receipt = self.route_receipt(run_id=f"rrb03-run-{index}")
+                request_path.write_text(json.dumps(request), encoding="utf-8")
+                receipt_path.write_text(json.dumps(receipt), encoding="utf-8")
+                invocations.append(
+                    [
+                        "--request",
+                        str(request_path),
+                        "--route-receipt",
+                        str(receipt_path),
+                        "--output",
+                        str(output_path),
+                    ]
+                )
+
+            with ThreadPoolExecutor(max_workers=2) as pool:
+                results = list(pool.map(routing.main, invocations))
+
+            self.assertEqual(results, [0, 0])
+            final = json.loads(output_path.read_text(encoding="utf-8"))
+            self.assertEqual(final["schema"], "prompt-kit.routing-decision/v1")
+            self.assertFalse((root / "decision.json.tmp").exists())
+            self.assertEqual(
+                [path for path in root.iterdir() if path.name.startswith(".decision.json.")],
+                [],
+            )
 
     def test_cli_refuses_to_overwrite_an_input_file(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
