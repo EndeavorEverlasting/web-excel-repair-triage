@@ -141,7 +141,7 @@
     "checks": [
       {
         "check_id": "CK-001",
-        "name": "synthetic-fixture-integrity",
+        "name": "action:A-001:synthetic-fixture-integrity",
         "status": "PASS",
         "evidence_refs": [
           "EV-001"
