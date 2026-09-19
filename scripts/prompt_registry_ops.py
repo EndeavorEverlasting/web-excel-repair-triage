@@ -6,7 +6,9 @@ import argparse
 import hashlib
 import json
 import re
+import subprocess
 import sys
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
