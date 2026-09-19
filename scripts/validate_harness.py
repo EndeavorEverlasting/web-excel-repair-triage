@@ -91,6 +91,7 @@ REQUIRED_ARTIFACT_IDS = {
     "app-harness-validation-report",
     "operant-external-resource-index",
     "operant-external-resource-gap-ledger",
+    "prompt-runtime-compliance-evidence",
 }
 REQUIRED_VALIDATOR_IDS = {
     "harness-completeness",
@@ -143,6 +144,8 @@ REQUIRED_VALIDATOR_IDS = {
     "repo-native-update-audit",
     "repo-native-update-tests",
     "repo-native-update-parity",
+    "prompt-runtime-compliance-receipt-audit",
+    "prompt-runtime-compliance-tests",
 }
 PRE_COMMIT_SNAPSHOT_PROFILE = "pre_commit_snapshot"
 PRE_COMMIT_SNAPSHOT_VALIDATOR_IDS = (
@@ -694,7 +697,7 @@ def validate_capabilities_and_triggers() -> tuple[dict[str, Any], dict[str, Any]
                 )
             hook_ids.add(hook_id)
             use_case_hooks.append((capability_id, hook))
-            for field in ("trigger_id", "workflow_id", "expected_artifact", "proof_ceiling"):
+            for field in ("trigger_id", "workflow_id", "expected_artifact_id", "proof_ceiling"):
                 if not isinstance(hook.get(field), str) or not hook[field].strip():
                     raise HarnessValidationError(
                         f"use-case hook {hook_id} is missing {field}"
@@ -718,6 +721,10 @@ def validate_capabilities_and_triggers() -> tuple[dict[str, Any], dict[str, Any]
             proof_resources = require_string_list(
                 hook.get("proof_resources"),
                 f"use_case_hook.{hook_id}.proof_resources",
+            )
+            validator_ids = require_string_list(
+                hook.get("validator_ids"),
+                f"use_case_hook.{hook_id}.validator_ids",
             )
             participants = set(implementation_resources) | set(proof_resources)
             if not set(workflow_entrypoints).issubset(participants):
@@ -748,14 +755,36 @@ def validate_capabilities_and_triggers() -> tuple[dict[str, Any], dict[str, Any]
                         f"{relative_path} -> {previous}, {hook_id}"
                     )
                 reverse_resource_owner[relative_path] = hook_id
-            expected_artifact = str(hook["expected_artifact"])
-            if not (
-                expected_artifact.startswith("Outputs/")
-                or expected_artifact.startswith("CI:")
-            ):
+            artifact_payload = load_json(ARTIFACTS_PATH)
+            artifact_by_id = {
+                str(item.get("id", "")): item
+                for item in artifact_payload.get("artifacts", [])
+                if isinstance(item, dict)
+            }
+            expected_artifact_id = str(hook["expected_artifact_id"])
+            artifact = artifact_by_id.get(expected_artifact_id)
+            if artifact is None:
                 raise HarnessValidationError(
-                    f"use-case hook expected artifact is not a runtime/CI surface: "
-                    f"{hook_id} -> {expected_artifact}"
+                    f"use-case hook references unknown artifact: "
+                    f"{hook_id} -> {expected_artifact_id}"
+                )
+            validator_payload = load_json(VALIDATORS_PATH)
+            validator_by_id = {
+                str(item.get("id", "")): item
+                for item in validator_payload.get("validators", [])
+                if isinstance(item, dict)
+            }
+            unknown_validators = sorted(set(validator_ids) - set(validator_by_id))
+            if unknown_validators:
+                raise HarnessValidationError(
+                    f"use-case hook references unknown validators: "
+                    f"{hook_id} -> {unknown_validators}"
+                )
+            artifact_validator = str(artifact.get("validator", ""))
+            if artifact_validator not in set(validator_ids):
+                raise HarnessValidationError(
+                    f"use-case hook artifact validator is not in its proof route: "
+                    f"{hook_id} -> {expected_artifact_id} -> {artifact_validator}"
                 )
     if set(capability_by_id) != REQUIRED_CAPABILITY_IDS:
         raise HarnessValidationError(f"capability IDs drifted: {sorted(capability_by_id)}")
