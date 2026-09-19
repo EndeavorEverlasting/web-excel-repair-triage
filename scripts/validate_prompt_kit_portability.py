@@ -376,7 +376,7 @@ def validate_repository_surfaces(
             '"prompt_kit_portability"',
             "harness/contracts/prompt-kit-portability.v1.json",
             "scripts/serve_prompt_kit_portable.py",
-            "python scripts/validate_prompt_kit_portability.py",
+            "python3 scripts/validate_prompt_kit_portability.py",
         ),
     )
     readme = require_text(

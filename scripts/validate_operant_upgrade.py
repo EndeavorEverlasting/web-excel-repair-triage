@@ -101,9 +101,9 @@ def validate() -> list[str]:
         findings.append("canonical upgrade validators must be a list")
     else:
         for command in (
-            "python scripts/validate_prompt_kit_feedback_afk_routing.py --summary",
-            "python scripts/validate_operant_upgrade.py --summary",
-            "python -m unittest tests.test_operant_upgrade tests.test_prompt_kit_feedback_afk_routing tests.test_operant_friction_repository_dispatch_adapter -v",
+            "python3 scripts/validate_prompt_kit_feedback_afk_routing.py --summary",
+            "python3 scripts/validate_operant_upgrade.py --summary",
+            "python3 -m unittest tests.test_operant_upgrade tests.test_prompt_kit_feedback_afk_routing tests.test_operant_friction_repository_dispatch_adapter -v",
             "git diff --check",
         ):
             if command not in validators:

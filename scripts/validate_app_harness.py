@@ -14,7 +14,7 @@ from typing import Callable, Mapping, Sequence
 
 SCHEMA_VERSION = "app-harness-validation/v2"
 PROOF_LEVEL = "offline_synthetic"
-CANONICAL_COMMAND = "python scripts/validate_app_harness.py --output Outputs/app-harness-validation.json"
+CANONICAL_COMMAND = "python3 scripts/validate_app_harness.py --output Outputs/app-harness-validation.json"
 PROOF_CEILING = (
     "Offline/synthetic repository harness validation only; no live runtime, browser, launcher, "
     "network, target, save/account, provider-runtime, deployment, or production proof."

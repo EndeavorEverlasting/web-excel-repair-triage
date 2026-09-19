@@ -385,7 +385,7 @@ def validate_root_registration() -> None:
         "validator": "scripts/validate_lua_harness.py",
         "contract_tests": "tests/test_lua_harness_contract.py",
         "workflow": "WORKFLOW.md#c-harness-infrastructure-change",
-        "harness_gate": "python scripts/validate_lua_harness.py --output Outputs/lua-embedding-readiness.json --summary",
+        "harness_gate": "python3 scripts/validate_lua_harness.py --output Outputs/lua-embedding-readiness.json --summary",
         "domain_manifest": "harness/lua/manifest.v1.json",
         "skill": ".ai/skills/lua-embedding-readiness/SKILL.md",
         "operator_report": "harness/lua/reports/CURRENT_STATE.md",

@@ -29,7 +29,7 @@ EXPECTED_DOMAIN = {
     "validator": "scripts/validate_prompt_kit_freshness_guidance.py",
     "contract_tests": "tests/test_prompt_kit_freshness_guidance.py",
     "workflow": "WORKFLOW.md#a-technician-acquisition-or-update",
-    "harness_gate": "python scripts/validate_prompt_kit_freshness_guidance.py --summary",
+    "harness_gate": "python3 scripts/validate_prompt_kit_freshness_guidance.py --summary",
     "skill": ".ai/skills/technician-prompt-kit-acquisition/SKILL.md",
     "operator_report": "harness/reports/PROMPT_KIT_FRESHNESS.md",
 }
