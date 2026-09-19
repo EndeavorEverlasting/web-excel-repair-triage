@@ -261,8 +261,7 @@ class HarnessContractTests(unittest.TestCase):
                 (candidate["id"], candidate_hook)
                 for candidate in capabilities
                 for candidate_hook in candidate.get("use_case_hooks", [])
-                if resource in candidate_hook["implementation_resources"]
-                or resource in candidate_hook["proof_resources"]
+                if resource in candidate_hook["reverse_entrypoints"]
             ]
             self.assertEqual(len(matches), 1, resource)
             owner_id, reverse_hook = matches[0]
@@ -277,6 +276,7 @@ class HarnessContractTests(unittest.TestCase):
         for resource in (
             hook["implementation_resources"]
             + hook["workflow_entrypoints"]
+            + hook["reverse_entrypoints"]
             + hook["proof_resources"]
         ):
             self.assertTrue((ROOT / resource).is_file(), resource)
