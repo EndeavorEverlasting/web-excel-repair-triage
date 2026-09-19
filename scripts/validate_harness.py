@@ -587,8 +587,11 @@ def validate_validator_registry(manifest: dict[str, Any]) -> dict[str, Any]:
     profiles = payload.get("profiles")
     if not isinstance(profiles, dict):
         raise HarnessValidationError("validator profiles must be an object")
-    for profile_id in ("harness", "pre_commit", "pre_commit_snapshot", "pre_push"):
-        ids = require_string_list(profiles.get(profile_id), f"validators.profiles.{profile_id}")
+    for profile_id, profile_values in profiles.items():
+        ids = require_string_list(
+            profile_values,
+            f"validators.profiles.{profile_id}",
+        )
         unknown = sorted(set(ids) - set(by_id))
         if unknown:
             raise HarnessValidationError(
@@ -931,6 +934,16 @@ def validate_capabilities_and_triggers() -> tuple[dict[str, Any], dict[str, Any]
             raise HarnessValidationError(
                 f"use case references unknown validators: "
                 f"{use_case_id} -> {unknown_validators}"
+            )
+        workflow_profile = str(workflow.get("validation_profile", "")).strip()
+        profile_ids = set(
+            validator_payload.get("profiles", {}).get(workflow_profile, [])
+        )
+        missing_profile_validators = sorted(validator_ids - profile_ids)
+        if missing_profile_validators:
+            raise HarnessValidationError(
+                f"use-case validators are not executable through workflow profile: "
+                f"{use_case_id} -> {workflow_profile} missing={missing_profile_validators}"
             )
 
         for artifact_id in use_case.get("artifact_ids", []):
