@@ -332,13 +332,16 @@ def _evaluate_boundary_rules(receipt: dict[str, Any], findings: dict[str, dict[s
         "sprint_id", "scope", "outcome", "first_executable_action_id",
         "completion_gate", "return_condition",
     )
-    for row in recovery_required_events:
+    declared_required_events = [
+        row for row in material if row["recovery_sprint"]["required"] is True
+    ]
+    for row in declared_required_events:
         sprint = row["recovery_sprint"]
         if not sprint["opened"] or any(sprint.get(field) in (None, "") for field in required_fields):
             opened_fail.append(row["boundary_event_id"])
     setf(
         _na("PRCR.BOUNDARY.RECOVERY_OPENED", "boundary_events", "No required recovery sprint.")
-        if not recovery_required_events
+        if not declared_required_events
         else (
             _pass("PRCR.BOUNDARY.RECOVERY_OPENED", "boundary_events", "Required recovery sprints are opened with executable metadata.")
             if not opened_fail
@@ -475,7 +478,18 @@ def _evaluate_action_rules(receipt: dict[str, Any], findings: dict[str, dict[str
     unsupported_promotions: list[str] = []
     pass_checks = [check for check in receipt["proof"]["checks"] if check["status"] == "PASS"]
     for row in promotions:
-        if not row["evidence_refs"] or not pass_checks:
+        expected_name = (
+            f"action:{row['action_id']}:proof:"
+            f"{row['proof_before']}->{row['proof_after']}"
+        )
+        action_refs = set(row["evidence_refs"])
+        matching_checks = [
+            check
+            for check in pass_checks
+            if check["name"] == expected_name
+            and action_refs.intersection(check["evidence_refs"])
+        ]
+        if len(matching_checks) != 1:
             unsupported_promotions.append(row["action_id"])
     setf(
         _na("PRCR.ACTION.NO_FALSE_PROOF_PROMOTION", "actions", "No action strengthens proof state.")
@@ -611,10 +625,19 @@ def _evaluate_terminal_rules(receipt: dict[str, Any], findings: dict[str, dict[s
         setf(_na("PRCR.TERMINAL.CANCEL_AUTHORITY", "terminal", "Terminal state is not operator cancellation."))
 
     if terminal["state"] == "USER_ONLY_DECISION_REQUIRED":
+        decision_evidence = [
+            row for row in receipt["evidence"]
+            if row["kind"] == "user_feedback"
+        ]
+        user_only_ok = (
+            terminal["reason_code"] == "USER_DECISION_REQUIRED"
+            and terminal["next_transition"] is not None
+            and bool(decision_evidence)
+        )
         setf(
-            _pass("PRCR.TERMINAL.USER_ONLY", "terminal", "User-only decision is explicit and carries the next transition.")
-            if terminal["reason_code"] == "USER_DECISION_REQUIRED" and terminal["next_transition"] is not None
-            else _fail("PRCR.TERMINAL.USER_ONLY", "terminal", "User-only decision terminal state lacks its exact decision/continuation gate.")
+            _pass("PRCR.TERMINAL.USER_ONLY", "terminal", "User-only decision is explicit, evidence-backed, and carries the next transition.")
+            if user_only_ok
+            else _fail("PRCR.TERMINAL.USER_ONLY", "terminal", "USER_ONLY_DECISION_REQUIRED lacks explicit user-decision evidence or its exact continuation gate.")
         )
     else:
         setf(_na("PRCR.TERMINAL.USER_ONLY", "terminal", "Terminal state is not USER_ONLY_DECISION_REQUIRED."))
