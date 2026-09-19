@@ -218,6 +218,69 @@ class HarnessContractTests(unittest.TestCase):
             self.assertEqual(trigger["skill"], capability["skill"])
             self.assertIn(trigger["id"], capability["trigger_ids"])
 
+    def test_prompt_strengthening_runtime_compliance_hook_is_bidirectional(self) -> None:
+        capabilities = self.load("harness/capabilities.v1.json")["capabilities"]
+        triggers = self.load("harness/triggers.v1.json")["triggers"]
+        workflows = self.load("harness/workflows.v1.json")["workflows"]
+
+        capability = next(
+            item for item in capabilities if item["id"] == "skill-evaluation"
+        )
+        hook = next(
+            item
+            for item in capability["use_case_hooks"]
+            if item["id"] == "prompt-strengthening-runtime-compliance"
+        )
+        trigger = next(item for item in triggers if item["id"] == hook["trigger_id"])
+        workflow = next(item for item in workflows if item["id"] == hook["workflow_id"])
+
+        # Intent-first: no internal filename is needed to select the canonical route.
+        self.assertIn("prompt strengthening sprint", hook["intent_aliases"])
+        self.assertEqual(trigger["capability_id"], capability["id"])
+        self.assertEqual(trigger["skill"], capability["skill"])
+        self.assertEqual(trigger["workflow"], workflow["document"])
+        self.assertTrue(
+            set(hook["workflow_entrypoints"]).issubset(set(workflow["entry_points"]))
+        )
+        self.assertEqual(
+            hook["expected_artifact"],
+            "Outputs/repository-ai-evals/runtime-compliance/pilot-receipt.json",
+        )
+        self.assertIn(
+            "scripts/validate_prompt_runtime_compliance_receipt.py",
+            hook["proof_resources"],
+        )
+
+        # Implementation-first: a resource already encountered in the subsystem
+        # resolves to exactly one owning use-case hook and its originating intent.
+        for resource in (
+            "harness/evals/runtime-compliance/scripts/pilot.py",
+            "scripts/validate_prompt_runtime_compliance_receipt.py",
+        ):
+            matches = [
+                (candidate["id"], candidate_hook)
+                for candidate in capabilities
+                for candidate_hook in candidate.get("use_case_hooks", [])
+                if resource in candidate_hook["implementation_resources"]
+                or resource in candidate_hook["proof_resources"]
+            ]
+            self.assertEqual(len(matches), 1, resource)
+            owner_id, reverse_hook = matches[0]
+            self.assertEqual(owner_id, "skill-evaluation")
+            self.assertEqual(
+                reverse_hook["id"],
+                "prompt-strengthening-runtime-compliance",
+            )
+            self.assertIn("prompt strengthening sprint", reverse_hook["intent_aliases"])
+            self.assertTrue(reverse_hook["proof_resources"])
+
+        for resource in (
+            hook["implementation_resources"]
+            + hook["workflow_entrypoints"]
+            + hook["proof_resources"]
+        ):
+            self.assertTrue((ROOT / resource).is_file(), resource)
+
     def test_every_active_skill_is_indexed_and_structured(self) -> None:
         manifest = self.load("harness/manifest.v1.json")
         index = (ROOT / "SKILLS.md").read_text(encoding="utf-8")
