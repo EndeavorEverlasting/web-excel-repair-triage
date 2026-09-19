@@ -11,7 +11,7 @@ PORTABLE_COMMIT = '429237aa41d8712d71859865c9be407ca23d8580'
 
 
 def run_validator(path=None, adoption=None):
-    command = ['python', str(VALIDATOR)]
+    command = ['python3', str(VALIDATOR)]
     if path:
         command += ['--file', str(path)]
     if adoption:
@@ -164,6 +164,40 @@ class RepositoryWorkLedgerTests(unittest.TestCase):
         self.assertIn('Sprint 2 repository/runtime-harness implementation is SAFE & EXECUTABLE', ledger)
         self.assertNotIn('Sprint 1 is SAFE & EXECUTABLE', ledger)
         self.assertNotIn('build Sprint 1 under `harness/evals/compute-authority/`', ledger)
+
+    def test_ledger_validator_commands_use_python3(self):
+        validators = json.loads((ROOT / 'harness' / 'validators.v1.json').read_text(encoding='utf-8'))
+        ledger_validators = [v for v in validators['validators']
+                            if v['id'].startswith('repository-work-ledger-')]
+        self.assertTrue(ledger_validators, 'Expected at least one ledger validator')
+        for validator in ledger_validators:
+            command = validator['command']
+            self.assertTrue(
+                command.startswith('python3 ') or ' python3 ' in command,
+                f"Validator {validator['id']} must use 'python3', not bare 'python': {command}"
+            )
+            self.assertNotRegex(
+                command,
+                r'(?:^| )python (?!-)',
+                f"Validator {validator['id']} uses bare 'python' which may not exist on all systems: {command}"
+            )
+
+    def test_ledger_workflow_steps_use_python3(self):
+        workflow = (ROOT / '.github' / 'workflows' / 'repository-work-ledger-contract.yml').read_text(encoding='utf-8')
+        lines = workflow.split('\n')
+        for i, line in enumerate(lines):
+            if 'run:' in line and 'python ' in line:
+                self.assertNotRegex(
+                    line,
+                    r'python\s+(?!-m\s+pip)',
+                    f"Line {i+1} in repository-work-ledger-contract.yml uses bare 'python' instead of 'python3': {line.strip()}"
+                )
+                if 'repository_work_ledger' in line or 'test_repository_work_ledger' in line:
+                    self.assertIn(
+                        'python3',
+                        line,
+                        f"Line {i+1} in repository-work-ledger-contract.yml must use 'python3': {line.strip()}"
+                    )
 
 
 if __name__ == '__main__':
