@@ -206,6 +206,51 @@ For use case `prompt-strengthening-runtime-compliance`, enter through the plan, 
 8. When a coherent candidate is ready, leave this workflow and route promotion to P105 / `pr-floor-integration`; never merge from the feedback router.
 9. Run the focused validator/tests and preserve friction derivation, browser collection/loopback, provider-adapter runtime, and promotion as separate proof levels.
 
+### J. Prompt semantic coverage
+
+**Workflow ID:** `prompt-semantic-coverage`
+**Trigger:** `prompt-semantic-lifecycle-change`
+**Capability:** `prompt-semantic-coverage`
+**Skill:** `.ai/skills/prompt-semantic-coverage/SKILL.md`
+**Focused contracts:** `harness/contracts/prompt-semantic-coverage.v1.json`, `harness/prompt-topology/semantic-capability-catalog.v1.json`
+
+Activate when canonical prompt ADD/EDIT/RETIRE operations or semantic profile/catalog/migration changes occur. Enforce PSC001-PSC016 non-weakening rules to prevent silent capability degradation.
+
+**ADD operation:**
+1. Require candidate semantic profile in draft JSON
+2. Check internal topology/profile overlap via P79
+3. Verify distinct residual proof (PSC008)
+4. Run `python3 scripts/prompt_registry_ops.py add --input draft.json --dry-run` first
+5. Profile check must pass before identity allocation
+
+**EDIT/STRENGTHEN operation:**
+1. Load accepted profile as immutable prior
+2. Compute declared capability deltas
+3. Reject unexplained downgrade (PSC004 REQUIRED presence, PSC005 PRIMARY ownership)
+4. Require migration when responsibility changes (PSC009)
+5. Run focused proof for protected PRIMARY/REQUIRED assignments
+
+**RETIRE operation:**
+1. Enumerate PRIMARY/REQUIRED capabilities from accepted profile
+2. Calculate alternate owners (PSC007)
+3. Require successor transfer for coverage that would disappear
+4. Run `python3 scripts/prompt_registry_ops.py retire --prompt-id P## --rationale "..." --dry-run`
+5. Coverage hole check must pass before registry removal
+
+**Validation:**
+```bash
+python3 scripts/validate_prompt_semantic_coverage.py
+python3 -m unittest tests.test_prompt_semantic_coverage tests.test_prompt_semantic_validator_1b -v
+```
+
+**Guardrails:**
+- No automatic ID allocation outside P79
+- No accepted-profile overwrite from generated inference
+- No runtime-behavior claim from static evidence
+- PROVISIONAL profiles cannot replace ACCEPTED history
+
+**Proof ceiling:** Static semantic lifecycle enforcement and accepted profile regression protection. Downstream runtime model behavior remains separate proof.
+
 ## 3. Validate before committing
 
 Use the strongest practical checks in dependency order:

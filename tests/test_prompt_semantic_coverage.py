@@ -11,6 +11,10 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 
+from scripts import build_prompt_semantic_baseline as semantic_baseline
+from scripts import prompt_registry_ops
+from scripts import validate_prompt_semantic_coverage as semantic_validator
+
 
 class SemanticCoverageContractTests(unittest.TestCase):
     """Test semantic coverage contract schema and structure."""
@@ -432,32 +436,54 @@ class Sprint1ABaselineAcceptanceTests(unittest.TestCase):
             self.assertIn("provenance", cap)
 
     def test_derived_matrix_deterministic(self) -> None:
-        """Derived matrix can be reconstructed deterministically."""
-        matrix_path = ROOT / "artifacts" / "prompt-semantic-coverage" / "matrix.v1.json"
-        matrix = json.loads(matrix_path.read_text(encoding="utf-8"))
+        """Derived matrix is reconstructed in-memory from canonical tracked owners."""
+        catalog = json.loads(
+            (ROOT / "harness" / "prompt-topology" / "semantic-capability-catalog.v1.json").read_text(
+                encoding="utf-8"
+            )
+        )
+        profiles_data = json.loads(
+            (ROOT / "harness" / "prompt-topology" / "prompt-capability-profiles.v1.json").read_text(
+                encoding="utf-8"
+            )
+        )
+        profiles = [
+            row for row in profiles_data["profiles"]
+            if row.get("profile_status") == "ACCEPTED"
+        ]
+        matrix = semantic_baseline.generate_baseline_matrix(catalog, profiles)
+        matrix_again = semantic_baseline.generate_baseline_matrix(catalog, profiles)
 
+        self.assertEqual(matrix, matrix_again)
         self.assertTrue(matrix["deterministic"])
-        self.assertEqual(matrix["prompt_count"], 62)
+        self.assertEqual(matrix["prompt_count"], len(profiles))
         self.assertGreater(matrix["capability_count"], 0)
-
-        # Matrix must have one row per prompt
-        self.assertEqual(len(matrix["matrix"]), 62)
-
-        # Each row must have prompt_id
+        self.assertEqual(len(matrix["matrix"]), len(profiles))
         for row in matrix["matrix"]:
             self.assertIn("prompt_id", row)
             self.assertRegex(row["prompt_id"], r"^P\d{2,4}$")
 
     def test_coverage_report_generated(self) -> None:
-        """Coverage report shows PRIMARY ownership distribution."""
-        coverage_path = ROOT / "artifacts" / "prompt-semantic-coverage" / "coverage-report.v1.json"
-        coverage_report = json.loads(coverage_path.read_text(encoding="utf-8"))
+        """Coverage report is generated in-memory; ignored artifacts are never test prerequisites."""
+        catalog = json.loads(
+            (ROOT / "harness" / "prompt-topology" / "semantic-capability-catalog.v1.json").read_text(
+                encoding="utf-8"
+            )
+        )
+        profiles_data = json.loads(
+            (ROOT / "harness" / "prompt-topology" / "prompt-capability-profiles.v1.json").read_text(
+                encoding="utf-8"
+            )
+        )
+        profiles = [
+            row for row in profiles_data["profiles"]
+            if row.get("profile_status") == "ACCEPTED"
+        ]
+        coverage_report = semantic_baseline.generate_coverage_report(catalog, profiles)
 
         self.assertIn("coverage", coverage_report)
         self.assertGreater(len(coverage_report["coverage"]), 0)
-
-        # Verify structure of coverage entries
-        for cap_id, data in coverage_report["coverage"].items():
+        for data in coverage_report["coverage"].values():
             self.assertIn("capability", data)
             self.assertIn("policy", data)
             self.assertIn("primary_owners", data)
@@ -473,27 +499,108 @@ class Sprint1ABaselineAcceptanceTests(unittest.TestCase):
         self.assertTrue(first_line.startswith("#!"), "Builder must have shebang")
 
     def test_primary_ownership_non_crowded(self) -> None:
-        """Primary ownership follows catalog overlap policies."""
-        catalog_path = ROOT / "harness" / "prompt-topology" / "semantic-capability-catalog.v1.json"
-        catalog = json.loads(catalog_path.read_text(encoding="utf-8"))
+        """Primary crowding policy is checked against an in-memory canonical projection."""
+        catalog = json.loads(
+            (ROOT / "harness" / "prompt-topology" / "semantic-capability-catalog.v1.json").read_text(
+                encoding="utf-8"
+            )
+        )
+        profiles_data = json.loads(
+            (ROOT / "harness" / "prompt-topology" / "prompt-capability-profiles.v1.json").read_text(
+                encoding="utf-8"
+            )
+        )
+        profiles = [
+            row for row in profiles_data["profiles"]
+            if row.get("profile_status") == "ACCEPTED"
+        ]
+        coverage_report = semantic_baseline.generate_coverage_report(catalog, profiles)
+        policies = {
+            cap["capability_id"]: cap["overlap_policy"]
+            for cap in catalog["capabilities"]
+        }
 
-        coverage_path = ROOT / "artifacts" / "prompt-semantic-coverage" / "coverage-report.v1.json"
-        coverage_report = json.loads(coverage_path.read_text(encoding="utf-8"))
-
-        # Build policy map
-        policies = {}
-        for cap in catalog["capabilities"]:
-            policies[cap["capability_id"]] = cap["overlap_policy"]
-
-        # Check PRIMARY crowding
         for cap_id, data in coverage_report["coverage"].items():
             primary_count = len(data["primary_owners"])
-            policy = policies.get(cap_id, "OVERLAP_EXPECTED")
+            if policies.get(cap_id, "OVERLAP_EXPECTED") == "PRIMARY_CROWDING_FAIL":
+                self.assertLessEqual(
+                    primary_count,
+                    1,
+                    f"Capability {cap_id} has PRIMARY_CROWDING_FAIL policy "
+                    f"but {primary_count} PRIMARY owners: {data['primary_owners']}",
+                )
 
-            if policy == "PRIMARY_CROWDING_FAIL":
-                self.assertLessEqual(primary_count, 1,
-                                   f"Capability {cap_id} has PRIMARY_CROWDING_FAIL policy "
-                                   f"but {primary_count} PRIMARY owners: {data['primary_owners']}")
+
+class Sprint2LifecycleGateTests(unittest.TestCase):
+    @staticmethod
+    def candidate_profile(*, reviewed: bool) -> dict:
+        profile = {
+            "direct_assignments": [
+                {
+                    "capability_id": "execution.implementation",
+                    "presence": "AWARE",
+                    "ownership": "NONE",
+                    "capability_relation": "ROUTES_TO",
+                    "delivery_source": "ROUTED_OWNER",
+                    "evidence_refs": ["tests/test_prompt_semantic_coverage.py"],
+                    "rationale": "Synthetic candidate routes execution to the existing P07 owner.",
+                }
+            ],
+            "evidence_refs": ["tests/test_prompt_semantic_coverage.py"],
+        }
+        if reviewed:
+            profile["distinct_residual"] = {
+                "summary": "Focused fixture proves a reviewed residual without inventing another execution owner.",
+                "evidence_refs": ["tests/test_prompt_semantic_coverage.py"],
+                "reviewed_against": ["P07"],
+            }
+        return profile
+
+    def test_malformed_candidate_profile_fails_closed(self) -> None:
+        with self.assertRaises(SystemExit):
+            prompt_registry_ops._validate_candidate_semantic_profile(
+                {"capabilities": [{"id": "execution.implementation"}]}
+            )
+
+    def test_psc008_overlapping_add_without_reviewed_residual_fails(self) -> None:
+        result = prompt_registry_ops._check_distinct_residual_for_add(
+            {"semantic_profile": self.candidate_profile(reviewed=False)}
+        )
+        self.assertFalse(result["distinct_residual"])
+        self.assertEqual(result["mode"], "absorbed_by_existing_owner")
+        self.assertIn("P07", result["overlapping_owners"])
+
+    def test_psc008_reviewed_residual_can_pass_without_duplicate_ownership(self) -> None:
+        result = prompt_registry_ops._check_distinct_residual_for_add(
+            {"semantic_profile": self.candidate_profile(reviewed=True)}
+        )
+        self.assertTrue(result["distinct_residual"])
+        self.assertEqual(result["mode"], "reviewed_residual")
+        self.assertIn("P07", result["reviewed_existing_owners"])
+
+    def test_direct_body_drift_breaks_accepted_profile_binding(self) -> None:
+        profiles = json.loads(
+            (ROOT / "harness" / "prompt-topology" / "prompt-capability-profiles.v1.json").read_text(
+                encoding="utf-8"
+            )
+        )["profiles"]
+        base = {
+            row["id"]: row
+            for row in json.loads((ROOT / "docs" / "prompts.json").read_text(encoding="utf-8"))
+        }
+        profile = next(
+            row
+            for row in profiles
+            if row.get("profile_status") == "ACCEPTED" and row.get("prompt_id") in base
+        )
+        modified = dict(base[profile["prompt_id"]])
+        modified["copyContent"] = modified["copyContent"] + "\nSILENT DRIFT"
+        errors = semantic_validator.check_psc002_profile_matches_canonical_record(
+            profile,
+            modified,
+        )
+        self.assertTrue(errors)
+        self.assertTrue(any("PSC009" in error for error in errors))
 
 
 if __name__ == "__main__":

@@ -64,6 +64,25 @@ class OperantExternalResourceTests(unittest.TestCase):
             "profile": "spec-architecture",
             "color": "Teal",
             "category": "standard",
+            "semantic_profile": {
+                "direct_assignments": [
+                    {
+                        "capability_id": "execution.implementation",
+                        "presence": "AWARE",
+                        "ownership": "NONE",
+                        "capability_relation": "ROUTES_TO",
+                        "delivery_source": "ROUTED_OWNER",
+                        "evidence_refs": ["tests/test_operant_external_resources.py"],
+                        "rationale": "Synthetic ADD fixture routes execution to the existing P07 owner.",
+                    }
+                ],
+                "evidence_refs": ["tests/test_operant_external_resources.py"],
+                "distinct_residual": {
+                    "summary": "Exercise external prior-art admission without claiming a duplicate implementation owner.",
+                    "evidence_refs": ["tests/test_operant_external_resources.py"],
+                    "reviewed_against": ["P07"],
+                },
+            },
         }
 
     def test_registered_donors_and_roots_are_explicit(self) -> None:

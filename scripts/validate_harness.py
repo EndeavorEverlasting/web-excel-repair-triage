@@ -146,6 +146,8 @@ REQUIRED_VALIDATOR_IDS = {
     "repo-native-update-parity",
     "prompt-runtime-compliance-receipt-audit",
     "prompt-runtime-compliance-tests",
+    "prompt-semantic-coverage-audit",
+    "prompt-semantic-coverage-tests",
 }
 PRE_COMMIT_SNAPSHOT_PROFILE = "pre_commit_snapshot"
 PRE_COMMIT_SNAPSHOT_VALIDATOR_IDS = (
@@ -184,6 +186,7 @@ REQUIRED_CAPABILITY_IDS = {
     "repository-hook-integration",
     "operant-external-resource-intake",
     "repo-native-update",
+    "prompt-semantic-coverage",
 }
 REQUIRED_TRIGGER_IDS = {
     "harness-infrastructure-change",
@@ -198,6 +201,7 @@ REQUIRED_TRIGGER_IDS = {
     "repository-hook-installation-needed",
     "operant-external-resource-refresh-needed",
     "repo-native-generated-surface-drift",
+    "prompt-semantic-lifecycle-change",
 }
 PROTECTED_PATHS = ("Candidates/", "Active/")
 PRE_PUSH_PROFILE_RUNNER = "python3 scripts/run_validator_profile.py --profile pre_push"
