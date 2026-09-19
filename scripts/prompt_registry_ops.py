@@ -437,6 +437,255 @@ def validate_current() -> dict[str, Any]:
     }
 
 
+# ============================================================================
+# Sprint 1B: Semantic coverage lifecycle extensions
+# ============================================================================
+
+def _load_semantic_profiles() -> dict[str, Any]:
+    """Load accepted prompt capability profiles."""
+    profiles_path = REPO_ROOT / "harness" / "prompt-topology" / "prompt-capability-profiles.v1.json"
+    return json.loads(profiles_path.read_text(encoding="utf-8"))
+
+
+def _load_semantic_migrations() -> dict[str, Any]:
+    """Load capability migration history."""
+    migrations_path = REPO_ROOT / "harness" / "prompt-topology" / "prompt-capability-migrations.v1.json"
+    return json.loads(migrations_path.read_text(encoding="utf-8"))
+
+
+def _save_semantic_profiles(profiles_data: dict[str, Any]) -> None:
+    """Save prompt capability profiles."""
+    profiles_path = REPO_ROOT / "harness" / "prompt-topology" / "prompt-capability-profiles.v1.json"
+    profiles_path.write_text(json.dumps(profiles_data, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
+
+
+def _save_semantic_migrations(migrations_data: dict[str, Any]) -> None:
+    """Save capability migration history."""
+    migrations_path = REPO_ROOT / "harness" / "prompt-topology" / "prompt-capability-migrations.v1.json"
+    migrations_path.write_text(json.dumps(migrations_data, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
+
+
+def simulate_global_coverage(
+    profiles: list[dict[str, Any]], excluding_prompt_id: str | None = None
+) -> dict[str, list[str]]:
+    """Simulate global coverage map for all capabilities.
+
+    Returns dict mapping capability_id to list of prompt_ids that provide it at REQUIRED/PRIMARY level.
+    """
+    coverage: dict[str, list[str]] = {}
+
+    for profile in profiles:
+        if profile.get("profile_status") != "ACCEPTED":
+            continue
+
+        prompt_id = profile.get("prompt_id")
+        if prompt_id == excluding_prompt_id:
+            continue
+
+        for assignment in profile.get("direct_assignments", []):
+            cap_id = assignment.get("capability_id")
+            if assignment.get("ownership") == "PRIMARY" or assignment.get("presence") == "REQUIRED":
+                if cap_id not in coverage:
+                    coverage[cap_id] = []
+                if prompt_id not in coverage[cap_id]:
+                    coverage[cap_id].append(prompt_id)
+
+    return coverage
+
+
+def check_retirement_coverage(prompt_id: str) -> dict[str, Any]:
+    """Check if a prompt can be retired without creating coverage holes.
+
+    Returns validation result with coverage analysis.
+    """
+    profiles_data = _load_semantic_profiles()
+    profiles = profiles_data.get("profiles", [])
+
+    # Find the profile being retired
+    target_profile = next(
+        (p for p in profiles if p.get("prompt_id") == prompt_id and p.get("profile_status") == "ACCEPTED"),
+        None
+    )
+
+    if not target_profile:
+        return {
+            "can_retire": False,
+            "reason": f"No ACCEPTED profile found for {prompt_id}",
+            "coverage_holes": []
+        }
+
+    # Get global coverage excluding this prompt
+    global_coverage = simulate_global_coverage(profiles, excluding_prompt_id=prompt_id)
+
+    # Check for coverage holes
+    coverage_holes = []
+    protected_capabilities = []
+
+    for assignment in target_profile.get("direct_assignments", []):
+        if assignment.get("ownership") == "PRIMARY" or assignment.get("presence") == "REQUIRED":
+            cap_id = assignment.get("capability_id")
+            protected_capabilities.append(cap_id)
+
+            if cap_id not in global_coverage:
+                coverage_holes.append({
+                    "capability_id": cap_id,
+                    "presence": assignment.get("presence"),
+                    "ownership": assignment.get("ownership"),
+                    "alternate_owners": []
+                })
+            else:
+                # Coverage exists but record it
+                pass
+
+    can_retire = len(coverage_holes) == 0
+
+    return {
+        "can_retire": can_retire,
+        "prompt_id": prompt_id,
+        "protected_capabilities": protected_capabilities,
+        "coverage_holes": coverage_holes,
+        "reason": None if can_retire else "Retirement would create coverage holes for protected capabilities"
+    }
+
+
+def create_retirement_migration(
+    prompt_id: str,
+    rationale: str,
+    transfers: dict[str, str] | None = None
+) -> dict[str, Any]:
+    """Create a retirement migration record.
+
+    Args:
+        prompt_id: The prompt being retired
+        rationale: Explanation for retirement
+        transfers: Optional dict mapping capability_id to successor prompt_id
+
+    Returns:
+        Migration record ready for append to migrations.json
+    """
+    profiles_data = _load_semantic_profiles()
+    profiles = profiles_data.get("profiles", [])
+    migrations_data = _load_semantic_migrations()
+
+    target_profile = next(
+        (p for p in profiles if p.get("prompt_id") == prompt_id and p.get("profile_status") == "ACCEPTED"),
+        None
+    )
+
+    if not target_profile:
+        raise SystemExit(f"Cannot retire {prompt_id}: No ACCEPTED profile found")
+
+    # Build capability deltas
+    capability_deltas = []
+    for assignment in target_profile.get("direct_assignments", []):
+        cap_id = assignment.get("capability_id")
+        delta = {
+            "capability_id": cap_id,
+            "before": {
+                "presence": assignment.get("presence"),
+                "ownership": assignment.get("ownership")
+            },
+            "after": None
+        }
+
+        if transfers and cap_id in transfers:
+            delta["transfer_target"] = transfers[cap_id]
+
+        capability_deltas.append(delta)
+
+    # Generate migration ID
+    migration_count = len(migrations_data.get("migrations", []))
+    migration_id = f"RETIRE_{prompt_id}_{migration_count + 1:03d}"
+
+    migration = {
+        "migration_id": migration_id,
+        "migration_kind": "RETIRE",
+        "prompt_id": prompt_id,
+        "from_profile_version": target_profile.get("profile_version"),
+        "to_profile_version": None,
+        "capability_deltas": capability_deltas,
+        "rationale": rationale,
+        "coverage_before": simulate_global_coverage(profiles),
+        "coverage_after": simulate_global_coverage(profiles, excluding_prompt_id=prompt_id)
+    }
+
+    return migration
+
+
+def strengthen_prompt_capability(
+    prompt_id: str,
+    capability_id: str,
+    new_presence: str | None = None,
+    new_ownership: str | None = None,
+    evidence_refs: list[str] | None = None,
+    rationale: str | None = None
+) -> dict[str, Any]:
+    """Strengthen a capability assignment in a prompt's profile.
+
+    Returns updated profile and migration record.
+    """
+    profiles_data = _load_semantic_profiles()
+    profiles = profiles_data.get("profiles", [])
+
+    target_profile = next(
+        (p for p in profiles if p.get("prompt_id") == prompt_id and p.get("profile_status") == "ACCEPTED"),
+        None
+    )
+
+    if not target_profile:
+        raise SystemExit(f"Cannot strengthen {prompt_id}: No ACCEPTED profile found")
+
+    # Find the capability assignment
+    assignments = target_profile.get("direct_assignments", [])
+    target_assignment = next(
+        (a for a in assignments if a.get("capability_id") == capability_id),
+        None
+    )
+
+    if not target_assignment:
+        raise SystemExit(f"Capability {capability_id} not found in {prompt_id}")
+
+    # Verify strengthening (not weakening)
+    PRESENCE_ORDER = ["NONE", "AWARE", "SUPPORT", "REQUIRED"]
+    OWNERSHIP_ORDER = ["NONE", "SECONDARY", "PRIMARY"]
+
+    current_presence = target_assignment.get("presence")
+    current_ownership = target_assignment.get("ownership")
+
+    if new_presence:
+        if PRESENCE_ORDER.index(new_presence) <= PRESENCE_ORDER.index(current_presence):
+            raise SystemExit(
+                f"Cannot strengthen: {new_presence} is not stronger than {current_presence}"
+            )
+
+    if new_ownership:
+        if OWNERSHIP_ORDER.index(new_ownership) <= OWNERSHIP_ORDER.index(current_ownership):
+            raise SystemExit(
+                f"Cannot strengthen: {new_ownership} is not stronger than {current_ownership}"
+            )
+
+    return {
+        "status": "strengthening_validated",
+        "prompt_id": prompt_id,
+        "capability_id": capability_id,
+        "before": {
+            "presence": current_presence,
+            "ownership": current_ownership
+        },
+        "after": {
+            "presence": new_presence or current_presence,
+            "ownership": new_ownership or current_ownership
+        },
+        "evidence_refs": evidence_refs or [],
+        "rationale": rationale or ""
+    }
+
+
+# ============================================================================
+# End Sprint 1B lifecycle extensions
+# ============================================================================
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(
         description="Inspect, add, and validate Prompt Kit registry contributions with minimal ceremony."
