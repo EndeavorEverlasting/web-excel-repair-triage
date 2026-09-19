@@ -154,6 +154,20 @@ class PromptRoutingDecisionTests(unittest.TestCase):
         self.assertEqual(decision["decision"]["routeAction"], "SWITCH_PROMPT")
         self.assertEqual(decision["decision"]["primaryPrompt"], self.prompt_ref)
 
+    def test_frozen_asb_prompt_ref_rejects_four_digit_ids(self) -> None:
+        invalid = {
+            "id": "P1000",
+            "kitVersion": self.kit_version,
+            "registrySha256": self.registry_sha,
+            "promptSha256": "0" * 64,
+            "executionSurface": "regular_ai_prompt",
+        }
+        with self.assertRaisesRegex(
+            routing.RoutingDecisionError,
+            "frozen ASB promptRef protocol",
+        ):
+            routing._validate_prompt_ref(invalid, "fixture")
+
     def test_route_receipt_must_bind_current_prompt_revision(self) -> None:
         stale = self.route_receipt(prompt_revision="0" * 64)
         with self.assertRaisesRegex(routing.RoutingDecisionError, "prompt revision is stale"):
