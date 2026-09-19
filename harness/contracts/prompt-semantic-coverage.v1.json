@@ -1,0 +1,217 @@
+{
+  "schema_version": "prompt-semantic-coverage/v1",
+  "contract_id": "prompt-semantic-coverage",
+  "status": "TRACKED",
+  "purpose": "Version Prompt Kit semantic capabilities per prompt as governed history, making silent weakening, disappearance, transfer, or crowding mechanically detectable. The capability matrix is a deterministic derived projection; profiles and migrations are the tracked authority.",
+  "canonical_plan": "harness/prompt-topology/PROMPT_SEMANTIC_CAPABILITY_COVERAGE_SPRINT_MAP.md",
+  "authority": {
+    "prompt_topology_schema": "harness/prompt-topology/schema.v1.json",
+    "prompt_quality_history": "harness/contracts/prompt-quality-history.v1.json",
+    "prompt_strength": "harness/contracts/prompt-strength.v1.json",
+    "prompt_topology_classifier": "harness/contracts/prompt-topology-classifier.v1.json",
+    "prompt_regression_safety": "harness/contracts/prompt-regression-safety.v1.json",
+    "prompt_kit_ontology_evidence": "harness/contracts/prompt-kit-ontology-evidence.v1.json",
+    "registry_builder": "scripts/build_prompt_kit_registry.py",
+    "product_boundaries": "registry/prompts/product-boundaries.v1.json",
+    "profile_schema": "harness/prompt-topology/prompt-capability-profile.schema.v1.json",
+    "catalog": "harness/prompt-topology/semantic-capability-catalog.v1.json",
+    "migration_ledger": "harness/prompt-topology/prompt-capability-migrations.v1.json",
+    "profiles": "harness/prompt-topology/prompt-capability-profiles.v1.json"
+  },
+  "ownership_boundaries": {
+    "P79": "Identity, admission, prior-art, similarity/overlap, family/cluster, and strengthen-before-add. Remains the gate for ADD/RETIRE; calls semantic coverage validator for coverage/overlap simulation before ID allocation or removal.",
+    "P13": "Recurring-process hardening. Consumes semantic-coverage violations as defect incidents when the same PSC rule recurs and must strengthen the shared prevention owner.",
+    "P94": "Retained regression interpretation. Preserves the negative/positive fixture corpus for semantic-coverage rules and registers the focused semantic regression in the deterministic floor.",
+    "PromptStrength": "Global shared execution-strength floor. Supplies inherited/shared capability obligations (canonical_identity, fresh_evidence_floor, etc.) and remains the seed vocabulary for shared capabilities; does not become the full catalog and does not own per-prompt PRIMARY assignment.",
+    "QualityHistory": "Canonical text/source lineage. Proves prompt-body blobs are immutable unless a semantic migration chains them; protects every canonical prompt source including docs/prompts.json; body-changing capability migrations must cross-link to this ledger.",
+    "Topology": "Prompt identity, similarity, overlap, family, and prompt-to-prompt relations. Owns CO_USAGE/TRANSITION/SUBSTITUTION/COMPLEMENT as the only prompt-to-prompt relation vocabulary; semantic coverage may derive or validate those edges but must not introduce competing synonyms.",
+    "RuntimeCompliance": "Observed model/config/runtime evidence. Downstream calibration only; may select high-value PRIMARY/REQUIRED capabilities for live proof but cannot rewrite accepted profile history automatically."
+  },
+  "capability_cell_model": {
+    "presence": {
+      "values": ["NONE", "AWARE", "SUPPORT", "REQUIRED"],
+      "description": "Strength of capability provision. REQUIRED is the protected non-weakening threshold; SUPPORT and AWARE are weaker informative levels; NONE is absent."
+    },
+    "ownership": {
+      "values": ["NONE", "SECONDARY", "PRIMARY"],
+      "description": "Claim of canonical ownership. PRIMARY is the protected non-weakening owner that may only move via explicit TRANSFER or intentional RETIRE with coverage proof."
+    },
+    "capability_relation": {
+      "values": ["IMPLEMENTS", "ROUTES_TO", "TESTS", "GUARDS", "FORBIDDEN"],
+      "description": "How this prompt relates to the capability. IMPLEMENTS provides the behavior; ROUTES_TO delegates to another prompt; TESTS validates; GUARDS enforces forbidding; FORBIDDEN explicitly disallows. This is not a new prompt-to-prompt topology edge."
+    },
+    "delivery_source": {
+      "values": ["CANONICAL_BODY", "SHARED_POLICY", "COMPILER_OVERLAY", "ROUTED_OWNER", "TEST_GUARD"],
+      "description": "Provenance of the behavior. CANONICAL_BODY is direct prompt text; SHARED_POLICY is inherited from a shared contract; COMPILER_OVERLAY from prompt compilation; ROUTED_OWNER via another prompt; TEST_GUARD via focused test."
+    },
+    "evidence_refs": {
+      "description": "One or more repository-owned proof references for every material PRIMARY/REQUIRED assignment. Must resolve to a tracked test, contract, or ontology-evidence receipt. Preference, critique, or candidate inference alone is not proof.",
+      "required_for": ["PRIMARY", "REQUIRED", "FORBIDDEN"]
+    },
+    "rationale": {
+      "description": "Short bounded explanation for PRIMARY/REQUIRED/FORBIDDEN assignments, referencing why this prompt owns or forbids the capability.",
+      "required_for": ["PRIMARY", "REQUIRED", "FORBIDDEN"]
+    },
+    "display_projection": {
+      "rule": "PRIMARY when ownership is PRIMARY; else REQUIRED when presence is REQUIRED; else SUPPORT when presence is SUPPORT; else AWARE when presence is AWARE; else NONE. PRIMARY and REQUIRED are not ordinal; the projection preserves both dimensions."
+    }
+  },
+  "direct_vs_inherited": {
+    "description": "Shared-policy/compiler behavior must not be falsely credited as direct ownership on every prompt.",
+    "direct": "Assignment owned by the prompt's own profile entry; stored per prompt; versioned by the prompt's canonical_sha256.",
+    "inherited": "Assignment referenced through a versioned inherited_source record (shared policy or compiler overlay identity + revision). The derived matrix expands inherited sources so every prompt still shows a complete cell, but PRIMARY remains with the canonical direct owner.",
+    "fingerprint": {
+      "direct": "Canonical prompt record hash (canonical_sha256) plus profile_version and profile_sha256.",
+      "inherited": "Inherited source identity/revision (e.g., actionable-next-step-policy.v1.json@sha, compiler overlay revision) recorded in the profile's inherited_sources array; a revision change invalidates dependent derived cells without implying each prompt body changed."
+    },
+    "rule": "PRIMARY ownership normally remains with the direct owner even when many prompts inherit REQUIRED behavior from a shared source."
+  },
+  "prompt_to_prompt_relations": {
+    "vocabulary": ["CO_USAGE", "TRANSITION", "SUBSTITUTION", "COMPLEMENT"],
+    "rule": "Reuse executable Prompt Topology reserved channels. A semantic-coverage implementation may derive or validate those channels from accepted profiles but must not introduce competing synonyms for the same prompt-to-prompt concepts."
+  },
+  "ontology_reuse": {
+    "chain": "capability -> skill -> implementation/prompt -> invocation/run -> evidence -> proof ceiling",
+    "contract": "harness/contracts/prompt-kit-ontology-evidence.v1.json",
+    "rule": "Profile evidence references should reuse the existing ontology evidence chain rather than creating a second runtime/evidence-history store. Static proof may reference focused tests/contracts; runtime proof should reference ontology-evidence receipts when available."
+  },
+  "lifecycle_kinds": [
+    {
+      "kind": "ADD",
+      "description": "New prompt identity with a candidate semantic profile, distinct residual proof, topology overlap simulation, and capability coverage simulation before allocation."
+    },
+    {
+      "kind": "STRENGTHEN",
+      "description": "Existing prompt gains capability presence or ownership (e.g., SUPPORT→REQUIRED, SECONDARY→PRIMARY) with evidence and without weakening any protected prior."
+    },
+    {
+      "kind": "NO_CAPABILITY_CHANGE",
+      "description": "Body text changed but no semantic capability delta; requires focused proof that protected PRIMARY/REQUIRED assignments still validate and a matching Prompt Quality History source migration."
+    },
+    {
+      "kind": "INTENTIONAL_CHANGE",
+      "description": "Deliberate semantic change that weakens, removes, or redefines a previously protected capability with explicit rationale and coverage proof; not a silent downgrade."
+    },
+    {
+      "kind": "TRANSFER",
+      "description": "PRIMARY or REQUIRED responsibility moves from one prompt to an equal-or-stronger canonical owner with proof; source prompt may weaken only after successor coverage is proven."
+    },
+    {
+      "kind": "RETIRE",
+      "description": "Prompt identity removed; requires global coverage simulation proving no protected capability loses its last owner; writes a tombstone profile and retains history forever; P-number never reused."
+    },
+    {
+      "kind": "RESTORE",
+      "description": "Previously RETIRED prompt identity reactivated; requires new distinct residual and coverage proof; appends to append-only history without erasing the prior retirement."
+    }
+  ],
+  "psc_rules": [
+    {
+      "id": "PSC001",
+      "title": "PROFILE_COVERAGE_COMPLETE",
+      "description": "Every current canonical prompt has exactly one ACCEPTED profile before strict semantic enforcement may activate. No prompt may be uncovered.",
+      "enforcement": "FAIL when profile count != canonical prompt count or any prompt lacks ACCEPTED profile; blocks strict gate activation."
+    },
+    {
+      "id": "PSC002",
+      "title": "PROFILE_BINDS_CANONICAL_PROMPT",
+      "description": "An ACCEPTED profile binds to the exact prompt identity and canonical record hash (canonical_sha256).",
+      "enforcement": "FAIL when profile prompt_id or canonical_sha256 does not match the current topology canonical record."
+    },
+    {
+      "id": "PSC003",
+      "title": "KNOWN_CAPABILITY_ONLY",
+      "description": "Every assignment references a capability_id that exists in the stable catalog.",
+      "enforcement": "FAIL when capability_id is unknown or alias is used without resolving to canonical ID."
+    },
+    {
+      "id": "PSC004",
+      "title": "REQUIRED_PRESENCE_NON_WEAKENING",
+      "description": "A previously accepted REQUIRED presence may not fall to SUPPORT, AWARE, or NONE without an explicit ACCEPTED migration.",
+      "enforcement": "FAIL when candidate presence < REQUIRED for a previously REQUIRED cell and no ACCEPTED migration authorizes the downgrade."
+    },
+    {
+      "id": "PSC005",
+      "title": "PRIMARY_OWNERSHIP_NON_WEAKENING",
+      "description": "A previously accepted PRIMARY ownership may not fall to SECONDARY or NONE unless responsibility is explicitly transferred or intentionally retired with coverage proof.",
+      "enforcement": "FAIL when candidate ownership < PRIMARY for a previously PRIMARY cell without an ACCEPTED TRANSFER or RETIRE migration that proves alternative coverage."
+    },
+    {
+      "id": "PSC006",
+      "title": "TRANSFER_EQUAL_OR_STRONGER",
+      "description": "A transfer is accepted only when successor coverage is equal-or-stronger for the protected capability and required proof exists.",
+      "enforcement": "PASS only when successor's presence >= source's former presence and ownership >= source's former ownership for the transferred capability, with evidence refs and focused proof."
+    },
+    {
+      "id": "PSC007",
+      "title": "RETIRE_NO_COVERAGE_HOLE",
+      "description": "Retirement fails if it produces an uncovered previously protected capability.",
+      "enforcement": "FAIL when global coverage simulation after removal shows AT_LEAST_ONE_PRIMARY or AT_LEAST_ONE_REQUIRED_OR_PRIMARY policy violated for any previously protected capability."
+    },
+    {
+      "id": "PSC008",
+      "title": "ADD_REQUIRES_DISTINCT_RESIDUAL",
+      "description": "P79 cannot ADD when topology/profile overlap shows an existing owner can absorb the use case without a reviewed distinct residual.",
+      "enforcement": "FAIL when candidate profile's overlap with nearest PRIMARY owner exceeds STRENGTHEN threshold without a distinct residual review."
+    },
+    {
+      "id": "PSC009",
+      "title": "BODY_CHANGE_REQUIRES_PROFILE_DISPOSITION",
+      "description": "Any changed canonical prompt body must have a capability migration or an exact NO_CAPABILITY_CHANGE attestation bound to focused proof.",
+      "enforcement": "FAIL when canonical_sha256 changed but no ACCEPTED migration for that prompt exists, or NO_CAPABILITY_CHANGE lacks matching source-history migration and proof."
+    },
+    {
+      "id": "PSC010",
+      "title": "SAME_AGENT_RESCORING_CANNOT_RESET_PRIOR",
+      "description": "Generated or proposed candidate profiles cannot replace accepted history. The prior remains the regression truth.",
+      "enforcement": "FAIL when a candidate inference attempts to overwrite an ACCEPTED profile without going through the migration chain."
+    },
+    {
+      "id": "PSC011",
+      "title": "NEW_PRIMARY_OR_REQUIRED_REQUIRES_PROOF",
+      "description": "A new PRIMARY or REQUIRED claim requires evidence, not just a higher self-assigned rating.",
+      "enforcement": "FAIL when a new PRIMARY/REQUIRED assignment lacks valid evidence_refs or focused test proof."
+    },
+    {
+      "id": "PSC012",
+      "title": "GLOBAL_PRIMARY_CROWDING_REVIEW",
+      "description": "Unexpected multiple PRIMARY owners for the same capability trigger configured crowding policy.",
+      "enforcement": "WARN or FAIL per catalog overlap_policy (OVERLAP_EXPECTED, OVERLAP_ALLOWED_WITH_RATIONALE, PRIMARY_CROWDING_WARNING, PRIMARY_CROWDING_FAIL)."
+    },
+    {
+      "id": "PSC013",
+      "title": "SOURCE_HISTORY_COMPLETE",
+      "description": "Every canonical prompt-body source, including docs/prompts.json, is covered by Prompt Quality History.",
+      "enforcement": "FAIL when canonical_body_sources set != builder-derived complete source set; enforced by validate_prompt_quality_history.py audit_canonical_source_coverage."
+    },
+    {
+      "id": "PSC014",
+      "title": "LIFECYCLE_TRANSITION_ATOMIC",
+      "description": "ADD, STRENGTHEN, RETIRE and other lifecycle transitions cannot leave registry, profile, migration, generated site, or required semantic proof mutually inconsistent.",
+      "enforcement": "FAIL when any of registry/profile/migration/site/proof are not updated atomically to the same revision head."
+    },
+    {
+      "id": "PSC015",
+      "title": "SOURCE_AND_CAPABILITY_MIGRATION_LINK",
+      "description": "Every body-changing capability migration must reference the matching Prompt Quality History semantic migration and agree on prompt IDs and source hashes/affected IDs.",
+      "enforcement": "FAIL when capability migration for a body change lacks a corresponding source-history migration or hashes/IDs diverge."
+    },
+    {
+      "id": "PSC016",
+      "title": "INHERITED_SOURCE_INTEGRITY",
+      "description": "Shared policy/compiler capability inheritance is versioned by source identity/revision; dependent matrix cells cannot remain accepted against a changed inherited source without revalidation.",
+      "enforcement": "FAIL when an inherited source revision changes but dependent profiles still claim the old fingerprint as accepted; requires revalidation of derived cells."
+    }
+  ],
+  "derived_artifacts": {
+    "matrix": "artifacts/prompt-semantic-coverage/matrix.v1.json",
+    "coverage_report": "artifacts/prompt-semantic-coverage/coverage-report.v1.json",
+    "overlap_report": "artifacts/prompt-semantic-coverage/overlap-report.v1.json",
+    "rule": "Matrix and reports are deterministic reconstructions from ACCEPTED profiles and the catalog; they are never edited directly and are never the source of truth for profile acceptance."
+  },
+  "candidate_inference": {
+    "rule": "A proposal generator or LLM may suggest PROVISIONAL profiles, but may never overwrite an ACCEPTED profile. Candidate inference is evidence input only."
+  },
+  "append_only": true,
+  "proof_ceiling": "Repository contract and static semantic history only. This contract can prove that declared prompt semantics are versioned, non-weakening, and lifecycle-governed against tracked profiles/migrations. It does not prove downstream model obedience, live execution, hosted CI availability, browser/device behavior, deployment, or operator acceptance. Runtime calibration remains downstream evidence via Runtime Compliance."
+}

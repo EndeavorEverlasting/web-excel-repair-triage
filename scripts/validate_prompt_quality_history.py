@@ -127,6 +127,41 @@ def _load_migrations(contract: dict[str, Any]) -> list[dict[str, Any]]:
     return migrations
 
 
+def _canonical_prompt_body_sources() -> set[str]:
+    """Derive the complete canonical prompt-body source set from builder authority."""
+    # Base registry + content registries + extension registries + overrides
+    sources: set[str] = set()
+    sources.add(builder.BASE_REGISTRY.relative_to(ROOT).as_posix())
+    for path in builder.CONTENT_REGISTRIES:
+        sources.add(path.relative_to(ROOT).as_posix())
+    for path in builder.EXTENSION_REGISTRIES:
+        sources.add(path.relative_to(ROOT).as_posix())
+    sources.add(builder.PROMPT_OVERRIDES.relative_to(ROOT).as_posix())
+    return sources
+
+
+def audit_canonical_source_coverage(contract: dict[str, Any]) -> list[str]:
+    """Fail-closed equality between protected history set and builder-derived set."""
+    protected = {item["path"] for item in contract.get("canonical_body_sources", [])}
+    derived = _canonical_prompt_body_sources()
+    errors: list[str] = []
+    missing = sorted(derived - protected)
+    extra = sorted(protected - derived)
+    if missing:
+        errors.append(
+            "PQH013: canonical prompt-body sources missing from history protection: "
+            f"{missing}; docs/prompts.json and every builder/product-boundary source must be history-protected"
+        )
+    if extra:
+        errors.append(
+            f"PQH013: history protects unknown canonical sources not in builder truth: {extra}"
+        )
+    # Also ensure no duplicates and all paths are normalized
+    if len(protected) != len(contract.get("canonical_body_sources", [])):
+        errors.append("PQH013: duplicate canonical_body_sources entry")
+    return errors
+
+
 def _accepted_source_heads(
     contract: dict[str, Any], migrations: list[dict[str, Any]]
 ) -> tuple[dict[str, str], list[str]]:
@@ -259,8 +294,10 @@ def audit_effective_identity(
 def validate() -> list[str]:
     contract = _load_contract()
     migrations = _load_migrations(contract)
-    return audit_source_history(contract, migrations) + audit_effective_identity(
-        contract, migrations
+    return (
+        audit_canonical_source_coverage(contract)
+        + audit_source_history(contract, migrations)
+        + audit_effective_identity(contract, migrations)
     )
 
 

@@ -1,0 +1,11 @@
+{
+  "schema_version": "prompt-capability-migrations/v1",
+  "description": "Append-only ledger of semantic capability transitions. Body-changing migrations must cross-link to Prompt Quality History source migrations via source_migration_refs and agree on hashes/IDs (PSC015). Candidate inference cannot append here directly.",
+  "migration_kinds": ["ADD", "STRENGTHEN", "NO_CAPABILITY_CHANGE", "INTENTIONAL_CHANGE", "TRANSFER", "RETIRE", "RESTORE"],
+  "required_fields": ["migration_id", "prompt_id", "kind", "old_canonical_sha256", "new_canonical_sha256", "from_profile_version", "to_profile_version", "from_profile_sha256", "to_profile_sha256", "capability_deltas", "rationale", "evidence_refs", "focused_tests", "coverage_before", "coverage_after", "acceptance_revision"],
+  "optional_fields": ["successor_targets", "source_migration_ref", "restore_of"],
+  "cross_link_rule": "Every body-changing capability migration (where old_canonical_sha256 != new_canonical_sha256) must reference a matching Prompt Quality History semantic migration via source_migration_ref and the two ledgers must agree on prompt_id, old/new source hashes, and affected IDs. NO_CAPABILITY_CHANGE must still reference the source migration and prove via focused tests that no protected capability weakened. PSC015 enforces this.",
+  "append_only": true,
+  "migrations": [],
+  "proof_ceiling": "Shape only. No semantic lifecycle enforcement is proven until Sprint 1B implements the validator and fixtures. This file reserves the ledger shape for Sprint 0."
+}

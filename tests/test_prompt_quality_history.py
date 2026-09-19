@@ -21,8 +21,40 @@ class PromptQualityHistoryTests(unittest.TestCase):
             contract["baseline"]["commit"],
             "93a8886d77e043023eeecca05f5e2e8e13b89f06",
         )
-        self.assertGreaterEqual(len(contract["canonical_body_sources"]), 8)
+        self.assertGreaterEqual(len(contract["canonical_body_sources"]), 9)
         self.assertIn("fail", contract["effective_identity"]["temporary_exception_policy"].lower())
+
+    def test_canonical_body_sources_include_docs_prompts(self) -> None:
+        contract = quality._load_contract()
+        paths = {item["path"] for item in contract["canonical_body_sources"]}
+        self.assertIn("docs/prompts.json", paths)
+
+    def test_canonical_body_sources_cover_complete_builder_set(self) -> None:
+        contract = quality._load_contract()
+        self.assertEqual(quality.audit_canonical_source_coverage(contract), [])
+        derived = quality._canonical_prompt_body_sources()
+        protected = {item["path"] for item in contract["canonical_body_sources"]}
+        self.assertEqual(protected, derived)
+
+    def test_canonical_coverage_fails_when_source_missing(self) -> None:
+        contract = quality._load_contract()
+        mutated = dict(contract)
+        mutated["canonical_body_sources"] = [
+            item for item in contract["canonical_body_sources"] if item["path"] != "docs/prompts.json"
+        ]
+        errors = quality.audit_canonical_source_coverage(mutated)
+        self.assertTrue(errors)
+        self.assertIn("missing from history protection", errors[0])
+
+    def test_canonical_coverage_fails_when_extra_source_present(self) -> None:
+        contract = quality._load_contract()
+        mutated = dict(contract)
+        extra = dict(contract["canonical_body_sources"][0])
+        extra["path"] = "registry/prompts/fake-extra.v1.json"
+        mutated["canonical_body_sources"] = list(contract["canonical_body_sources"]) + [extra]
+        errors = quality.audit_canonical_source_coverage(mutated)
+        self.assertTrue(errors)
+        self.assertIn("unknown canonical sources", errors[0])
 
     def test_current_canonical_body_sources_match_accepted_history(self) -> None:
         contract = quality._load_contract()

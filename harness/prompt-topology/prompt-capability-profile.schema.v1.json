@@ -1,0 +1,182 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "prompt-capability-profile/v1",
+  "title": "Prompt Capability Profile",
+  "description": "One ACCEPTED capability profile per canonical prompt. Direct assignments own behavior; inherited sources are versioned references. Candidate inference may only produce PROVISIONAL profiles.",
+  "schema_version": "prompt-capability-profile/v1",
+  "type": "object",
+  "required": ["schema_version", "prompt_id", "profile_version", "profile_sha256", "canonical_sha256", "source_identity", "acceptance_revision", "status", "direct_assignments", "inherited_sources", "semantic_fingerprint", "evidence_refs"],
+  "properties": {
+    "schema_version": {
+      "type": "string",
+      "const": "prompt-capability-profile/v1",
+      "description": "Schema identifier for this profile instance."
+    },
+    "prompt_id": {
+      "type": "string",
+      "pattern": "^P\\d{2,4}$",
+      "description": "Stable prompt identity. Must match a canonical prompt record."
+    },
+    "profile_version": {
+      "type": "integer",
+      "minimum": 1,
+      "description": "Monotonic version for this prompt_id. First accepted baseline is version 1."
+    },
+    "profile_sha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$",
+      "description": "SHA-256 of canonical profile JSON (sorted keys, UTF-8) excluding this field; used for migration chaining."
+    },
+    "canonical_sha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$",
+      "description": "Hash of the canonical prompt record (source.sha256) this profile was built against. Fails PSC002 if it diverges from current topology."
+    },
+    "source_identity": {
+      "type": "object",
+      "required": ["registry_path", "prompt_path"],
+      "properties": {
+        "registry_path": {
+          "type": "string",
+          "description": "Canonical registry file that contributed this prompt, e.g., docs/prompts.json."
+        },
+        "prompt_path": {
+          "type": "string",
+          "description": "Logical prompt path for provenance, e.g., prompts/P07."
+        },
+        "registry_sha256": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        }
+      },
+      "additionalProperties": false
+    },
+    "acceptance_revision": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{40}$",
+      "description": "Git commit SHA at which this profile was ACCEPTED. PROVISIONAL profiles may use a candidate revision."
+    },
+    "status": {
+      "type": "string",
+      "enum": ["PROVISIONAL", "REVIEW_READY", "ACCEPTED", "RETIRED"],
+      "description": "Only ACCEPTED profiles are regression priors. Candidate generators may emit only PROVISIONAL."
+    },
+    "prior_profile_sha256": {
+      "type": ["string", "null"],
+      "pattern": "^[0-9a-f]{64}$",
+      "description": "Previous ACCEPTED profile hash when version >1; null for version 1."
+    },
+    "direct_assignments": {
+      "type": "array",
+      "description": "Capabilities directly owned by this prompt's body. Each entry is a capability cell.",
+      "items": {
+        "type": "object",
+        "required": ["capability_id", "presence", "ownership", "capability_relation", "delivery_source"],
+        "properties": {
+          "capability_id": {
+            "type": "string",
+            "minLength": 1,
+            "description": "Must resolve to semantic-capability-catalog.v1.json via PSC003."
+          },
+          "presence": {
+            "type": "string",
+            "enum": ["NONE", "AWARE", "SUPPORT", "REQUIRED"]
+          },
+          "ownership": {
+            "type": "string",
+            "enum": ["NONE", "SECONDARY", "PRIMARY"]
+          },
+          "capability_relation": {
+            "type": "string",
+            "enum": ["IMPLEMENTS", "ROUTES_TO", "TESTS", "GUARDS", "FORBIDDEN"]
+          },
+          "delivery_source": {
+            "type": "string",
+            "enum": ["CANONICAL_BODY", "SHARED_POLICY", "COMPILER_OVERLAY", "ROUTED_OWNER", "TEST_GUARD"]
+          },
+          "evidence_refs": {
+            "type": "array",
+            "items": { "type": "string", "minLength": 1 },
+            "description": "Repository-owned proof references. Required when presence is REQUIRED or ownership is PRIMARY or relation is FORBIDDEN."
+          },
+          "rationale": {
+            "type": "string",
+            "description": "Bounded explanation for PRIMARY/REQUIRED/FORBIDDEN."
+          }
+        },
+        "additionalProperties": false,
+        "allOf": [
+          {
+            "if": {
+              "anyOf": [
+                { "properties": { "presence": { "const": "REQUIRED" } } },
+                { "properties": { "ownership": { "const": "PRIMARY" } } },
+                { "properties": { "capability_relation": { "const": "FORBIDDEN" } } }
+              ]
+            },
+            "then": {
+              "required": ["evidence_refs", "rationale"],
+              "properties": {
+                "evidence_refs": { "minItems": 1 },
+                "rationale": { "minLength": 1 }
+              }
+            }
+          }
+        ]
+      }
+    },
+    "inherited_sources": {
+      "type": "array",
+      "description": "Versioned shared sources that contribute capabilities without copying N times. The derived matrix expands these.",
+      "items": {
+        "type": "object",
+        "required": ["source_id", "revision", "capabilities"],
+        "properties": {
+          "source_id": {
+            "type": "string",
+            "description": "Stable source identity, e.g., registry/prompts/actionable-next-step-policy.v1.json or harness/prompt-compilation/build-context/default.v1.json."
+          },
+          "revision": {
+            "type": "string",
+            "pattern": "^[0-9a-f]{64}$",
+            "description": "SHA-256 of the shared source at acceptance time. PSC016 requires revalidation when this changes."
+          },
+          "capabilities": {
+            "type": "array",
+            "items": { "type": "string" },
+            "description": "Capability IDs contributed by this inherited source with their presence/ownership as defined by the source."
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    "semantic_fingerprint": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$",
+      "description": "Hash of (canonical_sha256 + sorted direct assignments + sorted inherited_sources identities). Used for drift detection."
+    },
+    "evidence_refs": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "Top-level evidence references for the profile as a whole, e.g., ontology evidence or topology proof."
+    },
+    "tombstone": {
+      "type": "boolean",
+      "description": "True only for RETIRED profiles. Never reuse the P-number.",
+      "default": false
+    }
+  },
+  "additionalProperties": false,
+  "allOf": [
+    {
+      "if": { "properties": { "profile_version": { "const": 1 } } },
+      "then": {
+        "properties": { "prior_profile_sha256": { "type": "null" } }
+      },
+      "else": {
+        "properties": { "prior_profile_sha256": { "pattern": "^[0-9a-f]{64}$" } },
+        "required": ["prior_profile_sha256"]
+      }
+    }
+  ]
+}

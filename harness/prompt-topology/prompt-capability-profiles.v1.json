@@ -1,0 +1,8 @@
+{
+  "schema_version": "prompt-capability-profiles/v1",
+  "description": "Bootstrap shape for Sprint 0 semantic-coverage floor. No ACCEPTED baseline is claimed yet; Sprint 1A owns population. This file proves the contract shape without falsely claiming full coverage.",
+  "acceptance_state": "BOOTSTRAP",
+  "profile_count": 0,
+  "profiles": [],
+  "proof_ceiling": "Shape only. No ACCEPTED semantic baseline is proven by this file. Sprint 0 validates schemas, history completeness, and mutation fixtures; the full per-prompt profile matrix remains REQUIRED SUCCESSOR WORK for Sprint 1A."
+}

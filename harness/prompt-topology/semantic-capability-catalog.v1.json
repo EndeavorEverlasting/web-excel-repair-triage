@@ -1,0 +1,139 @@
+{
+  "schema_version": "semantic-capability-catalog/v1",
+  "catalog_id": "prompt-semantic-capability-catalog",
+  "description": "Stable vocabulary of semantic capabilities that prompts may provide. Every capability_id is addressable by PSC003; profile assignments must resolve here.",
+  "global_coverage_policies": ["AT_LEAST_ONE_PRIMARY", "AT_LEAST_ONE_REQUIRED_OR_PRIMARY", "OPTIONAL", "EXACTLY_ONE_PRIMARY"],
+  "overlap_policies": ["OVERLAP_EXPECTED", "OVERLAP_ALLOWED_WITH_RATIONALE", "PRIMARY_CROWDING_WARNING", "PRIMARY_CROWDING_FAIL"],
+  "admissible_relations": ["IMPLEMENTS", "ROUTES_TO", "TESTS", "GUARDS", "FORBIDDEN"],
+  "delivery_sources": ["CANONICAL_BODY", "SHARED_POLICY", "COMPILER_OVERLAY", "ROUTED_OWNER", "TEST_GUARD"],
+  "capabilities": [
+    {
+      "capability_id": "canonical_identity",
+      "title": "Canonical Identity Preservation",
+      "definition": "Every executable representation preserves the canonical prompt's required obligations unless an explicit semantic migration authorizes replacement.",
+      "class": "representation",
+      "domain": "prompt-topology/governance",
+      "aliases": ["canonical", "effective", "compiled", "identity", "immutable", "display/copy"],
+      "admissible_relations": ["IMPLEMENTS", "GUARDS"],
+      "evidence_requirements": "Focused proof that compiledEffectivePrompts contain canonical copyContent verbatim or an explicit replacement-authorizing migration exists.",
+      "global_coverage_policy": "AT_LEAST_ONE_REQUIRED_OR_PRIMARY",
+      "overlap_policy": "PRIMARY_CROWDING_WARNING",
+      "provenance": {
+        "seed": "prompt-strength/canonical_identity",
+        "source": "harness/contracts/prompt-strength.v1.json"
+      }
+    },
+    {
+      "capability_id": "fresh_evidence_floor",
+      "title": "Fresh Evidence Floor",
+      "definition": "Refresh repository and provider truth and reconcile branch-sensitive evidence before mutation or emitted commands.",
+      "class": "evidence",
+      "domain": "execution/semantics",
+      "aliases": ["refresh", "stale", "current head", "provider truth", "upstream identity"],
+      "admissible_relations": ["IMPLEMENTS", "GUARDS"],
+      "evidence_requirements": "Repository evidence that git fetch and branch floor verification occurred before mutation.",
+      "global_coverage_policy": "AT_LEAST_ONE_REQUIRED_OR_PRIMARY",
+      "overlap_policy": "OVERLAP_EXPECTED",
+      "provenance": {
+        "seed": "prompt-strength/fresh_evidence_floor",
+        "source": "harness/contracts/prompt-strength.v1.json"
+      }
+    },
+    {
+      "capability_id": "scope_ownership",
+      "title": "Bounded Scope Ownership",
+      "definition": "Bounded scope constrains writes without shrinking reasoning depth; shared owners and forbidden surfaces remain explicit.",
+      "class": "ownership",
+      "domain": "execution/semantics",
+      "aliases": ["scope", "owner", "writer", "surface", "ownership"],
+      "admissible_relations": ["IMPLEMENTS", "GUARDS"],
+      "evidence_requirements": "Sprint declaration declares owned and forbidden mutation surfaces and is enforced by validator.",
+      "global_coverage_policy": "AT_LEAST_ONE_REQUIRED_OR_PRIMARY",
+      "overlap_policy": "OVERLAP_EXPECTED",
+      "provenance": {
+        "seed": "prompt-strength/scope_ownership",
+        "source": "harness/contracts/prompt-strength.v1.json"
+      }
+    },
+    {
+      "capability_id": "fixed_point_continuation",
+      "title": "Fixed-Point Continuation",
+      "definition": "A first pass or first green is a checkpoint; continue while authorized progress-bearing work can materially reduce a required gap.",
+      "class": "execution",
+      "domain": "execution/semantics",
+      "aliases": ["first pass", "first green", "continue", "remaining", "stop"],
+      "admissible_relations": ["IMPLEMENTS"],
+      "evidence_requirements": "Second-pass review evidence closing practical gaps before closeout.",
+      "global_coverage_policy": "AT_LEAST_ONE_REQUIRED_OR_PRIMARY",
+      "overlap_policy": "OVERLAP_EXPECTED",
+      "provenance": {
+        "seed": "prompt-strength/fixed_point_continuation",
+        "source": "harness/contracts/prompt-strength.v1.json"
+      }
+    },
+    {
+      "capability_id": "parallel_dispatch",
+      "title": "Parallel Dispatch",
+      "definition": "When graph width is at least two and safe capacity exists, independent lanes are actually launched concurrently and rejoined.",
+      "class": "orchestration",
+      "domain": "execution/semantics",
+      "aliases": ["parallel", "dispatch", "lane", "concurrent", "serial"],
+      "admissible_relations": ["IMPLEMENTS", "ROUTES_TO"],
+      "evidence_requirements": "Dispatch manifest plus observed_parallelism receipt for width>=2 lanes.",
+      "global_coverage_policy": "AT_LEAST_ONE_REQUIRED_OR_PRIMARY",
+      "overlap_policy": "PRIMARY_CROWDING_WARNING",
+      "provenance": {
+        "seed": "prompt-strength/parallel_dispatch",
+        "source": "harness/contracts/prompt-strength.v1.json"
+      }
+    },
+    {
+      "capability_id": "capability_ladder",
+      "title": "Capability Ladder",
+      "definition": "Failure of one worker adapter class does not imply global absence; continue through the evidenced adapter ladder before degradation.",
+      "class": "orchestration",
+      "domain": "execution/semantics",
+      "aliases": ["adapter", "rung", "unavailable", "degraded"],
+      "admissible_relations": ["IMPLEMENTS", "GUARDS"],
+      "evidence_requirements": "Evidence that all adapter rungs were probed before reporting DEGRADED.",
+      "global_coverage_policy": "AT_LEAST_ONE_REQUIRED_OR_PRIMARY",
+      "overlap_policy": "OVERLAP_EXPECTED",
+      "provenance": {
+        "seed": "prompt-strength/capability_ladder",
+        "source": "harness/contracts/prompt-strength.v1.json"
+      }
+    },
+    {
+      "capability_id": "lane_isolation",
+      "title": "Lane Isolation",
+      "definition": "Concurrent writers own isolated branches, worktrees, or workspaces and non-Git shared resources are serialized or separately allocated.",
+      "class": "ownership",
+      "domain": "execution/semantics",
+      "aliases": ["worktree", "writer", "shared resource", "sibling", "lane"],
+      "admissible_relations": ["IMPLEMENTS", "GUARDS"],
+      "evidence_requirements": "Worktree/branch ownership proof for concurrent writers.",
+      "global_coverage_policy": "AT_LEAST_ONE_REQUIRED_OR_PRIMARY",
+      "overlap_policy": "OVERLAP_EXPECTED",
+      "provenance": {
+        "seed": "prompt-strength/lane_isolation",
+        "source": "harness/contracts/prompt-strength.v1.json"
+      }
+    },
+    {
+      "capability_id": "mainline_convergence",
+      "title": "Mainline Convergence",
+      "definition": "A green owned branch or PR is intermediate evidence; integrate into the refreshed default branch when all merge gates are satisfied.",
+      "class": "integration",
+      "domain": "execution/semantics",
+      "aliases": ["merge", "default branch", "mainline", "converge", "integration"],
+      "admissible_relations": ["IMPLEMENTS", "ROUTES_TO"],
+      "evidence_requirements": "Exact validated head merged into default branch with containment proof.",
+      "global_coverage_policy": "AT_LEAST_ONE_REQUIRED_OR_PRIMARY",
+      "overlap_policy": "OVERLAP_EXPECTED",
+      "provenance": {
+        "seed": "prompt-strength/mainline_convergence",
+        "source": "harness/contracts/prompt-strength.v1.json"
+      }
+    }
+  ]
+}
