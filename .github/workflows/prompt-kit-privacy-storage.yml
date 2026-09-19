@@ -79,8 +79,8 @@ jobs:
 
       - name: Validate existing cross-device acquisition contract
         run: |
-          python scripts/validate_prompt_kit_cross_device_access.py --summary
-          python -m unittest tests.test_prompt_kit_cross_device_access -v
+          python3 scripts/validate_prompt_kit_cross_device_access.py --summary
+          python3 -m unittest tests.test_prompt_kit_cross_device_access -v
 
       - name: Validate privacy and storage boundaries
         run: |
