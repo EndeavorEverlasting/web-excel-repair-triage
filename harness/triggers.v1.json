@@ -51,7 +51,8 @@
       ],
       "forbidden_conditions": [
         "request is only cosmetic skill wording",
-        "target skill or owning repository is unknown"
+        "target skill or owning repository is unknown",
+        "canonical prompt wording or shared policy still needs mutation before an evaluable strengthened candidate exists; route prompt-language-change first, then return for runtime proof"
       ]
     },
     {
