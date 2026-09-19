@@ -597,6 +597,21 @@ def validate_validator_registry(manifest: dict[str, Any]) -> dict[str, Any]:
             raise HarnessValidationError(
                 f"validator profile {profile_id} references unknown IDs: {unknown}"
             )
+    workflow_payload = load_json(WORKFLOWS_PATH)
+    workflows = workflow_payload.get("workflows", [])
+    if not isinstance(workflows, list):
+        raise HarnessValidationError("workflow registry contains no workflows")
+    for workflow in workflows:
+        if not isinstance(workflow, dict):
+            continue
+        workflow_id = str(workflow.get("id", "")).strip()
+        profile_id = str(workflow.get("validation_profile", "")).strip()
+        if profile_id not in profiles:
+            raise HarnessValidationError(
+                f"workflow references unknown validator profile: "
+                f"{workflow_id} -> {profile_id}"
+            )
+
     harness_commands = [by_id[item]["command"] for item in profiles["harness"]]
     if harness_commands != manifest["validation_order"]:
         raise HarnessValidationError(
