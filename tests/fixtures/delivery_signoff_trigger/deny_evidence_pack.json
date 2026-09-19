@@ -1,0 +1,12 @@
+{
+  "request": {
+    "request_text": "Create a delivery sign-off but first assemble the evidence pack",
+    "task_kind": "evidence_pack",
+    "input_schema": ""
+  },
+  "expected": {
+    "decision": "deny",
+    "rule_id": "evidence-pack-without-validated-spec",
+    "route": "evidence_authority"
+  }
+}
