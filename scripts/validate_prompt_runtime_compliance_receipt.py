@@ -1155,6 +1155,10 @@ def validate_pilot_receipt(receipt: dict[str, Any]) -> dict[str, Any]:
                 errors.append("OBSERVED_RUNTIME requires every planned run to be observed")
             if receipt.get("blocker") is not None:
                 errors.append("OBSERVED_RUNTIME cannot declare a blocker")
+        elif runtime_state == "UNPROVEN_RUNTIME":
+            blocker = receipt.get("blocker")
+            if not isinstance(blocker, str) or not blocker.strip():
+                errors.append("UNPROVEN_RUNTIME requires an explicit blocker")
 
     proof_ceiling = receipt.get("proof_ceiling")
     if not isinstance(proof_ceiling, str) or not proof_ceiling.strip():
