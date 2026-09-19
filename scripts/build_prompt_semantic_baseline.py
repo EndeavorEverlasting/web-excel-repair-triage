@@ -54,14 +54,14 @@ def _save_json(path: Path, data: Any) -> None:
 
 def seed_capability_catalog() -> dict[str, Any]:
     """Seed capability catalog from Prompt Strength and registry metadata.
-    
+
     Returns populated catalog with stable capability definitions.
     """
     strength_path = REPO_ROOT / "harness" / "contracts" / "prompt-strength.v1.json"
     strength = _load_json(strength_path)
-    
+
     capabilities = []
-    
+
     # Seed from Prompt Strength dimensions (as shared/inherited capabilities)
     for dimension in strength["dimensions"]:
         dim_id = dimension["id"]
@@ -83,7 +83,7 @@ def seed_capability_catalog() -> dict[str, Any]:
             "seed_source": f"harness/contracts/prompt-strength.v1.json:dimensions[{dim_id}]",
             "provenance": "Prompt Strength shared execution dimension"
         })
-    
+
     # Seed domain-specific capabilities from prompt registry patterns
     domain_capabilities = [
         {
@@ -274,9 +274,9 @@ def seed_capability_catalog() -> dict[str, Any]:
             "provenance": "P13 canonical owner"
         },
     ]
-    
+
     capabilities.extend(domain_capabilities)
-    
+
     catalog = {
         "schema_version": "semantic-capability-catalog/v1",
         "catalog_id": "prompt-semantic-capability-catalog",
@@ -299,13 +299,13 @@ def seed_capability_catalog() -> dict[str, Any]:
             "reason": "Sprint 1A baseline seeded from Prompt Strength, registry metadata, and product domain evidence"
         }
     }
-    
+
     return catalog
 
 
 def generate_prompt_profile(prompt: dict[str, Any], catalog: dict[str, Any], acceptance_commit: str) -> dict[str, Any]:
     """Generate ACCEPTED profile for one canonical prompt.
-    
+
     Binds capability assignments to evidence from prompt metadata.
     """
     prompt_id = prompt["id"]
@@ -316,19 +316,19 @@ def generate_prompt_profile(prompt: dict[str, Any], catalog: dict[str, Any], acc
         "sprintRole": prompt.get("sprintRole", ""),
         "useWhen": prompt.get("useWhen", "")
     })
-    
+
     direct_assignments = []
-    
+
     # All prompts inherit Prompt Strength dimensions as REQUIRED (shared policy)
     # These are not direct assignments but inherited sources
     # For baseline, we document key direct capabilities only
-    
+
     # Analyze prompt type and role to assign PRIMARY/REQUIRED capabilities
     prompt_type = prompt.get("type", "")
     prompt_class = prompt.get("class", "")
     sprint_role = prompt.get("sprintRole", "").lower()
     use_when = prompt.get("useWhen", "").lower()
-    
+
     # Governance installer (P00)
     if prompt_id == "P00":
         direct_assignments.append({
@@ -344,7 +344,7 @@ def generate_prompt_profile(prompt: dict[str, Any], catalog: dict[str, Any], acc
             ],
             "rationale": "P00 is the canonical governance installer; PRIMARY owner of governance contract establishment"
         })
-    
+
     # Harness builder (P01)
     elif prompt_id == "P01":
         direct_assignments.append({
@@ -359,7 +359,7 @@ def generate_prompt_profile(prompt: dict[str, Any], catalog: dict[str, Any], acc
             ],
             "rationale": "P01 is the canonical harness infrastructure builder"
         })
-    
+
     # P07 - Implementation execution
     elif prompt_id == "P07":
         direct_assignments.append({
@@ -375,7 +375,7 @@ def generate_prompt_profile(prompt: dict[str, Any], catalog: dict[str, Any], acc
             ],
             "rationale": "P07 is the canonical implementation execution owner per Prompt Strength contract"
         })
-    
+
     # P13 - Recurring process
     elif prompt_id == "P13":
         direct_assignments.append({
@@ -390,7 +390,7 @@ def generate_prompt_profile(prompt: dict[str, Any], catalog: dict[str, Any], acc
             ],
             "rationale": "P13 is the canonical recurring process hardening owner per Prompt Strength contract"
         })
-    
+
     # P79 - Prompt identity and topology
     elif prompt_id == "P79":
         direct_assignments.append({
@@ -406,7 +406,7 @@ def generate_prompt_profile(prompt: dict[str, Any], catalog: dict[str, Any], acc
             ],
             "rationale": "P79 is the canonical prompt identity and topology owner per Prompt Strength contract"
         })
-    
+
     # P94 - Regression safety
     elif prompt_id == "P94":
         direct_assignments.append({
@@ -422,7 +422,7 @@ def generate_prompt_profile(prompt: dict[str, Any], catalog: dict[str, Any], acc
             ],
             "rationale": "P94 is the canonical regression safety design owner per Prompt Strength contract"
         })
-    
+
     # Prompt Quality History related prompts
     elif "quality history" in sprint_role or "quality history" in use_when:
         direct_assignments.append({
@@ -437,7 +437,7 @@ def generate_prompt_profile(prompt: dict[str, Any], catalog: dict[str, Any], acc
             ],
             "rationale": f"{prompt_id} implements quality history protection per registry metadata"
         })
-    
+
     # Spreadsheet repair prompts
     elif any(term in use_when for term in ["spreadsheet", "excel", "repair", "workbook"]):
         direct_assignments.append({
@@ -451,7 +451,7 @@ def generate_prompt_profile(prompt: dict[str, Any], catalog: dict[str, Any], acc
             ],
             "rationale": f"{prompt_id} provides spreadsheet operations support per useWhen declaration"
         })
-    
+
     # Billing/roster prompts
     elif any(term in use_when for term in ["billing", "roster", "time tracking"]):
         direct_assignments.append({
@@ -465,7 +465,7 @@ def generate_prompt_profile(prompt: dict[str, Any], catalog: dict[str, Any], acc
             ],
             "rationale": f"{prompt_id} provides billing/roster support per useWhen declaration"
         })
-    
+
     # Default: AWARE of execution implementation (all prompts participate)
     if not direct_assignments:
         direct_assignments.append({
@@ -479,7 +479,7 @@ def generate_prompt_profile(prompt: dict[str, Any], catalog: dict[str, Any], acc
             ],
             "rationale": f"{prompt_id} routes to P07 for implementation execution"
         })
-    
+
     # Inherited sources: all prompts inherit Prompt Strength shared policy
     inherited_sources = [
         {
@@ -488,14 +488,14 @@ def generate_prompt_profile(prompt: dict[str, Any], catalog: dict[str, Any], acc
             "source_hash": _sha256_dict(_load_json(REPO_ROOT / "harness" / "contracts" / "prompt-strength.v1.json"))
         }
     ]
-    
+
     # Compute semantic dependency fingerprint
     semantic_deps = {
         "direct": direct_assignments,
         "inherited": inherited_sources
     }
     semantic_fingerprint = _sha256_dict(semantic_deps)
-    
+
     profile = {
         "prompt_id": prompt_id,
         "profile_version": 1,
@@ -510,37 +510,37 @@ def generate_prompt_profile(prompt: dict[str, Any], catalog: dict[str, Any], acc
         ],
         "profile_status": "ACCEPTED"
     }
-    
+
     # Add profile_sha256
     profile["profile_sha256"] = _sha256_dict(profile)
-    
+
     return profile
 
 
 def generate_baseline_matrix(catalog: dict[str, Any], profiles: list[dict[str, Any]]) -> dict[str, Any]:
     """Generate derived prompt x capability matrix.
-    
+
     Matrix is deterministic projection of accepted profiles.
     """
     # Build capability lookup
     capability_ids = [cap["capability_id"] for cap in catalog["capabilities"]]
-    
+
     # Build matrix rows
     matrix_rows = []
     for profile in profiles:
         prompt_id = profile["prompt_id"]
         row = {"prompt_id": prompt_id}
-        
+
         # Initialize all capabilities to NONE
         for cap_id in capability_ids:
             row[cap_id] = "NONE"
-        
+
         # Fill in direct assignments
         for assignment in profile["direct_assignments"]:
             cap_id = assignment["capability_id"]
             ownership = assignment["ownership"]
             presence = assignment["presence"]
-            
+
             # Display label projection
             if ownership == "PRIMARY":
                 row[cap_id] = "PRIMARY"
@@ -550,9 +550,9 @@ def generate_baseline_matrix(catalog: dict[str, Any], profiles: list[dict[str, A
                 row[cap_id] = "SUPPORT"
             elif presence == "AWARE":
                 row[cap_id] = "AWARE"
-        
+
         matrix_rows.append(row)
-    
+
     matrix = {
         "schema_version": "prompt-capability-matrix/v1",
         "generated_from": {
@@ -565,14 +565,14 @@ def generate_baseline_matrix(catalog: dict[str, Any], profiles: list[dict[str, A
         "capability_count": len(capability_ids),
         "matrix": matrix_rows
     }
-    
+
     return matrix
 
 
 def generate_coverage_report(catalog: dict[str, Any], profiles: list[dict[str, Any]]) -> dict[str, Any]:
     """Generate global coverage report showing PRIMARY ownership distribution."""
     coverage = {}
-    
+
     for cap in catalog["capabilities"]:
         cap_id = cap["capability_id"]
         coverage[cap_id] = {
@@ -583,17 +583,17 @@ def generate_coverage_report(catalog: dict[str, Any], profiles: list[dict[str, A
             "support_providers": [],
             "aware_prompts": []
         }
-    
+
     for profile in profiles:
         prompt_id = profile["prompt_id"]
         for assignment in profile["direct_assignments"]:
             cap_id = assignment["capability_id"]
             ownership = assignment["ownership"]
             presence = assignment["presence"]
-            
+
             if cap_id not in coverage:
                 continue
-            
+
             if ownership == "PRIMARY":
                 coverage[cap_id]["primary_owners"].append(prompt_id)
             elif presence == "REQUIRED":
@@ -602,7 +602,7 @@ def generate_coverage_report(catalog: dict[str, Any], profiles: list[dict[str, A
                 coverage[cap_id]["support_providers"].append(prompt_id)
             elif presence == "AWARE":
                 coverage[cap_id]["aware_prompts"].append(prompt_id)
-    
+
     report = {
         "schema_version": "prompt-coverage-report/v1",
         "generated_from": {
@@ -612,37 +612,37 @@ def generate_coverage_report(catalog: dict[str, Any], profiles: list[dict[str, A
         "generation_commit": _get_current_commit(),
         "coverage": coverage
     }
-    
+
     return report
 
 
 def build_baseline(output_dir: Path | None = None) -> dict[str, Any]:
     """Build complete Sprint 1A baseline.
-    
+
     Returns summary with file paths and counts.
     """
     if output_dir is None:
         output_dir = REPO_ROOT
-    
+
     # Load canonical prompts
     prompts_path = REPO_ROOT / "docs" / "prompts.json"
     prompts = _load_json(prompts_path)
-    
+
     print(f"Loaded {len(prompts)} canonical prompts")
-    
+
     # Seed capability catalog
     catalog = seed_capability_catalog()
     catalog_path = output_dir / "harness" / "prompt-topology" / "semantic-capability-catalog.v1.json"
     _save_json(catalog_path, catalog)
     print(f"Generated capability catalog: {len(catalog['capabilities'])} capabilities")
-    
+
     # Generate profiles
     acceptance_commit = _get_current_commit()
     profiles = []
     for prompt in prompts:
         profile = generate_prompt_profile(prompt, catalog, acceptance_commit)
         profiles.append(profile)
-    
+
     profiles_data = {
         "schema_version": "prompt-capability-profiles/v1",
         "profiles_id": "prompt-capability-profiles",
@@ -658,28 +658,28 @@ def build_baseline(output_dir: Path | None = None) -> dict[str, Any]:
         "profiles": sorted(profiles, key=lambda p: p["prompt_id"]),
         "profile_count": len(profiles)
     }
-    
+
     profiles_path = output_dir / "harness" / "prompt-topology" / "prompt-capability-profiles.v1.json"
     _save_json(profiles_path, profiles_data)
     print(f"Generated {len(profiles)} ACCEPTED profiles")
-    
+
     # Generate derived matrix
     matrix = generate_baseline_matrix(catalog, profiles)
     matrix_path = output_dir / "artifacts" / "prompt-semantic-coverage" / "matrix.v1.json"
     _save_json(matrix_path, matrix)
     print(f"Generated derived matrix: {matrix['prompt_count']}x{matrix['capability_count']}")
-    
+
     # Generate coverage report
     coverage = generate_coverage_report(catalog, profiles)
     coverage_path = output_dir / "artifacts" / "prompt-semantic-coverage" / "coverage-report.v1.json"
     _save_json(coverage_path, coverage)
     print("Generated coverage report")
-    
+
     # Verify determinism
     matrix2 = generate_baseline_matrix(catalog, profiles)
     assert _sha256_dict(matrix) == _sha256_dict(matrix2), "Matrix generation is not deterministic"
     print("✓ Verified deterministic matrix generation")
-    
+
     return {
         "catalog_path": str(catalog_path.relative_to(REPO_ROOT)),
         "profiles_path": str(profiles_path.relative_to(REPO_ROOT)),
@@ -697,10 +697,10 @@ def main() -> None:
     parser.add_argument("--output-dir", type=Path, help="Output directory (default: repo root)")
     parser.add_argument("--verify", action="store_true", help="Verify existing baseline")
     args = parser.parse_args()
-    
+
     try:
         summary = build_baseline(args.output_dir)
-        
+
         print("\n" + "="*60)
         print("Sprint 1A Baseline Complete")
         print("="*60)
@@ -714,14 +714,14 @@ def main() -> None:
         print(f"Capabilities: {summary['capability_count']}")
         print(f"Commit:       {summary['acceptance_commit']}")
         print("="*60)
-        
+
         # Verify PSC001 satisfied
         if summary['prompt_count'] == summary['profile_count']:
             print("✓ PSC001 PROFILE_COVERAGE_COMPLETE satisfied")
         else:
             print(f"✗ PSC001 violation: {summary['prompt_count']} prompts but {summary['profile_count']} profiles")
             sys.exit(1)
-            
+
     except Exception as e:
         print(f"ERROR: {e}", file=sys.stderr)
         sys.exit(1)
