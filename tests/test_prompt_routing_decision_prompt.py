@@ -214,6 +214,28 @@ class PromptRoutingDecisionTests(unittest.TestCase):
         with self.assertRaisesRegex(routing.RoutingDecisionError, "not in the current registry"):
             routing.build_routing_decision(self.request(), receipt)
 
+    def test_non_authoritative_route_receipts_cannot_select_a_prompt(self) -> None:
+        for provenance, destination in (
+            ("declared", "firstmate"),
+            ("inferred", "firstmate"),
+            ("unknown", None),
+        ):
+            with self.subTest(provenance=provenance):
+                receipt = evidence_spine_runtime.build_route_receipt(
+                    {
+                        "prompt_id": self.prompt_id,
+                        "prompt_revision": self.prompt_ref["promptSha256"],
+                        "destination": destination,
+                        "provenance": provenance,
+                        "surface_id": "fm-asb",
+                    }
+                )
+                with self.assertRaisesRegex(
+                    routing.RoutingDecisionError,
+                    "observed authoritative route receipt",
+                ):
+                    routing.build_routing_decision(self.request(), receipt)
+
     def test_tampered_route_receipt_fails_identity_verification(self) -> None:
         receipt = self.route_receipt()
         receipt["destination"] = "cursor-agent"
@@ -278,6 +300,53 @@ class PromptRoutingDecisionTests(unittest.TestCase):
         decision = routing.build_routing_decision(request, self.route_receipt())
         self.assertEqual(decision["decision"]["intervention"], "CRITIQUE")
         self.assertEqual(decision["classification"]["outcomeClass"], "routing")
+
+    def test_cli_failure_removes_stale_output_and_returns_bounded_error(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            request_path = root / "request.json"
+            receipt_path = root / "receipt.json"
+            output_path = root / "decision.json"
+            request_path.write_text("{not-json", encoding="utf-8")
+            receipt_path.write_text(json.dumps(self.route_receipt()), encoding="utf-8")
+            output_path.write_text('{"stale": true}\n', encoding="utf-8")
+            self.assertEqual(
+                routing.main(
+                    [
+                        "--request",
+                        str(request_path),
+                        "--route-receipt",
+                        str(receipt_path),
+                        "--output",
+                        str(output_path),
+                    ]
+                ),
+                2,
+            )
+            self.assertFalse(output_path.exists())
+
+    def test_cli_refuses_to_overwrite_an_input_file(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            request_path = root / "request.json"
+            receipt_path = root / "receipt.json"
+            original = json.dumps(self.request())
+            request_path.write_text(original, encoding="utf-8")
+            receipt_path.write_text(json.dumps(self.route_receipt()), encoding="utf-8")
+            self.assertEqual(
+                routing.main(
+                    [
+                        "--request",
+                        str(request_path),
+                        "--route-receipt",
+                        str(receipt_path),
+                        "--output",
+                        str(request_path),
+                    ]
+                ),
+                2,
+            )
+            self.assertEqual(request_path.read_text(encoding="utf-8"), original)
 
     def test_cli_emits_same_current_registry_bound_decision(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
