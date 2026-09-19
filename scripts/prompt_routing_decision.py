@@ -6,6 +6,7 @@ import argparse
 import hashlib
 import json
 import re
+import sys
 from datetime import datetime
 from pathlib import Path
 from typing import Any
@@ -254,6 +255,14 @@ def _verify_route_receipt(
         raise RoutingDecisionError(f"invalid route receipt: {exc}") from exc
     if receipt != rebuilt:
         raise RoutingDecisionError("route receipt identity or derived fields do not verify")
+    if rebuilt.get("authoritative") is not True or rebuilt.get("provenance") != "observed":
+        raise RoutingDecisionError(
+            "routing decision requires an observed authoritative route receipt"
+        )
+    if rebuilt.get("effective_destination") in {None, "", "unknown"}:
+        raise RoutingDecisionError(
+            "routing decision requires an authoritative effective destination"
+        )
 
     prompt_id = str(receipt.get("prompt_id") or "").upper()
     record = by_id.get(prompt_id)
@@ -384,16 +393,42 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--output", type=Path)
     args = parser.parse_args(argv)
 
-    request = json.loads(args.request.read_text(encoding="utf-8"))
-    receipt = json.loads(args.route_receipt.read_text(encoding="utf-8"))
-    decision = build_routing_decision(request, receipt, created_at=args.created_at)
-    payload = json.dumps(decision, indent=2, sort_keys=True) + "\n"
-    if args.output:
-        args.output.parent.mkdir(parents=True, exist_ok=True)
-        args.output.write_text(payload, encoding="utf-8")
-    else:
-        print(payload, end="")
-    return 0
+    output_path = args.output.resolve() if args.output else None
+    request_path = args.request.resolve()
+    receipt_path = args.route_receipt.resolve()
+    if output_path is not None and output_path in {request_path, receipt_path}:
+        print("routing decision output must not overwrite an input file", file=sys.stderr)
+        return 2
+
+    temp_output: Path | None = None
+    try:
+        if output_path is not None:
+            output_path.parent.mkdir(parents=True, exist_ok=True)
+            if output_path.exists():
+                output_path.unlink()
+            temp_output = output_path.with_name(output_path.name + ".tmp")
+            if temp_output.exists():
+                temp_output.unlink()
+
+        request = json.loads(request_path.read_text(encoding="utf-8"))
+        receipt = json.loads(receipt_path.read_text(encoding="utf-8"))
+        decision = build_routing_decision(request, receipt, created_at=args.created_at)
+        payload = json.dumps(decision, indent=2, sort_keys=True) + "\n"
+        if output_path is not None:
+            assert temp_output is not None
+            temp_output.write_text(payload, encoding="utf-8")
+            temp_output.replace(output_path)
+        else:
+            print(payload, end="")
+        return 0
+    except (OSError, json.JSONDecodeError, RoutingDecisionError) as exc:
+        if temp_output is not None:
+            try:
+                temp_output.unlink(missing_ok=True)
+            except OSError:
+                pass
+        print(f"routing decision failed: {exc}", file=sys.stderr)
+        return 2
 
 
 if __name__ == "__main__":
