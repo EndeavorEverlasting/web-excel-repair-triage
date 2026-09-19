@@ -14,5 +14,28 @@
   "pass_requires_observed_events": true,
   "missing_artifact_fails_closed": true,
   "evidence_tiers_are_ordered": true,
-  "stale_on_subject_or_artifact_change": true
+  "stale_on_subject_or_artifact_change": true,
+  "proof_boundary": {
+    "repository_or_ci_classes": [
+      "source",
+      "build",
+      "synthetic"
+    ],
+    "observed_classes": [
+      "browser_runtime_observed",
+      "target_runtime_observed",
+      "production_observed"
+    ],
+    "non_promotions": [
+      "validated_or_integrated_or_installed_or_deployed_to_observed",
+      "synthetic_or_replay_to_observed",
+      "browser_runtime_observed_to_target_runtime_observed",
+      "target_runtime_observed_to_production_observed",
+      "observed_runtime_to_operator_acceptance"
+    ],
+    "target_runtime_pass_requires_actual_interaction": true,
+    "installed_or_deployed_is_not_observed": true,
+    "operator_acceptance_is_separate": true,
+    "inaccessible_runtime_disposition": "UNKNOWN_OR_UNPROVEN_WITH_EXACT_GATE"
+  }
 }
