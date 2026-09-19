@@ -96,6 +96,81 @@ class OperantVersioningWorkflowTests(unittest.TestCase):
                 "the full push range must detect the earlier OPERANT_VERSION bump",
             )
 
+    def test_release_publication_summary_escapes_markdown_backticks_from_shell(self) -> None:
+        workflow = WORKFLOW.read_text(encoding="utf-8")
+        unsafe_lines = [
+            'echo "- existing PR: `$existing_url`"',
+            'echo "- target head: `$target_head`"',
+            'echo "- candidate branch: `$candidate_branch`"',
+            'echo "- candidate SHA: `$candidate_sha`"',
+            'echo "- candidate tree: `$candidate_tree_sha`"',
+            'echo "- base: `main`"',
+            'echo "- request artifact: `Outputs/operant-release-pr-request.json`"',
+            'echo "- body artifact: `Outputs/operant-release-pr.md`"',
+        ]
+        for unsafe in unsafe_lines:
+            with self.subTest(unsafe=unsafe):
+                self.assertNotIn(unsafe, workflow)
+                self.assertIn(unsafe.replace("`", "\\`"), workflow)
+
+        block_start = workflow.index(
+            '          {\n            echo "## Operant release PR external publication required"'
+        )
+        block_end_marker = '          } >> "$GITHUB_STEP_SUMMARY"'
+        block_end = workflow.index(block_end_marker, block_start) + len(block_end_marker)
+        summary_block = workflow[block_start:block_end]
+
+        bash = Path("/bin/bash")
+        if not bash.exists():
+            self.skipTest("/bin/bash is required for the release-summary shell regression")
+
+        scenarios = (
+            ("https://github.com/example/repo/pull/1", True),
+            ("", False),
+        )
+        for existing_url, expects_existing_pr in scenarios:
+            with self.subTest(existing_url=existing_url):
+                with tempfile.TemporaryDirectory() as temp_dir:
+                    summary_path = Path(temp_dir) / "summary.md"
+                    env = {
+                        "GITHUB_STEP_SUMMARY": str(summary_path),
+                        "existing_url": existing_url,
+                        "target_head": "automation/operant-release-v0.10.0",
+                        "candidate_branch": "automation/operant-release-staging-v0.10.0",
+                        "candidate_sha": "be2a323bd7dbd19d93e42121c761ea151147720b",
+                        "candidate_tree_sha": "deadbeef",
+                    }
+                    result = subprocess.run(
+                        [str(bash), "-euo", "pipefail", "-c", summary_block],
+                        check=False,
+                        capture_output=True,
+                        text=True,
+                        env=env,
+                    )
+                    self.assertEqual(result.returncode, 0, result.stderr)
+                    self.assertEqual(result.stderr, "")
+
+                    rendered = summary_path.read_text(encoding="utf-8")
+                    self.assertIn(
+                        "- target head: `automation/operant-release-v0.10.0`",
+                        rendered,
+                    )
+                    self.assertIn(
+                        "- candidate branch: `automation/operant-release-staging-v0.10.0`",
+                        rendered,
+                    )
+                    self.assertIn(
+                        "- request artifact: `Outputs/operant-release-pr-request.json`",
+                        rendered,
+                    )
+                    if expects_existing_pr:
+                        self.assertIn(
+                            "- existing PR: `https://github.com/example/repo/pull/1`",
+                            rendered,
+                        )
+                    else:
+                        self.assertNotIn("- existing PR:", rendered)
+
     def test_first_release_pr_creation_is_externalized_as_machine_readable_request(self) -> None:
         workflow = WORKFLOW.read_text(encoding="utf-8")
         self.assertNotIn("gh pr create", workflow)

@@ -324,6 +324,104 @@ print("SECRET RAW OUTPUT")
         self.assertEqual(receipt["blocker"], "RUNTIME_UNAVAILABLE")
         self.assertFalse(receipt["effectiveness_promoted"])
 
+    def test_v2_capture_rejects_evaluative_fields(self) -> None:
+        run_dir = initialize_run(case_id="TC01", condition="control", run_id="capture-test-v2-evaluative")
+        with tempfile.TemporaryDirectory() as td:
+            script = Path(td) / "adapter_v2_eval.py"
+            body = r'''
+import json
+import pathlib
+import sys
+
+result = pathlib.Path(sys.argv[1])
+
+payload = {
+  "schema_version": "compute-authority-provider-capture/v2",
+  "provider": "fake-v2",
+  "agent": "test-agent",
+  "model": "test-model",
+  "status": "complete",
+  "termination_reason": "completed",
+  "usage": {"tool_calls": 3, "latency_ms": 15},
+  "events": [
+    {"id": "a1", "kind": "action", "action_index": 1, "useful": True},
+    {"id": "a2", "kind": "action", "action_index": 2, "first_green": True}
+  ],
+  "validations": []
+}
+
+result.write_text(json.dumps(payload), encoding="utf-8")
+'''
+            script.write_text(textwrap.dedent(body), encoding="utf-8")
+            config = {
+                "schema_version": "compute-authority-agent-adapter/v1",
+                "argv": [sys.executable, str(script), "{result}"],
+                "timeout_seconds": 30,
+                "env_allowlist": [],
+            }
+            result = runtime_adapter.invoke_or_mark_invalid(config, run_dir)
+        self.assertFalse(result["valid"])
+        invalid = json.loads((run_dir / "invalid-run.json").read_text(encoding="utf-8"))
+        self.assertEqual(invalid["code"], "CAPTURE_EVALUATIVE_REJECTED")
+        self.assertIn("useful", invalid["detail"])
+        self.assertFalse((run_dir / "provider-capture.json").exists())
+
+    def test_v2_capture_accepts_neutral_telemetry(self) -> None:
+        run_dir = initialize_run(case_id="TC06", condition="treatment", run_id="capture-test-v2-neutral")
+        with tempfile.TemporaryDirectory() as td:
+            script = Path(td) / "adapter_v2_neutral.py"
+            body = r'''
+import json
+import pathlib
+import sys
+
+result = pathlib.Path(sys.argv[1])
+
+payload = {
+  "schema_version": "compute-authority-provider-capture/v2",
+  "provider": "fake-v2-neutral",
+  "agent": "test-agent",
+  "model": "test-model",
+  "status": "complete",
+  "termination_reason": "completed",
+  "usage": {"tool_calls": 5, "input_tokens": 1000, "output_tokens": 500, "latency_ms": 20},
+  "events": [
+    {"id": "a1", "kind": "action", "action_index": 1, "category": "read", "started_ns": 100, "ended_ns": 200},
+    {"id": "a2", "kind": "action", "action_index": 2, "category": "write", "started_ns": 250, "ended_ns": 350},
+    {"id": "a3", "kind": "action", "action_index": 3, "category": "execute", "started_ns": 400, "ended_ns": 500},
+    {"id": "h1", "kind": "hypothesis_test", "hypothesis_id": "hyp-1", "result_code": "pass"},
+    {"id": "c1", "kind": "child_lane", "child_lane_id": "lane-1", "started_ns": 600, "ended_ns": 1000},
+    {"id": "c2", "kind": "child_lane", "child_lane_id": "lane-2", "started_ns": 650, "ended_ns": 950}
+  ],
+  "validations": [
+    {"id": "v1", "command": "validate.py", "return_code": 0, "started_ns": 1100, "ended_ns": 1200}
+  ]
+}
+
+result.write_text(json.dumps(payload), encoding="utf-8")
+'''
+            script.write_text(textwrap.dedent(body), encoding="utf-8")
+            config = {
+                "schema_version": "compute-authority-agent-adapter/v1",
+                "argv": [sys.executable, str(script), "{result}"],
+                "timeout_seconds": 30,
+                "env_allowlist": [],
+            }
+            result = runtime_adapter.invoke_or_mark_invalid(config, run_dir)
+        self.assertTrue(result["valid"])
+        capture = json.loads((run_dir / "provider-capture.json").read_text(encoding="utf-8"))
+        metrics = json.loads((run_dir / "metrics.json").read_text(encoding="utf-8"))
+        self.assertEqual(capture["schema_version"], "compute-authority-provider-capture/v2")
+        self.assertEqual(capture["provider"], "fake-v2-neutral")
+        self.assertEqual(capture["status"], "complete")
+        self.assertNotIn("outcomes", capture)
+        self.assertNotIn("contracts", capture)
+        self.assertEqual(len(capture["events"]), 6)
+        self.assertEqual(metrics["total_substantive_actions"], 3)
+        self.assertEqual(metrics["parallel_lanes_used"], 2)
+        self.assertNotIn("useful_compute_actions", metrics)
+        self.assertNotIn("seeded_defects_found", metrics)
+
 
 if __name__ == "__main__":
     unittest.main()

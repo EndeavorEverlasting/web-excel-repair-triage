@@ -20,6 +20,23 @@
         "tests/test_prompt_kit_discovery.py",
         "tests/test_prompt_quality_history.py"
       ]
+    },
+    {
+      "migration_id": "2026-09-19-p79-route-protected-lifecycle-through-semantic-gates",
+      "path": "registry/prompts/spec-architecture-prompts.v1.json",
+      "from_git_blob_sha1": "fdebc3b1f1a96ab4a812244c9d27471e6bba9eb6",
+      "to_git_blob_sha1": "a3fdb112ffd593a0d6545bafe8e01ee823dad2b8",
+      "affected_prompt_ids": [
+        "P79"
+      ],
+      "change_kind": "strengthening",
+      "effective_identity_change": "preserve_canonical",
+      "rationale": "P79 is the lifecycle/admission owner but still instructed protected STRENGTHEN work to edit canonical source directly. Route profiled ADD/EDIT/RETIRE mutations through prompt_registry_ops semantic/history gates while preserving P79 identity and the 62-profile accepted baseline boundary.",
+      "focused_tests": [
+        "tests/test_spec_architecture_prompt_registry.py",
+        "tests/test_prompt_registry_expansion_regression_design_teach.py",
+        "tests/test_prompt_quality_history.py"
+      ]
     }
   ]
 }

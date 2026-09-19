@@ -1,0 +1,10 @@
+{
+  "schema_version": "prompt-capability-migrations/v1",
+  "migrations_id": "prompt-capability-migrations",
+  "purpose": "Append-only ledger of semantic capability transitions across prompt ADD, STRENGTHEN, CHANGE, TRANSFER, and RETIRE lifecycle operations.",
+  "established_at": "2026-09-19",
+  "status": "sprint0_floor",
+  "migration_kinds": ["ADD", "STRENGTHEN", "NO_CAPABILITY_CHANGE", "INTENTIONAL_CHANGE", "TRANSFER", "RETIRE", "RESTORE"],
+  "migrations": [],
+  "note": "Empty until Sprint 1A baseline acceptance and Sprint 2 lifecycle integration. Every lifecycle transition after baseline acceptance must be explicit and recorded here."
+}

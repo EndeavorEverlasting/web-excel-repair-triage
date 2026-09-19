@@ -95,6 +95,42 @@ class SysAdminSuitePromptRegistryTests(unittest.TestCase):
             payload["prompts"] = [item for item in payload["prompts"] if item.get("name") not in ORDER]
             sandbox_raw.write_text(json.dumps(payload, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
 
+            # This copied fixture intentionally starts from a historical source state.
+            # Rebind only the sandbox quality-history baseline to that state so the
+            # lifecycle helper must extend a valid history chain rather than bless drift.
+            quality_contract_path = sandbox / "harness" / "contracts" / "prompt-quality-history.v1.json"
+            quality_contract = json.loads(quality_contract_path.read_text(encoding="utf-8"))
+            source_rel = sandbox_raw.relative_to(sandbox).as_posix()
+            source_row = next(
+                row
+                for row in quality_contract["canonical_body_sources"]
+                if row["path"] == source_rel
+            )
+            source_bytes = sandbox_raw.read_bytes()
+            source_row["git_blob_sha1"] = prompt_registry_ops._git_blob_sha1(source_bytes)
+            source_row["baseline_size_bytes"] = len(source_bytes)
+            quality_contract_path.write_text(
+                json.dumps(quality_contract, indent=2, ensure_ascii=False) + "\n",
+                encoding="utf-8",
+            )
+
+            # Sprint 2: Remove semantic migrations from sandbox
+            # The test rebases to a historical state by removing prompts, which invalidates
+            # the existing migration chain. Since this is a sandbox test without git history,
+            # clear migrations to allow fresh lifecycle operations.
+            migrations_path = sandbox / "harness" / "prompt-compilation" / "prompt-semantic-migrations.v1.json"
+            if migrations_path.exists():
+                migrations_data = json.loads(migrations_path.read_text(encoding="utf-8"))
+                # Remove migrations for the spec-architecture-prompts registry
+                migrations_data["migrations"] = [
+                    m for m in migrations_data.get("migrations", [])
+                    if m.get("path") != source_rel
+                ]
+                migrations_path.write_text(
+                    json.dumps(migrations_data, indent=2, ensure_ascii=False) + "\n",
+                    encoding="utf-8",
+                )
+
             inspect_proc = subprocess.run(
                 [sys.executable, "scripts/prompt_registry_ops.py", "inspect"],
                 cwd=sandbox,
@@ -110,6 +146,25 @@ class SysAdminSuitePromptRegistryTests(unittest.TestCase):
             receipts = []
             for index, name in enumerate(ORDER, start=1):
                 draft = {key: value for key, value in records[name].items() if key in allowed}
+                draft["semantic_profile"] = {
+                    "direct_assignments": [
+                        {
+                            "capability_id": "execution.implementation",
+                            "presence": "AWARE",
+                            "ownership": "NONE",
+                            "capability_relation": "ROUTES_TO",
+                            "delivery_source": "ROUTED_OWNER",
+                            "evidence_refs": ["tests/test_sysadminsuite_prompt_registry.py"],
+                            "rationale": "Historical re-add fixture routes implementation to P07.",
+                        }
+                    ],
+                    "evidence_refs": ["tests/test_sysadminsuite_prompt_registry.py"],
+                    "distinct_residual": {
+                        "summary": f"Restore the distinct historical SysAdminSuite use case {index} without claiming execution ownership.",
+                        "evidence_refs": ["tests/test_sysadminsuite_prompt_registry.py"],
+                        "reviewed_against": ["P07"],
+                    },
+                }
                 draft_path = sandbox / f"sas-draft-{index}.json"
                 draft_path.write_text(json.dumps(draft, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
                 proc = subprocess.run(
@@ -138,6 +193,109 @@ class SysAdminSuitePromptRegistryTests(unittest.TestCase):
             replayed_site = (sandbox / "web" / "prompt-kit" / "index.html").read_text(encoding="utf-8")
             for name in ORDER:
                 self.assertIn(name, replayed_site)
+
+            # Exercise the actual atomic lifecycle, not only admission helpers:
+            # ADD above -> EDIT with explicit no-capability-change proof -> RETIRE.
+            target_receipt = receipts[-1]
+            target_id = target_receipt["id"]
+            target_name = ORDER[-1]
+            target_record = replayed_by_name[target_name]
+            edit_patch = {
+                "useWhen": target_record["useWhen"]
+                + " Synthetic lifecycle edit keeps the accepted capability profile unchanged."
+            }
+            edit_path = sandbox / "sas-edit.json"
+            edit_path.write_text(
+                json.dumps(edit_patch, indent=2, ensure_ascii=False) + "\n",
+                encoding="utf-8",
+            )
+            edit_proc = subprocess.run(
+                [
+                    sys.executable,
+                    "scripts/prompt_registry_ops.py",
+                    "edit",
+                    "--prompt-id",
+                    target_id,
+                    "--input",
+                    str(edit_path),
+                    "--disposition",
+                    "NO_CAPABILITY_CHANGE",
+                    "--evidence-ref",
+                    "tests/test_sysadminsuite_prompt_registry.py",
+                    "--rationale",
+                    "Synthetic lifecycle edit proves PSC009 disposition and atomic persistence.",
+                ],
+                cwd=sandbox,
+                text=True,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.STDOUT,
+                check=False,
+            )
+            self.assertEqual(edit_proc.returncode, 0, edit_proc.stdout)
+            edit_receipt = json.loads(edit_proc.stdout)
+            self.assertEqual(edit_receipt["status"], "edited")
+            self.assertTrue(edit_receipt["site_parity"])
+            self.assertEqual(edit_receipt["profile_version"], 2)
+
+            edited_rows = json.loads(sandbox_raw.read_text(encoding="utf-8"))["prompts"]
+            edited = next(row for row in edited_rows if row["id"] == target_id)
+            self.assertIn("Synthetic lifecycle edit", edited["useWhen"])
+
+            retire_proc = subprocess.run(
+                [
+                    sys.executable,
+                    "scripts/prompt_registry_ops.py",
+                    "retire",
+                    "--prompt-id",
+                    target_id,
+                    "--rationale",
+                    "Synthetic lifecycle retirement proves canonical removal and tombstone retention.",
+                ],
+                cwd=sandbox,
+                text=True,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.STDOUT,
+                check=False,
+            )
+            self.assertEqual(retire_proc.returncode, 0, retire_proc.stdout)
+            retire_receipt = json.loads(retire_proc.stdout)
+            self.assertEqual(retire_receipt["status"], "retired")
+            self.assertTrue(retire_receipt["site_parity"])
+            self.assertTrue((sandbox / retire_receipt["backup_path"]).is_dir())
+
+            retired_rows = json.loads(sandbox_raw.read_text(encoding="utf-8"))["prompts"]
+            self.assertNotIn(target_id, {row["id"] for row in retired_rows})
+            retired_site = (sandbox / "web" / "prompt-kit" / "index.html").read_text(encoding="utf-8")
+            self.assertNotIn(target_name, retired_site)
+
+            profiles = json.loads(
+                (sandbox / "harness" / "prompt-topology" / "prompt-capability-profiles.v1.json").read_text(
+                    encoding="utf-8"
+                )
+            )["profiles"]
+            tombstone = next(row for row in profiles if row["prompt_id"] == target_id)
+            self.assertEqual(tombstone["profile_status"], "RETIRED")
+
+            migrations = json.loads(
+                (sandbox / "harness" / "prompt-topology" / "prompt-capability-migrations.v1.json").read_text(
+                    encoding="utf-8"
+                )
+            )["migrations"]
+            kinds = [row["migration_kind"] for row in migrations if row["prompt_id"] == target_id]
+            self.assertEqual(kinds, ["ADD", "NO_CAPABILITY_CHANGE", "RETIRE"])
+            self.assertTrue(all(row.get("source_history_migration_id") for row in migrations if row["prompt_id"] == target_id))
+
+            next_proc = subprocess.run(
+                [sys.executable, "scripts/prompt_registry_ops.py", "inspect"],
+                cwd=sandbox,
+                text=True,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.STDOUT,
+                check=False,
+            )
+            self.assertEqual(next_proc.returncode, 0, next_proc.stdout)
+            next_receipt = json.loads(next_proc.stdout)
+            self.assertGreater(int(next_receipt["next_id"][1:]), int(target_id[1:]))
 
 
 if __name__ == "__main__":

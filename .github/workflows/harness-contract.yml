@@ -191,8 +191,8 @@ jobs:
           python -m unittest tests.test_prompt_kit_cross_device_access -v
       - name: Validate Prompt Kit freshness guidance
         run: |
-          python scripts/validate_prompt_kit_freshness_guidance.py --summary
-          python -m unittest tests.test_prompt_kit_freshness_guidance -v
+          python3 scripts/validate_prompt_kit_freshness_guidance.py --summary
+          python3 -m unittest tests.test_prompt_kit_freshness_guidance -v
       - name: Validate PR merge gate
         run: |
           python scripts/validate_pr_merge_gate.py --summary

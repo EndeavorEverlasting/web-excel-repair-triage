@@ -93,6 +93,10 @@ class SpecArchitecturePromptRegistryTests(unittest.TestCase):
         self.assertIn("CONTEXT IMMEDIATELY ABOVE THIS INSTRUCTION", content)
         self.assertIn("DO NOT ASK ME TO RESTATE CONTEXT", content)
         self.assertIn("scripts/prompt_registry_ops.py add", content)
+        self.assertIn("scripts/prompt_registry_ops.py edit", content)
+        self.assertIn("scripts/prompt_registry_ops.py retire", content)
+        self.assertIn("semantic_profile.direct_assignments", content)
+        self.assertIn("target lacks an ACCEPTED semantic profile", content)
         self.assertIn("Do NOT set id, seq, or copySheet", content)
         self.assertIn("roll back registry/site writes if validation fails", content)
         self.assertIn("focused semantic assertion", content)
@@ -132,6 +136,25 @@ class SpecArchitecturePromptRegistryTests(unittest.TestCase):
             "keywords": ["prompt ops fixture", "registry helper fixture"],
             "profile": "spec-architecture",
             "color": "Cyan",
+            "semantic_profile": {
+                "direct_assignments": [
+                    {
+                        "capability_id": "execution.implementation",
+                        "presence": "AWARE",
+                        "ownership": "NONE",
+                        "capability_relation": "ROUTES_TO",
+                        "delivery_source": "ROUTED_OWNER",
+                        "evidence_refs": ["tests/test_spec_architecture_prompt_registry.py"],
+                        "rationale": "Dry-run fixture routes implementation to the existing P07 owner.",
+                    }
+                ],
+                "evidence_refs": ["tests/test_spec_architecture_prompt_registry.py"],
+                "distinct_residual": {
+                    "summary": "Exercise the low-friction registry helper without claiming duplicate execution ownership.",
+                    "evidence_refs": ["tests/test_spec_architecture_prompt_registry.py"],
+                    "reviewed_against": ["P07"],
+                },
+            },
         }
         result = prompt_registry_ops.add_prompt(
             draft, "spec-architecture-prompts", dry_run=True

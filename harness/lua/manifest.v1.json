@@ -21,12 +21,12 @@
     "ci_workflow": ".github/workflows/lua-harness-contract.yml"
   },
   "validation_order": [
-    "python -m py_compile scripts/validate_lua_harness.py tests/test_lua_harness_contract.py",
-    "python scripts/validate_lua_harness.py --output Outputs/lua-embedding-readiness.json --summary",
-    "python -m unittest tests.test_lua_harness_contract -v",
-    "python scripts/validate_harness.py --report Outputs/harness-completeness-report.json",
-    "python -m unittest tests.test_harness_contract -v",
-    "python -m triage.gitignore_hygiene",
+    "python3 -m py_compile scripts/validate_lua_harness.py tests/test_lua_harness_contract.py",
+    "python3 scripts/validate_lua_harness.py --output Outputs/lua-embedding-readiness.json --summary",
+    "python3 -m unittest tests.test_lua_harness_contract -v",
+    "python3 scripts/validate_harness.py --report Outputs/harness-completeness-report.json",
+    "python3 -m unittest tests.test_harness_contract -v",
+    "python3 -m triage.gitignore_hygiene",
     "git diff --check"
   ],
   "proof_ceiling": "Tracked Lua embedding-readiness harness, static contract validation, root harness integration, and CI proof. Product/runtime Lua remains explicitly unimplemented."

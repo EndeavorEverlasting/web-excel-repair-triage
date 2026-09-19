@@ -112,6 +112,27 @@ class PromptQualityHistoryTests(unittest.TestCase):
             quality.builder.load_prompt_kit_registry = original
         self.assertTrue(any("temporary exceptions are no longer needed" in item for item in errors))
 
+    def test_source_set_parity_rejects_missing_canonical_source(self) -> None:
+        """PSC013: removing a canonical source from history fails validation."""
+        contract = quality._load_contract()
+        incomplete_contract = dict(contract)
+        incomplete_contract["canonical_body_sources"] = [
+            item for item in contract["canonical_body_sources"]
+            if item["path"] != "docs/prompts.json"
+        ]
+        errors = quality.audit_source_set_parity(incomplete_contract)
+        self.assertTrue(errors)
+        self.assertTrue(
+            any("docs/prompts.json" in error and "missing from history protection" in error 
+                for error in errors)
+        )
+
+    def test_base_registry_is_history_protected(self) -> None:
+        """Defect D1: docs/prompts.json must be present in canonical_body_sources."""
+        contract = quality._load_contract()
+        protected_paths = {item["path"] for item in contract["canonical_body_sources"]}
+        self.assertIn("docs/prompts.json", protected_paths)
+
 
 if __name__ == "__main__":
     unittest.main()

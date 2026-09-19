@@ -353,15 +353,15 @@ Before any observed Gen2 pilot:
 
 ### Adapter phase map
 
-| Phase | Owner | Depends on | Completion gate |
-| --- | --- | --- | --- |
-| ADP-00 Neutral capture authority | Triage P67 | Gen2 integrated | versioned neutral capture + evaluator annotation derivation; negative self-rating and positive neutral fixtures green |
-| ADP-01 OpenCode capability/readiness | AgentSwitchboard | current ASB main | exact installed/upstream noninteractive/structured-event/config/plugin/provider identity capabilities proven or one typed blocker |
-| ADP-02 Canonical adapter + config generator | AgentSwitchboard | ADP-00 + ADP-01 | P67 placeholder invocation writes one privacy-bounded neutral result; timeout/nonzero/missing-result fail closed |
-| ADP-03 Synthetic interoperability | ASB + Triage seam | ADP-02 | action/validation/subagent/parallel/error paths covered; no raw-text/gold leakage; cross-repo consumer contract green |
-| ADP-04 Observed adapter smoke | authorized provider runtime | ADP-03 | TC01 control/treatment pair same provider/agent/model; optional TC06 pair only with real >=2 worker capacity; no effectiveness verdict |
-| ADP-05 Gen2 16-run pilot | P67 model-runtime | ADP-04 | 16 classified paired runs, stable pair identity, zero forbidden escape/gold leakage, valid pilot aggregate/fixture disposition |
-| ADP-06 Sprint 3 handoff | P67 convergence | ADP-05 | existing 48-valid-run/blinded-decision dependency gate opens without changing frozen Gen2 treatment or thresholds |
+| Phase | Owner | Depends on | Completion gate | Status |
+| --- | --- | --- | --- | --- |
+| ADP-00 Neutral capture authority | Triage P67 | Gen2 integrated | versioned neutral capture + evaluator annotation derivation; negative self-rating and positive neutral fixtures green | INTEGRATED |
+| ADP-01 OpenCode capability/readiness | AgentSwitchboard | current ASB main | exact installed/upstream noninteractive/structured-event/config/plugin/provider identity capabilities proven or one typed blocker | (pending) |
+| ADP-02 Canonical adapter + config generator | AgentSwitchboard | ADP-00 + ADP-01 | P67 placeholder invocation writes one privacy-bounded neutral result; timeout/nonzero/missing-result fail closed | (blocked on ADP-01) |
+| ADP-03 Synthetic interoperability | ASB + Triage seam | ADP-02 | action/validation/subagent/parallel/error paths covered; no raw-text/gold leakage; cross-repo consumer contract green | (blocked on ADP-02) |
+| ADP-04 Observed adapter smoke | authorized provider runtime | ADP-03 | TC01 control/treatment pair same provider/agent/model; optional TC06 pair only with real >=2 worker capacity; no effectiveness verdict | (blocked on ADP-03) |
+| ADP-05 Gen2 16-run pilot | P67 model-runtime | ADP-04 | 16 classified paired runs, stable pair identity, zero forbidden escape/gold leakage, valid pilot aggregate/fixture disposition | (blocked on ADP-04) |
+| ADP-06 Sprint 3 handoff | P67 convergence | ADP-05 | existing 48-valid-run/blinded-decision dependency gate opens without changing frozen Gen2 treatment or thresholds | (blocked on ADP-05) |
 
 ### Canonical adapter invocation target
 

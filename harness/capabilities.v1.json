@@ -437,6 +437,36 @@
       "proof_ceiling": "Live public donor source-SHA resolution plus repository metadata projection, catalog floor-only receipts, fixture/on-demand catalog search, deterministic coverage routing, size-budget, lazy-load, CI drift, and generated-site proof; no donor quality, license-adaptation, browser-network, MCP, or automatic prompt-quality proof."
     },
     {
+      "id": "prompt-semantic-coverage",
+      "version": "1.0.0",
+      "status": "canonical",
+      "skill": ".ai/skills/prompt-semantic-coverage/SKILL.md",
+      "trigger_ids": [
+        "prompt-semantic-lifecycle-change"
+      ],
+      "operation": "Enforce PSC001-PSC016 non-weakening semantic coverage rules; validate capability profiles, migrations, and lifecycle transitions; prevent silent prompt behavior degradation through versioned capability truth.",
+      "inputs": [
+        "harness/contracts/prompt-semantic-coverage.v1.json",
+        "harness/prompt-topology/semantic-capability-catalog.v1.json",
+        "harness/prompt-topology/prompt-capability-profiles.v1.json",
+        "harness/prompt-topology/prompt-capability-migrations.v1.json",
+        "canonical prompt registry",
+        "candidate prompt draft or edit",
+        "topology prior-art evidence"
+      ],
+      "outputs": [
+        "semantic diff report",
+        "coverage/overlap analysis",
+        "migration disposition",
+        "PSC rule PASS/FAIL receipt"
+      ],
+      "implementation": {
+        "kind": "script",
+        "path": "scripts/validate_prompt_semantic_coverage.py"
+      },
+      "proof_ceiling": "Static semantic lifecycle enforcement and accepted profile regression protection; runtime model behavior remains separate proof."
+    },
+    {
       "id": "repo-native-update",
       "version": "1.0.0",
       "status": "canonical",

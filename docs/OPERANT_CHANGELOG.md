@@ -2,6 +2,25 @@
 
 Human-facing Operant releases. Git commit/artifact identity remains the forensic freshness proof.
 
+## 0.10.1 - 2026-09-19
+
+### Fixes / performance
+
+- fix(operant): escape release summary markdown backticks (#590) (`f8570e10`)
+
+## 0.10.0 - 2026-09-19
+
+### Features / breaking pre-1.0 changes
+
+- feat(prompt-kit): strengthen P56 context artifact recovery (`ee5052af`)
+- feat(prompt-kit): project use-case routing into ontology (`eaa5f072`)
+- feat(prompt-kit): show routed use cases in ontology (`3053b7dc`)
+
+### Fixes / performance
+
+- fix(prompt-kit): route artifact creation to P56 (`8760e100`)
+- fix(harness): normalize python→python3 across validators and hooks (#584) (`25a2b6b6`)
+
 ## 0.9.0 - 2026-09-18
 
 ### Features / breaking pre-1.0 changes

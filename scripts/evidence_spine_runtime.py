@@ -4,16 +4,54 @@ from __future__ import annotations
 
 import hashlib
 import json
+import re
 from pathlib import Path
 from typing import Any
 
 ROOT = Path(__file__).resolve().parents[1]
 CONTRACT_PATH = ROOT / "harness/contracts/evidence-spine-continuation.v1.json"
 DISPOSITIONS = ("continue", "recover", "complete", "blocked")
+ROUTE_RECEIPT_SCHEMA = "evidence-spine-route-receipt/v1"
+PROMPT_ID_RE = re.compile(r"^P[0-9]{2,4}$")
+BOUNDED_ID_RE = re.compile(r"^[A-Za-z0-9._:/-]+$")
+SHORT_TEXT_RE = re.compile(r"^[^\\r\\n]+$")
+MAX_SHORT_TEXT = 160
+ROUTE_PROVENANCE = {"observed", "declared", "inferred", "unknown"}
+ROUTE_FIELDS = {
+    "prompt_id",
+    "prompt_revision",
+    "destination",
+    "provenance",
+    "surface_id",
+    "invocation_id",
+    "run_id",
+}
 
 
 class ContinuationError(ValueError):
     pass
+
+
+def _require_short_text(value: Any, field: str) -> str:
+    if not isinstance(value, str):
+        raise ContinuationError(f"{field} must be a string")
+    if len(value) > MAX_SHORT_TEXT or not SHORT_TEXT_RE.fullmatch(value):
+        raise ContinuationError(
+            f"{field} must be 1..{MAX_SHORT_TEXT} characters without CR/LF"
+        )
+    normalized = value.strip()
+    if not normalized:
+        raise ContinuationError(
+            f"{field} must be 1..{MAX_SHORT_TEXT} characters without CR/LF"
+        )
+    return normalized
+
+
+def _require_bounded_id(value: Any, field: str) -> str:
+    normalized = _require_short_text(value, field)
+    if not BOUNDED_ID_RE.fullmatch(normalized):
+        raise ContinuationError(f"{field} must use bounded identifier characters")
+    return normalized
 
 
 def load_contract() -> dict[str, Any]:
@@ -109,6 +147,82 @@ def classify_route_destination(
         "provenance": provenance,
         "authoritative": provenance == "observed",
         "effective_destination": dest if provenance == "observed" else dest,
+    }
+
+
+def build_route_receipt(route: dict[str, Any]) -> dict[str, Any]:
+    """Build one actor-neutral, deterministic route receipt.
+
+    This is the P95-admitted Lane A seam. It records route provenance without
+    mutating route state, consulting outcome/recovery owners, or trusting a
+    caller-provided idempotency key/fingerprint.
+    """
+    if not isinstance(route, dict):
+        raise ContinuationError("route must be an object")
+
+    extras = sorted(set(route) - ROUTE_FIELDS)
+    if extras:
+        raise ContinuationError(f"route contains unsupported fields: {extras}")
+
+    prompt_id = route.get("prompt_id")
+    if not isinstance(prompt_id, str) or not PROMPT_ID_RE.fullmatch(prompt_id):
+        raise ContinuationError("prompt_id must match P[0-9]{2,4}")
+
+    prompt_revision = _require_short_text(route.get("prompt_revision"), "prompt_revision")
+    surface_id = _require_bounded_id(route.get("surface_id"), "surface_id")
+
+    provenance = route.get("provenance")
+    if not isinstance(provenance, str) or provenance not in ROUTE_PROVENANCE:
+        raise ContinuationError(f"invalid destination provenance: {provenance}")
+
+    destination = route.get("destination")
+    normalized_destination = (
+        _require_bounded_id(destination, "destination") if destination is not None else None
+    )
+
+    if provenance in {"observed", "declared"} and normalized_destination is None:
+        raise ContinuationError(f"{provenance} route requires destination")
+    if provenance == "unknown" and normalized_destination is not None:
+        raise ContinuationError("unknown route must not carry destination")
+
+    normalized_ids: dict[str, str | None] = {}
+    for field in ("invocation_id", "run_id"):
+        value = route.get(field)
+        normalized_ids[field] = (
+            _require_bounded_id(value, field) if value is not None else None
+        )
+
+    classified = classify_route_destination(
+        destination=normalized_destination,
+        provenance=provenance,
+    )
+    confidence = {
+        "observed": "authoritative",
+        "declared": "declared",
+        "inferred": "inferred",
+        "unknown": "unknown",
+    }[provenance]
+
+    semantic = {
+        "prompt_id": prompt_id,
+        "prompt_revision": prompt_revision,
+        "surface_id": surface_id,
+        "destination": classified["destination"],
+        "provenance": classified["provenance"],
+        "destination_confidence": confidence,
+        "authoritative": classified["authoritative"],
+        "effective_destination": (
+            classified["effective_destination"] if classified["authoritative"] else "unknown"
+        ),
+        "invocation_id": normalized_ids["invocation_id"],
+        "run_id": normalized_ids["run_id"],
+    }
+    semantic_sha256 = _fingerprint(semantic)
+    return {
+        "schema_version": ROUTE_RECEIPT_SCHEMA,
+        "route_id": f"route_{semantic_sha256}",
+        "semantic_sha256": semantic_sha256,
+        **semantic,
     }
 
 
