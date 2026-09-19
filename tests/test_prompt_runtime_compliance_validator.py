@@ -24,7 +24,48 @@ def finding(result: dict, rule_id: str) -> dict:
     return next(row for row in result["findings"] if row["rule_id"] == rule_id)
 
 
+def pilot_receipt() -> dict:
+    return {
+        "schema_version": "prompt-runtime-compliance-pilot-receipt/v1",
+        "pilot_id": "fixture-pilot",
+        "runtime_state": "UNPROVEN_RUNTIME",
+        "planned_runs": 5,
+        "valid_runs": 0,
+        "invalid_runs": 0,
+        "observed_runs": 0,
+        "blocker": "RUNTIME_UNAVAILABLE",
+        "runs": [],
+        "proof_ceiling": "Repository harness evidence only; target runtime remains unobserved.",
+    }
+
+
 class PromptRuntimeComplianceValidatorTests(unittest.TestCase):
+    def test_pilot_receipt_schema_is_supported_by_registered_artifact_validator(self) -> None:
+        artifacts = json.loads((ROOT / "harness" / "artifacts.v1.json").read_text(encoding="utf-8"))
+        artifact = next(
+            item for item in artifacts["artifacts"]
+            if item["id"] == "prompt-runtime-compliance-evidence"
+        )
+        self.assertIn(artifact["schema"], validator.SUPPORTED_SCHEMA_VERSIONS)
+        result = validator.validate_pilot_receipt(pilot_receipt())
+        self.assertEqual(result["overall_result"], "PASS")
+        self.assertEqual(result["receipt_schema"], artifact["schema"])
+
+    def test_pilot_receipt_count_mismatch_fails_closed(self) -> None:
+        receipt = pilot_receipt()
+        receipt["valid_runs"] = 1
+        result = validator.validate_pilot_receipt(receipt)
+        self.assertEqual(result["overall_result"], "FAIL")
+        self.assertNotEqual(validator.exit_code(result), 0)
+
+    def test_validate_path_dispatches_pilot_receipt_schema(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp) / "pilot-receipt.json"
+            path.write_text(json.dumps(pilot_receipt()), encoding="utf-8")
+            result = validator.validate_path(path)
+        self.assertEqual(result["schema_version"], "prompt-runtime-compliance-pilot-validation/v1")
+        self.assertEqual(result["overall_result"], "PASS")
+
     def test_positive_contract_fixture_passes_and_covers_every_rule(self) -> None:
         result = validator.validate_receipt(load_positive())
         self.assertEqual(result["overall_result"], "PASS")
