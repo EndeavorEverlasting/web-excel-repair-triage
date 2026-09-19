@@ -711,13 +711,22 @@ def validate_capabilities_and_triggers() -> tuple[dict[str, Any], dict[str, Any]
                 hook.get("workflow_entrypoints"),
                 f"use_case_hook.{hook_id}.workflow_entrypoints",
             )
+            reverse_entrypoints = require_string_list(
+                hook.get("reverse_entrypoints"),
+                f"use_case_hook.{hook_id}.reverse_entrypoints",
+            )
             proof_resources = require_string_list(
                 hook.get("proof_resources"),
                 f"use_case_hook.{hook_id}.proof_resources",
             )
-            if not set(workflow_entrypoints).issubset(set(implementation_resources) | set(proof_resources)):
+            participants = set(implementation_resources) | set(proof_resources)
+            if not set(workflow_entrypoints).issubset(participants):
                 raise HarnessValidationError(
                     f"use-case hook workflow entrypoints must resolve to participating resources: {hook_id}"
+                )
+            if not set(reverse_entrypoints).issubset(participants):
+                raise HarnessValidationError(
+                    f"use-case hook reverse entrypoints must resolve to participating resources: {hook_id}"
                 )
             for alias in aliases:
                 key = alias.casefold().strip()
@@ -731,10 +740,11 @@ def validate_capabilities_and_triggers() -> tuple[dict[str, Any], dict[str, Any]
             for relative_path in implementation_resources + proof_resources:
                 require_file(relative_path)
                 require_tracked(relative_path)
+            for relative_path in reverse_entrypoints:
                 previous = reverse_resource_owner.get(relative_path)
                 if previous is not None and previous != hook_id:
                     raise HarnessValidationError(
-                        f"use-case resource has ambiguous reverse ownership: "
+                        f"use-case reverse entrypoint has ambiguous ownership: "
                         f"{relative_path} -> {previous}, {hook_id}"
                     )
                 reverse_resource_owner[relative_path] = hook_id
