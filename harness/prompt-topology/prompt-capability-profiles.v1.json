@@ -1,0 +1,14 @@
+{
+  "schema_version": "prompt-capability-profiles/v1",
+  "profiles_id": "prompt-capability-profiles",
+  "purpose": "Accepted capability profiles for each canonical prompt, forming the regression prior for non-weakening rules.",
+  "established_at": "2026-09-19",
+  "status": "sprint0_floor",
+  "baseline": {
+    "completeness": "incomplete",
+    "reason": "Sprint 0 establishes the profiles contract and schema only. Sprint 1A populates the accepted baseline matrix.",
+    "strict_enforcement_active": false
+  },
+  "profiles": [],
+  "note": "Empty until Sprint 1A. PSC001 PROFILE_COVERAGE_COMPLETE is not yet satisfied; strict non-weakening enforcement cannot activate until every current prompt has exactly one ACCEPTED profile."
+}

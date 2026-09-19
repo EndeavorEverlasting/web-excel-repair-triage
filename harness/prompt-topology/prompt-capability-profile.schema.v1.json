@@ -1,0 +1,129 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://endeavoreverlasting.github.io/schemas/prompt-capability-profile.v1.json",
+  "title": "Prompt Capability Profile",
+  "description": "A versioned record of semantic capabilities provided by one canonical prompt.",
+  "type": "object",
+  "required": [
+    "prompt_id",
+    "profile_version",
+    "profile_sha256",
+    "canonical_prompt_hash",
+    "acceptance_commit",
+    "direct_assignments",
+    "inherited_sources",
+    "semantic_dependency_fingerprint",
+    "evidence_refs",
+    "profile_status"
+  ],
+  "properties": {
+    "prompt_id": {
+      "type": "string",
+      "pattern": "^P\\d{2,4}$",
+      "description": "Stable prompt identifier (e.g., P07, P13)"
+    },
+    "profile_version": {
+      "type": "integer",
+      "minimum": 1,
+      "description": "Sequential version number for this prompt's profile history"
+    },
+    "profile_sha256": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$",
+      "description": "SHA256 hash of this complete profile for integrity verification"
+    },
+    "canonical_prompt_hash": {
+      "type": "string",
+      "description": "Hash binding this profile to the exact canonical prompt record"
+    },
+    "acceptance_commit": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{7,40}$",
+      "description": "Git commit SHA where this profile was accepted"
+    },
+    "direct_assignments": {
+      "type": "array",
+      "description": "Capabilities directly owned by this prompt's canonical body",
+      "items": {
+        "type": "object",
+        "required": ["capability_id", "presence", "ownership", "capability_relation", "delivery_source"],
+        "properties": {
+          "capability_id": {
+            "type": "string",
+            "description": "Stable capability identifier from the catalog"
+          },
+          "presence": {
+            "enum": ["NONE", "AWARE", "SUPPORT", "REQUIRED"],
+            "description": "Level of capability presence in this prompt"
+          },
+          "ownership": {
+            "enum": ["NONE", "SECONDARY", "PRIMARY"],
+            "description": "Ownership responsibility for this capability"
+          },
+          "capability_relation": {
+            "enum": ["IMPLEMENTS", "ROUTES_TO", "TESTS", "GUARDS", "FORBIDDEN"],
+            "description": "How this prompt relates to the capability"
+          },
+          "delivery_source": {
+            "enum": ["CANONICAL_BODY", "SHARED_POLICY", "COMPILER_OVERLAY", "ROUTED_OWNER", "TEST_GUARD"],
+            "description": "Where this capability originates"
+          },
+          "evidence_refs": {
+            "type": "array",
+            "items": {"type": "string"},
+            "description": "Repository proof references for material assignments"
+          },
+          "rationale": {
+            "type": "string",
+            "description": "Required explanation for PRIMARY/REQUIRED/FORBIDDEN assignments"
+          }
+        }
+      }
+    },
+    "inherited_sources": {
+      "type": "array",
+      "description": "Versioned shared policy/compiler sources this profile inherits from",
+      "items": {
+        "type": "object",
+        "required": ["source_id", "source_version", "source_hash"],
+        "properties": {
+          "source_id": {
+            "type": "string",
+            "description": "Stable identifier for the inherited source"
+          },
+          "source_version": {
+            "type": "string",
+            "description": "Version of the inherited source"
+          },
+          "source_hash": {
+            "type": "string",
+            "description": "Content hash of the inherited source for integrity"
+          }
+        }
+      }
+    },
+    "semantic_dependency_fingerprint": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$",
+      "description": "SHA256 of combined direct + inherited semantic dependencies"
+    },
+    "evidence_refs": {
+      "type": "array",
+      "items": {"type": "string"},
+      "description": "Repository-owned proof references for this profile"
+    },
+    "profile_status": {
+      "enum": ["PROVISIONAL", "REVIEW_READY", "ACCEPTED", "RETIRED"],
+      "description": "Lifecycle status of this profile"
+    },
+    "prior_profile_ref": {
+      "type": "object",
+      "description": "Reference to previous profile version (required when profile_version > 1)",
+      "required": ["profile_version", "profile_sha256"],
+      "properties": {
+        "profile_version": {"type": "integer", "minimum": 1},
+        "profile_sha256": {"type": "string", "pattern": "^[a-f0-9]{64}$"}
+      }
+    }
+  }
+}

@@ -8,6 +8,7 @@
     "authority": "git"
   },
   "canonical_body_sources": [
+    {"path": "docs/prompts.json", "git_blob_sha1": "0b5ff65078ab2bc0fdd70dd52a199e440ccbe6c7", "baseline_size_bytes": 328661},
     {"path": "registry/prompts/ai-engineering-level-up-prompts.v1.json", "git_blob_sha1": "f25d7fd9bb09b42d022283aa33a24b6d43af67c7", "baseline_size_bytes": 60055},
     {"path": "registry/prompts/correspondence-prompts.v1.json", "git_blob_sha1": "07df19ffcbe48d9b92af346a679799ac1d99510a", "baseline_size_bytes": 17432},
     {"path": "registry/prompts/management-operations-prompts.v1.json", "git_blob_sha1": "fbcfde1ba452c42388d74f61b1f8a8392424f7cf", "baseline_size_bytes": 139881},
