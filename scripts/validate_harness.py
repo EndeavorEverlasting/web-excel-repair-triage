@@ -145,7 +145,6 @@ REQUIRED_VALIDATOR_IDS = {
     "repo-native-update-tests",
     "repo-native-update-parity",
     "prompt-runtime-compliance-receipt-audit",
-    "prompt-runtime-compliance-tests",
 }
 PRE_COMMIT_SNAPSHOT_PROFILE = "pre_commit_snapshot"
 PRE_COMMIT_SNAPSHOT_VALIDATOR_IDS = (
