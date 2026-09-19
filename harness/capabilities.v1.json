@@ -31,7 +31,7 @@
     },
     {
       "id": "skill-evaluation",
-      "version": "1.0.0",
+      "version": "1.1.0",
       "status": "canonical",
       "skill": ".ai/skills/skill-evaluation/SKILL.md",
       "trigger_ids": [
@@ -57,54 +57,85 @@
         "prompt_id": "P62"
       },
       "proof_ceiling": "Depends on the eval lanes actually executed; static, model, runtime, and production proof must remain distinct.",
-      "use_case_hooks": [
+      "use_cases": [
         {
           "id": "prompt-strengthening-runtime-compliance",
+          "originating_user_intent": "Strengthen Prompt Kit execution behavior and prove execution-boundary continuation, proof-state, regression, and runtime-compliance behavior through the existing P67 pilot without inventing a new prompt identity.",
           "intent_aliases": [
             "prompt strengthening sprint",
             "prove strengthened Prompt Kit execution behavior",
             "runtime compliance for Prompt Kit execution contracts",
             "verify prompt execution-boundary continuation proof-state and regression behavior"
           ],
-          "trigger_id": "skill-quality-unproven",
+          "primary_trigger_id": "skill-quality-unproven",
           "workflow_id": "skill-evaluation",
-          "implementation_resources": [
-            "harness/evals/PROMPT_RUNTIME_COMPLIANCE_PILOT_PLAN.md",
-            "harness/evals/runtime-compliance/README.md",
-            "harness/contracts/prompt-runtime-compliance.v1.json",
-            "harness/contracts/prompt-runtime-compliance-receipt.schema.v1.json",
-            "harness/evals/runtime-compliance/scripts/pilot.py",
-            "harness/evals/runtime-compliance/scripts/runtime_adapter.py",
-            "harness/evals/runtime-compliance/scripts/linkage.py",
-            "harness/evals/runtime-compliance/fixtures/receipt-corpus.v1.json"
+          "skill": ".ai/skills/skill-evaluation/SKILL.md",
+          "participants": [
+            {
+              "role": "plan",
+              "path": "harness/evals/PROMPT_RUNTIME_COMPLIANCE_PILOT_PLAN.md"
+            },
+            {
+              "role": "operator-map",
+              "path": "harness/evals/runtime-compliance/README.md"
+            },
+            {
+              "role": "contract",
+              "path": "harness/contracts/prompt-runtime-compliance.v1.json"
+            },
+            {
+              "role": "receipt-schema",
+              "path": "harness/contracts/prompt-runtime-compliance-receipt.schema.v1.json"
+            },
+            {
+              "role": "implementation",
+              "path": "harness/evals/runtime-compliance/scripts/pilot.py"
+            },
+            {
+              "role": "runtime-adapter",
+              "path": "harness/evals/runtime-compliance/scripts/runtime_adapter.py"
+            },
+            {
+              "role": "linkage",
+              "path": "harness/evals/runtime-compliance/scripts/linkage.py"
+            },
+            {
+              "role": "evidence-artifact",
+              "path": "harness/evals/runtime-compliance/fixtures/receipt-corpus.v1.json"
+            },
+            {
+              "role": "validator",
+              "path": "scripts/validate_prompt_runtime_compliance_receipt.py"
+            },
+            {
+              "role": "regression-test-validator",
+              "path": "tests/test_prompt_runtime_compliance_validator.py"
+            },
+            {
+              "role": "regression-test-runner",
+              "path": "tests/test_prompt_runtime_compliance_runner.py"
+            },
+            {
+              "role": "regression-test-corpus",
+              "path": "tests/test_prompt_runtime_compliance_receipt_corpus.py"
+            },
+            {
+              "role": "regression-test-linkage",
+              "path": "tests/test_prompt_runtime_compliance_linkage.py"
+            }
           ],
-          "proof_resources": [
-            "scripts/validate_prompt_runtime_compliance_receipt.py",
-            "tests/test_prompt_runtime_compliance_validator.py",
-            "tests/test_prompt_runtime_compliance_runner.py",
-            "tests/test_prompt_runtime_compliance_receipt_corpus.py",
-            "tests/test_prompt_runtime_compliance_linkage.py"
+          "expected_artifacts": [
+            "prompt-runtime-compliance-evidence",
+            "Outputs/repository-ai-evals/runtime-compliance/pilot-receipt.json"
           ],
-          "proof_ceiling": "Repository contract, fixture, runner, linkage, and deterministic receipt-validation proof until a real external-agent adapter produces observed runtime evidence.",
-          "workflow_entrypoints": [
-            "harness/evals/PROMPT_RUNTIME_COMPLIANCE_PILOT_PLAN.md",
-            "harness/evals/runtime-compliance/scripts/pilot.py",
-            "scripts/validate_prompt_runtime_compliance_receipt.py"
+          "artifact_ids": [
+            "prompt-runtime-compliance-evidence"
           ],
-          "reverse_entrypoints": [
-            "harness/evals/PROMPT_RUNTIME_COMPLIANCE_PILOT_PLAN.md",
-            "harness/evals/runtime-compliance/README.md",
-            "harness/evals/runtime-compliance/scripts/pilot.py",
-            "harness/evals/runtime-compliance/scripts/runtime_adapter.py",
-            "harness/evals/runtime-compliance/scripts/linkage.py",
-            "harness/evals/runtime-compliance/fixtures/receipt-corpus.v1.json",
-            "scripts/validate_prompt_runtime_compliance_receipt.py"
-          ],
-          "expected_artifact_id": "prompt-runtime-compliance-evidence",
           "validator_ids": [
             "prompt-runtime-compliance-receipt-audit",
             "prompt-runtime-compliance-tests"
-          ]
+          ],
+          "proof_ceiling": "Bidirectional repository routing plus deterministic runtime-compliance contract, runner, fixture, linkage, and receipt-validation proof on the tested commit; observed external-agent behavior remains a separate runtime gate."
         }
       ]
     },
@@ -170,7 +201,7 @@
     },
     {
       "id": "harness-infrastructure-maintenance",
-      "version": "1.2.0",
+      "version": "1.3.0",
       "status": "canonical",
       "skill": ".ai/skills/harness-infrastructure-maintenance/SKILL.md",
       "trigger_ids": [
@@ -192,7 +223,10 @@
         "focused operator reports including harness/reports/PROMPT_KIT_ORDER_NAVIGATION.md",
         ".githooks/",
         ".github/workflows/harness-contract.yml",
-        "existing harness failures, product-gap evidence, PR state, merge intent, and merge authority"
+        "existing harness failures, product-gap evidence, PR state, merge intent, and merge authority",
+        "harness/contracts/execution-boundary-enforcement.v1.json",
+        "harness/contracts/execution-boundary-taxonomy.v1.json",
+        "harness/evals/execution-boundaries/boundary-regression-matrix.v1.json"
       ],
       "outputs": [
         "tracked canonical harness repairs",
@@ -207,7 +241,65 @@
         "kind": "script",
         "path": "scripts/validate_harness.py"
       },
-      "proof_ceiling": "Static repository, contract, source-gap, and CI harness proof on the tested commit; actual provider merges, product runtime, browser/mobile ergonomics, GUI, protected-target, and production proof remain separate."
+      "proof_ceiling": "Static repository, contract, source-gap, and CI harness proof on the tested commit; actual provider merges, product runtime, browser/mobile ergonomics, GUI, protected-target, and production proof remain separate.",
+      "use_cases": [
+        {
+          "id": "execution-boundary-continuation",
+          "originating_user_intent": "Agents stop at material or arbitrary boundaries instead of reporting the boundary, preserving the requested outcome, and continuing through the smallest bounded recovery sprint.",
+          "intent_aliases": [
+            "agents stop at arbitrary boundaries instead of continuing",
+            "turn arbitrary boundaries into bounded sprints",
+            "why did the agent stop without reporting the boundary",
+            "classification became a stopping condition"
+          ],
+          "primary_trigger_id": "harness-infrastructure-change",
+          "workflow_id": "harness-infrastructure",
+          "skill": ".ai/skills/harness-infrastructure-maintenance/SKILL.md",
+          "participants": [
+            {
+              "role": "contract",
+              "path": "harness/contracts/execution-boundary-enforcement.v1.json"
+            },
+            {
+              "role": "taxonomy",
+              "path": "harness/contracts/execution-boundary-taxonomy.v1.json"
+            },
+            {
+              "role": "prompt-semantics",
+              "path": "harness/prompt-compilation/semantics/P07.json"
+            },
+            {
+              "role": "implementation",
+              "path": "scripts/execution_boundary_engine.py"
+            },
+            {
+              "role": "shared-policy",
+              "path": "registry/prompts/actionable-next-step-policy.v1.json"
+            },
+            {
+              "role": "evidence-artifact",
+              "path": "harness/evals/execution-boundaries/boundary-regression-matrix.v1.json"
+            },
+            {
+              "role": "validator",
+              "path": "scripts/validate_execution_boundary_enforcement.py"
+            },
+            {
+              "role": "regression-test",
+              "path": "tests/test_execution_boundary_enforcement_prompt.py"
+            }
+          ],
+          "expected_artifacts": [
+            "typed primary_recovery_sprint decision from scripts/execution_boundary_engine.py",
+            "harness/evals/execution-boundaries/boundary-regression-matrix.v1.json"
+          ],
+          "validator_ids": [
+            "execution-boundary-enforcement-audit",
+            "execution-boundary-enforcement-tests"
+          ],
+          "proof_ceiling": "Bidirectional repository routing plus deterministic execution-boundary contract/engine/regression proof on the tested commit; downstream model/host obedience and hard-termination supervision remain runtime proof."
+        }
+      ]
     },
     {
       "id": "prompt-kit-browser-proof-scratch-cleanup",
