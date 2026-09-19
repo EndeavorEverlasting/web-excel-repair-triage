@@ -39,6 +39,7 @@ Machine control-plane entry points are `harness/manifest.v1.json`, `harness/work
 | Prompt Kit build | `scripts/build_prompt_kit_registry.py` |
 | Prompt Kit generator selection | `generator_selection_gui.py` / registered launcher |
 | harness integrity | `scripts/validate_harness.py` |
+| agent-stop / boundary-to-sprint repair | `TRIGGERS.md` → `harness-infrastructure-change` → `harness/capabilities.v1.json` use case `execution-boundary-continuation` |
 | context architecture | `scripts/validate_context_architecture.py` |
 | prompt language | `scripts/evaluate_prompt_language.py` |
 | workflow detail | selected anchor in `WORKFLOW.md` or `harness/workflows.v1.json` |
