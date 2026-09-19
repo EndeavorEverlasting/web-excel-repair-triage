@@ -239,7 +239,7 @@ def validate_manifest() -> dict[str, Any]:
         require_tracked(relative_path)
     order = require_string_list(manifest.get("validation_order"), "manifest.validation_order", 6)
     if order[0] != (
-        "python -m py_compile scripts/validate_lua_harness.py tests/test_lua_harness_contract.py"
+        "python3 -m py_compile scripts/validate_lua_harness.py tests/test_lua_harness_contract.py"
     ):
         raise LuaHarnessValidationError("Lua validation must begin with compilation")
     if order[-1] != "git diff --check":
@@ -385,7 +385,7 @@ def validate_root_registration() -> None:
         "validator": "scripts/validate_lua_harness.py",
         "contract_tests": "tests/test_lua_harness_contract.py",
         "workflow": "WORKFLOW.md#c-harness-infrastructure-change",
-        "harness_gate": "python scripts/validate_lua_harness.py --output Outputs/lua-embedding-readiness.json --summary",
+        "harness_gate": "python3 scripts/validate_lua_harness.py --output Outputs/lua-embedding-readiness.json --summary",
         "domain_manifest": "harness/lua/manifest.v1.json",
         "skill": ".ai/skills/lua-embedding-readiness/SKILL.md",
         "operator_report": "harness/lua/reports/CURRENT_STATE.md",

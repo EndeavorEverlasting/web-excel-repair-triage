@@ -34,9 +34,9 @@ jobs:
         with:
           python-version: "3.11"
       - name: Compile Lua harness validator and tests
-        run: python -m py_compile scripts/validate_lua_harness.py tests/test_lua_harness_contract.py
+        run: python3 -m py_compile scripts/validate_lua_harness.py tests/test_lua_harness_contract.py
       - name: Validate Lua embedding readiness
-        run: python scripts/validate_lua_harness.py --output "$RUNNER_TEMP/lua-embedding-readiness.json" --summary
+        run: python3 scripts/validate_lua_harness.py --output "$RUNNER_TEMP/lua-embedding-readiness.json" --summary
       - name: Upload Lua embedding readiness report
         uses: actions/upload-artifact@v4
         with:
@@ -44,12 +44,12 @@ jobs:
           path: ${{ runner.temp }}/lua-embedding-readiness.json
           if-no-files-found: error
       - name: Run Lua harness contract tests
-        run: python -m unittest tests.test_lua_harness_contract -v
+        run: python3 -m unittest tests.test_lua_harness_contract -v
       - name: Validate root harness integration
         run: |
-          python scripts/validate_harness.py --report "$RUNNER_TEMP/harness-completeness-lua.json"
-          python -m unittest tests.test_harness_contract -v
+          python3 scripts/validate_harness.py --report "$RUNNER_TEMP/harness-completeness-lua.json"
+          python3 -m unittest tests.test_harness_contract -v
       - name: Validate artifact hygiene
-        run: python -m triage.gitignore_hygiene
+        run: python3 -m triage.gitignore_hygiene
       - name: Check patch hygiene
         run: git diff --check origin/${{ github.base_ref || 'main' }}...HEAD

@@ -139,9 +139,9 @@ class StagedValidatorCliTests(unittest.TestCase):
 class HookAndRegistrySafetyTests(unittest.TestCase):
     def test_pre_commit_runs_path_gate_before_staged_tree_validation(self) -> None:
         hook = (ROOT / ".githooks" / "pre-commit").read_text(encoding="utf-8")
-        gate = "python scripts/validate_staged_artifacts.py"
+        gate = "python3 scripts/validate_staged_artifacts.py"
         checkout = "git checkout-index"
-        profile = "python scripts/run_validator_profile.py --profile pre_commit_snapshot"
+        profile = "python3 scripts/run_validator_profile.py --profile pre_commit_snapshot"
         cached_diff = "git diff --cached --check"
         self.assertIn(gate, hook)
         self.assertIn(checkout, hook)
@@ -157,7 +157,7 @@ class HookAndRegistrySafetyTests(unittest.TestCase):
         validators = {item["id"]: item for item in registry["validators"]}
         self.assertEqual(
             validators["staged-artifact-hygiene"]["command"],
-            "python scripts/validate_staged_artifacts.py",
+            "python3 scripts/validate_staged_artifacts.py",
         )
         self.assertTrue(validators["staged-artifact-hygiene"]["blocking"])
         self.assertIn(

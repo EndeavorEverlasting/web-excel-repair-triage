@@ -3,7 +3,7 @@ set -eu
 
 # Path-only staged gate: rejects generated/runtime/secret/local-junk paths
 # before the staged tree is materialized. It never reads staged file contents.
-python scripts/validate_staged_artifacts.py
+python3 scripts/validate_staged_artifacts.py
 
 staged_tree="$(mktemp -d "${TMPDIR:-/tmp}/web-excel-harness-index.XXXXXX")"
 PROFILE_REPORT="${TMPDIR:-/tmp}/web-excel-pre-commit-snapshot-profile.json"
@@ -12,6 +12,6 @@ trap 'rm -rf "$staged_tree"' EXIT HUP INT TERM
 git checkout-index --all --prefix="$staged_tree/"
 (
   cd "$staged_tree"
-  python scripts/run_validator_profile.py --profile pre_commit_snapshot --report "$PROFILE_REPORT"
+  python3 scripts/run_validator_profile.py --profile pre_commit_snapshot --report "$PROFILE_REPORT"
 )
 git diff --cached --check

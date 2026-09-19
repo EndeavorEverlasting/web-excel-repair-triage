@@ -113,7 +113,7 @@ class RequiredCheckProgramCallStackTests(unittest.TestCase):
             SNAPSHOT_PROFILE,
         )
         self.assertIn(
-            f"python scripts/run_validator_profile.py --profile {SNAPSHOT_PROFILE}",
+            f"python3 scripts/run_validator_profile.py --profile {SNAPSHOT_PROFILE}",
             hook,
         )
         validators = {item["id"]: item for item in registry["validators"]}
