@@ -407,7 +407,7 @@
       "command": "python scripts/validate_prompt_runtime_compliance_receipt.py --summary",
       "blocking": true,
       "output": "process log",
-      "proof_ceiling": "Deterministic semantic validation of the canonical contract receipt fixture; no external-agent runtime claim."
+      "proof_ceiling": "Deterministic semantic validation of per-run receipts plus structural/count validation of pilot receipts; no external-agent runtime claim."
     },
     {
       "id": "prompt-runtime-compliance-tests",
