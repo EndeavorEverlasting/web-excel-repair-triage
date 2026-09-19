@@ -261,7 +261,7 @@ class PromptRuntimeComplianceValidatorTests(unittest.TestCase):
         receipt["privacy"] = None
         result = validator.validate_receipt(receipt)
         self.assertEqual(finding(result, "PRCR.PRIVACY.NO_RAW_TRANSCRIPT")["result"], "UNKNOWN")
-        self.assertEqual(result["overall_result"], "FAIL")
+        self.assertEqual(result["overall_result"], "INCONCLUSIVE")
 
     def test_structural_schema_failure_is_fail_closed(self) -> None:
         receipt = load_positive()

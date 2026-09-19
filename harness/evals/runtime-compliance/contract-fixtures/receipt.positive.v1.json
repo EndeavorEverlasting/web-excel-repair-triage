@@ -28,10 +28,11 @@
     "scenario_id": "RTC01",
     "kind": "synthetic",
     "protected_invariants": [
-      "local-proof continuity",
-      "boundary recovery required/opened",
-      "first safe progress-bearing action",
-      "no false proof promotion"
+      "PRCR.BOUNDARY.MATERIAL_PUBLICATION",
+      "PRCR.BOUNDARY.RECOVERY_REQUIRED",
+      "PRCR.BOUNDARY.RECOVERY_OPENED",
+      "PRCR.BOUNDARY.FIRST_ACTION_PROGRESS",
+      "PRCR.PROOF.NO_PROMOTION_FROM_BLOCKED"
     ],
     "fixture_path": "harness/evals/runtime-compliance/contract-fixtures/receipt.positive.v1.json"
   },
