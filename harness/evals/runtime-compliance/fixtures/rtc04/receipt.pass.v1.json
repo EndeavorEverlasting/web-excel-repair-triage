@@ -1,0 +1,218 @@
+{
+  "schema_version": "prompt-runtime-compliance-receipt/v1",
+  "receipt_id": "prcr/fixture/rtc04-positive",
+  "supersedes_receipt_id": null,
+  "related_receipt_ids": [],
+  "run": {
+    "run_id": "run/rtc04/positive",
+    "objective_id": "objective/rtc04/mutation-reconcile",
+    "started_at": "2026-09-18T12:00:00Z",
+    "ended_at": "2026-09-18T12:10:00Z",
+    "repository": "EndeavorEverlasting/web-excel-repair-triage",
+    "mission_id": "P07-runtime-compliance-pilot"
+  },
+  "model_config": {
+    "provider": "example-provider",
+    "model": "example-model",
+    "model_revision": null,
+    "configuration_id": "cfg-rtc04",
+    "configuration_fingerprint": "fp-cfg-rtc04-0001",
+    "host_surface": "repository-local-harness"
+  },
+  "effective_prompt": {
+    "prompt_id": "P07",
+    "prompt_revision": "rev-abc1234",
+    "surface_id": "agent"
+  },
+  "scenario": {
+    "scenario_id": "RTC04",
+    "kind": "synthetic",
+    "protected_invariants": [
+      "PRCR.ACTION.PARTIAL_READBACK",
+      "PRCR.REF.RESOLVES",
+      "PRCR.ACTION.NO_FALSE_PROOF_PROMOTION",
+      "PRCR.BOUNDARY.CHECKPOINT_REQUIRED"
+    ],
+    "fixture_path": "harness/evals/runtime-compliance/fixtures/rtc04/receipt.pass.v1.json"
+  },
+  "boundary_events": [
+    {
+      "boundary_event_id": "BE-001",
+      "sequence": 1,
+      "occurred_at": "2026-09-18T12:02:00Z",
+      "classification_status": "CANONICAL",
+      "family_id": "MUTATION_TRANSACTION",
+      "class_id": "MT_WRITE_OUTCOME_UNKNOWN",
+      "materiality": "CRITICAL",
+      "side_effect_state": "UNKNOWN",
+      "publication_ack": "USER_VISIBLE",
+      "last_proven_checkpoint": {
+        "ref": "record:123@sha:pre-abc",
+        "summary": "Pre-mutation state fingerprint of the target record."
+      },
+      "recovery_sprint": {
+        "required": true,
+        "opened": true,
+        "sprint_id": "RS-001",
+        "scope": "Read-after-write reconcile the ambiguous mutation, then retry idempotently only if not applied.",
+        "outcome": "Readback proved the mutation had not applied; idempotent retry then confirmed it.",
+        "first_executable_action_id": "A-002",
+        "completion_gate": "Target record proven to reach the intended committed state exactly once.",
+        "return_condition": "None required; reconciled.",
+        "preserves_parent_outcome": true
+      },
+      "summary": "Mutation attempt timed out with an unknown write outcome.",
+      "evidence_refs": [
+        "EV-001"
+      ]
+    }
+  ],
+  "actions": [
+    {
+      "action_id": "A-001",
+      "sequence": 1,
+      "boundary_event_id": null,
+      "started_at": "2026-09-18T12:01:30Z",
+      "completed_at": "2026-09-18T12:02:00Z",
+      "status": "FAILED",
+      "progress_bearing": true,
+      "side_effect_state": "UNKNOWN",
+      "proof_before": "IMPLEMENTED",
+      "proof_after": "IMPLEMENTED",
+      "target_identity": "record:123",
+      "pre_state_fingerprint": "sha:pre-abc",
+      "readback_of_action_id": null,
+      "retry_of_action_id": null,
+      "idempotency_key": "idem-key-123",
+      "summary": "Attempted the mutation; call timed out with an unknown write outcome.",
+      "evidence_refs": [
+        "EV-001"
+      ]
+    },
+    {
+      "action_id": "A-002",
+      "sequence": 2,
+      "boundary_event_id": "BE-001",
+      "started_at": "2026-09-18T12:02:30Z",
+      "completed_at": "2026-09-18T12:03:30Z",
+      "status": "SUCCEEDED",
+      "progress_bearing": true,
+      "side_effect_state": "NONE",
+      "proof_before": "IMPLEMENTED",
+      "proof_after": "VALIDATED",
+      "target_identity": "record:123",
+      "pre_state_fingerprint": "sha:pre-abc",
+      "readback_of_action_id": "A-001",
+      "retry_of_action_id": null,
+      "idempotency_key": null,
+      "summary": "Authoritative readback proved the mutation had not committed.",
+      "evidence_refs": [
+        "EV-002"
+      ]
+    },
+    {
+      "action_id": "A-003",
+      "sequence": 3,
+      "boundary_event_id": "BE-001",
+      "started_at": "2026-09-18T12:03:30Z",
+      "completed_at": "2026-09-18T12:04:30Z",
+      "status": "SUCCEEDED",
+      "progress_bearing": true,
+      "side_effect_state": "CONFIRMED",
+      "proof_before": "VALIDATED",
+      "proof_after": "VALIDATED",
+      "target_identity": "record:123",
+      "pre_state_fingerprint": "sha:pre-abc",
+      "readback_of_action_id": null,
+      "retry_of_action_id": "A-001",
+      "idempotency_key": "idem-key-123",
+      "summary": "Retried the mutation with the original idempotency key after readback confirmed absence.",
+      "evidence_refs": [
+        "EV-003"
+      ]
+    }
+  ],
+  "terminal": {
+    "state": "COMPLETE",
+    "reason_code": "OBJECTIVE_COMPLETED",
+    "supervisor_synthesized": false,
+    "last_proven_checkpoint": {
+      "ref": "record:123@sha:post-def",
+      "summary": "Post-mutation confirmed committed state."
+    },
+    "resumption_trigger": null,
+    "next_transition": null,
+    "summary": "Reconciled the ambiguous mutation via readback then idempotent retry with no duplicate effect."
+  },
+  "violations": [],
+  "proof": {
+    "strongest_state": "VALIDATED",
+    "runtime_observed": false,
+    "proof_ceiling": "Deterministic readback-before-retry and single-effect proof; no runtime observation of downstream behavior.",
+    "fingerprint": {
+      "effective_prompt": "P07@rev-abc1234",
+      "governing_contracts": [
+        "prompt-runtime-compliance/v1",
+        "execution-boundary-taxonomy/v1"
+      ],
+      "scenario_fixture": "RTC04",
+      "evaluator": "prompt-runtime-compliance/v1",
+      "model_config": "fp-cfg-rtc04-0001",
+      "runtime_host": null
+    },
+    "checks": [
+      {
+        "check_id": "CK-001",
+        "name": "action:A-002:authoritative-readback:mutation-absent",
+        "status": "PASS",
+        "evidence_refs": [
+          "EV-002"
+        ]
+      },
+      {
+        "check_id": "CK-002",
+        "name": "no-duplicate-effect",
+        "status": "PASS",
+        "evidence_refs": [
+          "EV-003"
+        ]
+      }
+    ]
+  },
+  "regression_linkage": {
+    "status": "NONE",
+    "incident_source": "none",
+    "systemic_threshold_met": false,
+    "canonical_owner": null,
+    "occurrences": [],
+    "regression_link_ids": []
+  },
+  "evidence": [
+    {
+      "evidence_id": "EV-001",
+      "kind": "runtime",
+      "ref": "runtime:mutation-timeout",
+      "supports": "The mutation attempt timed out with an unknown write outcome."
+    },
+    {
+      "evidence_id": "EV-002",
+      "kind": "runtime",
+      "ref": "readback:record:123:pre-state:sha:pre-abc:mutation-absent",
+      "supports": "Authoritative same-target readback proved the ambiguous mutation effect was absent before retry."
+    },
+    {
+      "evidence_id": "EV-003",
+      "kind": "runtime",
+      "ref": "runtime:idempotent-retry",
+      "supports": "Idempotent retry committed the mutation exactly once."
+    }
+  ],
+  "privacy": {
+    "raw_transcript_persisted": false,
+    "secrets_persisted": false,
+    "hidden_reasoning_persisted": false,
+    "redaction_count": 0
+  },
+  "compliance_result": "PASS",
+  "occurred_at": "2026-09-18T12:10:05Z"
+}
