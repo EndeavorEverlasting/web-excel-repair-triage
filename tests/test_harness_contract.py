@@ -251,6 +251,18 @@ class HarnessContractTests(unittest.TestCase):
             artifact["canonical_path"],
             "Outputs/repository-ai-evals/runtime-compliance/",
         )
+        self.assertEqual(
+            artifact["primary_artifact"],
+            "Outputs/repository-ai-evals/runtime-compliance/pilot-receipt.json",
+        )
+        self.assertEqual(
+            artifact["schema"],
+            "prompt-runtime-compliance-pilot-receipt/v1",
+        )
+        self.assertEqual(
+            artifact["schema_owner"],
+            "harness/evals/runtime-compliance/scripts/pilot.py",
+        )
         self.assertIn(artifact["validator"], hook["validator_ids"])
         validator_by_id = {item["id"]: item for item in validators}
         self.assertEqual(
@@ -296,6 +308,23 @@ class HarnessContractTests(unittest.TestCase):
             + hook["proof_resources"]
         ):
             self.assertTrue((ROOT / resource).is_file(), resource)
+
+    def test_prompt_language_mutation_precedes_runtime_proof_when_both_are_requested(self) -> None:
+        triggers = self.load("harness/triggers.v1.json")["triggers"]
+        proof_trigger = next(
+            item for item in triggers if item["id"] == "skill-quality-unproven"
+        )
+        language_trigger = next(
+            item for item in triggers if item["id"] == "prompt-language-change"
+        )
+        exclusion = (
+            "canonical prompt wording or shared policy still needs mutation before an "
+            "evaluable strengthened candidate exists; route prompt-language-change first, "
+            "then return for runtime proof"
+        )
+        self.assertIn(exclusion, proof_trigger["forbidden_conditions"])
+        self.assertEqual(language_trigger["capability_id"], "prompt-language-audit")
+        self.assertEqual(proof_trigger["capability_id"], "skill-evaluation")
 
     def test_every_active_skill_is_indexed_and_structured(self) -> None:
         manifest = self.load("harness/manifest.v1.json")
