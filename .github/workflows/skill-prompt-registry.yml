@@ -61,11 +61,13 @@ jobs:
           python -m unittest tests.test_skill_prompt_registry -v
           python -m unittest tests.test_actionable_prompt_registry -v
       - name: Generate Prompt Kit candidate artifact
+        if: ${{ always() }}
         run: |
           mkdir -p Outputs/prompt-kit-generated
           python scripts/build_prompt_kit_registry.py --output Outputs/prompt-kit-generated/index.html
           python scripts/build_prompt_kit_registry.py --output Outputs/prompt-kit-generated/index.html --check
       - name: Upload generated Prompt Kit candidate
+        if: ${{ always() }}
         uses: actions/upload-artifact@v4
         with:
           name: prompt-kit-generated-${{ github.event.pull_request.head.sha || github.sha }}
