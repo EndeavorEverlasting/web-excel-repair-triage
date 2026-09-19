@@ -65,6 +65,33 @@ class PromptRoutingDecisionTests(unittest.TestCase):
             },
         }
         payload.update(overrides)
+        semantic = {
+            key: value
+            for key, value in payload.items()
+            if key not in {"eventId", "createdAt", "idempotency"}
+        }
+        semantic_sha = hashlib.sha256(
+            json.dumps(
+                semantic,
+                ensure_ascii=False,
+                sort_keys=True,
+                separators=(",", ":"),
+            ).encode("utf-8")
+        ).hexdigest()
+        payload["idempotency"] = {
+            "key": "idem_"
+            + hashlib.sha256(
+                "|".join(
+                    [
+                        "prompt-kit.routing-request/v1",
+                        payload["observationEventId"],
+                        payload["mission"]["groundingEpisodeId"],
+                        payload["executionSurface"],
+                    ]
+                ).encode("utf-8")
+            ).hexdigest(),
+            "semanticSha256": semantic_sha,
+        }
         return payload
 
     @classmethod
@@ -192,6 +219,24 @@ class PromptRoutingDecisionTests(unittest.TestCase):
         receipt["destination"] = "cursor-agent"
         with self.assertRaisesRegex(routing.RoutingDecisionError, "do not verify"):
             routing.build_routing_decision(self.request(), receipt)
+
+    def test_routing_request_tamper_seal_rejects_post_builder_mutation(self) -> None:
+        request = self.request()
+        request["signals"] = ["routing"]
+        with self.assertRaisesRegex(
+            routing.RoutingDecisionError,
+            "semanticSha256 does not verify",
+        ):
+            routing.build_routing_decision(request, self.route_receipt())
+
+    def test_routing_request_idempotency_key_must_verify(self) -> None:
+        request = self.request()
+        request["idempotency"]["key"] = "idem_" + "0" * 64
+        with self.assertRaisesRegex(
+            routing.RoutingDecisionError,
+            "idempotency key does not verify",
+        ):
+            routing.build_routing_decision(request, self.route_receipt())
 
     def test_request_must_require_current_registry_and_no_cross_surface_fallback(self) -> None:
         for policy in (
