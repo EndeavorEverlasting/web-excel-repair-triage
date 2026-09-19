@@ -56,7 +56,39 @@
         "kind": "prompt",
         "prompt_id": "P62"
       },
-      "proof_ceiling": "Depends on the eval lanes actually executed; static, model, runtime, and production proof must remain distinct."
+      "proof_ceiling": "Depends on the eval lanes actually executed; static, model, runtime, and production proof must remain distinct.",
+      "use_case_hooks": [
+        {
+          "id": "prompt-strengthening-runtime-compliance",
+          "intent_aliases": [
+            "prompt strengthening sprint",
+            "prove strengthened Prompt Kit execution behavior",
+            "runtime compliance for Prompt Kit execution contracts",
+            "verify prompt execution-boundary continuation proof-state and regression behavior"
+          ],
+          "trigger_id": "skill-quality-unproven",
+          "workflow_id": "skill-evaluation",
+          "implementation_resources": [
+            "harness/evals/PROMPT_RUNTIME_COMPLIANCE_PILOT_PLAN.md",
+            "harness/evals/runtime-compliance/README.md",
+            "harness/contracts/prompt-runtime-compliance.v1.json",
+            "harness/contracts/prompt-runtime-compliance-receipt.schema.v1.json",
+            "harness/evals/runtime-compliance/scripts/pilot.py",
+            "harness/evals/runtime-compliance/scripts/runtime_adapter.py",
+            "harness/evals/runtime-compliance/scripts/linkage.py",
+            "harness/evals/runtime-compliance/fixtures/receipt-corpus.v1.json"
+          ],
+          "expected_artifact": "Outputs/repository-ai-evals/runtime-compliance/pilot-receipt.json",
+          "proof_resources": [
+            "scripts/validate_prompt_runtime_compliance_receipt.py",
+            "tests/test_prompt_runtime_compliance_validator.py",
+            "tests/test_prompt_runtime_compliance_runner.py",
+            "tests/test_prompt_runtime_compliance_receipt_corpus.py",
+            "tests/test_prompt_runtime_compliance_linkage.py"
+          ],
+          "proof_ceiling": "Repository contract, fixture, runner, linkage, and deterministic receipt-validation proof until a real external-agent adapter produces observed runtime evidence."
+        }
+      ]
     },
     {
       "id": "skill-factoring",
