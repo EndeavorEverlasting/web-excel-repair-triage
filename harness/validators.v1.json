@@ -400,6 +400,22 @@
       "blocking": true,
       "output": "Outputs/repo-native-update/receipt.json",
       "proof_ceiling": "Generated canary surface matches canonical input with a reviewable receipt; local CLI only."
+    },
+    {
+      "id": "prompt-runtime-compliance-receipt-audit",
+      "class": "contract",
+      "command": "python scripts/validate_prompt_runtime_compliance_receipt.py --summary",
+      "blocking": true,
+      "output": "process log",
+      "proof_ceiling": "Deterministic semantic validation of the canonical contract receipt fixture; no external-agent runtime claim."
+    },
+    {
+      "id": "prompt-runtime-compliance-tests",
+      "class": "test",
+      "command": "python -m unittest tests.test_prompt_runtime_compliance_validator tests.test_prompt_runtime_compliance_runner tests.test_prompt_runtime_compliance_receipt_corpus tests.test_prompt_runtime_compliance_linkage -v",
+      "blocking": true,
+      "output": "process log",
+      "proof_ceiling": "Executable runtime-compliance contract, runner, corpus, and linkage regression proof on the tested repository head."
     }
   ],
   "profiles": {
