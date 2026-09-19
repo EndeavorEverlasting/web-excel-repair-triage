@@ -33,6 +33,10 @@ Canonical report command:
 python scripts/validate_harness.py --report Outputs/harness-completeness-report.json
 ```
 
+## Execution-boundary continuation use case
+
+`harness-infrastructure-maintenance` remains the single capability owner. Its machine-readable `execution-boundary-continuation` use-case record maps real operator language such as “agents stop at arbitrary boundaries” to `harness-infrastructure-change`, the existing harness workflow/skill, the execution-boundary contract/taxonomy, P07 semantics, `scripts/execution_boundary_engine.py`, the shared Prompt Kit policy, the boundary regression matrix, and the focused validator/tests. The participant list is also the reverse index: an agent arriving at one of those resources can recover the originating intent, trigger, owner, siblings, and proof without guessing filenames.
+
 ## Repository hook integration capability
 
 `repository-hook-integration` makes the existing `.githooks` + local `core.hooksPath` installer the canonical Git-hook implementation. Upstream Claude/Codex/DeepSeek/Husky/Lefthook mechanisms are adapter donors, not parallel authorities; add an adapter only when the canonical Git hooks cannot express the required interception semantics, and prove that adapter separately.
@@ -65,7 +69,7 @@ python -m unittest tests.test_prompt_kit_cross_device_access -v
 
 P62 must reproduce functional weaknesses and inefficiencies with versioned cases, guide the smallest valid repair through tests or profiling, validate unit/integration correctness, and measure performance, tool calls, context, cost, retries, and tokens without weakening safety or routing.
 
-The machine-readable use-case hook `prompt-strengthening-runtime-compliance` routes operator language such as “prompt strengthening sprint” through `skill-quality-unproven` to the existing P67 / `skill-evaluation` owner. Follow the hook's workflow entrypoints to load the runtime-compliance plan, pilot runner, and semantic validator on demand; the same hook is the reverse ownership map when arriving from those implementation/proof resources.
+The canonical use case `prompt-strengthening-runtime-compliance` maps operator language such as “prompt strengthening sprint” through `skill-quality-unproven` to this existing capability. Follow its participant edges to the P67 runtime-compliance plan, runner, artifact family, and proof validators; arriving from the pilot or semantic validator resolves back to the same capability and originating intent.
 
 ## Browser-proof scratch cleanup capability
 
