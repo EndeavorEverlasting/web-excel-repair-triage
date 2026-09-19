@@ -14,6 +14,10 @@ SCHEMA_PATH = ROOT / "harness" / "contracts" / "prompt-runtime-compliance-receip
 CONTRACT_PATH = ROOT / "harness" / "contracts" / "prompt-runtime-compliance.v1.json"
 TAXONOMY_PATH = ROOT / "harness" / "contracts" / "execution-boundary-taxonomy.v1.json"
 DEFAULT_RECEIPT = ROOT / "harness" / "evals" / "runtime-compliance" / "contract-fixtures" / "receipt.positive.v1.json"
+SUPPORTED_SCHEMA_VERSIONS = {
+    "prompt-runtime-compliance-receipt/v1",
+    "prompt-runtime-compliance-pilot-receipt/v1",
+}
 
 STATE_RANK = {
     "PLANNED_DESIGNED": 0,
@@ -328,13 +332,16 @@ def _evaluate_boundary_rules(receipt: dict[str, Any], findings: dict[str, dict[s
         "sprint_id", "scope", "outcome", "first_executable_action_id",
         "completion_gate", "return_condition",
     )
-    for row in recovery_required_events:
+    declared_required_events = [
+        row for row in material if row["recovery_sprint"]["required"] is True
+    ]
+    for row in declared_required_events:
         sprint = row["recovery_sprint"]
         if not sprint["opened"] or any(sprint.get(field) in (None, "") for field in required_fields):
             opened_fail.append(row["boundary_event_id"])
     setf(
         _na("PRCR.BOUNDARY.RECOVERY_OPENED", "boundary_events", "No required recovery sprint.")
-        if not recovery_required_events
+        if not declared_required_events
         else (
             _pass("PRCR.BOUNDARY.RECOVERY_OPENED", "boundary_events", "Required recovery sprints are opened with executable metadata.")
             if not opened_fail
@@ -426,13 +433,40 @@ def _evaluate_action_rules(receipt: dict[str, Any], findings: dict[str, dict[str
             else _fail("PRCR.ACTION.BOUNDARY_LINK", "actions", "Invalid boundary/action ordering for " + ", ".join(bad_links))
         )
     )
+    pass_checks = [
+        check for check in receipt["proof"]["checks"] if check["status"] == "PASS"
+    ]
+
+    def exact_promotion_supported(row: dict[str, Any]) -> bool:
+        before_rank = _rank(row["proof_before"])
+        after_rank = _rank(row["proof_after"])
+        if before_rank is None or after_rank is None or after_rank <= before_rank:
+            return True
+        expected_name = (
+            f"action:{row['action_id']}:proof:"
+            f"{row['proof_before']}->{row['proof_after']}"
+        )
+        action_refs = set(row["evidence_refs"])
+        matches = [
+            check
+            for check in pass_checks
+            if check["name"] == expected_name
+            and action_refs.intersection(check["evidence_refs"])
+        ]
+        return len(matches) == 1
+
     progress = [row for row in receipt["actions"] if row["progress_bearing"]]
     unsubstantiated = [
         row["action_id"]
         for row in progress
-        if not row["evidence_refs"]
-        and row["proof_before"] == row["proof_after"]
-        and row["status"] in {"SKIPPED", "CANCELLED"}
+        if (
+            (
+                not row["evidence_refs"]
+                and row["proof_before"] == row["proof_after"]
+                and row["status"] in {"SKIPPED", "CANCELLED"}
+            )
+            or not exact_promotion_supported(row)
+        )
     ]
     setf(
         _na("PRCR.ACTION.PROGRESS_TRUTH", "actions", "No action claims progress-bearing status.")
@@ -468,11 +502,11 @@ def _evaluate_action_rules(receipt: dict[str, Any], findings: dict[str, dict[str
         and _rank(row["proof_after"]) is not None
         and _rank(row["proof_after"]) > _rank(row["proof_before"])
     ]
-    unsupported_promotions: list[str] = []
-    pass_checks = [check for check in receipt["proof"]["checks"] if check["status"] == "PASS"]
-    for row in promotions:
-        if not row["evidence_refs"] or not pass_checks:
-            unsupported_promotions.append(row["action_id"])
+    unsupported_promotions = [
+        row["action_id"]
+        for row in promotions
+        if not exact_promotion_supported(row)
+    ]
     setf(
         _na("PRCR.ACTION.NO_FALSE_PROOF_PROMOTION", "actions", "No action strengthens proof state.")
         if not promotions
@@ -607,10 +641,19 @@ def _evaluate_terminal_rules(receipt: dict[str, Any], findings: dict[str, dict[s
         setf(_na("PRCR.TERMINAL.CANCEL_AUTHORITY", "terminal", "Terminal state is not operator cancellation."))
 
     if terminal["state"] == "USER_ONLY_DECISION_REQUIRED":
+        decision_evidence = [
+            row for row in receipt["evidence"]
+            if row["kind"] == "user_feedback"
+        ]
+        user_only_ok = (
+            terminal["reason_code"] == "USER_DECISION_REQUIRED"
+            and terminal["next_transition"] is not None
+            and bool(decision_evidence)
+        )
         setf(
-            _pass("PRCR.TERMINAL.USER_ONLY", "terminal", "User-only decision is explicit and carries the next transition.")
-            if terminal["reason_code"] == "USER_DECISION_REQUIRED" and terminal["next_transition"] is not None
-            else _fail("PRCR.TERMINAL.USER_ONLY", "terminal", "User-only decision terminal state lacks its exact decision/continuation gate.")
+            _pass("PRCR.TERMINAL.USER_ONLY", "terminal", "User-only decision is explicit, evidence-backed, and carries the next transition.")
+            if user_only_ok
+            else _fail("PRCR.TERMINAL.USER_ONLY", "terminal", "USER_ONLY_DECISION_REQUIRED lacks explicit user-decision evidence or its exact continuation gate.")
         )
     else:
         setf(_na("PRCR.TERMINAL.USER_ONLY", "terminal", "Terminal state is not USER_ONLY_DECISION_REQUIRED."))
@@ -1076,8 +1119,138 @@ def validate_receipt(receipt: dict[str, Any]) -> dict[str, Any]:
     return result
 
 
+def validate_pilot_receipt(receipt: dict[str, Any]) -> dict[str, Any]:
+    errors: list[str] = []
+    if receipt.get("schema_version") != "prompt-runtime-compliance-pilot-receipt/v1":
+        errors.append("pilot receipt schema_version is invalid")
+    pilot_id = receipt.get("pilot_id")
+    if not isinstance(pilot_id, str) or not pilot_id.strip():
+        errors.append("pilot receipt requires a non-empty pilot_id")
+    runtime_state = receipt.get("runtime_state")
+    if runtime_state not in {"OBSERVED_RUNTIME", "UNPROVEN_RUNTIME"}:
+        errors.append("pilot receipt runtime_state is invalid")
+
+    count_fields = ("planned_runs", "valid_runs", "invalid_runs", "observed_runs")
+    counts: dict[str, int] = {}
+    for field in count_fields:
+        value = receipt.get(field)
+        if not isinstance(value, int) or isinstance(value, bool) or value < 0:
+            errors.append(f"pilot receipt {field} must be a non-negative integer")
+        else:
+            counts[field] = value
+
+    runs = receipt.get("runs")
+    if not isinstance(runs, list):
+        errors.append("pilot receipt runs must be an array")
+        runs = []
+    else:
+        run_ids: list[str] = []
+        scenario_ids: list[str] = []
+        for index, row in enumerate(runs):
+            if not isinstance(row, dict):
+                errors.append(f"pilot receipt run {index} must be an object")
+                continue
+            disposition = row.get("disposition")
+            if disposition not in {"VALID", "INVALID"}:
+                errors.append(f"pilot receipt run {index} has invalid disposition")
+                continue
+            for field, identities in (
+                ("run_id", run_ids),
+                ("scenario_id", scenario_ids),
+            ):
+                value = row.get(field)
+                if not isinstance(value, str) or not value.strip():
+                    errors.append(f"pilot receipt run {index} requires {field}")
+                else:
+                    identities.append(value)
+            if disposition == "VALID":
+                if not isinstance(row.get("runtime_observed"), bool):
+                    errors.append(f"pilot receipt run {index} requires runtime_observed")
+                for field in ("receipt_path", "validation_path"):
+                    value = row.get(field)
+                    if not isinstance(value, str) or not value.strip():
+                        errors.append(f"pilot receipt run {index} requires {field}")
+                for field in ("compliance_result", "validation_result"):
+                    value = row.get(field)
+                    if value not in {"PASS", "FAIL", "BLOCKED", "INCONCLUSIVE"}:
+                        errors.append(
+                            f"pilot receipt run {index} {field} must be a canonical result"
+                        )
+            elif not isinstance(row.get("invalid_code"), str) or not row["invalid_code"].strip():
+                errors.append(f"pilot receipt run {index} requires invalid_code")
+        if len(run_ids) != len(set(run_ids)):
+            errors.append("pilot receipt run_id values must be unique")
+        if len(scenario_ids) != len(set(scenario_ids)):
+            errors.append("pilot receipt scenario_id values must be unique")
+
+    if len(counts) == len(count_fields):
+        executed = counts["valid_runs"] + counts["invalid_runs"]
+        if executed != len(runs):
+            errors.append("pilot receipt valid_runs + invalid_runs must equal len(runs)")
+        if executed > counts["planned_runs"]:
+            errors.append("pilot receipt executed runs cannot exceed planned_runs")
+        if counts["observed_runs"] > counts["valid_runs"]:
+            errors.append("pilot receipt observed_runs cannot exceed valid_runs")
+        actual_valid = sum(1 for row in runs if isinstance(row, dict) and row.get("disposition") == "VALID")
+        actual_invalid = sum(1 for row in runs if isinstance(row, dict) and row.get("disposition") == "INVALID")
+        actual_observed = sum(
+            1
+            for row in runs
+            if isinstance(row, dict)
+            and row.get("disposition") == "VALID"
+            and row.get("runtime_observed") is True
+        )
+        if counts["valid_runs"] != actual_valid:
+            errors.append("pilot receipt valid_runs does not match run records")
+        if counts["invalid_runs"] != actual_invalid:
+            errors.append("pilot receipt invalid_runs does not match run records")
+        if counts["observed_runs"] != actual_observed:
+            errors.append("pilot receipt observed_runs does not match run records")
+        if runtime_state == "OBSERVED_RUNTIME":
+            if counts["planned_runs"] == 0 or counts["observed_runs"] != counts["planned_runs"]:
+                errors.append("OBSERVED_RUNTIME requires every planned run to be observed")
+            if receipt.get("blocker") is not None:
+                errors.append("OBSERVED_RUNTIME cannot declare a blocker")
+        elif runtime_state == "UNPROVEN_RUNTIME":
+            blocker = receipt.get("blocker")
+            if not isinstance(blocker, str) or not blocker.strip():
+                errors.append("UNPROVEN_RUNTIME requires an explicit blocker")
+
+    proof_ceiling = receipt.get("proof_ceiling")
+    if not isinstance(proof_ceiling, str) or not proof_ceiling.strip():
+        errors.append("pilot receipt requires a non-empty proof_ceiling")
+
+    findings = [
+        {
+            "rule_id": "PRCR.PILOT.STRUCTURE",
+            "severity": "HIGH",
+            "result": "FAIL" if errors else "PASS",
+            "subject": "pilot-receipt",
+            "message": "; ".join(errors) if errors else "Pilot receipt structure and aggregate counts are internally consistent.",
+            "evidence_refs": [],
+        }
+    ]
+    return {
+        "schema_version": "prompt-runtime-compliance-pilot-validation/v1",
+        "receipt_id": f"pilot/{str(pilot_id or 'unknown')}",
+        "receipt_schema": str(receipt.get("schema_version", "unknown")),
+        "overall_result": "FAIL" if errors else "PASS",
+        "counts": {
+            "PASS": 0 if errors else 1,
+            "FAIL": 1 if errors else 0,
+            "NOT_APPLICABLE": 0,
+            "UNKNOWN": 0,
+        },
+        "findings": findings,
+    }
+
+
 def validate_path(path: Path) -> dict[str, Any]:
-    return validate_receipt(load_json(path))
+    receipt = load_json(path)
+    schema_version = receipt.get("schema_version")
+    if schema_version == "prompt-runtime-compliance-pilot-receipt/v1":
+        return validate_pilot_receipt(receipt)
+    return validate_receipt(receipt)
 
 
 def exit_code(result: dict[str, Any]) -> int:

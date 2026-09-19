@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import copy
 import json
 import subprocess
 import sys
@@ -448,6 +449,73 @@ class HarnessContractTests(unittest.TestCase):
                 set(validator_registry["profiles"][workflow["validation_profile"]])
             )
         )
+
+    def test_runtime_compliance_test_validator_is_blocking(self) -> None:
+        validators = self.load("harness/validators.v1.json")
+        by_id = {item["id"]: item for item in validators["validators"]}
+        test_id = "prompt-runtime-compliance-tests"
+        self.assertIn(test_id, by_id)
+        command = by_id[test_id]["command"]
+        for module in (
+            "tests.test_prompt_runtime_compliance_contract",
+            "tests.test_prompt_runtime_compliance_fixtures",
+            "tests.test_prompt_runtime_compliance_validator",
+            "tests.test_prompt_runtime_compliance_runner",
+            "tests.test_prompt_runtime_compliance_receipt_corpus",
+            "tests.test_prompt_runtime_compliance_linkage",
+        ):
+            self.assertIn(module, command)
+        for profile in ("required_checks", "harness", "pre_push"):
+            self.assertIn(test_id, validators["profiles"][profile])
+
+    def test_use_case_artifact_ids_null_fails_closed(self) -> None:
+        capabilities = self.load("harness/capabilities.v1.json")
+        mutated = copy.deepcopy(capabilities)
+        skill_eval = next(item for item in mutated["capabilities"] if item["id"] == "skill-evaluation")
+        use_case = next(item for item in skill_eval["use_cases"] if item["id"] == "prompt-strengthening-runtime-compliance")
+        use_case["artifact_ids"] = None
+        original = validate_harness.load_json
+
+        def load_json(path: Path) -> dict:
+            if Path(path) == validate_harness.CAPABILITIES_PATH:
+                return mutated
+            return original(path)
+
+        with mock.patch.object(validate_harness, "load_json", side_effect=load_json):
+            with self.assertRaisesRegex(validate_harness.HarnessValidationError, "artifact_ids"):
+                validate_harness.validate_capabilities_and_triggers()
+
+    def test_declared_reverse_backlinks_reject_unknown_ids(self) -> None:
+        base_triggers = self.load("harness/triggers.v1.json")
+        base_workflows = self.load("harness/workflows.v1.json")
+        cases = []
+
+        triggers = copy.deepcopy(base_triggers)
+        trigger = next(item for item in triggers["triggers"] if item["id"] == "skill-quality-unproven")
+        trigger["use_case_ids"].append("missing-use-case")
+        cases.append((validate_harness.TRIGGERS_PATH, triggers, "trigger references unknown use cases"))
+
+        workflows = copy.deepcopy(base_workflows)
+        workflow = next(item for item in workflows["workflows"] if item["id"] == "skill-evaluation")
+        workflow["use_case_ids"].append("missing-use-case")
+        cases.append((validate_harness.WORKFLOWS_PATH, workflows, "workflow references unknown use cases"))
+
+        workflows = copy.deepcopy(base_workflows)
+        workflow = next(item for item in workflows["workflows"] if item["id"] == "skill-evaluation")
+        workflow["capability_ids"].append("missing-capability")
+        cases.append((validate_harness.WORKFLOWS_PATH, workflows, "workflow references unknown capabilities"))
+
+        original = validate_harness.load_json
+        for target_path, payload, message in cases:
+            with self.subTest(message=message):
+                def load_json(path: Path, *, _target=target_path, _payload=payload) -> dict:
+                    if Path(path) == _target:
+                        return _payload
+                    return original(path)
+
+                with mock.patch.object(validate_harness, "load_json", side_effect=load_json):
+                    with self.assertRaisesRegex(validate_harness.HarnessValidationError, message):
+                        validate_harness.validate_capabilities_and_triggers()
 
     def test_runtime_compliance_use_case_routes_implementation_first(self) -> None:
         capabilities = self.load("harness/capabilities.v1.json")["capabilities"]
