@@ -14,7 +14,7 @@ DISPOSITIONS = ("continue", "recover", "complete", "blocked")
 ROUTE_RECEIPT_SCHEMA = "evidence-spine-route-receipt/v1"
 PROMPT_ID_RE = re.compile(r"^P[0-9]{2,4}$")
 BOUNDED_ID_RE = re.compile(r"^[A-Za-z0-9._:/-]+$")
-SHORT_TEXT_RE = re.compile(r"^[^\\r\\n]+$")
+SHORT_TEXT_RE = re.compile(r"^[^\r\n]+$")
 MAX_SHORT_TEXT = 160
 ROUTE_PROVENANCE = {"observed", "declared", "inferred", "unknown"}
 ROUTE_FIELDS = {
@@ -25,6 +25,8 @@ ROUTE_FIELDS = {
     "surface_id",
     "invocation_id",
     "run_id",
+    "routing_request_event_id",
+    "correlation_id",
 }
 
 
@@ -186,7 +188,12 @@ def build_route_receipt(route: dict[str, Any]) -> dict[str, Any]:
         raise ContinuationError("unknown route must not carry destination")
 
     normalized_ids: dict[str, str | None] = {}
-    for field in ("invocation_id", "run_id"):
+    for field in (
+        "invocation_id",
+        "run_id",
+        "routing_request_event_id",
+        "correlation_id",
+    ):
         value = route.get(field)
         normalized_ids[field] = (
             _require_bounded_id(value, field) if value is not None else None
@@ -216,6 +223,8 @@ def build_route_receipt(route: dict[str, Any]) -> dict[str, Any]:
         ),
         "invocation_id": normalized_ids["invocation_id"],
         "run_id": normalized_ids["run_id"],
+        "routing_request_event_id": normalized_ids["routing_request_event_id"],
+        "correlation_id": normalized_ids["correlation_id"],
     }
     semantic_sha256 = _fingerprint(semantic)
     return {
