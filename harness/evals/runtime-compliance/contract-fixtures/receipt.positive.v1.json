@@ -126,7 +126,7 @@
     "checks": [
       {
         "check_id": "CK-001",
-        "name": "repository-local-proof",
+        "name": "action:A-001:repository-local-proof",
         "status": "PASS",
         "evidence_refs": [
           "EV-002"
