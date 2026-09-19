@@ -57,6 +57,22 @@
         "tests/test_prompt_parallel_execution_contract.py",
         "tests/test_p02_p07_autonomous_iteration.py"
       ]
+    },
+    {
+      "migration_id": "p79-add-p143-004",
+      "path": "registry/prompts/ai-engineering-level-up-prompts.v1.json",
+      "from_git_blob_sha1": "f25d7fd9bb09b42d022283aa33a24b6d43af67c7",
+      "to_git_blob_sha1": "2c665735cd8dbbbe524efa45edb3a06f2945bd8f",
+      "affected_prompt_ids": [
+        "P143"
+      ],
+      "change_kind": "strengthening",
+      "effective_identity_change": "preserve_canonical",
+      "rationale": "Repository SSH transport authentication (HTTPS to SSH conversion, provider-neutral key handling, host trust, noninteractive ls-remote read proof, safe push --dry-run write proof) plus a tailored HOW TO USE THIS SSH SETUP guide form a bounded transport residual distinct from general implementation execution (P07) and from repository creation/clone bootstrap (P55/P61).",
+      "focused_tests": [
+        "tests/test_prompt_semantic_coverage.py",
+        "tests/test_prompt_quality_history.py"
+      ]
     }
   ]
 }

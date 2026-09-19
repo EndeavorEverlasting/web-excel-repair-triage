@@ -2062,7 +2062,40 @@
       ],
       "profile_status": "ACCEPTED",
       "profile_sha256": "9204d9bdadd534400ad14f201f82abed57e8ea87f93e1fecfd189474b7a413a5"
+    },
+    {
+      "prompt_id": "P143",
+      "profile_version": 1,
+      "canonical_prompt_hash": "2cf2b7d77196f2c1e4d43bedcc3a20a6b0ba1ccc8431eb123151d6ae0d852e39",
+      "acceptance_commit": "944c69b4e8b6fa0f79dcd3fda671223964813966",
+      "direct_assignments": [
+        {
+          "capability_id": "execution.implementation",
+          "presence": "SUPPORT",
+          "ownership": "SECONDARY",
+          "capability_relation": "IMPLEMENTS",
+          "delivery_source": "CANONICAL_BODY",
+          "evidence_refs": [
+            "registry/prompts/ai-engineering-level-up-prompts.v1.json"
+          ],
+          "rationale": "Implements repository SSH transport setup/repair, HTTPS->SSH remote conversion, host-trust verification, noninteractive git ls-remote read proof, and safe git push --dry-run write proof directly in the canonical body."
+        }
+      ],
+      "inherited_sources": [
+        {
+          "source_id": "prompt-strength-shared-policy",
+          "source_version": "v1",
+          "source_hash": "e249da6706d86733cd03a046ef9e16552a3ae87dc8cc644281c5c1fd9c08c796"
+        }
+      ],
+      "semantic_dependency_fingerprint": "d6ff2279f682391a3d670bf7e1fd2abd1768a4de0db104d38bd0880a381e6b22",
+      "evidence_refs": [
+        "harness/contracts/prompt-strength.v1.json",
+        "registry/prompts/ai-engineering-level-up-prompts.v1.json"
+      ],
+      "profile_status": "ACCEPTED",
+      "profile_sha256": "660237237a9b15891baeca8e87eee1068f0c9665a97c364a8c650ed2a8e4ce45"
     }
   ],
-  "profile_count": 62
+  "profile_count": 63
 }

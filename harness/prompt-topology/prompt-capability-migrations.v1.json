@@ -4,7 +4,15 @@
   "purpose": "Append-only ledger of semantic capability transitions across prompt ADD, STRENGTHEN, CHANGE, TRANSFER, and RETIRE lifecycle operations.",
   "established_at": "2026-09-19",
   "status": "sprint0_floor",
-  "migration_kinds": ["ADD", "STRENGTHEN", "NO_CAPABILITY_CHANGE", "INTENTIONAL_CHANGE", "TRANSFER", "RETIRE", "RESTORE"],
+  "migration_kinds": [
+    "ADD",
+    "STRENGTHEN",
+    "NO_CAPABILITY_CHANGE",
+    "INTENTIONAL_CHANGE",
+    "TRANSFER",
+    "RETIRE",
+    "RESTORE"
+  ],
   "migrations": [
     {
       "migration_id": "2026-09-19-agent-transport-panels-p02",
@@ -49,6 +57,42 @@
       "rationale": "Strengthen P59 to make explicit that copyable panels are machine-readable transport that agents must ingest and dispatch",
       "semantic_diff": "No capability changes",
       "effective_identity_change": "preserve_canonical"
+    },
+    {
+      "migration_id": "ADD_P143_005",
+      "migration_kind": "ADD",
+      "prompt_id": "P143",
+      "old_canonical_prompt_hash": null,
+      "new_canonical_prompt_hash": "2cf2b7d77196f2c1e4d43bedcc3a20a6b0ba1ccc8431eb123151d6ae0d852e39",
+      "from_profile_version": null,
+      "to_profile_version": 1,
+      "from_profile_sha256": null,
+      "to_profile_sha256": "660237237a9b15891baeca8e87eee1068f0c9665a97c364a8c650ed2a8e4ce45",
+      "capability_deltas": [
+        {
+          "capability_id": "execution.implementation",
+          "before": null,
+          "after": {
+            "presence": "SUPPORT",
+            "ownership": "SECONDARY"
+          }
+        }
+      ],
+      "rationale": "Repository SSH transport authentication (HTTPS to SSH conversion, provider-neutral key handling, host trust, noninteractive ls-remote read proof, safe push --dry-run write proof) plus a tailored HOW TO USE THIS SSH SETUP guide form a bounded transport residual distinct from general implementation execution (P07) and from repository creation/clone bootstrap (P55/P61).",
+      "evidence_refs": [
+        "harness/contracts/prompt-strength.v1.json",
+        "registry/prompts/ai-engineering-level-up-prompts.v1.json"
+      ],
+      "focused_tests": [
+        "tests/test_prompt_semantic_coverage.py",
+        "tests/test_prompt_semantic_validator_1b.py"
+      ],
+      "source_history_migration_id": "p79-add-p143-004",
+      "source_history_from_git_blob_sha1": "f25d7fd9bb09b42d022283aa33a24b6d43af67c7",
+      "source_history_to_git_blob_sha1": "2c665735cd8dbbbe524efa45edb3a06f2945bd8f",
+      "coverage_before_fingerprint": "a73eb32987243e2e9697c6d04f6321a449453d2c8224a3160d7fd42a8fd8cbec",
+      "coverage_after_fingerprint": "a73eb32987243e2e9697c6d04f6321a449453d2c8224a3160d7fd42a8fd8cbec",
+      "acceptance_state": "ACCEPTED"
     }
   ],
   "note": "Migrations recorded after Sprint 1A baseline. Every lifecycle transition after baseline acceptance must be explicit and recorded here."

@@ -334,9 +334,13 @@ class Sprint1ABaselineAcceptanceTests(unittest.TestCase):
 
         profiles = profiles_data["profiles"]
 
-        # Count must match
-        self.assertEqual(len(prompts), len(profiles), "Profile count must equal prompt count")
+        # Canonical coverage: every one of the 62 canonical prompts has a
+        # profile; extension prompts (P62+) may add further profiles.
         self.assertEqual(len(prompts), 62, "Expected 62 canonical prompts")
+        canonical_ids = {p["id"] for p in prompts}
+        canonical_profiles = [p for p in profiles if p["prompt_id"] in canonical_ids]
+        self.assertEqual(len(canonical_profiles), len(prompts),
+                         "Every canonical prompt must have exactly one profile")
 
         # Every profile must be ACCEPTED
         for profile in profiles:
@@ -347,10 +351,13 @@ class Sprint1ABaselineAcceptanceTests(unittest.TestCase):
         self.assertEqual(profiles_data["baseline"]["completeness"], "complete")
         self.assertTrue(profiles_data["baseline"]["strict_enforcement_active"])
 
-        # Every prompt ID must have exactly one profile
-        prompt_ids = {p["id"] for p in prompts}
-        profile_ids = {p["prompt_id"] for p in profiles}
-        self.assertEqual(prompt_ids, profile_ids, "Profile IDs must match prompt IDs exactly")
+        # Every canonical prompt ID must be covered; extension profiles
+        # (P62+) are permitted beyond the frozen canonical baseline.
+        profile_ids = [p["prompt_id"] for p in profiles]
+        self.assertTrue(canonical_ids <= set(profile_ids),
+                        "Every canonical prompt must have a profile")
+        self.assertEqual(len(profile_ids), len(set(profile_ids)),
+                         "Profile IDs must be unique")
 
     def test_psc002_profile_binds_canonical_prompt(self) -> None:
         """PSC002: Accepted profile binds to exact prompt identity and canonical hash."""
