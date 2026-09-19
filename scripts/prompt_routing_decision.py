@@ -28,6 +28,7 @@ GE_RE = re.compile(r"^ge_[A-Za-z0-9][A-Za-z0-9._-]{7,95}$")
 SHA_RE = re.compile(r"^[a-f0-9]{64}$")
 PROMPT_ID_RE = re.compile(r"^P[0-9]{2,4}$")
 WIRE_PROMPT_ID_RE = re.compile(r"^P[0-9]{2,3}$")
+WIRE_DESTINATION_RE = re.compile(r"^[a-z0-9][a-z0-9._-]{0,67}$")
 RFC3339_RE = re.compile(
     r"^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?(?:Z|[+-]\d{2}:\d{2})$"
 )
@@ -338,16 +339,15 @@ def build_routing_decision(
     current_ref = _validate_prompt_ref(request.get("currentPrompt"), "routing request currentPrompt")
     route_action = "KEEP_CURRENT_PROMPT" if current_ref == selected_ref else "SWITCH_PROMPT"
     destination = str(verified_receipt["effective_destination"])
-    destination_reason = f"route-destination:{destination}"
-    if len(destination_reason) > 96:
+    if not WIRE_DESTINATION_RE.fullmatch(destination):
         raise RoutingDecisionError(
-            "authoritative route destination is too long for frozen decision reasonCodes"
+            "authoritative route destination cannot be represented by frozen decision reasonCodes"
         )
     reason_codes = [
         "current-registry-bound",
         "route-receipt-verified",
-        f"route-receipt:{verified_receipt['route_id']}",
-        destination_reason,
+        str(verified_receipt["route_id"]),
+        f"destination-{destination}",
         "current-prompt-kept" if route_action == "KEEP_CURRENT_PROMPT" else "current-prompt-switched",
     ]
 
