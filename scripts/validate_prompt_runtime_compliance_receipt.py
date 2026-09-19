@@ -433,13 +433,40 @@ def _evaluate_action_rules(receipt: dict[str, Any], findings: dict[str, dict[str
             else _fail("PRCR.ACTION.BOUNDARY_LINK", "actions", "Invalid boundary/action ordering for " + ", ".join(bad_links))
         )
     )
+    pass_checks = [
+        check for check in receipt["proof"]["checks"] if check["status"] == "PASS"
+    ]
+
+    def exact_promotion_supported(row: dict[str, Any]) -> bool:
+        before_rank = _rank(row["proof_before"])
+        after_rank = _rank(row["proof_after"])
+        if before_rank is None or after_rank is None or after_rank <= before_rank:
+            return True
+        expected_name = (
+            f"action:{row['action_id']}:proof:"
+            f"{row['proof_before']}->{row['proof_after']}"
+        )
+        action_refs = set(row["evidence_refs"])
+        matches = [
+            check
+            for check in pass_checks
+            if check["name"] == expected_name
+            and action_refs.intersection(check["evidence_refs"])
+        ]
+        return len(matches) == 1
+
     progress = [row for row in receipt["actions"] if row["progress_bearing"]]
     unsubstantiated = [
         row["action_id"]
         for row in progress
-        if not row["evidence_refs"]
-        and row["proof_before"] == row["proof_after"]
-        and row["status"] in {"SKIPPED", "CANCELLED"}
+        if (
+            (
+                not row["evidence_refs"]
+                and row["proof_before"] == row["proof_after"]
+                and row["status"] in {"SKIPPED", "CANCELLED"}
+            )
+            or not exact_promotion_supported(row)
+        )
     ]
     setf(
         _na("PRCR.ACTION.PROGRESS_TRUTH", "actions", "No action claims progress-bearing status.")
@@ -475,22 +502,11 @@ def _evaluate_action_rules(receipt: dict[str, Any], findings: dict[str, dict[str
         and _rank(row["proof_after"]) is not None
         and _rank(row["proof_after"]) > _rank(row["proof_before"])
     ]
-    unsupported_promotions: list[str] = []
-    pass_checks = [check for check in receipt["proof"]["checks"] if check["status"] == "PASS"]
-    for row in promotions:
-        expected_name = (
-            f"action:{row['action_id']}:proof:"
-            f"{row['proof_before']}->{row['proof_after']}"
-        )
-        action_refs = set(row["evidence_refs"])
-        matching_checks = [
-            check
-            for check in pass_checks
-            if check["name"] == expected_name
-            and action_refs.intersection(check["evidence_refs"])
-        ]
-        if len(matching_checks) != 1:
-            unsupported_promotions.append(row["action_id"])
+    unsupported_promotions = [
+        row["action_id"]
+        for row in promotions
+        if not exact_promotion_supported(row)
+    ]
     setf(
         _na("PRCR.ACTION.NO_FALSE_PROOF_PROMOTION", "actions", "No action strengthens proof state.")
         if not promotions
