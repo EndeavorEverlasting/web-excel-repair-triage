@@ -149,7 +149,7 @@
     {
       "prompt_id": "P04",
       "profile_version": 1,
-      "canonical_prompt_hash": "2ada5761ad6a1e8b52605bfa6aa51eeca0415b1863f9c23e317ab364ceced3f6",
+      "canonical_prompt_hash": "5cd6f94f54f49695d01d58803b1b05bce071b0effcf8e2972ece10e7c8b1ee25",
       "acceptance_commit": "55148914364e2988bc6096b7c8d142eca3f62c28",
       "direct_assignments": [
         {
@@ -248,7 +248,7 @@
     {
       "prompt_id": "P07",
       "profile_version": 1,
-      "canonical_prompt_hash": "90e7f78c9a3e4e2108ca2bcbe5c0cd07c62e10bdaa02d408b5e64caa24a1cf0b",
+      "canonical_prompt_hash": "57bb9e948da82e27bc55d7fcc163522bbfd81c0ac352e7ec476554308b5f4f49",
       "acceptance_commit": "55148914364e2988bc6096b7c8d142eca3f62c28",
       "direct_assignments": [
         {
@@ -1967,7 +1967,7 @@
     {
       "prompt_id": "P59",
       "profile_version": 1,
-      "canonical_prompt_hash": "faf238ce36993ce2796eb606d560f3e32cd7111267206b112c08b7825a8e07b2",
+      "canonical_prompt_hash": "068339e02dc8383179aa29281ddae26ae4150cb63a65eebd192636d20a12762c",
       "acceptance_commit": "55148914364e2988bc6096b7c8d142eca3f62c28",
       "direct_assignments": [
         {

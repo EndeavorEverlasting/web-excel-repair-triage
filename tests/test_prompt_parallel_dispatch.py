@@ -262,5 +262,47 @@ class PromptParallelDispatchTests(unittest.TestCase):
             MOD.validate_receipt(payload, receipt)
 
 
+    def test_panels_are_machine_transport_not_human_only(self) -> None:
+        """Validate that panel/portability language emphasizes agent consumption."""
+        import json
+        
+        # Check AGENTS.md binding law
+        agents_md = (ROOT / "AGENTS.md").read_text(encoding="utf-8")
+        self.assertIn("agent transport", agents_md.lower())
+        
+        # Check prompt-operations.md specification
+        prompt_ops = (ROOT / "harness" / "specs" / "prompt-operations.md").read_text(encoding="utf-8")
+        self.assertIn("machine", prompt_ops.lower())
+        self.assertIn("agents must ingest", prompt_ops.lower())
+        # Ensure we're not saying panels are human-only
+        self.assertNotRegex(prompt_ops.lower(), r"human[- ]only.*panel")
+        self.assertNotRegex(prompt_ops.lower(), r"panel.*human[- ]only")
+        
+        # Check parallel dispatch contract policy
+        contract_path = ROOT / "harness" / "contracts" / "prompt-parallel-dispatch.v1.json"
+        contract = json.loads(contract_path.read_text(encoding="utf-8"))
+        policy = contract.get("policy", {})
+        self.assertFalse(policy.get("human_scheduler_allowed", True))
+        self.assertTrue(policy.get("panels_are_machine_ingestible", False))
+        
+        # Check key prompts in registry
+        prompts_path = ROOT / "docs" / "prompts.json"
+        prompts = json.loads(prompts_path.read_text(encoding="utf-8"))
+        parallel_prompts = [p for p in prompts if p["id"] in ("P04", "P59")]
+        for prompt in parallel_prompts:
+            content = prompt.get("copyContent", "").lower()
+            # Should mention machine/agent consumption
+            self.assertTrue(
+                "machine-readable" in content or "machine-ingestible" in content or "agents must ingest" in content,
+                f"{prompt['id']}: Should mention machine/agent panel consumption"
+            )
+            # Should not say panels are human-only or require human paste
+            self.assertNotRegex(
+                content,
+                r"human[- ]only.*panel|panel.*human[- ]only",
+                f"{prompt['id']}: Should not describe panels as human-only"
+            )
+
+
 if __name__ == "__main__":
     unittest.main()
