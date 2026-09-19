@@ -58,6 +58,13 @@ class PromptRuntimeComplianceValidatorTests(unittest.TestCase):
         self.assertEqual(result["overall_result"], "FAIL")
         self.assertNotEqual(validator.exit_code(result), 0)
 
+    def test_unproven_pilot_requires_explicit_blocker(self) -> None:
+        receipt = pilot_receipt()
+        receipt["blocker"] = None
+        result = validator.validate_pilot_receipt(receipt)
+        self.assertEqual(result["overall_result"], "FAIL")
+        self.assertIn("explicit blocker", result["findings"][0]["message"])
+
     def test_validate_path_dispatches_pilot_receipt_schema(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             path = Path(tmp) / "pilot-receipt.json"
