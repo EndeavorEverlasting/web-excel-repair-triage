@@ -86,7 +86,12 @@
             "tests/test_prompt_runtime_compliance_receipt_corpus.py",
             "tests/test_prompt_runtime_compliance_linkage.py"
           ],
-          "proof_ceiling": "Repository contract, fixture, runner, linkage, and deterministic receipt-validation proof until a real external-agent adapter produces observed runtime evidence."
+          "proof_ceiling": "Repository contract, fixture, runner, linkage, and deterministic receipt-validation proof until a real external-agent adapter produces observed runtime evidence.",
+          "workflow_entrypoints": [
+            "harness/evals/PROMPT_RUNTIME_COMPLIANCE_PILOT_PLAN.md",
+            "harness/evals/runtime-compliance/scripts/pilot.py",
+            "scripts/validate_prompt_runtime_compliance_receipt.py"
+          ]
         }
       ]
     },
