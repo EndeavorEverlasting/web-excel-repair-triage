@@ -342,11 +342,11 @@ def add_prompt(
         raise SystemExit(
             f"Prompt ADD external prior-art gate failed before identity allocation: {exc}"
         ) from exc
-    
+
     # Sprint 2: Require semantic profile and distinct residual for ADD
     # This enforces PSC008 ADD_REQUIRES_DISTINCT_RESIDUAL
     semantic_profile_check = require_add_semantic_profile(draft)
-    
+
     record = _build_record(draft, target_payload)
     preview = tutorial_coverage.coverage_for_prompt(record)
     if preview["needs_wiring"]:
@@ -696,18 +696,18 @@ def strengthen_prompt_capability(
 
 def _check_distinct_residual_for_add(candidate: dict[str, Any]) -> dict[str, Any]:
     """Sprint 2: Check that ADD has distinct residual not covered by existing prompts.
-    
+
     PSC008 ADD_REQUIRES_DISTINCT_RESIDUAL: Cannot ADD when existing owner can absorb use case.
     """
     profiles_data = _load_semantic_profiles()
     profiles = profiles_data.get("profiles", [])
-    
+
     # For now, this is a placeholder that always passes
     # In a complete implementation, this would:
     # 1. Load the candidate profile
     # 2. Check overlap with existing profiles
     # 3. Verify distinct residual exists
-    
+
     return {
         "distinct_residual": True,
         "reason": "Placeholder: distinct residual check passes"
@@ -716,7 +716,7 @@ def _check_distinct_residual_for_add(candidate: dict[str, Any]) -> dict[str, Any
 
 def require_add_semantic_profile(candidate: dict[str, Any]) -> dict[str, Any]:
     """Sprint 2: Require candidate semantic profile for ADD operations.
-    
+
     Before allocating a new prompt ID, verify:
     - Candidate has a semantic profile
     - Profile shows distinct residual not covered by existing prompts
@@ -728,14 +728,14 @@ def require_add_semantic_profile(candidate: dict[str, Any]) -> dict[str, Any]:
             "ADD operation requires a candidate semantic profile. "
             "Provide semantic_profile in the draft with capability assignments."
         )
-    
+
     # Check for distinct residual
     residual_check = _check_distinct_residual_for_add(candidate)
     if not residual_check.get("distinct_residual"):
         raise SystemExit(
             f"PSC008 ADD_REQUIRES_DISTINCT_RESIDUAL: {residual_check.get('reason', 'No distinct residual')}"
         )
-    
+
     return {
         "profile_required": True,
         "distinct_residual_check": residual_check
@@ -748,18 +748,18 @@ def retire_prompt(
     dry_run: bool = False
 ) -> dict[str, Any]:
     """Sprint 2: Retire a prompt with coverage hole validation.
-    
+
     Enforces PSC007 RETIRE_NO_COVERAGE_HOLE.
     """
     # Check if retirement would create coverage holes
     coverage_check = check_retirement_coverage(prompt_id)
-    
+
     if not coverage_check["can_retire"]:
         raise SystemExit(
             f"PSC007 RETIRE_NO_COVERAGE_HOLE: Cannot retire {prompt_id}. "
             f"{coverage_check['reason']}. Coverage holes: {coverage_check['coverage_holes']}"
         )
-    
+
     if dry_run:
         return {
             "status": "dry-run",
@@ -768,15 +768,15 @@ def retire_prompt(
             "coverage_check": coverage_check,
             "rationale": rationale
         }
-    
+
     # Create retirement migration
     migration = create_retirement_migration(prompt_id, rationale, transfers=None)
-    
+
     # Save the migration
     migrations_data = _load_semantic_migrations()
     migrations_data.setdefault("migrations", []).append(migration)
     _save_semantic_migrations(migrations_data)
-    
+
     # Update profile status to RETIRED
     profiles_data = _load_semantic_profiles()
     for profile in profiles_data.get("profiles", []):
@@ -784,7 +784,7 @@ def retire_prompt(
             profile["profile_status"] = "RETIRED"
             break
     _save_semantic_profiles(profiles_data)
-    
+
     return {
         "status": "retired",
         "prompt_id": prompt_id,
@@ -802,16 +802,16 @@ def validate_body_change_disposition(
     evidence_refs: list[str] | None = None
 ) -> dict[str, Any]:
     """Sprint 2: Validate body change has proper capability disposition.
-    
+
     Enforces PSC009 BODY_CHANGE_REQUIRES_PROFILE_DISPOSITION.
-    
+
     Args:
         prompt_id: The prompt being edited
         old_body_hash: Hash of old body
-        new_body_hash: Hash of new body  
+        new_body_hash: Hash of new body
         disposition: One of NO_CAPABILITY_CHANGE, STRENGTHEN, INTENTIONAL_CHANGE
         evidence_refs: Evidence supporting the disposition
-        
+
     Returns:
         Validation result
     """
@@ -820,7 +820,7 @@ def validate_body_change_disposition(
             "body_changed": False,
             "disposition_required": False
         }
-    
+
     # Body changed - require disposition
     valid_dispositions = ["NO_CAPABILITY_CHANGE", "STRENGTHEN", "INTENTIONAL_CHANGE", "TRANSFER"]
     if disposition not in valid_dispositions:
@@ -828,14 +828,14 @@ def validate_body_change_disposition(
             f"PSC009 BODY_CHANGE_REQUIRES_PROFILE_DISPOSITION: "
             f"Body changed but disposition {disposition!r} is not in {valid_dispositions}"
         )
-    
+
     # For NO_CAPABILITY_CHANGE, require evidence
     if disposition == "NO_CAPABILITY_CHANGE" and not evidence_refs:
         raise SystemExit(
             f"PSC009 BODY_CHANGE_REQUIRES_PROFILE_DISPOSITION: "
             f"NO_CAPABILITY_CHANGE disposition requires evidence_refs"
         )
-    
+
     return {
         "body_changed": True,
         "disposition_required": True,
@@ -870,7 +870,7 @@ def main(argv: list[str] | None = None) -> int:
     add.add_argument("--input", required=True, help="Draft JSON path, or - for stdin.")
     add.add_argument("--registry", help="Existing registry_id; otherwise resolve from draft profile.")
     add.add_argument("--dry-run", action="store_true", help="Resolve and validate without writing files.")
-    
+
     retire = sub.add_parser(
         "retire",
         help="Retire a prompt after validating no coverage holes (PSC007)."
@@ -878,7 +878,7 @@ def main(argv: list[str] | None = None) -> int:
     retire.add_argument("--prompt-id", required=True, help="Prompt ID to retire (e.g., P42)")
     retire.add_argument("--rationale", required=True, help="Reason for retirement")
     retire.add_argument("--dry-run", action="store_true", help="Check coverage without writing files.")
-    
+
     sub.add_parser("validate", help="Validate current registry, tutorial wiring, and generated-site parity.")
     args = parser.parse_args(argv)
 

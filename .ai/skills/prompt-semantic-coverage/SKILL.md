@@ -1,8 +1,8 @@
 # Skill: Prompt Semantic Coverage
 
-**Capability ID**: `prompt-semantic-coverage`  
-**Version**: 1.0.0  
-**Status**: Canonical  
+**Capability ID**: `prompt-semantic-coverage`
+**Version**: 1.0.0
+**Status**: Canonical
 
 ## Trigger
 
@@ -138,11 +138,11 @@ python3 scripts/prompt_registry_ops.py retire --prompt-id P42 --rationale "reaso
 
 ## Implementation
 
-**Validator**: `scripts/validate_prompt_semantic_coverage.py`  
-**Lifecycle Bridge**: `scripts/prompt_registry_ops.py`  
-**Tests**: `tests/test_prompt_semantic_coverage.py`, `tests/test_prompt_semantic_validator_1b.py`  
-**Catalog**: `harness/prompt-topology/semantic-capability-catalog.v1.json`  
-**Profiles**: `harness/prompt-topology/prompt-capability-profiles.v1.json`  
+**Validator**: `scripts/validate_prompt_semantic_coverage.py`
+**Lifecycle Bridge**: `scripts/prompt_registry_ops.py`
+**Tests**: `tests/test_prompt_semantic_coverage.py`, `tests/test_prompt_semantic_validator_1b.py`
+**Catalog**: `harness/prompt-topology/semantic-capability-catalog.v1.json`
+**Profiles**: `harness/prompt-topology/prompt-capability-profiles.v1.json`
 **Migrations**: `harness/prompt-topology/prompt-capability-migrations.v1.json`
 
 ## Sprint Context
