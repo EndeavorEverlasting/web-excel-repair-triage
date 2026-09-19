@@ -338,13 +338,16 @@ def _evaluate_boundary_rules(receipt: dict[str, Any], findings: dict[str, dict[s
         "sprint_id", "scope", "outcome", "first_executable_action_id",
         "completion_gate", "return_condition",
     )
-    for row in recovery_required_events:
+    declared_required_events = [
+        row for row in material if row["recovery_sprint"]["required"] is True
+    ]
+    for row in declared_required_events:
         sprint = row["recovery_sprint"]
         if not sprint["opened"] or any(sprint.get(field) in (None, "") for field in required_fields):
             opened_fail.append(row["boundary_event_id"])
     setf(
         _na("PRCR.BOUNDARY.RECOVERY_OPENED", "boundary_events", "No required recovery sprint.")
-        if not recovery_required_events
+        if not declared_required_events
         else (
             _pass("PRCR.BOUNDARY.RECOVERY_OPENED", "boundary_events", "Required recovery sprints are opened with executable metadata.")
             if not opened_fail
@@ -512,12 +515,16 @@ def _evaluate_action_rules(receipt: dict[str, Any], findings: dict[str, dict[str
         return len(matches) == 1
 
     progress = [row for row in receipt["actions"] if row["progress_bearing"]]
+
+    def progress_supported(row: dict[str, Any]) -> bool:
+        if _proof_advances(row):
+            return exact_promotion_supported(row)
+        return bool(row["evidence_refs"]) or _confirmed_effect(row)
+
     unsubstantiated = [
         row["action_id"]
         for row in progress
-        if not row["evidence_refs"]
-        and not _proof_advances(row)
-        and not _confirmed_effect(row)
+        if not progress_supported(row)
     ]
     setf(
         _na("PRCR.ACTION.PROGRESS_TRUTH", "actions", "No action claims progress-bearing status.")
