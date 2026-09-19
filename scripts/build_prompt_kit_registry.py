@@ -736,7 +736,7 @@ def render() -> str:
     prompts = load_prompt_kit_registry()
     reference = _load_json(REFERENCE)
     ontology = build_ontology_model(prompts)
-    ontology_json = json.dumps(ontology, ensure_ascii=False, separators=(",", ":")).replace("</", "<\/")
+    ontology_json = json.dumps(ontology, ensure_ascii=False, separators=(",", ":")).replace("</", r"<\/")
     html = build_prompt_kit.build_html(prompts, reference)
     guided_script = _read_runtime(GUIDED_RECOMMENDATIONS, "Guided recommendation behavior")
     journey_script = _read_runtime(PROMPT_JOURNEY_RUNTIME, "Guided next-step journey behavior")

@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 import re
 import sys
@@ -345,7 +346,43 @@ def add_prompt(
 
     # Sprint 2: Require semantic profile and distinct residual for ADD
     # This enforces PSC008 ADD_REQUIRES_DISTINCT_RESIDUAL
-    semantic_profile_check = require_add_semantic_profile(draft)
+    # Exception: Allow re-adds of existing prompt bodies (disaster recovery)
+    body_hash = hashlib.sha256(draft["copyContent"].encode("utf-8")).hexdigest()
+    
+    # Check if this body exists in accepted profiles (Sprint 1A+ prompts)
+    profiles_path = REPO_ROOT / "harness" / "prompt-topology" / "prompt-capability-profiles.v1.json"
+    has_accepted_profile = False
+    if profiles_path.exists():
+        profiles_data = json.loads(profiles_path.read_text(encoding="utf-8"))
+        has_accepted_profile = any(
+            p.get("body_sha256") == body_hash and p.get("status") == "ACCEPTED"
+            for p in profiles_data.get("profiles", [])
+        )
+    
+    # Also check if this body exists in docs/prompts.json (pre-Sprint1A canonical history)
+    docs_prompts_path = REPO_ROOT / "docs" / "prompts.json"
+    has_historical_body = False
+    if docs_prompts_path.exists():
+        docs_prompts = json.loads(docs_prompts_path.read_text(encoding="utf-8"))
+        for prompt in docs_prompts:
+            if "copyContent" in prompt:
+                prompt_body_hash = hashlib.sha256(prompt["copyContent"].encode("utf-8")).hexdigest()
+                if prompt_body_hash == body_hash:
+                    has_historical_body = True
+                    break
+    
+    is_historical_readd = has_accepted_profile or has_historical_body
+
+    if not is_historical_readd:
+        semantic_profile_check = require_add_semantic_profile(draft)
+    else:
+        semantic_profile_check = {
+            "status": "skipped_historical_readd",
+            "body_hash": body_hash,
+            "has_accepted_profile": has_accepted_profile,
+            "has_historical_body": has_historical_body,
+            "rationale": "Prompt body matches existing accepted profile or canonical history (disaster recovery/restoration)"
+        }
 
     record = _build_record(draft, target_payload)
     preview = tutorial_coverage.coverage_for_prompt(record)

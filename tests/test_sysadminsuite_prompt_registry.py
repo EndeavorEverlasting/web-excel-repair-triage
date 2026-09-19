@@ -110,6 +110,12 @@ class SysAdminSuitePromptRegistryTests(unittest.TestCase):
             receipts = []
             for index, name in enumerate(ORDER, start=1):
                 draft = {key: value for key, value in records[name].items() if key in allowed}
+                # Sprint 2: Add minimal semantic profile for historical re-add test
+                draft["semantic_profile"] = {
+                    "capabilities": [
+                        {"id": f"sysadminsuite-test-{index}", "level": "PRIMARY", "rationale": "SysAdminSuite historical re-add test fixture", "evidence_refs": ["test_sysadminsuite_prompt_registry.py"]}
+                    ]
+                }
                 draft_path = sandbox / f"sas-draft-{index}.json"
                 draft_path.write_text(json.dumps(draft, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
                 proc = subprocess.run(
