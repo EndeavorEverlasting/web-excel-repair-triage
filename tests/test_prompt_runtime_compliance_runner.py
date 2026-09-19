@@ -137,6 +137,38 @@ class RuntimeComplianceRunnerTests(unittest.TestCase):
             )
             self.assertEqual(finding["result"], "PASS")
 
+    def test_rtc04_readback_promotion_has_exact_passing_evidence_binding(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            spec = next(row for row in pilot.build_plan()["runs"] if row["scenario_id"] == "RTC04")
+            result = pilot.execute_case(
+                spec,
+                pilot_id="rtc04-binding",
+                adapter_config=fake_config(),
+                output_root=root,
+            )
+            receipt = json.loads(
+                (root / "runs" / result["run_id"] / "receipt.json").read_text(encoding="utf-8")
+            )
+            readback = next(
+                action for action in receipt["actions"] if action["readback_of_action_id"] == "A-001"
+            )
+            passing_refs = {
+                ref
+                for check in receipt["proof"]["checks"]
+                if check["status"] == "PASS"
+                for ref in check["evidence_refs"]
+            }
+            self.assertTrue(set(readback["evidence_refs"]).intersection(passing_refs))
+            self.assertIn(
+                "EV-003",
+                next(
+                    check["evidence_refs"]
+                    for check in receipt["proof"]["checks"]
+                    if check["check_id"] == "CK-READBACK"
+                ),
+            )
+
     def test_rtc04_missing_readback_is_detected_by_semantic_validator(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
