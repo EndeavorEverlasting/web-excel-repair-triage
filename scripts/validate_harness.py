@@ -786,6 +786,27 @@ def validate_capabilities_and_triggers() -> tuple[dict[str, Any], dict[str, Any]
                     f"use-case hook artifact validator is not in its proof route: "
                     f"{hook_id} -> {expected_artifact_id} -> {artifact_validator}"
                 )
+            primary_artifact = str(artifact.get("primary_artifact", "")).strip()
+            artifact_schema = str(artifact.get("schema", "")).strip()
+            schema_owner = str(artifact.get("schema_owner", "")).strip()
+            canonical_path = str(artifact.get("canonical_path", "")).strip()
+            if not primary_artifact or not artifact_schema or not schema_owner:
+                raise HarnessValidationError(
+                    f"use-case hook artifact lacks primary/schema linkage: "
+                    f"{hook_id} -> {expected_artifact_id}"
+                )
+            if not primary_artifact.startswith(canonical_path):
+                raise HarnessValidationError(
+                    f"use-case hook primary artifact escapes its registered family: "
+                    f"{hook_id} -> {primary_artifact}"
+                )
+            schema_owner_path = require_file(schema_owner)
+            require_tracked(schema_owner)
+            if artifact_schema not in schema_owner_path.read_text(encoding="utf-8"):
+                raise HarnessValidationError(
+                    f"use-case hook artifact schema identity is not owned by its producer: "
+                    f"{hook_id} -> {artifact_schema}"
+                )
     if set(capability_by_id) != REQUIRED_CAPABILITY_IDS:
         raise HarnessValidationError(f"capability IDs drifted: {sorted(capability_by_id)}")
 
