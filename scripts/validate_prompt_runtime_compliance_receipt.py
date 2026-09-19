@@ -14,6 +14,10 @@ SCHEMA_PATH = ROOT / "harness" / "contracts" / "prompt-runtime-compliance-receip
 CONTRACT_PATH = ROOT / "harness" / "contracts" / "prompt-runtime-compliance.v1.json"
 TAXONOMY_PATH = ROOT / "harness" / "contracts" / "execution-boundary-taxonomy.v1.json"
 DEFAULT_RECEIPT = ROOT / "harness" / "evals" / "runtime-compliance" / "contract-fixtures" / "receipt.positive.v1.json"
+SUPPORTED_SCHEMA_VERSIONS = {
+    "prompt-runtime-compliance-receipt/v1",
+    "prompt-runtime-compliance-pilot-receipt/v1",
+}
 
 STATE_RANK = {
     "PLANNED_DESIGNED": 0,
@@ -1076,8 +1080,117 @@ def validate_receipt(receipt: dict[str, Any]) -> dict[str, Any]:
     return result
 
 
+def validate_pilot_receipt(receipt: dict[str, Any]) -> dict[str, Any]:
+    errors: list[str] = []
+    if receipt.get("schema_version") != "prompt-runtime-compliance-pilot-receipt/v1":
+        errors.append("pilot receipt schema_version is invalid")
+    pilot_id = receipt.get("pilot_id")
+    if not isinstance(pilot_id, str) or not pilot_id.strip():
+        errors.append("pilot receipt requires a non-empty pilot_id")
+    runtime_state = receipt.get("runtime_state")
+    if runtime_state not in {"OBSERVED_RUNTIME", "UNPROVEN_RUNTIME"}:
+        errors.append("pilot receipt runtime_state is invalid")
+
+    count_fields = ("planned_runs", "valid_runs", "invalid_runs", "observed_runs")
+    counts: dict[str, int] = {}
+    for field in count_fields:
+        value = receipt.get(field)
+        if not isinstance(value, int) or isinstance(value, bool) or value < 0:
+            errors.append(f"pilot receipt {field} must be a non-negative integer")
+        else:
+            counts[field] = value
+
+    runs = receipt.get("runs")
+    if not isinstance(runs, list):
+        errors.append("pilot receipt runs must be an array")
+        runs = []
+    else:
+        for index, row in enumerate(runs):
+            if not isinstance(row, dict):
+                errors.append(f"pilot receipt run {index} must be an object")
+                continue
+            disposition = row.get("disposition")
+            if disposition not in {"VALID", "INVALID"}:
+                errors.append(f"pilot receipt run {index} has invalid disposition")
+                continue
+            for field in ("run_id", "scenario_id"):
+                value = row.get(field)
+                if not isinstance(value, str) or not value.strip():
+                    errors.append(f"pilot receipt run {index} requires {field}")
+            if disposition == "VALID":
+                if not isinstance(row.get("runtime_observed"), bool):
+                    errors.append(f"pilot receipt run {index} requires runtime_observed")
+                for field in ("receipt_path", "validation_path", "validation_result"):
+                    value = row.get(field)
+                    if not isinstance(value, str) or not value.strip():
+                        errors.append(f"pilot receipt run {index} requires {field}")
+            elif not isinstance(row.get("invalid_code"), str) or not row["invalid_code"].strip():
+                errors.append(f"pilot receipt run {index} requires invalid_code")
+
+    if len(counts) == len(count_fields):
+        executed = counts["valid_runs"] + counts["invalid_runs"]
+        if executed != len(runs):
+            errors.append("pilot receipt valid_runs + invalid_runs must equal len(runs)")
+        if executed > counts["planned_runs"]:
+            errors.append("pilot receipt executed runs cannot exceed planned_runs")
+        if counts["observed_runs"] > counts["valid_runs"]:
+            errors.append("pilot receipt observed_runs cannot exceed valid_runs")
+        actual_valid = sum(1 for row in runs if isinstance(row, dict) and row.get("disposition") == "VALID")
+        actual_invalid = sum(1 for row in runs if isinstance(row, dict) and row.get("disposition") == "INVALID")
+        actual_observed = sum(
+            1
+            for row in runs
+            if isinstance(row, dict)
+            and row.get("disposition") == "VALID"
+            and row.get("runtime_observed") is True
+        )
+        if counts["valid_runs"] != actual_valid:
+            errors.append("pilot receipt valid_runs does not match run records")
+        if counts["invalid_runs"] != actual_invalid:
+            errors.append("pilot receipt invalid_runs does not match run records")
+        if counts["observed_runs"] != actual_observed:
+            errors.append("pilot receipt observed_runs does not match run records")
+        if runtime_state == "OBSERVED_RUNTIME":
+            if counts["planned_runs"] == 0 or counts["observed_runs"] != counts["planned_runs"]:
+                errors.append("OBSERVED_RUNTIME requires every planned run to be observed")
+            if receipt.get("blocker") is not None:
+                errors.append("OBSERVED_RUNTIME cannot declare a blocker")
+
+    proof_ceiling = receipt.get("proof_ceiling")
+    if not isinstance(proof_ceiling, str) or not proof_ceiling.strip():
+        errors.append("pilot receipt requires a non-empty proof_ceiling")
+
+    findings = [
+        {
+            "rule_id": "PRCR.PILOT.STRUCTURE",
+            "severity": "HIGH",
+            "result": "FAIL" if errors else "PASS",
+            "subject": "pilot-receipt",
+            "message": "; ".join(errors) if errors else "Pilot receipt structure and aggregate counts are internally consistent.",
+            "evidence_refs": [],
+        }
+    ]
+    return {
+        "schema_version": "prompt-runtime-compliance-pilot-validation/v1",
+        "receipt_id": f"pilot/{str(pilot_id or 'unknown')}",
+        "receipt_schema": str(receipt.get("schema_version", "unknown")),
+        "overall_result": "FAIL" if errors else "PASS",
+        "counts": {
+            "PASS": 0 if errors else 1,
+            "FAIL": 1 if errors else 0,
+            "NOT_APPLICABLE": 0,
+            "UNKNOWN": 0,
+        },
+        "findings": findings,
+    }
+
+
 def validate_path(path: Path) -> dict[str, Any]:
-    return validate_receipt(load_json(path))
+    receipt = load_json(path)
+    schema_version = receipt.get("schema_version")
+    if schema_version == "prompt-runtime-compliance-pilot-receipt/v1":
+        return validate_pilot_receipt(receipt)
+    return validate_receipt(receipt)
 
 
 def exit_code(result: dict[str, Any]) -> int:
