@@ -96,6 +96,23 @@ class OperantVersioningWorkflowTests(unittest.TestCase):
                 "the full push range must detect the earlier OPERANT_VERSION bump",
             )
 
+    def test_release_publication_summary_escapes_markdown_backticks_from_shell(self) -> None:
+        workflow = WORKFLOW.read_text(encoding="utf-8")
+        unsafe_lines = [
+            'echo "- existing PR: `$existing_url`"',
+            'echo "- target head: `$target_head`"',
+            'echo "- candidate branch: `$candidate_branch`"',
+            'echo "- candidate SHA: `$candidate_sha`"',
+            'echo "- candidate tree: `$candidate_tree_sha`"',
+            'echo "- base: `main`"',
+            'echo "- request artifact: `Outputs/operant-release-pr-request.json`"',
+            'echo "- body artifact: `Outputs/operant-release-pr.md`"',
+        ]
+        for unsafe in unsafe_lines:
+            with self.subTest(unsafe=unsafe):
+                self.assertNotIn(unsafe, workflow)
+                self.assertIn(unsafe.replace("`", "\\`"), workflow)
+
     def test_first_release_pr_creation_is_externalized_as_machine_readable_request(self) -> None:
         workflow = WORKFLOW.read_text(encoding="utf-8")
         self.assertNotIn("gh pr create", workflow)
