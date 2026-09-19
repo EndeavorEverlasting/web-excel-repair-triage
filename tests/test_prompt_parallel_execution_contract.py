@@ -23,7 +23,7 @@ class PromptParallelExecutionContractTests(unittest.TestCase):
             "PARALLEL EXECUTION: DEGRADED",
             "AUTONOMY_GAP",
             "PARALLEL DISPATCH MANIFEST",
-            "Copyable chat panels are portability/recovery fallback only",
+            "Copyable chat panels are machine-readable transport that agents must ingest and dispatch",
             "harness/contracts/prompt-parallel-dispatch.v1.json",
             "scripts/prompt_parallel_dispatch.py",
             "prompt-parallel-dispatch-receipt/v1",
