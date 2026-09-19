@@ -437,6 +437,17 @@ class HarnessContractTests(unittest.TestCase):
         )
         self.assertIn(artifact["validator"], use_case["validator_ids"])
         self.assertTrue(set(use_case["validator_ids"]).issubset(validators))
+        validator_registry = self.load("harness/validators.v1.json")
+        self.assertIn(
+            "prompt-runtime-compliance-receipt-audit",
+            validator_registry["profiles"]["required_checks"],
+        )
+        self.assertEqual(workflow["validation_profile"], "required_checks")
+        self.assertTrue(
+            set(use_case["validator_ids"]).issubset(
+                set(validator_registry["profiles"][workflow["validation_profile"]])
+            )
+        )
 
     def test_runtime_compliance_use_case_routes_implementation_first(self) -> None:
         capabilities = self.load("harness/capabilities.v1.json")["capabilities"]
