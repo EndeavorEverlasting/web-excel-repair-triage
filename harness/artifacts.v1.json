@@ -131,7 +131,10 @@
       "validator": "prompt-runtime-compliance-tests",
       "naming": "Stable pilot-plan.json and pilot-receipt.json plus runs/<run-id>/{scenario,run,receipt,validation}.json.",
       "tracking_policy": "Gitignored runtime evidence or CI artifact; observed external-agent receipts remain sanitized and proof-scoped rather than tracked as canonical source truth.",
-      "proof_ceiling": "Repository contract, fixture, runner, linkage, and deterministic receipt-validation proof unless an exact external-agent run is independently observed."
+      "proof_ceiling": "Repository contract, fixture, runner, linkage, and deterministic receipt-validation proof unless an exact external-agent run is independently observed.",
+      "primary_artifact": "Outputs/repository-ai-evals/runtime-compliance/pilot-receipt.json",
+      "schema": "prompt-runtime-compliance-pilot-receipt/v1",
+      "schema_owner": "harness/evals/runtime-compliance/scripts/pilot.py"
     }
   ]
 }
