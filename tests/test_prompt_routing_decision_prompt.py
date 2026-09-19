@@ -212,15 +212,20 @@ class PromptRoutingDecisionTests(unittest.TestCase):
         with self.assertRaisesRegex(routing.RoutingDecisionError, "prompt revision is stale"):
             routing.build_routing_decision(self.request(), stale)
 
-    def test_retired_or_unknown_prompt_id_fails_closed(self) -> None:
-        self.assertNotIn("P83", self.by_id)
+    def test_unknown_wire_valid_prompt_id_fails_closed(self) -> None:
+        candidates = [f"P{n:02d}" for n in range(100)] + [
+            f"P{n}" for n in range(100, 1000)
+        ]
+        unknown_prompt_id = next(prompt_id for prompt_id in candidates if prompt_id not in self.by_id)
         receipt = evidence_spine_runtime.build_route_receipt(
             {
-                "prompt_id": "P83",
+                "prompt_id": unknown_prompt_id,
                 "prompt_revision": "0" * 64,
                 "destination": "firstmate",
                 "provenance": "observed",
                 "surface_id": "fm-asb",
+                "routing_request_event_id": "evt_route_req_rrb03_0001",
+                "correlation_id": "corr_rrb03_route_decision_0001",
             }
         )
         with self.assertRaisesRegex(routing.RoutingDecisionError, "not in the current registry"):
