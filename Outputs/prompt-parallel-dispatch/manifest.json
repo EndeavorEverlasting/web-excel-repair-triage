@@ -3,7 +3,7 @@
   "run_id": "runtime-compliance-sprint4-convergence-20260919",
   "graph_width": 1,
   "parallel_disposition": "NOT_APPLICABLE",
-  "autonomy_gap": "Graph width is 1 because Sprint 4 shared-registry ownership serializes convergence. This provider-only coordinator can complete the non-colliding test-floor/plan/dispatch slice; repository-ai-evals remains ownership-blocked by open PR #450, and harness manifest/validator surfaces remain owned by open PR #584.",
+  "autonomy_gap": null,
   "lanes": [
     {
       "lane_id": "lane-runtime-compliance-sprint4-safe-convergence",
