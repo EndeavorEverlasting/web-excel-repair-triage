@@ -5,6 +5,51 @@
   "established_at": "2026-09-19",
   "status": "sprint0_floor",
   "migration_kinds": ["ADD", "STRENGTHEN", "NO_CAPABILITY_CHANGE", "INTENTIONAL_CHANGE", "TRANSFER", "RETIRE", "RESTORE"],
-  "migrations": [],
-  "note": "Empty until Sprint 1A baseline acceptance and Sprint 2 lifecycle integration. Every lifecycle transition after baseline acceptance must be explicit and recorded here."
+  "migrations": [
+    {
+      "migration_id": "2026-09-19-agent-transport-panels-p02",
+      "prompt_id": "P02",
+      "migration_kind": "STRENGTHEN",
+      "source_history_migration_id": "2026-09-19-agent-transport-panels-binding-law",
+      "source_history_from_git_blob_sha1": "0b5ff65078ab2bc0fdd70dd52a199e440ccbe6c7",
+      "source_history_to_git_blob_sha1": "aa4dd85a41f374db82d7800bc0ecdf78f62803cd",
+      "rationale": "Strengthen P02 to make explicit that copyable panels are machine-readable transport that agents must ingest and dispatch",
+      "semantic_diff": "No capability changes",
+      "effective_identity_change": "preserve_canonical"
+    },
+    {
+      "migration_id": "2026-09-19-agent-transport-panels-p04",
+      "prompt_id": "P04",
+      "migration_kind": "STRENGTHEN",
+      "source_history_migration_id": "2026-09-19-agent-transport-panels-binding-law",
+      "source_history_from_git_blob_sha1": "0b5ff65078ab2bc0fdd70dd52a199e440ccbe6c7",
+      "source_history_to_git_blob_sha1": "aa4dd85a41f374db82d7800bc0ecdf78f62803cd",
+      "rationale": "Strengthen P04 to make explicit that copyable panels are machine-readable transport that agents must ingest and dispatch",
+      "semantic_diff": "No capability changes",
+      "effective_identity_change": "preserve_canonical"
+    },
+    {
+      "migration_id": "2026-09-19-agent-transport-panels-p07",
+      "prompt_id": "P07",
+      "migration_kind": "STRENGTHEN",
+      "source_history_migration_id": "2026-09-19-agent-transport-panels-binding-law",
+      "source_history_from_git_blob_sha1": "0b5ff65078ab2bc0fdd70dd52a199e440ccbe6c7",
+      "source_history_to_git_blob_sha1": "aa4dd85a41f374db82d7800bc0ecdf78f62803cd",
+      "rationale": "Strengthen P07 to make explicit that copyable panels are machine-readable transport that agents must ingest and dispatch",
+      "semantic_diff": "No capability changes",
+      "effective_identity_change": "preserve_canonical"
+    },
+    {
+      "migration_id": "2026-09-19-agent-transport-panels-p59",
+      "prompt_id": "P59",
+      "migration_kind": "STRENGTHEN",
+      "source_history_migration_id": "2026-09-19-agent-transport-panels-binding-law",
+      "source_history_from_git_blob_sha1": "0b5ff65078ab2bc0fdd70dd52a199e440ccbe6c7",
+      "source_history_to_git_blob_sha1": "aa4dd85a41f374db82d7800bc0ecdf78f62803cd",
+      "rationale": "Strengthen P59 to make explicit that copyable panels are machine-readable transport that agents must ingest and dispatch",
+      "semantic_diff": "No capability changes",
+      "effective_identity_change": "preserve_canonical"
+    }
+  ],
+  "note": "Migrations recorded after Sprint 1A baseline. Every lifecycle transition after baseline acceptance must be explicit and recorded here."
 }
