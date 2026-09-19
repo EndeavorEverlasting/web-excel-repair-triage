@@ -93,6 +93,8 @@ def main() -> int:
                 taxonomy,
             )
             save_state(state_path, state)
+            response = {"continue": True} if args.hook_name == "beforeSubmitPrompt" else {}
+            sys.stdout.write(json.dumps(response, sort_keys=True, separators=(",", ":")) + "\n")
             return 0
 
         state_path = state_path_for_run(args.state_dir, args.run_key)

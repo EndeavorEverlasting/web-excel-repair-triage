@@ -378,6 +378,22 @@
       "proof_ceiling": "Executable zero-content state, provenance, hard-stop, persistence, and privacy-canary regression proof."
     },
     {
+      "id": "cursor-failure-observatory-install-audit",
+      "class": "contract",
+      "command": "python scripts/validate_cursor_failure_observatory_installation.py",
+      "blocking": true,
+      "output": "process log",
+      "proof_ceiling": "Tracked project-hook installation, passive execution policy, state isolation, and phase-state proof; no real Cursor invocation proof."
+    },
+    {
+      "id": "cursor-failure-observatory-install-tests",
+      "class": "test",
+      "command": "python -m unittest tests.test_cursor_failure_observatory_installation -v",
+      "blocking": true,
+      "output": "process log",
+      "proof_ceiling": "Synthetic stdio proof through the installed hook commands for success, semantic abandonment, user abort, and host error; no desktop Cursor observation."
+    },
+    {
       "id": "repo-native-update-audit",
       "class": "contract",
       "command": "python scripts/validate_repo_native_update_harness.py --summary",
@@ -441,6 +457,8 @@
       "execution-boundary-enforcement-tests",
       "privacy-failure-observatory-audit",
       "privacy-failure-observatory-tests",
+      "cursor-failure-observatory-install-audit",
+      "cursor-failure-observatory-install-tests",
       "repo-native-update-audit",
       "repo-native-update-tests",
       "repo-native-update-parity",
@@ -476,6 +494,8 @@
       "execution-boundary-enforcement-tests",
       "privacy-failure-observatory-audit",
       "privacy-failure-observatory-tests",
+      "cursor-failure-observatory-install-audit",
+      "cursor-failure-observatory-install-tests",
       "repo-native-update-audit",
       "repo-native-update-tests",
       "repo-native-update-parity",
@@ -538,6 +558,8 @@
       "execution-boundary-enforcement-tests",
       "privacy-failure-observatory-audit",
       "privacy-failure-observatory-tests",
+      "cursor-failure-observatory-install-audit",
+      "cursor-failure-observatory-install-tests",
       "repo-native-update-audit",
       "repo-native-update-tests",
       "repo-native-update-parity",

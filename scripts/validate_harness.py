@@ -140,6 +140,8 @@ REQUIRED_VALIDATOR_IDS = {
     "execution-boundary-enforcement-tests",
     "privacy-failure-observatory-audit",
     "privacy-failure-observatory-tests",
+    "cursor-failure-observatory-install-audit",
+    "cursor-failure-observatory-install-tests",
     "repo-native-update-audit",
     "repo-native-update-tests",
     "repo-native-update-parity",

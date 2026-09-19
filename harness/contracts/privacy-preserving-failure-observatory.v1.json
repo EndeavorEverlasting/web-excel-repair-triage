@@ -1,7 +1,7 @@
 {
   "schema_version": "privacy-preserving-failure-observatory/v1",
   "contract_id": "privacy-preserving-failure-observatory",
-  "status": "PROTOTYPE",
+  "status": "P1_REPOSITORY_INSTALLATION_IMPLEMENTED_FIELD_PROOF_REQUIRED",
   "purpose": "Detect Prompt Kit execution failures in third-party agent hosts without collecting user code, repository identity, transcript content, reasoning text, shell arguments, error strings, account identity, or stable device identity.",
   "default_mode": "LOCAL_ONLY",
   "design_choice": "ALLOWLIST_LOCAL_SENTINEL_PLUS_STRUCTURED_RECEIPT",
@@ -164,13 +164,13 @@
   "phase_map": [
     {
       "phase": "P0_LOCAL_PROTOTYPE",
-      "status": "ACTIVE",
+      "status": "VALIDATED_INTEGRATED",
       "gate": "Focused tests plus deterministic floor; no network transport."
     },
     {
       "phase": "P1_HOST_INSTALLATION",
-      "status": "REQUIRED_SUCCESSOR_WORK",
-      "gate": "Observed local Cursor runs for success, semantic abandonment, user abort, and host error."
+      "status": "REPOSITORY_INSTALLATION_IMPLEMENTED_FIELD_PROOF_REQUIRED",
+      "gate": "Tracked .cursor/hooks.json plus synthetic stdio proof are repository-proven; completion still requires observed local Cursor runs for success, semantic abandonment, user abort, and host error, with prompt provenance supplied out-of-band without changing canonical prompt copy."
     },
     {
       "phase": "P2_ANONYMOUS_CONTRIBUTION",

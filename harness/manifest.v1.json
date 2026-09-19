@@ -291,6 +291,8 @@
     "python -m unittest tests.test_execution_boundary_enforcement_prompt -v",
     "python scripts/validate_privacy_preserving_failure_observatory.py",
     "python -m unittest tests.test_privacy_preserving_failure_observatory_prompt -v",
+    "python scripts/validate_cursor_failure_observatory_installation.py",
+    "python -m unittest tests.test_cursor_failure_observatory_installation -v",
     "python scripts/validate_repo_native_update_harness.py --summary",
     "python -m unittest tests.test_repo_native_update -v",
     "python scripts/run_repo_native_update.py generate --surface canary-constants --check",
