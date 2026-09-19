@@ -308,7 +308,7 @@ Provider-backed model-runtime execution remains separately typed from CI/static 
 
 **Proof ceiling now:** IMPLEMENTED / VALIDATED / INTEGRATED / DEPLOYED for Gen2 harness artifacts; `UNPROVEN_RUNTIME` for real external-agent pilot effectiveness; Sprint 3 is dependency-gated and NOT STARTED.
 
-**NEXT ACTION:** execute §16 ADP-00 (Triage neutral-capture authority) and AgentSwitchboard ADP-01 (OpenCode capability/readiness) concurrently. Do not ask the operator to invent an adapter JSON. ADP-02 must produce the repository-owned executable/config generator after both contracts are green.
+**NEXT ACTION:** execute AgentSwitchboard ADP-01 (OpenCode capability/readiness) then ADP-02 (canonical adapter + config generator) from §16 adapter phase map. Do not ask the operator to invent an adapter JSON. ADP-02 must produce the repository-owned executable/config generator after both ADP-00 and ADP-01 are green. ADP-00 (Triage neutral-capture authority) is already INTEGRATED.
 
 ## 15. Generation versioning
 
