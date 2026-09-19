@@ -707,10 +707,18 @@ def validate_capabilities_and_triggers() -> tuple[dict[str, Any], dict[str, Any]
                 hook.get("implementation_resources"),
                 f"use_case_hook.{hook_id}.implementation_resources",
             )
+            workflow_entrypoints = require_string_list(
+                hook.get("workflow_entrypoints"),
+                f"use_case_hook.{hook_id}.workflow_entrypoints",
+            )
             proof_resources = require_string_list(
                 hook.get("proof_resources"),
                 f"use_case_hook.{hook_id}.proof_resources",
             )
+            if not set(workflow_entrypoints).issubset(set(implementation_resources) | set(proof_resources)):
+                raise HarnessValidationError(
+                    f"use-case hook workflow entrypoints must resolve to participating resources: {hook_id}"
+                )
             for alias in aliases:
                 key = alias.casefold().strip()
                 previous = intent_owner.get(key)
@@ -818,7 +826,7 @@ def validate_capabilities_and_triggers() -> tuple[dict[str, Any], dict[str, Any]
             )
         workflow_entry_points = set(workflow.get("entry_points", []))
         missing_entry_points = sorted(
-            set(hook["implementation_resources"]) - workflow_entry_points
+            set(hook["workflow_entrypoints"]) - workflow_entry_points
         )
         if missing_entry_points:
             raise HarnessValidationError(
