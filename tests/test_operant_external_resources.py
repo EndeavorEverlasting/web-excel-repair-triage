@@ -64,6 +64,11 @@ class OperantExternalResourceTests(unittest.TestCase):
             "profile": "spec-architecture",
             "color": "Teal",
             "category": "standard",
+            "semantic_profile": {
+                "capabilities": [
+                    {"id": "external-prior-art-test", "level": "PRIMARY", "rationale": "Test fixture for external prior-art gate", "evidence_refs": ["test_operant_external_resources.py"]}
+                ]
+            },
         }
 
     def test_registered_donors_and_roots_are_explicit(self) -> None:

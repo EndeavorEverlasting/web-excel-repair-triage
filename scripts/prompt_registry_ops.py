@@ -32,7 +32,7 @@ REQUIRED_DRAFT_FIELDS = {
     "copyContent",
     "keywords",
 }
-OPTIONAL_DRAFT_FIELDS = {"registry_id", "profile", "color", "category", "progress"}
+OPTIONAL_DRAFT_FIELDS = {"registry_id", "profile", "color", "category", "progress", "semantic_profile"}
 
 
 def _read_json(path_value: str) -> dict[str, Any]:

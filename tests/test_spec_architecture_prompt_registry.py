@@ -132,6 +132,11 @@ class SpecArchitecturePromptRegistryTests(unittest.TestCase):
             "keywords": ["prompt ops fixture", "registry helper fixture"],
             "profile": "spec-architecture",
             "color": "Cyan",
+            "semantic_profile": {
+                "capabilities": [
+                    {"id": "prompt-registry-test", "level": "PRIMARY", "rationale": "Test fixture for prompt registry operations", "evidence_refs": ["test_spec_architecture_prompt_registry.py"]}
+                ]
+            },
         }
         result = prompt_registry_ops.add_prompt(
             draft, "spec-architecture-prompts", dry_run=True
