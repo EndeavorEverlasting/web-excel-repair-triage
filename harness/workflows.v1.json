@@ -249,7 +249,7 @@
         "harness/evals/runtime-compliance/scripts/pilot.py",
         "scripts/validate_prompt_runtime_compliance_receipt.py"
       ],
-      "validation_profile": "target-repository",
+      "validation_profile": "required_checks",
       "failure_policy": "Reproduce the weakness, repair the smallest owned boundary, and rerun correctness before accepting efficiency changes.",
       "handoff_fields": [
         "baseline",
