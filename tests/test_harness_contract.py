@@ -502,6 +502,20 @@ class HarnessContractTests(unittest.TestCase):
         self.assertEqual(language_trigger["capability_id"], "prompt-language-audit")
         self.assertEqual(proof_trigger["capability_id"], "skill-evaluation")
 
+    def test_operational_harness_installs_pinned_test_dependencies(self) -> None:
+        workflow = (ROOT / ".github/workflows/harness-contract.yml").read_text(
+            encoding="utf-8"
+        )
+        self.assertIn(
+            "python -m pip install -r requirements-test-floor.txt",
+            workflow,
+        )
+        self.assertIn("requirements-test-floor.txt", workflow)
+        requirements = (ROOT / "requirements-test-floor.txt").read_text(
+            encoding="utf-8"
+        )
+        self.assertIn("jsonschema==", requirements)
+
     def test_workflow_validation_profiles_resolve(self) -> None:
         workflows = self.load("harness/workflows.v1.json")["workflows"]
         profiles = self.load("harness/validators.v1.json")["profiles"]
