@@ -100,7 +100,11 @@ class RuntimeComplianceLinkageTests(unittest.TestCase):
         self.assertEqual(record["p99_evidence_candidate"]["kind"], "validator")
         self.assertEqual(record["failure_class_hints"], [])
         self.assertEqual(record["regression"]["status"], "NONE")
-        p99_evidence_schema = self.p99_schema["$defs"]["evidence"]
+        p99_evidence_schema = {
+            "$schema": self.p99_schema["$schema"],
+            "$defs": self.p99_schema["$defs"],
+            "$ref": "#/$defs/evidence",
+        }
         self.assertTrue(
             Draft202012Validator(p99_evidence_schema).is_valid(
                 record["p99_evidence_candidate"]
