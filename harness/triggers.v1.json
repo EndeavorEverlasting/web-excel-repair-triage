@@ -53,6 +53,15 @@
         "request is only cosmetic skill wording",
         "target skill or owning repository is unknown",
         "canonical prompt wording or shared policy still needs mutation before an evaluable strengthened candidate exists; route prompt-language-change first, then return for runtime proof"
+      ],
+      "intent_aliases": [
+        "prompt strengthening sprint",
+        "prove strengthened Prompt Kit execution behavior",
+        "runtime compliance for Prompt Kit execution contracts",
+        "verify prompt execution-boundary continuation proof-state and regression behavior"
+      ],
+      "use_case_ids": [
+        "prompt-strengthening-runtime-compliance"
       ]
     },
     {
@@ -102,12 +111,23 @@
         "harness completeness check is missing or failing",
         "operator report is stale or incomplete",
         "a PR integration failure reveals missing or incorrect merge-gate harness behavior",
-        "an agent labels a green mergeable authorized PR as a blocker or routes normal consumers to a feature branch after merge"
+        "an agent labels a green mergeable authorized PR as a blocker or routes normal consumers to a feature branch after merge",
+        "an agent stops at a material or arbitrary boundary instead of continuing the requested outcome through a bounded recovery sprint",
+        "execution-boundary intent-to-implementation or implementation-to-owner routing is missing, stale, or ambiguous"
       ],
       "forbidden_conditions": [
         "request changes AGENTS.md governance",
         "request is product implementation only",
         "request requires secrets or destructive cleanup"
+      ],
+      "intent_aliases": [
+        "agents stop at arbitrary boundaries instead of continuing",
+        "turn arbitrary boundaries into bounded sprints",
+        "why did the agent stop without reporting the boundary",
+        "classification became a stopping condition"
+      ],
+      "use_case_ids": [
+        "execution-boundary-continuation"
       ]
     },
     {
