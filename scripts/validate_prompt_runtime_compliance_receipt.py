@@ -14,6 +14,7 @@ SCHEMA_PATH = ROOT / "harness" / "contracts" / "prompt-runtime-compliance-receip
 CONTRACT_PATH = ROOT / "harness" / "contracts" / "prompt-runtime-compliance.v1.json"
 TAXONOMY_PATH = ROOT / "harness" / "contracts" / "execution-boundary-taxonomy.v1.json"
 DEFAULT_RECEIPT = ROOT / "harness" / "evals" / "runtime-compliance" / "contract-fixtures" / "receipt.positive.v1.json"
+SCENARIO_INDEX_PATH = ROOT / "harness" / "evals" / "runtime-compliance" / "fixtures" / "index.v1.json"
 SUPPORTED_SCHEMA_VERSIONS = {
     "prompt-runtime-compliance-receipt/v1",
     "prompt-runtime-compliance-pilot-receipt/v1",
@@ -33,7 +34,7 @@ MATERIAL = {"MATERIAL", "CRITICAL"}
 FAILURE_SEVERITIES = {"CRITICAL", "HIGH"}
 
 
-def load_json(path: Path) -> dict[str, Any]:
+def load_json(path: Path) -> Any:
     return json.loads(path.read_text(encoding="utf-8"))
 
 
@@ -49,12 +50,16 @@ CANONICAL_CLASSES = {
 }
 FORMAT_CHECKER = FormatChecker()
 
-
 def _time(value: str | None) -> datetime | None:
     if not value:
         return None
-    return datetime.fromisoformat(value.replace("Z", "+00:00"))
-
+    try:
+        parsed = datetime.fromisoformat(value.replace("Z", "+00:00"))
+    except (TypeError, ValueError):
+        return None
+    if parsed.tzinfo is None or parsed.utcoffset() is None:
+        return None
+    return parsed
 
 def _finding(
     rule_id: str,
@@ -228,12 +233,14 @@ def _evaluate_identity_reference_time_rules(receipt: dict[str, Any], findings: d
         if inside
         else _fail("PRCR.TIME.RUN_ORDER", "run", "Run or trace timestamps are out of order.")
     )
-    bad_action_times = [
-        action["action_id"]
-        for action in receipt["actions"]
-        if action["completed_at"] is not None
-        and _time(action["started_at"]) > _time(action["completed_at"])
-    ]
+    bad_action_times: list[str] = []
+    for action in receipt["actions"]:
+        if action["completed_at"] is None:
+            continue
+        started = _time(action["started_at"])
+        completed = _time(action["completed_at"])
+        if started is None or completed is None or started > completed:
+            bad_action_times.append(action["action_id"])
     setf(
         _na("PRCR.TIME.ACTION_ORDER", "actions", "No completed actions.")
         if not any(action["completed_at"] is not None for action in receipt["actions"])
@@ -243,7 +250,6 @@ def _evaluate_identity_reference_time_rules(receipt: dict[str, Any], findings: d
             else _fail("PRCR.TIME.ACTION_ORDER", "actions", "Action time order failed for " + ", ".join(bad_action_times))
         )
     )
-
 
 def _evaluate_boundary_rules(receipt: dict[str, Any], findings: dict[str, dict[str, Any]], ctx: dict[str, Any]) -> None:
     boundaries = ctx["boundaries"]
@@ -332,16 +338,13 @@ def _evaluate_boundary_rules(receipt: dict[str, Any], findings: dict[str, dict[s
         "sprint_id", "scope", "outcome", "first_executable_action_id",
         "completion_gate", "return_condition",
     )
-    declared_required_events = [
-        row for row in material if row["recovery_sprint"]["required"] is True
-    ]
-    for row in declared_required_events:
+    for row in recovery_required_events:
         sprint = row["recovery_sprint"]
         if not sprint["opened"] or any(sprint.get(field) in (None, "") for field in required_fields):
             opened_fail.append(row["boundary_event_id"])
     setf(
         _na("PRCR.BOUNDARY.RECOVERY_OPENED", "boundary_events", "No required recovery sprint.")
-        if not declared_required_events
+        if not recovery_required_events
         else (
             _pass("PRCR.BOUNDARY.RECOVERY_OPENED", "boundary_events", "Required recovery sprints are opened with executable metadata.")
             if not opened_fail
@@ -408,6 +411,59 @@ def _evaluate_boundary_rules(receipt: dict[str, Any], findings: dict[str, dict[s
         "Single receipt cannot prove a previously omitted recovered boundary; retained material events remain present."
     )
 
+def _proof_advances(action: dict[str, Any]) -> bool:
+    before = _rank(action.get("proof_before"))
+    after = _rank(action.get("proof_after"))
+    return before is not None and after is not None and after > before
+
+def _confirmed_effect(action: dict[str, Any]) -> bool:
+    return action.get("side_effect_state") in {"CONFIRMED", "ROLLED_BACK_PROVEN"}
+
+def _safe_receipt_id(value: Any) -> str:
+    if isinstance(value, str) and Draft202012Validator(SCHEMA["$defs"]["id"]).is_valid(value):
+        return value
+    return "unknown"
+
+def _scenario_rule_map() -> dict[str, set[str]] | None:
+    try:
+        payload = load_json(SCENARIO_INDEX_PATH)
+    except (OSError, UnicodeError, json.JSONDecodeError):
+        return None
+    if not isinstance(payload, dict) or payload.get("schema_version") != "prompt-runtime-compliance-scenario-index/v1":
+        return None
+    rows = payload.get("scenarios")
+    if not isinstance(rows, list):
+        return None
+    result: dict[str, set[str]] = {}
+    for row in rows:
+        if not isinstance(row, dict):
+            return None
+        scenario_id = row.get("scenario_id")
+        protected = row.get("protected_rule_ids")
+        if not isinstance(scenario_id, str) or not isinstance(protected, list):
+            return None
+        if not protected or not all(isinstance(item, str) and item in RULE_IDS for item in protected):
+            return None
+        if scenario_id in result:
+            return None
+        result[scenario_id] = set(protected)
+    return result
+
+def _structural_inconclusive(message: str, receipt_id: Any = "unknown") -> dict[str, Any]:
+    return {
+        "schema_version": "prompt-runtime-compliance-validation/v1",
+        "receipt_id": _safe_receipt_id(receipt_id),
+        "receipt_schema": "prompt-runtime-compliance-receipt/v1",
+        "overall_result": "INCONCLUSIVE",
+        "counts": {"PASS": 0, "FAIL": 1, "NOT_APPLICABLE": 0, "UNKNOWN": 0},
+        "findings": [
+            _fail(
+                "PRCR.COMPLIANCE.INCONCLUSIVE",
+                "receipt-structure",
+                message,
+            )
+        ],
+    }
 
 def _evaluate_action_rules(receipt: dict[str, Any], findings: dict[str, dict[str, Any]], ctx: dict[str, Any]) -> None:
     boundaries = ctx["boundaries"]
@@ -459,20 +515,15 @@ def _evaluate_action_rules(receipt: dict[str, Any], findings: dict[str, dict[str
     unsubstantiated = [
         row["action_id"]
         for row in progress
-        if (
-            (
-                not row["evidence_refs"]
-                and row["proof_before"] == row["proof_after"]
-                and row["status"] in {"SKIPPED", "CANCELLED"}
-            )
-            or not exact_promotion_supported(row)
-        )
+        if not row["evidence_refs"]
+        and not _proof_advances(row)
+        and not _confirmed_effect(row)
     ]
     setf(
         _na("PRCR.ACTION.PROGRESS_TRUTH", "actions", "No action claims progress-bearing status.")
         if not progress
         else (
-            _pass("PRCR.ACTION.PROGRESS_TRUTH", "actions", "Progress-bearing actions carry evidence, a proof transition, or an executed status.")
+            _pass("PRCR.ACTION.PROGRESS_TRUTH", "actions", "Progress-bearing actions carry evidence, a stronger proof transition, or a confirmed effect.")
             if not unsubstantiated
             else _fail("PRCR.ACTION.PROGRESS_TRUTH", "actions", "Unsupported progress-bearing claim on " + ", ".join(unsubstantiated))
         )
@@ -524,23 +575,48 @@ def _evaluate_action_rules(receipt: dict[str, Any], findings: dict[str, dict[str
     partial_fail: list[str] = []
     for row in ambiguous:
         action_id = row["action_id"]
+        target_identity = row.get("target_identity")
+        pre_state = row.get("pre_state_fingerprint")
         readbacks = [
-            other for other in receipt["actions"]
+            other
+            for other in receipt["actions"]
             if other.get("readback_of_action_id") == action_id
         ]
         retries = [
-            other for other in receipt["actions"]
+            other
+            for other in receipt["actions"]
             if other.get("retry_of_action_id") == action_id
         ]
-        first_readback = min((other["sequence"] for other in readbacks), default=None)
+        valid_readbacks = [
+            other
+            for other in readbacks
+            if target_identity is not None
+            and pre_state is not None
+            and other.get("target_identity") == target_identity
+            and other.get("pre_state_fingerprint") == pre_state
+            and other["status"] == "SUCCEEDED"
+            and other["side_effect_state"] not in {"PARTIAL", "UNKNOWN"}
+            and bool(other["evidence_refs"])
+            and other["sequence"] > row["sequence"]
+        ]
+        first_valid_readback = min(valid_readbacks, key=lambda item: item["sequence"], default=None)
         first_retry = min((other["sequence"] for other in retries), default=None)
-        if first_readback is None or (first_retry is not None and first_retry < first_readback):
+        retry_before_readback = (
+            first_retry is not None
+            and (first_valid_readback is None or first_retry < first_valid_readback["sequence"])
+        )
+        duplicate_after_confirmed = (
+            first_valid_readback is not None
+            and first_valid_readback["side_effect_state"] == "CONFIRMED"
+            and any(other["sequence"] > first_valid_readback["sequence"] for other in retries)
+        )
+        if first_valid_readback is None or retry_before_readback or duplicate_after_confirmed:
             partial_fail.append(action_id)
     setf(
         _na("PRCR.ACTION.PARTIAL_READBACK", "actions", "No partial or unknown mutation side effect.")
         if not ambiguous
         else (
-            _pass("PRCR.ACTION.PARTIAL_READBACK", "actions", "Authoritative readback precedes every equivalent retry.")
+            _pass("PRCR.ACTION.PARTIAL_READBACK", "actions", "Authoritative same-target readback reconciles every ambiguous mutation before retry.")
             if not partial_fail
             else _fail("PRCR.ACTION.PARTIAL_READBACK", "actions", "Partial/unknown mutation lacks readback-before-retry: " + ", ".join(partial_fail))
         )
@@ -564,7 +640,6 @@ def _evaluate_action_rules(receipt: dict[str, Any], findings: dict[str, dict[str
         )
     )
 
-
 def _evaluate_terminal_rules(receipt: dict[str, Any], findings: dict[str, dict[str, Any]], ctx: dict[str, Any]) -> None:
     boundaries = ctx["boundaries"]
     actions = ctx["actions"]
@@ -575,12 +650,31 @@ def _evaluate_terminal_rules(receipt: dict[str, Any], findings: dict[str, dict[s
 
     terminal = receipt["terminal"]
     if terminal["state"] == "COMPLETE":
+        material_disposed = True
+        for event in ctx["material"]:
+            sprint = event["recovery_sprint"]
+            first_action = actions.get(sprint.get("first_executable_action_id"))
+            if event["publication_ack"] == "PENDING" or event["last_proven_checkpoint"] is None:
+                material_disposed = False
+                break
+            if sprint["required"] and (
+                not sprint["opened"]
+                or not sprint.get("outcome")
+                or first_action is None
+                or first_action["status"] != "SUCCEEDED"
+                or first_action["completed_at"] is None
+                or not first_action["progress_bearing"]
+                or not first_action["evidence_refs"]
+            ):
+                material_disposed = False
+                break
         complete_ok = (
             terminal["reason_code"] == "OBJECTIVE_COMPLETED"
             and terminal["resumption_trigger"] is None
             and terminal["next_transition"] is None
+            and material_disposed
             and not any(v["status"] == "OPEN" and v["severity"] in FAILURE_SEVERITIES for v in receipt["violations"])
-            and not any(check["status"] == "BLOCKED" for check in receipt["proof"]["checks"])
+            and not any(check["status"] in {"FAIL", "BLOCKED", "UNKNOWN"} for check in receipt["proof"]["checks"])
         )
         setf(
             _pass("PRCR.TERMINAL.COMPLETE_GATE", "terminal", "Completion gate has no retained blocker or open high-severity violation.")
@@ -615,12 +709,19 @@ def _evaluate_terminal_rules(receipt: dict[str, Any], findings: dict[str, dict[s
         setf(_na("PRCR.TERMINAL.NO_SAFE_PATH_EVIDENCE", "terminal", "Reason is not NO_SAFE_PROGRESS_PATH."))
 
     if terminal["state"] == "HARD_TERMINATED_SYNTHETIC":
-        runtime_evidence = [row for row in receipt["evidence"] if row["kind"] in {"runtime", "provider"}]
-        setf(
-            _pass("PRCR.TERMINAL.HARD_SYNTHETIC", "terminal", "Synthetic hard termination is externally evidenced.")
-            if terminal["supervisor_synthesized"] and runtime_evidence
-            else _fail("PRCR.TERMINAL.HARD_SYNTHETIC", "terminal", "Hard termination was self-asserted or lacks external supervisor evidence.")
-        )
+        if not terminal["supervisor_synthesized"]:
+            hard_finding = _fail(
+                "PRCR.TERMINAL.HARD_SYNTHETIC",
+                "terminal",
+                "Hard termination was self-asserted instead of supervisor-synthesized.",
+            )
+        else:
+            hard_finding = _unknown(
+                "PRCR.TERMINAL.HARD_SYNTHETIC",
+                "terminal",
+                "Supervisor synthesis is claimed, but receipt-local evidence cannot prove external authorship; an external supervisor proof owner must attest it.",
+            )
+        setf(hard_finding)
         setf(
             _pass("PRCR.TERMINAL.HARD_REASON", "terminal", "Hard termination uses HOST_FORCED_TERMINATION with a checkpoint.")
             if terminal["reason_code"] == "HOST_FORCED_TERMINATION" and terminal["last_proven_checkpoint"] is not None
@@ -657,7 +758,6 @@ def _evaluate_terminal_rules(receipt: dict[str, Any], findings: dict[str, dict[s
         )
     else:
         setf(_na("PRCR.TERMINAL.USER_ONLY", "terminal", "Terminal state is not USER_ONLY_DECISION_REQUIRED."))
-
 
 def _evaluate_violation_rules(receipt: dict[str, Any], findings: dict[str, dict[str, Any]], ctx: dict[str, Any]) -> None:
     boundaries = ctx["boundaries"]
@@ -972,11 +1072,33 @@ def _evaluate_scenario_rules(receipt: dict[str, Any], findings: dict[str, dict[s
         findings[row["rule_id"]] = row
 
     invariants = receipt["scenario"]["protected_invariants"]
-    setf(
-        _pass("PRCR.SCENARIO.PROTECTED_INVARIANTS", "scenario", "Scenario declares protected invariants.")
-        if invariants
-        else _fail("PRCR.SCENARIO.PROTECTED_INVARIANTS", "scenario", "Scenario has no protected invariants.")
-    )
+    scenario_id = receipt["scenario"]["scenario_id"]
+    scenario_rules = _scenario_rule_map()
+    if scenario_rules is None:
+        scenario_finding = _unknown(
+            "PRCR.SCENARIO.PROTECTED_INVARIANTS",
+            "scenario",
+            "Canonical scenario index is unavailable or invalid, so invariant resolution cannot be proven.",
+        )
+    elif scenario_id not in scenario_rules:
+        scenario_finding = _fail(
+            "PRCR.SCENARIO.PROTECTED_INVARIANTS",
+            "scenario",
+            f"Scenario {scenario_id!r} is not registered in the canonical runtime-compliance index.",
+        )
+    elif set(invariants) == scenario_rules[scenario_id]:
+        scenario_finding = _pass(
+            "PRCR.SCENARIO.PROTECTED_INVARIANTS",
+            "scenario",
+            "Protected invariants exactly match the scenario's canonical rule identities.",
+        )
+    else:
+        scenario_finding = _fail(
+            "PRCR.SCENARIO.PROTECTED_INVARIANTS",
+            "scenario",
+            "Protected invariants are missing, unresolved, or drifted from the canonical scenario rule set.",
+        )
+    setf(scenario_finding)
     if receipt["scenario"]["kind"] in {"synthetic", "replay"}:
         setf(
             _pass("PRCR.SCENARIO.FIXTURE_REQUIRED", "scenario", "Synthetic/replay scenario has a durable fixture identity.")
@@ -985,7 +1107,6 @@ def _evaluate_scenario_rules(receipt: dict[str, Any], findings: dict[str, dict[s
         )
     else:
         setf(_na("PRCR.SCENARIO.FIXTURE_REQUIRED", "scenario", "Observed scenario does not require a synthetic fixture path."))
-
 
 def _evaluate_nonaggregate(receipt: dict[str, Any]) -> list[dict[str, Any]]:
     ctx = _semantic_context(receipt)
@@ -1010,28 +1131,19 @@ def _evaluate_nonaggregate(receipt: dict[str, Any]) -> list[dict[str, Any]]:
     return [findings[rule["rule_id"]] for rule in CONTRACT["rules"]]
 
 
-def validate_receipt(receipt: dict[str, Any]) -> dict[str, Any]:
+def validate_receipt(receipt: Any) -> dict[str, Any]:
+    if not isinstance(receipt, dict):
+        return _structural_inconclusive("Receipt input must be a JSON object.")
     schema_errors = sorted(
         Draft202012Validator(SCHEMA, format_checker=FORMAT_CHECKER).iter_errors(receipt),
         key=lambda error: list(error.absolute_path),
     )
     if schema_errors:
         message = "; ".join(error.message for error in schema_errors[:6])
-        result = {
-            "schema_version": "prompt-runtime-compliance-validation/v1",
-            "receipt_id": str(receipt.get("receipt_id", "unknown")),
-            "receipt_schema": "prompt-runtime-compliance-receipt/v1",
-            "overall_result": "INCONCLUSIVE",
-            "counts": {"PASS": 0, "FAIL": 1, "NOT_APPLICABLE": 0, "UNKNOWN": 0},
-            "findings": [
-                _fail(
-                    "PRCR.COMPLIANCE.INCONCLUSIVE",
-                    "receipt-schema",
-                    "Structural receipt validation failed: " + message,
-                )
-            ],
-        }
-        return result
+        return _structural_inconclusive(
+            "Structural receipt validation failed: " + message,
+            receipt.get("receipt_id", "unknown"),
+        )
 
     findings = _evaluate_nonaggregate(receipt)
     by_id = {row["rule_id"]: row for row in findings}
@@ -1052,11 +1164,24 @@ def validate_receipt(receipt: dict[str, Any]) -> dict[str, Any]:
     hard_unknown = serious(nonaggregate, "UNKNOWN")
 
     if receipt["compliance_result"] == "PASS":
-        by_id["PRCR.COMPLIANCE.PASS"] = (
-            _pass("PRCR.COMPLIANCE.PASS", "receipt", "PASS is consistent with all applicable critical/high rules.")
-            if not hard_fail and not hard_unknown
-            else _fail("PRCR.COMPLIANCE.PASS", "receipt", "PASS hides a critical/high failure or unknown.")
-        )
+        if hard_fail:
+            by_id["PRCR.COMPLIANCE.PASS"] = _fail(
+                "PRCR.COMPLIANCE.PASS",
+                "receipt",
+                "PASS hides a critical/high semantic failure.",
+            )
+        elif hard_unknown:
+            by_id["PRCR.COMPLIANCE.PASS"] = _unknown(
+                "PRCR.COMPLIANCE.PASS",
+                "receipt",
+                "PASS cannot be confirmed while critical/high evidence remains UNKNOWN.",
+            )
+        else:
+            by_id["PRCR.COMPLIANCE.PASS"] = _pass(
+                "PRCR.COMPLIANCE.PASS",
+                "receipt",
+                "PASS is consistent with all applicable critical/high rules.",
+            )
     else:
         by_id["PRCR.COMPLIANCE.PASS"] = _na("PRCR.COMPLIANCE.PASS", "receipt", "Receipt does not claim PASS.")
 
@@ -1117,7 +1242,6 @@ def validate_receipt(receipt: dict[str, Any]) -> dict[str, Any]:
         format_checker=FORMAT_CHECKER,
     ).validate(result)
     return result
-
 
 def validate_pilot_receipt(receipt: dict[str, Any]) -> dict[str, Any]:
     errors: list[str] = []
@@ -1246,12 +1370,15 @@ def validate_pilot_receipt(receipt: dict[str, Any]) -> dict[str, Any]:
 
 
 def validate_path(path: Path) -> dict[str, Any]:
-    receipt = load_json(path)
-    schema_version = receipt.get("schema_version")
-    if schema_version == "prompt-runtime-compliance-pilot-receipt/v1":
-        return validate_pilot_receipt(receipt)
-    return validate_receipt(receipt)
-
+    try:
+        payload = load_json(path)
+    except (OSError, UnicodeError, json.JSONDecodeError) as exc:
+        return _structural_inconclusive(
+            f"Receipt input could not be loaded: {type(exc).__name__}: {exc}"
+        )
+    if isinstance(payload, dict) and payload.get("schema_version") == "prompt-runtime-compliance-pilot-receipt/v1":
+        return validate_pilot_receipt(payload)
+    return validate_receipt(payload)
 
 def exit_code(result: dict[str, Any]) -> int:
     if result["overall_result"] == "PASS":
