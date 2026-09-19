@@ -87,6 +87,8 @@ Static success does not prove a specific browser menu, PWA installation, Termux/
 **Capability:** `harness-infrastructure-maintenance`
 **Skill:** `.ai/skills/harness-infrastructure-maintenance/SKILL.md`
 
+**Execution-boundary subroute:** When the operator reports that an agent stops at a material/arbitrary boundary, fails to report why it stopped, or treats classification as a stopping condition, resolve `harness/capabilities.v1.json` → capability `harness-infrastructure-maintenance` → use case `execution-boundary-continuation`. That record owns the forward and reverse participant edges to the execution-boundary contract/taxonomy, P07 semantics, engine, shared policy, regression artifact, and focused proof. Load those participants on demand; do not preload unrelated harness domains.
+
 1. Preserve occupied or dirty work and create an isolated harness branch/worktree.
 2. Inspect all canonical harness files before inventing new names or contracts.
 3. Repair the canonical owner. Do not create a competing map, registry, validator, hook, report, or command-delivery surface.

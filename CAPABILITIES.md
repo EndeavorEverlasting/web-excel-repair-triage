@@ -33,6 +33,10 @@ Canonical report command:
 python scripts/validate_harness.py --report Outputs/harness-completeness-report.json
 ```
 
+## Execution-boundary continuation use case
+
+`harness-infrastructure-maintenance` remains the single capability owner. Its machine-readable `execution-boundary-continuation` use-case record maps real operator language such as “agents stop at arbitrary boundaries” to `harness-infrastructure-change`, the existing harness workflow/skill, the execution-boundary contract/taxonomy, P07 semantics, `scripts/execution_boundary_engine.py`, the shared Prompt Kit policy, the boundary regression matrix, and the focused validator/tests. The participant list is also the reverse index: an agent arriving at one of those resources can recover the originating intent, trigger, owner, siblings, and proof without guessing filenames.
+
 ## Repository hook integration capability
 
 `repository-hook-integration` makes the existing `.githooks` + local `core.hooksPath` installer the canonical Git-hook implementation. Upstream Claude/Codex/DeepSeek/Husky/Lefthook mechanisms are adapter donors, not parallel authorities; add an adapter only when the canonical Git hooks cannot express the required interception semantics, and prove that adapter separately.
