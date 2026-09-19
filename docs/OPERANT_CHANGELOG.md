@@ -7,6 +7,8 @@ Human-facing Operant releases. Git commit/artifact identity remains the forensic
 ### Features / breaking pre-1.0 changes
 
 - feat(prompt-kit): strengthen P56 context artifact recovery (`ee5052af`)
+- feat(prompt-kit): project use-case routing into ontology (`eaa5f072`)
+- feat(prompt-kit): show routed use cases in ontology (`3053b7dc`)
 
 ### Fixes / performance
 
