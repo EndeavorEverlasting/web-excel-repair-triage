@@ -1138,6 +1138,32 @@ def _evaluate_nonaggregate(receipt: dict[str, Any]) -> list[dict[str, Any]]:
     return [findings[rule["rule_id"]] for rule in CONTRACT["rules"]]
 
 
+def _timestamp_integrity_errors(receipt: dict[str, Any]) -> list[str]:
+    fields: list[tuple[str, Any]] = [
+        ("occurred_at", receipt.get("occurred_at")),
+        ("run.started_at", receipt["run"].get("started_at")),
+        ("run.ended_at", receipt["run"].get("ended_at")),
+    ]
+    fields.extend(
+        (f"boundary_events[{index}].occurred_at", row.get("occurred_at"))
+        for index, row in enumerate(receipt["boundary_events"])
+    )
+    fields.extend(
+        (f"actions[{index}].started_at", row.get("started_at"))
+        for index, row in enumerate(receipt["actions"])
+    )
+    fields.extend(
+        (f"actions[{index}].completed_at", row.get("completed_at"))
+        for index, row in enumerate(receipt["actions"])
+        if row.get("completed_at") is not None
+    )
+    return [
+        path
+        for path, value in fields
+        if not isinstance(value, str) or _time(value) is None
+    ]
+
+
 def validate_receipt(receipt: Any) -> dict[str, Any]:
     if not isinstance(receipt, dict):
         return _structural_inconclusive("Receipt input must be a JSON object.")
@@ -1149,6 +1175,14 @@ def validate_receipt(receipt: Any) -> dict[str, Any]:
         message = "; ".join(error.message for error in schema_errors[:6])
         return _structural_inconclusive(
             "Structural receipt validation failed: " + message,
+            receipt.get("receipt_id", "unknown"),
+        )
+
+    timestamp_errors = _timestamp_integrity_errors(receipt)
+    if timestamp_errors:
+        return _structural_inconclusive(
+            "Structural receipt timestamp validation failed: timezone-aware RFC 3339 values required at "
+            + ", ".join(timestamp_errors[:8]),
             receipt.get("receipt_id", "unknown"),
         )
 
