@@ -3,6 +3,8 @@ from __future__ import annotations
 import copy
 import hashlib
 import json
+import subprocess
+import sys
 import tempfile
 import unittest
 from pathlib import Path
@@ -118,6 +120,8 @@ class PromptRoutingDecisionTests(unittest.TestCase):
             "surface_id": "fm-asb",
             "invocation_id": None,
             "run_id": "rrb03-run",
+            "routing_request_event_id": "evt_route_req_rrb03_0001",
+            "correlation_id": "corr_rrb03_route_decision_0001",
         }
         payload.update(overrides)
         return evidence_spine_runtime.build_route_receipt(payload)
@@ -136,6 +140,14 @@ class PromptRoutingDecisionTests(unittest.TestCase):
         self.assertEqual(decision["decision"]["routeAction"], "SWITCH_PROMPT")
         self.assertEqual(decision["decision"]["primaryPrompt"], self.prompt_ref)
         self.assertEqual(decision["decision"]["intervention"], "REGROUND")
+        self.assertIn(
+            f"route-receipt:{receipt['route_id']}",
+            decision["decision"]["reasonCodes"],
+        )
+        self.assertIn(
+            "route-destination:firstmate",
+            decision["decision"]["reasonCodes"],
+        )
         self.assertEqual(decision["classification"]["outcomeClass"], "evidence-promotion")
         self.assertEqual(decision["proofGate"], self.prompt_record["proofGate"])
         self.assertEqual(decision["nextStep"], self.prompt_record["nextStep"])
@@ -236,6 +248,42 @@ class PromptRoutingDecisionTests(unittest.TestCase):
                 ):
                     routing.build_routing_decision(self.request(), receipt)
 
+    def test_route_receipt_must_match_request_correlation(self) -> None:
+        for field, value in (
+            ("routing_request_event_id", "evt_route_req_rrb03_other"),
+            ("correlation_id", "corr_rrb03_route_decision_other"),
+        ):
+            with self.subTest(field=field):
+                receipt = self.route_receipt(**{field: value})
+                with self.assertRaisesRegex(
+                    routing.RoutingDecisionError,
+                    "does not match routing request",
+                ):
+                    routing.build_routing_decision(self.request(), receipt)
+
+    def test_distinct_authoritative_receipts_produce_distinct_decisions(self) -> None:
+        first_receipt = self.route_receipt(run_id="rrb03-run-a")
+        second_receipt = self.route_receipt(
+            run_id="rrb03-run-b",
+            destination="cursor-agent",
+        )
+        first = routing.build_routing_decision(self.request(), first_receipt)
+        second = routing.build_routing_decision(self.request(), second_receipt)
+        self.assertNotEqual(first_receipt["route_id"], second_receipt["route_id"])
+        self.assertNotEqual(first["eventId"], second["eventId"])
+        self.assertNotEqual(
+            first["idempotency"]["semanticSha256"],
+            second["idempotency"]["semanticSha256"],
+        )
+        self.assertIn(
+            f"route-receipt:{first_receipt['route_id']}",
+            first["decision"]["reasonCodes"],
+        )
+        self.assertIn(
+            f"route-receipt:{second_receipt['route_id']}",
+            second["decision"]["reasonCodes"],
+        )
+
     def test_tampered_route_receipt_fails_identity_verification(self) -> None:
         receipt = self.route_receipt()
         receipt["destination"] = "cursor-agent"
@@ -300,6 +348,22 @@ class PromptRoutingDecisionTests(unittest.TestCase):
         decision = routing.build_routing_decision(request, self.route_receipt())
         self.assertEqual(decision["decision"]["intervention"], "CRITIQUE")
         self.assertEqual(decision["classification"]["outcomeClass"], "routing")
+
+    def test_direct_script_help_bootstraps_repository_imports(self) -> None:
+        completed = subprocess.run(
+            [
+                sys.executable,
+                "scripts/prompt_routing_decision.py",
+                "--help",
+            ],
+            cwd=ROOT,
+            capture_output=True,
+            text=True,
+            check=False,
+        )
+        self.assertEqual(completed.returncode, 0, completed.stderr)
+        self.assertIn("--route-receipt", completed.stdout)
+        self.assertNotIn("ModuleNotFoundError", completed.stderr)
 
     def test_cli_failure_removes_stale_output_and_returns_bounded_error(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
