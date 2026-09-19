@@ -36,7 +36,7 @@ on:
       - .github/workflows/skill-prompt-registry.yml
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
   skill-prompts-and-generators:
@@ -44,7 +44,8 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          persist-credentials: false
+          ref: ${{ github.event.pull_request.head.ref }}
+          persist-credentials: true
           fetch-depth: 0
       - uses: actions/setup-python@v5
         with:
@@ -60,6 +61,25 @@ jobs:
         run: |
           python -m unittest tests.test_skill_prompt_registry -v
           python -m unittest tests.test_actionable_prompt_registry -v
+      - name: Generate and commit Prompt Kit candidate
+        if: ${{ always() }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html
+          python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html --check
+          git fetch --no-tags origin +refs/heads/main:refs/remotes/origin/main
+          git checkout origin/main -- .github/workflows/skill-prompt-registry.yml
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add web/prompt-kit/index.html .github/workflows/skill-prompt-registry.yml
+          git diff --cached --check
+          if git diff --cached --quiet; then
+            echo "No generated Prompt Kit change to commit."
+            exit 0
+          fi
+          git commit -m "build(prompt-kit): refresh generated site"
+          git push origin HEAD:${{ github.event.pull_request.head.ref }}
       - name: Validate checked-in combined Prompt Kit website
         run: |
           python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html --check
