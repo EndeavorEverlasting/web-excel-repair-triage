@@ -199,6 +199,15 @@ def build_route_receipt(route: dict[str, Any]) -> dict[str, Any]:
             _require_bounded_id(value, field) if value is not None else None
         )
 
+    correlation_pair = (
+        normalized_ids["routing_request_event_id"],
+        normalized_ids["correlation_id"],
+    )
+    if (correlation_pair[0] is None) != (correlation_pair[1] is None):
+        raise ContinuationError(
+            "routing_request_event_id and correlation_id must be supplied together"
+        )
+
     classified = classify_route_destination(
         destination=normalized_destination,
         provenance=provenance,
@@ -223,9 +232,10 @@ def build_route_receipt(route: dict[str, Any]) -> dict[str, Any]:
         ),
         "invocation_id": normalized_ids["invocation_id"],
         "run_id": normalized_ids["run_id"],
-        "routing_request_event_id": normalized_ids["routing_request_event_id"],
-        "correlation_id": normalized_ids["correlation_id"],
     }
+    if correlation_pair[0] is not None:
+        semantic["routing_request_event_id"] = correlation_pair[0]
+        semantic["correlation_id"] = correlation_pair[1]
     semantic_sha256 = _fingerprint(semantic)
     return {
         "schema_version": ROUTE_RECEIPT_SCHEMA,
