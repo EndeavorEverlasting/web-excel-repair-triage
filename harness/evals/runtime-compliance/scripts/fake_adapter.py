@@ -171,15 +171,26 @@ def _terminal(scenario_id: str) -> dict[str, Any]:
     }
 
 
-def _proof(scenario_id: str, *, has_readback: bool) -> dict[str, Any]:
-    checks = [
-        {
-            "check_id": "CK-001",
-            "name": "action:A-001:synthetic-harness",
-            "status": "PASS",
-            "evidence_refs": ["EV-002"],
-        }
-    ]
+def _proof(
+    scenario_id: str,
+    actions: list[dict[str, Any]],
+    *,
+    has_readback: bool,
+) -> dict[str, Any]:
+    checks: list[dict[str, Any]] = []
+    for action in actions:
+        before = action["proof_before"]
+        after = action["proof_after"]
+        if before == after:
+            continue
+        checks.append(
+            {
+                "check_id": f"CK-{action['action_id']}",
+                "name": f"action:{action['action_id']}:proof:{before}->{after}",
+                "status": "PASS",
+                "evidence_refs": list(action["evidence_refs"]),
+            }
+        )
     if has_readback:
         checks.append(
             {
@@ -191,7 +202,7 @@ def _proof(scenario_id: str, *, has_readback: bool) -> dict[str, Any]:
         )
     checks.append(
         {
-            "check_id": "CK-002",
+            "check_id": "CK-EXTERNAL",
             "name": "external-runtime",
             "status": "BLOCKED",
             "evidence_refs": ["EV-004"],
@@ -273,6 +284,7 @@ def build_capture(scenario: dict[str, Any], mode: str) -> dict[str, Any]:
         "terminal": _terminal(sid),
         "proof": _proof(
             sid,
+            actions,
             has_readback=any(action["readback_of_action_id"] for action in actions),
         ),
         "regression_linkage": {
