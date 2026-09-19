@@ -69,6 +69,8 @@ python -m unittest tests.test_prompt_kit_cross_device_access -v
 
 P62 must reproduce functional weaknesses and inefficiencies with versioned cases, guide the smallest valid repair through tests or profiling, validate unit/integration correctness, and measure performance, tool calls, context, cost, retries, and tokens without weakening safety or routing.
 
+The canonical use case `prompt-strengthening-runtime-compliance` maps operator language such as “prompt strengthening sprint” through `skill-quality-unproven` to this existing capability. Follow its participant edges to the P67 runtime-compliance plan, runner, artifact family, and proof validators; arriving from the pilot or semantic validator resolves back to the same capability and originating intent.
+
 ## Browser-proof scratch cleanup capability
 
 `prompt-kit-browser-proof-scratch-cleanup` owns only detached `prompt-kit-browser-proof-*` directories directly under the OS temp root. Preview is default; apply is explicit; rejected paths are preserved; prior stable receipts are backed up. Browser profile data, localStorage, Favorites, canonical repositories, public Pages, and unrelated Temp contents are outside this capability.
