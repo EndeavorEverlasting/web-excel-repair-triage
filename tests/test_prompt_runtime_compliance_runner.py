@@ -153,11 +153,15 @@ class RuntimeComplianceRunnerTests(unittest.TestCase):
             readback = next(
                 action for action in receipt["actions"] if action["readback_of_action_id"] == "A-001"
             )
+            expected_name = (
+                f"action:{readback['action_id']}:proof:"
+                f"{readback['proof_before']}->{readback['proof_after']}"
+            )
             matching_checks = [
                 check
                 for check in receipt["proof"]["checks"]
                 if check["status"] == "PASS"
-                and check["name"].startswith(f"action:{readback['action_id']}:")
+                and check["name"] == expected_name
                 and set(readback["evidence_refs"]).intersection(check["evidence_refs"])
             ]
             self.assertEqual(len(matching_checks), 1)
