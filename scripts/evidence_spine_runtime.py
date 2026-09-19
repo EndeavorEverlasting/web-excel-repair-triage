@@ -12,7 +12,10 @@ ROOT = Path(__file__).resolve().parents[1]
 CONTRACT_PATH = ROOT / "harness/contracts/evidence-spine-continuation.v1.json"
 DISPOSITIONS = ("continue", "recover", "complete", "blocked")
 ROUTE_RECEIPT_SCHEMA = "evidence-spine-route-receipt/v1"
-PROMPT_ID_RE = re.compile(r"^P[0-9]{2,3}$")
+PROMPT_ID_RE = re.compile(r"^P[0-9]{2,4}$")
+BOUNDED_ID_RE = re.compile(r"^[A-Za-z0-9._:/-]+$")
+SHORT_TEXT_RE = re.compile(r"^[^\\r\\n]+$")
+MAX_SHORT_TEXT = 160
 ROUTE_PROVENANCE = {"observed", "declared", "inferred", "unknown"}
 ROUTE_FIELDS = {
     "prompt_id",
@@ -27,6 +30,24 @@ ROUTE_FIELDS = {
 
 class ContinuationError(ValueError):
     pass
+
+
+def _require_short_text(value: Any, field: str) -> str:
+    if not isinstance(value, str):
+        raise ContinuationError(f"{field} must be a string")
+    normalized = value.strip()
+    if not normalized or len(normalized) > MAX_SHORT_TEXT or not SHORT_TEXT_RE.fullmatch(normalized):
+        raise ContinuationError(
+            f"{field} must be 1..{MAX_SHORT_TEXT} characters without CR/LF"
+        )
+    return normalized
+
+
+def _require_bounded_id(value: Any, field: str) -> str:
+    normalized = _require_short_text(value, field)
+    if not BOUNDED_ID_RE.fullmatch(normalized):
+        raise ContinuationError(f"{field} must use bounded identifier characters")
+    return normalized
 
 
 def load_contract() -> dict[str, Any]:
@@ -141,34 +162,31 @@ def build_route_receipt(route: dict[str, Any]) -> dict[str, Any]:
 
     prompt_id = route.get("prompt_id")
     if not isinstance(prompt_id, str) or not PROMPT_ID_RE.fullmatch(prompt_id):
-        raise ContinuationError("prompt_id must match P[0-9]{2,3}")
+        raise ContinuationError("prompt_id must match P[0-9]{2,4}")
 
-    prompt_revision = route.get("prompt_revision")
-    if not isinstance(prompt_revision, str) or not prompt_revision.strip():
-        raise ContinuationError("prompt_revision must be a non-empty string")
-
-    surface_id = route.get("surface_id")
-    if not isinstance(surface_id, str) or not surface_id.strip():
-        raise ContinuationError("surface_id must be a non-empty string")
+    prompt_revision = _require_short_text(route.get("prompt_revision"), "prompt_revision")
+    surface_id = _require_bounded_id(route.get("surface_id"), "surface_id")
 
     provenance = route.get("provenance")
-    if provenance not in ROUTE_PROVENANCE:
+    if not isinstance(provenance, str) or provenance not in ROUTE_PROVENANCE:
         raise ContinuationError(f"invalid destination provenance: {provenance}")
 
     destination = route.get("destination")
-    if destination is not None and not isinstance(destination, str):
-        raise ContinuationError("destination must be null or a string")
-    normalized_destination = (destination or "").strip() or None
+    normalized_destination = (
+        _require_bounded_id(destination, "destination") if destination is not None else None
+    )
 
     if provenance in {"observed", "declared"} and normalized_destination is None:
         raise ContinuationError(f"{provenance} route requires destination")
     if provenance == "unknown" and normalized_destination is not None:
         raise ContinuationError("unknown route must not carry destination")
 
+    normalized_ids: dict[str, str | None] = {}
     for field in ("invocation_id", "run_id"):
         value = route.get(field)
-        if value is not None and (not isinstance(value, str) or not value.strip()):
-            raise ContinuationError(f"{field} must be null or a non-empty string")
+        normalized_ids[field] = (
+            _require_bounded_id(value, field) if value is not None else None
+        )
 
     classified = classify_route_destination(
         destination=normalized_destination,
@@ -183,8 +201,8 @@ def build_route_receipt(route: dict[str, Any]) -> dict[str, Any]:
 
     semantic = {
         "prompt_id": prompt_id,
-        "prompt_revision": prompt_revision.strip(),
-        "surface_id": surface_id.strip(),
+        "prompt_revision": prompt_revision,
+        "surface_id": surface_id,
         "destination": classified["destination"],
         "provenance": classified["provenance"],
         "destination_confidence": confidence,
@@ -192,8 +210,8 @@ def build_route_receipt(route: dict[str, Any]) -> dict[str, Any]:
         "effective_destination": (
             classified["effective_destination"] if classified["authoritative"] else "unknown"
         ),
-        "invocation_id": route.get("invocation_id"),
-        "run_id": route.get("run_id"),
+        "invocation_id": normalized_ids["invocation_id"],
+        "run_id": normalized_ids["run_id"],
     }
     semantic_sha256 = _fingerprint(semantic)
     return {
