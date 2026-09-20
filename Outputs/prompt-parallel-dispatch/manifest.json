@@ -14,7 +14,9 @@
         "scripts/upstream_capability_watch.py",
         "registry/resources/upstream-capability-impact-edges.v1.json",
         "tests/test_upstream_capability_watch.py",
-        "harness/test-floor.v1.json"
+        "harness/test-floor.v1.json",
+        "scripts/validate_operant_external_resources.py",
+        ".github/workflows/operant-external-resource-refresh.yml"
       ],
       "forbidden_surfaces": [
         "browser feedback telemetry semantics",
@@ -46,6 +48,8 @@
       ],
       "validation": [
         "existing canonical contracts are inspected and extended where sufficient; no new contract path is created by assumption",
+        "canonical external-resource validator validates capability-watch/impact-edge invariants",
+        "external-resource refresh workflow runs the focused capability-watch suite on relevant PRs",
         "UNSEEN first observation establishes CURRENT baseline",
         "last_observed_identity and last_processed_identity are distinct after A→B until durable routing succeeds",
         "transition dedupe is enforced",
