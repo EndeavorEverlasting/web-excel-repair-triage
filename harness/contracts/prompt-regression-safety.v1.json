@@ -125,7 +125,28 @@
     "The regression is registered in the deterministic floor when repository convention classifies it as a focused Prompt Kit semantic regression.",
     "Affected local required checks pass before integration when executable in the current environment.",
     "Hosted provider parity is additional proof when applicable, not a replacement semantic owner.",
-    "The retained regression remains present after integration."
+    "The retained regression remains present after integration.",
+    "Prompt semantic coverage incidents must ratchet live operational coverage and effective override bindings instead of treating raw-canonical profile coverage as the whole Prompt Kit."
   ],
-  "proof_ceiling": "Repository contract and regression semantics only. It can prove that recurring defects are classified, assigned to a canonical owner, regression-tested, and included in repository-owned local proof surfaces. It does not by itself grant hostless merge authority, prove downstream model obedience, or replace provider-only/external gates still required by the active repository promotion contract."
+  "proof_ceiling": "Repository contract and regression semantics only. It can prove that recurring defects are classified, assigned to a canonical owner, regression-tested, and included in repository-owned local proof surfaces. It does not by itself grant hostless merge authority, prove downstream model obedience, or replace provider-only/external gates still required by the active repository promotion contract.",
+  "prompt_coverage_ratcheting": {
+    "baseline": "harness/evals/prompt-regression/prompt-coverage-baseline.v1.json",
+    "operational_loader": "scripts.build_prompt_kit_registry.load_prompt_registry",
+    "semantic_profile_owner": "harness/prompt-topology/prompt-capability-profiles.v1.json",
+    "override_registry": "registry/prompts/prompt-overrides.v1.json",
+    "closeout_or_review_owner_fields": [
+      "name",
+      "class",
+      "sprintRole",
+      "useWhen",
+      "keywords"
+    ],
+    "rules": [
+      "Known unprofiled operational prompt debt may shrink but may not grow; any operational prompt outside the accepted-profile set and outside the reviewed baseline fails closed.",
+      "Every current override prompt must have an explicit baseline binding, critical behavioral markers, and repository-owned focused regression references.",
+      "The current override registry Git blob must match the reviewed baseline; an intentional override edit must refresh the coverage baseline in the same reviewed change.",
+      "Closeout OR review owner classification is derived from prompt ownership metadata, not incidental wording in proof text, and any owner-set drift requires explicit baseline review.",
+      "A coverage ratchet is prevention, not backfill proof: baseline debt remains unprofiled until Prompt Semantic Coverage accepts profiles through its lifecycle."
+    ]
+  }
 }
