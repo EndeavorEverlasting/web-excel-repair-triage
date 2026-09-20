@@ -1,9 +1,9 @@
 # Upstream Capability Watch + Prompt Impact Sprint Map
 
-**Canonical repository:** `EndeavorEverlasting/web-excel-repair-triage`  
-**Planning floor:** `main@70178017ffa5c27f4428d6aae733a61113a6f4ad`  
-**Planning branch:** `plan/upstream-capability-watch-20260920`  
-**Owner:** Prompt Kit upstream capability watch / P102 + P115 integration  
+**Canonical repository:** `EndeavorEverlasting/web-excel-repair-triage`
+**Planning floor:** `main@70178017ffa5c27f4428d6aae733a61113a6f4ad`
+**Planning branch:** `plan/upstream-capability-watch-20260920`
+**Owner:** Prompt Kit upstream capability watch / P102 + P115 integration
 **Status:** TRACKED PLAN — implementation and live AFK visibility remain unproven.
 
 ## Mission
@@ -71,39 +71,39 @@ Do not force one root cause. Record PASS / FAIL / UNKNOWN independently.
 ## Dependency graph / waves
 
 ### Wave 0 — parallel research/forensics
-**Lane U0A — Missed teach forensic classification**  
+**Lane U0A — Missed teach forensic classification**
 Owns forensic report/receipts only. Proves the five dispositions against current source, workflow, artifacts, and history.
 
-**Lane U0B — Design + skill-authoring authoritative-source research**  
+**Lane U0B — Design + skill-authoring authoritative-source research**
 Read/research lane. Establishes the authoritative Claude/Anthropic `/design` and skill-authoring surfaces, versionability, license/usage boundaries, and candidate local owners. No registry mutation.
 
 These lanes are write-collision free.
 
 ### Wave 1 — shared contract floor
-**Lane U1 — Capability watch contract + fixtures**  
+**Lane U1 — Capability watch contract + fixtures**
 Depends U0A. Defines minimal persisted source/capability identity, poll state, `last_observed_identity`, `last_processed_identity`, append-only poll receipt, impact-edge shape, dedupe transition key, promotion policy, and canonical change event. Adds negative/positive fixtures.
 
 This lane owns any new shared schema/registry shape. Later lanes must not redefine it.
 
 ### Wave 2 — parallel implementation
-**Lane U2A — Runtime detection + P115 visibility routing**  
+**Lane U2A — Runtime detection + P115 visibility routing**
 Depends U1. Extends the current external-resource refresh/watch seam to calculate capability-level identities, persist/process transitions safely, emit deduped change events, and route accepted actionable events to P115. Preserve read-only schedule semantics unless an existing strategic owner already owns candidate PR creation. No prompt body mutation.
 
-**Lane U2B — Teach impact edges + Socratic reconciliation**  
+**Lane U2B — Teach impact edges + Socratic reconciliation**
 Depends U1. Adds explicit `mattpocock-skills:productivity/teach` impact mappings to the current teaching owners after refreshed overlap review, then semantically compares current upstream `teach` with P96/P98/P65 and changes only proven stale/missing behavior. P79 remains promotion gate. Do not rewrite P96 merely because a donor changed.
 
 U2A and U2B are parallel-safe if U1 owns shared schema and U2B alone owns canonical impact-edge data.
 
 ### Wave 3 — donor intake
-**Lane U3 — Design/skill-creator intake**  
+**Lane U3 — Design/skill-creator intake**
 Depends U0B, U1, U2B. Register only authoritative, maintainable donor surfaces established by U0B. Add impact mappings: authoring/evaluation mechanics toward P79/prompt operations; design/UX mechanics toward current UX architecture/design-system/certification owners after refreshed owner resolution. Do not treat `/design` as universal prompt-authoring authority.
 
 ### Wave 4 — user-facing status
-**Lane U4 — Capability Radar / visibility UX**  
+**Lane U4 — Capability Radar / visibility UX**
 Depends U2A and U3. Expose receipt-derived states such as CURRENT, UPSTREAM_CHANGED, EVALUATING, CANDIDATE, DECLINED, INTEGRATED without becoming a second state store. Reconcile current open PRs #431 and #561 before touching their UI/generated-output surfaces.
 
 ### Wave 5 — convergence proof
-**Lane U5 — Synthetic A→B replay + integration**  
+**Lane U5 — Synthetic A→B replay + integration**
 Depends U2A, U2B, U3, U4. Run end-to-end fixture:
 A observed/processed → B observed → durable change event → impact resolution → P115 review item/user-visible state → processed advances to B only after durable routing. Re-poll B produces no duplicate. B→C produces exactly one new event. Validate promotion remains review-required and converge exact green owners to refreshed main.
 
@@ -120,50 +120,50 @@ A observed/processed → B observed → durable change event → impact resoluti
 ## Sprint definitions
 
 ### U0A — Missed teach forensic classification
-**Primary surface:** research/runtime proof.  
-**Read first:** external-resource contract/index/sync/workflow; workflow evidence if accessible; P102 history; P115 routing contract/router; teaching prompt registry; P79 prior-art gate.  
-**Outputs:** `harness/reports/UPSTREAM_CAPABILITY_WATCH_FORENSICS.md` plus machine-readable evidence receipt under an approved Outputs path if repo convention supports it.  
-**Validation:** every disposition has PASS/FAIL/UNKNOWN evidence; no unsupported claim that scheduled runs occurred.  
+**Primary surface:** research/runtime proof.
+**Read first:** external-resource contract/index/sync/workflow; workflow evidence if accessible; P102 history; P115 routing contract/router; teaching prompt registry; P79 prior-art gate.
+**Outputs:** `harness/reports/UPSTREAM_CAPABILITY_WATCH_FORENSICS.md` plus machine-readable evidence receipt under an approved Outputs path if repo convention supports it.
+**Validation:** every disposition has PASS/FAIL/UNKNOWN evidence; no unsupported claim that scheduled runs occurred.
 **Proof ceiling:** repository/provider forensics only unless scheduled-run evidence is available.
 
 ### U0B — Design/skill-authoring authoritative-source research
-**Primary surface:** research/design.  
-**Outputs:** bounded donor-source disposition with authoritative location/version signal, usage/license boundary, local owner map, and recommendation REGISTER / REFERENCE_ONLY / REJECT.  
-**Forbidden:** editing Prompt Kit registry or adopting donor wording wholesale.  
+**Primary surface:** research/design.
+**Outputs:** bounded donor-source disposition with authoritative location/version signal, usage/license boundary, local owner map, and recommendation REGISTER / REFERENCE_ONLY / REJECT.
+**Forbidden:** editing Prompt Kit registry or adopting donor wording wholesale.
 **Proof ceiling:** authoritative-source research.
 
 ### U1 — Capability watch contract + fixtures
-**Primary surface:** harness spine.  
-**Expected contract:** watched source/capability locator; immutable identity; repository revision provenance; poll state; append-only receipt; impact edge; dedupe transition; promotion policy; event schema.  
-**Required tests:** initial observation; unchanged; A→B; replay B; B→C; routing failure leaves processed=A; missing impact edge retains event; promotion cannot jump changed→integrated.  
+**Primary surface:** harness spine.
+**Expected contract:** watched source/capability locator; immutable identity; repository revision provenance; poll state; append-only receipt; impact edge; dedupe transition; promotion policy; event schema.
+**Required tests:** initial observation; unchanged; A→B; replay B; B→C; routing failure leaves processed=A; missing impact edge retains event; promotion cannot jump changed→integrated.
 **Proof ceiling:** deterministic repository proof.
 
 ### U2A — Runtime detection + P115 visibility routing
-**Primary surface:** integration seam + agent harness.  
-**Expected behavior:** existing daily refresh detects per-capability changes, produces durable typed events, routes actionable impacted events to P115, and exposes bounded status.  
-**Forbidden:** automatic prompt rewrite, scheduler-owned merge, credentials in receipts, raw donor bodies in tracked state.  
+**Primary surface:** integration seam + agent harness.
+**Expected behavior:** existing daily refresh detects per-capability changes, produces durable typed events, routes actionable impacted events to P115, and exposes bounded status.
+**Forbidden:** automatic prompt rewrite, scheduler-owned merge, credentials in receipts, raw donor bodies in tracked state.
 **Proof ceiling:** deterministic + provider workflow proof; due-time observation only if actually observed.
 
 ### U2B — Teach impact + Socratic reconciliation
-**Primary surface:** Prompt Kit registry/semantic validation.  
-**Expected behavior:** explicit impact mapping and evidence-backed P96/P98/P65 disposition. Current file blob identity must be pinned in the review receipt.  
-**Forbidden:** donor-copy rewrite, P79 bypass, hand-editing generated HTML.  
+**Primary surface:** Prompt Kit registry/semantic validation.
+**Expected behavior:** explicit impact mapping and evidence-backed P96/P98/P65 disposition. Current file blob identity must be pinned in the review receipt.
+**Forbidden:** donor-copy rewrite, P79 bypass, hand-editing generated HTML.
 **Proof ceiling:** Prompt Kit semantic/regression proof; no claim of teaching efficacy without user/runtime observation.
 
 ### U3 — Design/skill-creator intake
-**Primary surface:** external donor registration + impact graph.  
-**Expected behavior:** authoritative donor surfaces become watchable prior art only where source/version semantics are stable; mappings point to existing owners.  
-**Forbidden:** new universal design owner when current UX owners suffice.  
+**Primary surface:** external donor registration + impact graph.
+**Expected behavior:** authoritative donor surfaces become watchable prior art only where source/version semantics are stable; mappings point to existing owners.
+**Forbidden:** new universal design owner when current UX owners suffice.
 **Proof ceiling:** repository integration + source provenance.
 
 ### U4 — Capability Radar
-**Primary surface:** conventional UI + UX prompts only where required.  
-**Expected behavior:** receipt-derived state with provenance and no duplicate state authority. Keyboard/mouse/phone interaction follows current UX owners; generated site rebuilt only from canonical sources.  
+**Primary surface:** conventional UI + UX prompts only where required.
+**Expected behavior:** receipt-derived state with provenance and no duplicate state authority. Keyboard/mouse/phone interaction follows current UX owners; generated site rebuilt only from canonical sources.
 **Proof ceiling:** automated/browser proof available in repo; physical-device proof remains separate.
 
 ### U5 — Synthetic replay + convergence
-**Primary surface:** validation/runtime proof/integration.  
-**Expected artifact:** exact transition receipt chain proving no silent consumption between observed and processed identity.  
+**Primary surface:** validation/runtime proof/integration.
+**Expected artifact:** exact transition receipt chain proving no silent consumption between observed and processed identity.
 **Proof ceiling:** exact environment actually exercised.
 
 ## Skill / capability / trigger inventory
@@ -219,8 +219,7 @@ Therefore current execution posture is **DEGRADED** for autonomous implementatio
 
 ## First executable continuation
 
-Owner: U0A forensic lane.  
-Dependency: refreshed main and current provider evidence.  
-Action: inspect the current external-resource workflow/run evidence available to the executing environment, compare registered donor floor and per-capability blob identity, inspect P115 routing inputs and impact metadata, then write the forensic report with every disposition typed PASS/FAIL/UNKNOWN.  
+Owner: U0A forensic lane.
+Dependency: refreshed main and current provider evidence.
+Action: inspect the current external-resource workflow/run evidence available to the executing environment, compare registered donor floor and per-capability blob identity, inspect P115 routing inputs and impact metadata, then write the forensic report with every disposition typed PASS/FAIL/UNKNOWN.
 Completion gate: no disposition is inferred from absence; the earliest broken boundary and any independent downstream defects are explicitly recorded.
-
