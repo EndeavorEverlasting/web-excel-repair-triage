@@ -137,7 +137,7 @@ A observed/processed → B observed → durable change event → impact resoluti
 
 ### U1 — Capability watch contract + fixtures
 **Primary surface:** harness spine.
-**Expected contract:** watched source/capability locator; immutable identity; repository revision provenance; poll state; append-only receipt; impact edge; dedupe transition; promotion policy; event schema. U1 also owns the deterministic state-transition kernel at `scripts/upstream_capability_watch.py`; U2A later owns provider polling, persistence, workflow, and P115 wiring around that kernel.
+**Expected contract:** watched source/capability locator; immutable identity; repository revision provenance; poll state; append-only receipt; impact edge; dedupe transition; promotion policy; event schema. U1 also owns the deterministic state-transition kernel at `scripts/upstream_capability_watch.py`, the capability-watch checks inside `scripts/validate_operant_external_resources.py`, and focused-suite wiring in `.github/workflows/operant-external-resource-refresh.yml`; U2A later owns provider polling, durable runtime persistence, and P115 routing around that proven kernel.
 **Required tests:** initial observation; unchanged; A→B; replay B; B→C; routing failure leaves processed=A; missing impact edge retains event; promotion cannot jump changed→integrated.
 **Proof ceiling:** deterministic repository proof.
 
@@ -224,7 +224,7 @@ Therefore current execution posture is **DEGRADED** for autonomous implementatio
 
 Owner: U1 capability-watch contract-floor lane.
 Dependency: U0A forensics and U0B source research are PROVEN. Graph width is now 1, so parallel execution is NOT_APPLICABLE. The executable manifest is `Outputs/prompt-parallel-dispatch/manifest.json` with run id `upstream-capability-watch-20260920-u1`.
-Action: continue PR #619 on refreshed main: repair the `UNSEEN -> CURRENT` baseline transition, implement the deterministic state kernel in `scripts/upstream_capability_watch.py`, make the routing-failure fixture exercise that kernel, and register the focused suite in the deterministic floor only after reconciling the active #606 owner of `harness/test-floor.v1.json`.
+Action: continue PR #619 on refreshed main: repair the `UNSEEN -> CURRENT` baseline transition, implement the deterministic state kernel in `scripts/upstream_capability_watch.py`, validate the contract/impact-edge invariants through `scripts/validate_operant_external_resources.py`, make the refresh workflow execute the focused capability-watch suite, make the routing-failure fixture exercise the kernel, and register the focused suite in the deterministic floor only after reconciling the active #606 owner of `harness/test-floor.v1.json`.
 Completion gate: deterministic A→B/replay/B→C fixtures plus routing-failure preservation prove that a new observed identity cannot be silently consumed before durable routing.
 
 Coordination note: `.ai/WORK_QUEUE.md` is temporarily owned by open PR #615, so U0A ledger synchronization is deferred to convergence rather than racing that shared file.
