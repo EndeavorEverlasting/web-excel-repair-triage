@@ -300,7 +300,7 @@ Canonical terminal action: none; no safe actionable work remains
 - **Next action:** commit, push, open PR, run local proof, merge if gates pass
 - **Updated:** 2026-09-19T21:54:00Z
 
-## TRQ-020 — Adopt issue-centered AFKAF work progression
+## TRQ-021 — Adopt issue-centered AFKAF work progression
 
 - **Status:** CLAIMED
 - **Priority:** P1
