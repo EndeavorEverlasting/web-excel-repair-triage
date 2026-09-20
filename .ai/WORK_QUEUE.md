@@ -354,4 +354,3 @@ Canonical terminal action: none; no safe actionable work remains
 - **Last proof:** issue:#614 created as canonical sprint work item; branch:feat/issue-centered-afkaf-progression-20260920 created from commit:3defbc21812522f9bc454d96835ba6bb7ea1552c; pr:#615 opened with candidate commit:00979b41fa115b35b62f1564cc5244072a2098eb
 - **Next action:** validate the issue-centered progression contract and focused ledger regressions, then open the exact-head integration PR
 - **Updated:** 2026-09-20T17:34:00-04:00
-
