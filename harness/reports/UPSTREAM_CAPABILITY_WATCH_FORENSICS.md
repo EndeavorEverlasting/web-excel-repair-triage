@@ -1,9 +1,9 @@
 # Upstream Capability Watch Forensics — Missed Matt Signal
 
-**Repository floor:** `main@b9089975e5dd87bc710102b4d35af54e4c499709`  
-**Canonical plan:** `docs/plans/UPSTREAM_CAPABILITY_WATCH_SPRINT_MAP.md`  
-**Forensic lane:** U0A — Missed teach forensic classification  
-**Evidence class:** repository/provider/runtime-history evidence  
+**Repository floor:** `main@b9089975e5dd87bc710102b4d35af54e4c499709`
+**Canonical plan:** `docs/plans/UPSTREAM_CAPABILITY_WATCH_SPRINT_MAP.md`
+**Forensic lane:** U0A — Missed teach forensic classification
+**Evidence class:** repository/provider/runtime-history evidence
 **Result:** PROVEN forensic classification; implementation remains successor work.
 
 ## Question
