@@ -14,7 +14,6 @@
         "scripts/upstream_capability_watch.py",
         "registry/resources/upstream-capability-impact-edges.v1.json",
         "tests/test_upstream_capability_watch.py",
-        "harness/test-floor.v1.json",
         "scripts/validate_operant_external_resources.py",
         ".github/workflows/operant-external-resource-refresh.yml"
       ],
@@ -22,7 +21,8 @@
         "browser feedback telemetry semantics",
         "Prompt Kit prompt bodies",
         "generated Prompt Kit",
-        "automatic donor-body persistence"
+        "automatic donor-body persistence",
+        "harness/test-floor.v1.json while open PR #606 owns that mutation surface"
       ],
       "adapter": {
         "kind": "connected_provider",
@@ -43,13 +43,13 @@
         "impact-edge registry shape",
         "A/B/C identity fixtures",
         "routing-failure lost-event negative fixture",
-        "deterministic test-floor registration",
+        "focused suite wired into the external-resource refresh workflow; deterministic test-floor registration remains a foreign-owner convergence gate while PR #606 is open",
         "if canonical contracts are insufficient: an evidence-backed manifest amendment that explicitly owns the new contract path before creation"
       ],
       "validation": [
         "existing canonical contracts are inspected and extended where sufficient; no new contract path is created by assumption",
         "canonical external-resource validator validates capability-watch/impact-edge invariants",
-        "external-resource refresh workflow runs the focused capability-watch suite on relevant PRs",
+        "external-resource refresh workflow runs the focused capability-watch suite on relevant PRs; deterministic-floor registration is not claimed while PR #606 owns harness/test-floor.v1.json",
         "UNSEEN first observation establishes CURRENT baseline",
         "last_observed_identity and last_processed_identity are distinct after A→B until durable routing succeeds",
         "transition dedupe is enforced",
