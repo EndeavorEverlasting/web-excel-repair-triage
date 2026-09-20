@@ -14,48 +14,7 @@ permissions:
   contents: read
 
 jobs:
-  bootstrap-generated-site:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: write
-    outputs:
-      changed: ${{ steps.state.outputs.changed }}
-    steps:
-      - name: Initialize bootstrap state
-        id: state
-        run: echo "changed=false" >> "$GITHUB_OUTPUT"
-      - name: Checkout PR branch for canonical regeneration
-        if: github.event_name == 'pull_request'
-        uses: actions/checkout@v7
-        with:
-          ref: ${{ github.head_ref }}
-          persist-credentials: true
-          fetch-depth: 0
-      - name: Set up Python
-        if: github.event_name == 'pull_request'
-        uses: actions/setup-python@v7
-        with:
-          python-version: "3.11"
-      - name: Regenerate and commit canonical Prompt Kit when stale
-        if: github.event_name == 'pull_request'
-        shell: bash
-        run: |
-          set -euo pipefail
-          python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html
-          if git diff --quiet -- web/prompt-kit/index.html; then
-            echo "Canonical site already current."
-            exit 0
-          fi
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add web/prompt-kit/index.html
-          git commit -m "build(prompt-kit): regenerate P02 continuity site"
-          git push origin "HEAD:${GITHUB_HEAD_REF}"
-          echo "changed=true" >> "$GITHUB_OUTPUT"
-
   validate:
-    needs: bootstrap-generated-site
-    if: needs.bootstrap-generated-site.outputs.changed != 'true'
     runs-on: ubuntu-latest
     steps:
       - name: Checkout exact candidate
