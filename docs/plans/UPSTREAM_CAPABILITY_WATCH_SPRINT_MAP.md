@@ -4,7 +4,7 @@
 **Planning floor:** `main@70178017ffa5c27f4428d6aae733a61113a6f4ad`
 **Planning branch:** `plan/upstream-capability-watch-20260920`
 **Owner:** Prompt Kit upstream capability watch / P102 + P115 integration
-**Status:** TRACKED PLAN — U0A forensic classification PROVEN; U0B/U1+ implementation and live AFK visibility remain unproven.
+**Status:** TRACKED PLAN — U0A forensics and U0B source research PROVEN; U1 implementation is active on PR #619; U1 integration and U2+ runtime/visibility remain unproven.
 
 ## Mission
 
@@ -196,15 +196,13 @@ A observed/processed → B observed → durable change event → impact resoluti
 
 ## Parallel capability / autonomy state
 
-Graph width is 2 (U0A∥U0B and U2A∥U2B). Parallel dispatch is therefore required by topology.
+### Current executable graph
 
-Current ChatGPT environment evidence:
-- no native sub-agent/child-agent task API exposed;
-- no local repository checkout or AgentSwitchboard/OpenCode/Cursor runner exposed;
-- GitHub connector can inspect/mutate provider state but exposes no generic workflow-dispatch or autonomous coding-worker operation;
-- deterministic local-process fan-out is unavailable because the repository is not mounted.
+After U0A and U0B integration, the active executable graph contains only U1. Current graph width is **1**, so parallel execution is **NOT_APPLICABLE** for the active wave. The machine-readable manifest is `Outputs/prompt-parallel-dispatch/manifest.json`, run id `upstream-capability-watch-20260920-u1`, and it is pinned to existing writer PR #619 / branch `feat/upstream-capability-watch-contract-floor-20260920`.
 
-Therefore current execution posture is **DEGRADED** for autonomous implementation dispatch. The smallest autonomy repair is to consume this manifest from the already-evidenced AgentSwitchboard/local-agent path when that runner is available; do not make the operator manually schedule lanes if a later runtime exposes it.
+### Historical wave
+
+The prior U0B/U1 successor wave had graph width 2 and ran under DEGRADED coordination because no autonomous worker adapter was exposed. That historical autonomy gap is preserved by the merged U0A/U0B evidence; it is not the current dispatch posture.
 
 ## Contract horizon
 
