@@ -202,7 +202,7 @@
       "prompt_markers": [
         "PROVIDED-CONTEXT MODE",
         "a rich pasted handoff is sufficient to begin",
-        "cannot block safe inspection of current truth"
+        "cannot block repository/provider inspection"
       ],
       "proof_ceiling": "Repository/static regression only; downstream model obedience remains unproven."
     },
@@ -222,7 +222,7 @@
         "Do not average contradictory instructions or keep the older one because it appeared first."
       ],
       "prompt_markers": [
-        "resolve later superseding decisions",
+        "resolve state transitions and later superseding decisions",
         "Later explicit operator corrections supersede earlier intent"
       ],
       "proof_ceiling": "Repository/static regression only; downstream model obedience remains unproven."
