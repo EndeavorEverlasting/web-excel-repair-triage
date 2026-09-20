@@ -17,6 +17,9 @@ REPO_ROOT = Path(__file__).resolve().parents[1]
 DEFAULT_CONTRACT = REPO_ROOT / "harness/contracts/deterministic-test-floor-canary.v1.json"
 DEFAULT_REPORT = REPO_ROOT / "Outputs/deterministic-test-floor-canary-report.json"
 DEFAULT_FLOOR_REPORT = REPO_ROOT / "Outputs/deterministic-test-floor-canary-floor-report.json"
+DEFAULT_BASELINE_FLOOR_REPORT = (
+    REPO_ROOT / "Outputs/deterministic-test-floor-canary-clean-floor-report.json"
+)
 
 
 class ContractError(RuntimeError):
@@ -67,11 +70,31 @@ def load_contract(path: Path) -> dict[str, Any]:
     _repo_path(target)
 
     mutation = contract.get("mutation")
-    if not isinstance(mutation, dict) or mutation.get("mode") != "append_text":
-        raise ContractError("mutation.mode must be append_text")
-    mutation_text = mutation.get("text")
-    if not isinstance(mutation_text, str) or not mutation_text:
-        raise ContractError("mutation.text must be a non-empty string")
+    if not isinstance(mutation, dict):
+        raise ContractError("mutation must be an object")
+    mutation_mode = mutation.get("mode")
+    if mutation_mode == "append_text":
+        mutation_text = mutation.get("text")
+        if not isinstance(mutation_text, str) or not mutation_text:
+            raise ContractError("append_text mutation.text must be a non-empty string")
+    elif mutation_mode == "replace_text":
+        old_text = mutation.get("old_text")
+        new_text = mutation.get("new_text")
+        expected_occurrences = mutation.get("expected_occurrences", 1)
+        if not isinstance(old_text, str) or not old_text:
+            raise ContractError("replace_text mutation.old_text must be a non-empty string")
+        if not isinstance(new_text, str) or not new_text:
+            raise ContractError("replace_text mutation.new_text must be a non-empty string")
+        if old_text == new_text:
+            raise ContractError("replace_text mutation must change the target text")
+        if (
+            not isinstance(expected_occurrences, int)
+            or isinstance(expected_occurrences, bool)
+            or expected_occurrences < 1
+        ):
+            raise ContractError("replace_text expected_occurrences must be a positive integer")
+    else:
+        raise ContractError("mutation.mode must be append_text or replace_text")
 
     witness = contract.get("witness")
     if not isinstance(witness, dict):
@@ -97,6 +120,34 @@ def load_contract(path: Path) -> dict[str, Any]:
 
 def _digest(data: bytes) -> str:
     return hashlib.sha256(data).hexdigest()
+
+
+def _apply_declared_mutation(original: bytes, mutation: dict[str, Any]) -> bytes:
+    """Build the mutated bytes without writing the target."""
+    mode = mutation["mode"]
+    if mode == "append_text":
+        marker = mutation["text"].encode("utf-8")
+        if marker in original:
+            raise ContractError("declared append_text mutation already exists in clean target")
+        return original + marker
+
+    if mode == "replace_text":
+        try:
+            source = original.decode("utf-8")
+        except UnicodeDecodeError as exc:
+            raise ContractError("replace_text target must be UTF-8 text") from exc
+        old_text = mutation["old_text"]
+        new_text = mutation["new_text"]
+        expected = mutation.get("expected_occurrences", 1)
+        observed = source.count(old_text)
+        if observed != expected:
+            raise ContractError(
+                "replace_text occurrence mismatch: "
+                f"expected {expected}, observed {observed}"
+            )
+        return source.replace(old_text, new_text, expected).encode("utf-8")
+
+    raise ContractError(f"unsupported mutation mode: {mode}")
 
 
 def _atomic_write_bytes(path: Path, data: bytes) -> None:
@@ -151,6 +202,19 @@ def run_command(argv: list[str]) -> dict[str, Any]:
     }
 
 
+def evaluate_clean_floor_baseline(
+    floor_process: dict[str, Any],
+    floor_receipt: dict[str, Any] | None,
+) -> list[str]:
+    """Require the exact clean checkout/environment to pass before mutation."""
+    errors: list[str] = []
+    if floor_process.get("returncode") != 0:
+        errors.append("CLEAN_FLOOR_BASELINE_PROCESS_FAILED")
+    if not isinstance(floor_receipt, dict) or floor_receipt.get("status") != "PASS":
+        errors.append("CLEAN_FLOOR_BASELINE_RECEIPT_NOT_PASS")
+    return errors
+
+
 def evaluate_proof(
     contract: dict[str, Any],
     clean_witness: dict[str, Any],
@@ -192,7 +256,12 @@ def evaluate_proof(
     return errors
 
 
-def run(contract_path: Path, report_path: Path, floor_report_path: Path) -> int:
+def run(
+    contract_path: Path,
+    report_path: Path,
+    floor_report_path: Path,
+    baseline_floor_report_path: Path | None = None,
+) -> int:
     report: dict[str, Any] = {
         "schema_version": "deterministic-test-floor-canary-report/v1",
         "status": "FAIL",
@@ -207,6 +276,12 @@ def run(contract_path: Path, report_path: Path, floor_report_path: Path) -> int:
     mutated_witness: dict[str, Any] = {}
     floor_process: dict[str, Any] = {}
     floor_receipt: dict[str, Any] | None = None
+    baseline_floor_process: dict[str, Any] = {}
+    baseline_floor_receipt: dict[str, Any] | None = None
+    if baseline_floor_report_path is None:
+        baseline_floor_report_path = floor_report_path.with_name(
+            floor_report_path.stem + "-clean" + floor_report_path.suffix
+        )
 
     try:
         contract = load_contract(contract_path)
@@ -216,9 +291,7 @@ def run(contract_path: Path, report_path: Path, floor_report_path: Path) -> int:
         target = _repo_path(contract["target_path"])
         original = target.read_bytes()
         before_digest = _digest(original)
-        mutation_bytes = contract["mutation"]["text"].encode("utf-8")
-        if mutation_bytes in original:
-            raise ContractError("declared mutation marker already exists in clean target")
+        mutated_bytes = _apply_declared_mutation(original, contract["mutation"])
 
         witness_argv = command_argv(contract["witness"]["argv"])
         clean_witness = run_command(witness_argv)
@@ -229,7 +302,35 @@ def run(contract_path: Path, report_path: Path, floor_report_path: Path) -> int:
             return 1
         report["state"] = "CLEAN_WITNESS_PROVEN"
 
-        _atomic_write_bytes(target, original + mutation_bytes)
+        runner = _repo_path(contract["full_floor"]["runner"])
+        _prepare_fresh_report(baseline_floor_report_path)
+        baseline_floor_process = run_command(
+            [
+                sys.executable,
+                str(runner.relative_to(REPO_ROOT)),
+                "--report",
+                str(baseline_floor_report_path),
+            ]
+        )
+        report["baseline_floor_process"] = baseline_floor_process
+        if baseline_floor_report_path.is_file():
+            baseline_floor_receipt = _read_json(baseline_floor_report_path)
+            report["baseline_floor_receipt"] = {
+                "schema_version": baseline_floor_receipt.get("schema_version"),
+                "status": baseline_floor_receipt.get("status"),
+                "failed_step": baseline_floor_receipt.get("failed_step"),
+            }
+        baseline_errors = evaluate_clean_floor_baseline(
+            baseline_floor_process,
+            baseline_floor_receipt,
+        )
+        if baseline_errors:
+            report["state"] = baseline_errors[0]
+            report["proof_errors"] = baseline_errors
+            return 1
+        report["state"] = "CLEAN_FLOOR_PROVEN"
+
+        _atomic_write_bytes(target, mutated_bytes)
         report["state"] = "MUTATED"
         report["mutated_digest"] = _digest(target.read_bytes())
 
@@ -237,7 +338,6 @@ def run(contract_path: Path, report_path: Path, floor_report_path: Path) -> int:
         report["mutated_witness"] = mutated_witness
         report["state"] = "MUTATED_WITNESS_PROVEN"
 
-        runner = _repo_path(contract["full_floor"]["runner"])
         _prepare_fresh_report(floor_report_path)
         floor_process = run_command(
             [sys.executable, str(runner.relative_to(REPO_ROOT)), "--report", str(floor_report_path)]
@@ -317,11 +417,26 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--contract", type=Path, default=DEFAULT_CONTRACT)
     parser.add_argument("--report", type=Path, default=DEFAULT_REPORT)
     parser.add_argument("--floor-report", type=Path, default=DEFAULT_FLOOR_REPORT)
+    parser.add_argument(
+        "--baseline-floor-report",
+        type=Path,
+        default=DEFAULT_BASELINE_FLOOR_REPORT,
+    )
     args = parser.parse_args(argv)
     contract = args.contract if args.contract.is_absolute() else REPO_ROOT / args.contract
     report = args.report if args.report.is_absolute() else REPO_ROOT / args.report
     floor_report = args.floor_report if args.floor_report.is_absolute() else REPO_ROOT / args.floor_report
-    return run(contract.resolve(), report.resolve(), floor_report.resolve())
+    baseline_floor_report = (
+        args.baseline_floor_report
+        if args.baseline_floor_report.is_absolute()
+        else REPO_ROOT / args.baseline_floor_report
+    )
+    return run(
+        contract.resolve(),
+        report.resolve(),
+        floor_report.resolve(),
+        baseline_floor_report.resolve(),
+    )
 
 
 if __name__ == "__main__":

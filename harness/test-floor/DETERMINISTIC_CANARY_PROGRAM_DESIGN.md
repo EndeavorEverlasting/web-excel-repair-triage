@@ -10,7 +10,7 @@ The deterministic negative canary must prove that the repository test floor dete
 
 Required invariants:
 
-1. A clean, unmodified checkout passes the selected canary witness.
+1. A clean, unmodified checkout passes the selected canary witness and the canonical deterministic floor immediately before mutation.
 2. The declared mutation is applied atomically to exactly one owned target and is observable by the witness.
 3. The same witness fails after the mutation for evidence containing the declared marker/signature.
 4. The full deterministic floor fails at the contract-declared earliest gate using a receipt created by the current invocation, never a pre-existing receipt.
@@ -66,14 +66,14 @@ Interface: require the mutation marker in the failed full-floor step output.
 Pros: small change; reuses existing receipt.
 Cons: couples proof to bounded tail truncation and pytest rendering; a noisy failure can push the marker out of the retained tail. Better than A, but not sufficiently causal by itself.
 
-### C. Differential witness + full-floor gate + restoration (selected)
+### C. Clean-floor baseline + differential witness + mutated full-floor gate + restoration (selected)
 
 Interface:
 
-`clean witness PASS -> atomic declared mutation -> mutated witness FAIL with marker -> fresh full-floor receipt FAIL at expected gate -> atomic restore digest == original -> clean floor PASS`
+`clean witness PASS -> fresh clean full-floor PASS -> atomic declared mutation -> mutated witness FAIL with marker -> fresh mutated full-floor receipt FAIL at expected gate -> atomic restore digest == original -> workflow clean floor PASS`
 
-Pros: proves the target was healthy before mutation, the declared mutation causes a specific narrow detector to fail, the full harness also fails at the expected gate, stale evidence cannot be reused, and the repository is restored. It rejects an unrelated same-gate failure because that failure cannot satisfy the mutated witness proof.
-Cons: one additional narrow test invocation. Accepted.
+Pros: proves the exact checkout/environment is green immediately before mutation, the declared mutation causes a specific narrow detector to fail, the full harness transitions from PASS to the expected FAIL after that mutation, stale evidence cannot be reused, and the repository is restored. An unrelated pre-existing self-test or collection failure cannot certify a canary because it fails the clean full-floor baseline before mutation.
+Cons: each canary pays for one additional clean deterministic-floor invocation. Accepted because causal proof is the purpose of the canary.
 
 ### D. Teach the generic floor runner canary-specific semantics
 
@@ -96,7 +96,7 @@ Responsibility: orchestrate one canary lifecycle and emit one receipt.
 Owned transient state: original target bytes, original digest, mutation-applied state, command results, and freshness of the nested floor receipt.
 Public interface:
 
-`python scripts/run_deterministic_test_floor_canary.py --contract <path> --report <path> --floor-report <path>`
+`python scripts/run_deterministic_test_floor_canary.py --contract <path> --report <path> --floor-report <path> --baseline-floor-report <path>`
 
 Hidden complexity: subprocess normalization, atomic mutation/restoration, nested-receipt freshness, bounded output capture, evidence evaluation.
 Dependencies: canary contract; existing `scripts/run_deterministic_test_floor.py` as the canonical full-floor port.
@@ -104,6 +104,12 @@ Side effects: temporary atomic replacement of the declared target; report writes
 Failure contract: nonzero for contract error, failed proof, failed restoration, stale/missing current-run floor evidence, or unexpected command outcome. A failed canary probe is never converted to PASS.
 Observability: receipt records transition states, return codes, digests, and bounded tails.
 Test seam: pure proof-evaluation function plus small filesystem primitives for atomic replacement and fresh-receipt preparation.
+
+### `harness/contracts/prompt-semantic-weakening-canary.v1.json`
+
+Responsibility: declare the second materially different canary: a temporary canonical P07 text weakening that must be rejected by Prompt Semantic Coverage.
+Owned data: P07 target path, one bounded text replacement, semantic-validator witness, expected deterministic-floor failure gate, and proof ceiling.
+Safety boundary: the weakened prompt is never committed; the orchestrator restores the canonical file byte-identically in `finally`.
 
 ### Existing `scripts/run_deterministic_test_floor.py`
 
@@ -117,7 +123,7 @@ It delegates negative-canary behavior to the repository-owned canary runner, the
 
 ## State model
 
-`READY_CLEAN -> CLEAN_WITNESS_PROVEN -> MUTATED -> MUTATED_WITNESS_PROVEN -> FLOOR_PROCESS_OBSERVED -> RESTORED -> PROVEN`
+`READY_CLEAN -> CLEAN_WITNESS_PROVEN -> CLEAN_FLOOR_PROVEN -> MUTATED -> MUTATED_WITNESS_PROVEN -> FLOOR_PROCESS_OBSERVED -> RESTORED -> PROVEN`
 
 `FLOOR_PROCESS_OBSERVED` intentionally does not claim the floor failure is valid; proof evaluation must still establish the current receipt, expected gate, witness signature, and restoration digest before promotion to `PROVEN`.
 
@@ -125,6 +131,8 @@ Terminal failures:
 
 - `CONTRACT_INVALID`
 - `CLEAN_WITNESS_FAILED`
+- `CLEAN_FLOOR_BASELINE_PROCESS_FAILED`
+- `CLEAN_FLOOR_BASELINE_RECEIPT_NOT_PASS`
 - `MUTATED_WITNESS_UNEXPECTEDLY_PASSED`
 - `WRONG_FAILURE_SIGNATURE`
 - `FULL_FLOOR_UNEXPECTEDLY_PASSED`
@@ -153,6 +161,8 @@ CI pull-request event
 -> load/validate canary contract
 -> read target + digest
 -> run clean witness (must PASS)
+-> remove any pre-existing clean-floor baseline receipt
+-> invoke canonical `run_deterministic_test_floor.py` on the clean checkout (must PASS with a current receipt)
 -> atomically replace target with declared mutation
 -> run same witness (must FAIL with declared marker/signature)
 -> remove any pre-existing nested floor report
@@ -168,10 +178,12 @@ CI pull-request event
 
 ### Same broad gate, wrong cause
 
-Synthetic/unrelated self-test failure
--> proof evaluator receives `failed_step == test-floor-self-tests`
--> mutated witness evidence does not contain declared mutation signature or does not fail as required
--> `WRONG_FAILURE_SIGNATURE`
+Synthetic/unrelated self-test or collection failure exists before mutation
+-> clean witness may still PASS
+-> clean canonical deterministic floor runs before mutation
+-> baseline process or receipt is not PASS
+-> `CLEAN_FLOOR_BASELINE_PROCESS_FAILED` and/or `CLEAN_FLOOR_BASELINE_RECEIPT_NOT_PASS`
+-> mutation is never applied
 -> receipt FAIL
 -> workflow FAIL
 
@@ -204,17 +216,18 @@ Any probe state
 
 1. Contract loader rejects malformed declarations before write.
 2. Pure proof evaluator accepts one representative correct evidence tuple.
-3. Pure proof evaluator rejects an unrelated report with the same broad failed step.
-4. Thin integration path proves clean witness PASS and mutated witness FAIL for the real generated-site marker.
-5. Mutation/restoration uses same-directory atomic replacement with no temp residue.
-6. Pre-existing nested floor receipts are removed before invocation and missing current-run receipts cannot prove the gate.
-7. Workflow uses the repository-owned runner instead of embedded Python proof logic.
-8. Exact-head deterministic-floor workflow passes after the canary restores the checkout.
-9. Second-pass review confirms no duplicate runner semantics and no hand-edited generated output.
+3. Clean full-floor baseline accepts only a current PASS receipt and rejects an unrelated same-gate failure before mutation.
+4. Pure proof evaluator rejects an unrelated report with the same broad failed step.
+5. Thin integration path proves clean witness PASS and mutated witness FAIL for the real generated-site marker.
+6. Mutation/restoration uses same-directory atomic replacement with no temp residue.
+7. Pre-existing clean/mutated nested floor receipts are removed before invocation and missing current-run receipts cannot prove either gate.
+8. Workflow uses the repository-owned runner instead of embedded Python proof logic.
+9. Exact-head deterministic-floor workflow passes after the canary restores the checkout.
+10. Second-pass review confirms no duplicate runner semantics and no hand-edited generated output.
 
 ## Proof ceiling
 
-The prototype can prove deterministic CI failure specificity for the declared generated-site mutation, current-run floor-receipt freshness, and byte-identical restoration in a clean repository checkout. It does not prove arbitrary mutation classes, survival of an uncatchable process kill after a complete atomic replacement, production runtime behavior, or every future test framework output format.
+The prototype can prove same-checkout differential behavior (clean full-floor PASS before mutation, declared mutated-floor FAIL afterward), deterministic CI failure specificity for the declared mutation, current-run floor-receipt freshness, and byte-identical restoration in a clean repository checkout. It does not prove arbitrary mutation classes, survival of an uncatchable process kill after a complete atomic replacement, production runtime behavior, or every future test framework output format.
 
 ## Phase map
 
@@ -230,6 +243,12 @@ Create the versioned canary contract, orchestrator, focused tests, atomic mutati
 
 Run targeted tests, deterministic test-floor CI, review the receipt, falsify with the same-gate/wrong-cause and stale-receipt cases, then integrate the exact green head into `main`.
 
+### Phase 3 — Canonical P07 semantic-weakening canary
+
+The second materially different canary deliberately replaces one mainline-convergence sentence in canonical P07 with a weaker branch-only completion sentence. The direct witness is `scripts/validate_prompt_semantic_coverage.py`, which must reject the temporary body drift with PSC009 and identify P07. Before mutation, the exact checkout/environment must pass a fresh canonical deterministic-floor baseline; only then may the mutated full floor fail closed at its earliest registered gate. Restoration must return `docs/prompts.json` to the exact pre-probe digest.
+
+This phase extends the existing orchestrator with one bounded `replace_text` primitive and focused fail-closed tests. It does not add a mutation plugin framework, change accepted prompt profiles, or persist weakened prompt text.
+
 ## Deferred work
 
-A multi-canary registry or generalized mutation plugin system is not justified by one canary. Add that only after a second materially different canary demonstrates repeated orchestration pressure.
+Two canaries justify the shared append/replace mutation seam but still do not justify a registry or generalized mutation-plugin framework. Add a broader registry only when another materially different canary demonstrates repeated orchestration/registration pressure that the two explicit contracts cannot cleanly absorb.
