@@ -219,7 +219,7 @@ Move Prompt Kit from a library of hand-maintained English prompts toward a **sel
 
 ### Sprint 7 — Explicit per-prompt content variants
 
-**Status:** IMPLEMENTING on PR #608 from recovered `main@1ea0e465ab20b8fcb7a6071d85345e0c3916eabb`.
+**Status:** COMPLETE / INTEGRATED via PR #608 at `main@c9bcf5b29927ebe9206fc1c4d642319fc8551510`; operator refresh subsequently observed the restored full canonical P07 copy surface.
 
 **Dependency:** #607 restored canonical P07 copy identity and retained it in the deterministic floor. Sprint 7 may expose compiled variants again only behind an explicit prompt-level user choice; it may not reintroduce compiled-first clipboard routing.
 
@@ -265,6 +265,8 @@ Move Prompt Kit from a library of hand-maintained English prompts toward a **sel
 - Normalized explicit prompt-profile casing before content selection, so `Efficient` and `efficient` cannot diverge.
 - Proved card/detail clipboard convergence through the final `docs/prompt-kit-polish.js` `window.copyPrompt` owner, which delegates to `PromptKitComputeMode.resolveCopyContent`; no duplicate detail-copy implementation was introduced.
 - Regenerated the checked-in Prompt Kit only through `scripts/build_prompt_kit_registry.py`; temporary provider materialization infrastructure is not retained.
+- Final PR head `2a5a1fcd9c9141091b3b86b36df2adced01a883f` passed the exact-head Prompt Kit browser, web, Pages, UI-format, deterministic-floor, harness, and related registered checks before merge.
+- Post-merge operator observation after refresh confirms the copy surface now returns the full canonical P07 instead of the short compiled effective-prompt block; this is operator/browser acceptance evidence for the repaired copy identity, not evidence about external-agent execution behavior.
 
 ## Acceptance for Sprint 3
 
