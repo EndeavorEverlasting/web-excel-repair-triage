@@ -157,14 +157,14 @@ function resolveCopyContent(prompt,options){
     userDefault:userDefault,
     productDefault:options.productDefault!=null?options.productDefault:PRODUCT_DEFAULT
   });
+  if(prompt&&prompt.copyContent!=null){
+    var canonical=String(prompt.copyContent);
+    if(canonical.trim())return canonical
+  }
   var compiled=prompt&&prompt.compiledEffectivePrompts;
   if(compiled&&typeof compiled==='object'&&!Array.isArray(compiled)){
     var text=compiled[resolved.profile];
     if(typeof text==='string'&&text.trim())return text
-  }
-  if(prompt&&prompt.copyContent!=null){
-    var canonical=String(prompt.copyContent);
-    if(canonical.trim())return canonical
   }
   return ''
 }

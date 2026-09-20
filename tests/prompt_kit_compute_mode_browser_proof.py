@@ -92,7 +92,7 @@ def build_receipt(subject: dict[str, object], observations: list[dict[str, objec
             },
             {
                 "id": "compute_mode_effective_copy",
-                "statement": "P07 Copy returns the compiled effective prompt selected by Efficient user default, Exhaustive prompt override, and Exhaustive run override",
+                "statement": "P07 Copy preserves canonical prompt content while Efficient user default, Exhaustive prompt override, and Exhaustive run override change only execution-profile resolution metadata",
                 "status": "PASS" if effective_copy else "FAIL",
                 "required_evidence_class": "browser_runtime_observed",
                 "observation_ids": [
@@ -223,8 +223,8 @@ def observe(port: int, screenshot: Path):
                 }
             )
 
-            expected_efficient = page.evaluate(
-                "PROMPTS.find(p => p.id === 'P07').compiledEffectivePrompts.efficient"
+            expected_canonical = page.evaluate(
+                "PROMPTS.find(p => p.id === 'P07').copyContent"
             )
             card = page.locator('[data-prompt-id="P07"]')
             card.scroll_into_view_if_needed()
@@ -234,11 +234,11 @@ def observe(port: int, screenshot: Path):
             observations.append(
                 {
                     "id": "compute_mode_efficient_copy",
-                    "event": "P07 card Copy uses the compiled Efficient effective prompt selected by the user default",
+                    "event": "P07 card Copy preserves canonical prompt content under the Efficient user default",
                     "occurred": True,
-                    "passed": efficient_clipboard == canonical(expected_efficient),
+                    "passed": efficient_clipboard == canonical(expected_canonical),
                     "actual_length": len(efficient_clipboard),
-                    "expected_length": len(canonical(expected_efficient)),
+                    "expected_length": len(canonical(expected_canonical)),
                 }
             )
 
@@ -308,9 +308,6 @@ def observe(port: int, screenshot: Path):
                 }
             )
 
-            expected_exhaustive = page.evaluate(
-                "PROMPTS.find(p => p.id === 'P07').compiledEffectivePrompts.exhaustive"
-            )
             page.evaluate("navigator.clipboard.writeText('sentinel-compute-mode')")
             page.locator("#promptDetail .pd-section h4").nth(1).click()
             page.wait_for_timeout(260)
@@ -318,11 +315,11 @@ def observe(port: int, screenshot: Path):
             observations.append(
                 {
                     "id": "compute_mode_prompt_override_copy",
-                    "event": "Prompt-detail neutral-surface Copy uses the Exhaustive compiled prompt selected by the P07 override",
+                    "event": "Prompt-detail neutral-surface Copy preserves canonical P07 content under the Exhaustive prompt override",
                     "occurred": True,
-                    "passed": exhaustive_clipboard == canonical(expected_exhaustive),
+                    "passed": exhaustive_clipboard == canonical(expected_canonical),
                     "actual_length": len(exhaustive_clipboard),
-                    "expected_length": len(canonical(expected_exhaustive)),
+                    "expected_length": len(canonical(expected_canonical)),
                 }
             )
 
@@ -385,11 +382,11 @@ def observe(port: int, screenshot: Path):
             observations.append(
                 {
                     "id": "compute_mode_run_override_copy",
-                    "event": "P07 Copy honors the explicit Exhaustive run override",
+                    "event": "P07 Copy preserves canonical prompt content under the explicit Exhaustive run override",
                     "occurred": run_clipboard != run_sentinel,
-                    "passed": run_clipboard == canonical(expected_exhaustive),
+                    "passed": run_clipboard == canonical(expected_canonical),
                     "actual_length": len(run_clipboard),
-                    "expected_length": len(canonical(expected_exhaustive)),
+                    "expected_length": len(canonical(expected_canonical)),
                 }
             )
 
