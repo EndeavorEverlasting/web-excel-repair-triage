@@ -8,6 +8,7 @@ Human-facing Operant releases. Git commit/artifact identity remains the forensic
 
 - feat(harness): Sprint 2 — P79 semantic coverage lifecycle + required checks (#594) (`7ecbf642`)
 - feat(governance): establish binding law that copy panels are agent transport (#602) (`895e7cdf`)
+- feat(prompt-kit): add per-prompt compute variant controls (#608) (`c9bcf5b2`)
 
 ### Fixes / performance
 
