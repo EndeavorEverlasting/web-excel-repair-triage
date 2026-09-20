@@ -1,0 +1,317 @@
+{
+  "schema_version": "p02-continuity-regression-matrix/v1",
+  "matrix_id": "p02-continuity-alignment-20260920",
+  "status": "TRACKED_VALIDATING",
+  "prompt_id": "P02",
+  "effective_authority": "registry/prompts/prompt-overrides.v1.json",
+  "effective_loader": "scripts/build_prompt_kit_registry.py",
+  "global_strength_dependency": "harness/evals/prompt-strength/adversarial-regression-matrix.v1.json",
+  "continuity_contract": "harness/conversation-continuity/README.md",
+  "required_modes": [
+    "ORIENT",
+    "SUMMARIZE",
+    "CLOSEOUT",
+    "CONTINUE"
+  ],
+  "semantic_coverage_boundary": {
+    "current_profile_owner": "harness/prompt-topology/prompt-capability-profiles.v1.json",
+    "known_gap": "PSC002 currently hashes raw canonical prompt records and does not bind the effective P02 override body.",
+    "local_guard": "This matrix and its focused test bind the effective P02 override directly until the broader all-prompts effective-semantic audit is completed."
+  },
+  "capability_ids": [
+    "mode_routing",
+    "conversation_fidelity",
+    "current_reality",
+    "independent_alignment",
+    "checkpoint_continuity",
+    "execution_first_continue",
+    "bounded_review",
+    "non_recursive_recovery",
+    "evidence_provenance",
+    "supersession"
+  ],
+  "case_contract": {
+    "minimum_cases": 12,
+    "required_fields": [
+      "case_id",
+      "title",
+      "mode",
+      "stimulus",
+      "capabilities",
+      "positive_assertions",
+      "negative_assertions",
+      "prompt_markers",
+      "proof_ceiling"
+    ]
+  },
+  "cases": [
+    {
+      "case_id": "P02R-001",
+      "title": "AUTO orientation is not promoted to implementation",
+      "mode": "ORIENT",
+      "stimulus": "Operator asks to get bearings on a previous chat without asking for work to continue.",
+      "capabilities": [
+        "mode_routing"
+      ],
+      "positive_assertions": [
+        "Resolve AUTO to ORIENT and report current bearings without repository mutation merely to orient."
+      ],
+      "negative_assertions": [
+        "Do not treat the existence of open work as authorization to execute it."
+      ],
+      "prompt_markers": [
+        "AUTO: infer the disposition from the operator's current request.",
+        "ORIENT: answer where things stand",
+        "No repository mutation merely to provide bearings."
+      ],
+      "proof_ceiling": "Repository/static regression only; downstream model obedience remains unproven."
+    },
+    {
+      "case_id": "P02R-002",
+      "title": "Summary preserves corrections and unresolved state",
+      "mode": "SUMMARIZE",
+      "stimulus": "Operator asks for a faithful summary of a long previous conversation.",
+      "capabilities": [
+        "mode_routing",
+        "conversation_fidelity",
+        "supersession"
+      ],
+      "positive_assertions": [
+        "Compress decisions, corrections, superseded state, disagreement, proof floors, and open questions."
+      ],
+      "negative_assertions": [
+        "Do not smooth contradictions away or begin implementation because work remains."
+      ],
+      "prompt_markers": [
+        "SUMMARIZE: compress the conversation faithfully",
+        "preserving decisions, corrections, superseded state, unresolved disagreement",
+        "Do not execute work merely because open work exists."
+      ],
+      "proof_ceiling": "Repository/static regression only; downstream model obedience remains unproven."
+    },
+    {
+      "case_id": "P02R-003",
+      "title": "Closeout produces resumable state instead of a new sprint",
+      "mode": "CLOSEOUT",
+      "stimulus": "Operator says the conversation is ending and wants a clean continuation surface.",
+      "capabilities": [
+        "mode_routing",
+        "checkpoint_continuity",
+        "evidence_provenance"
+      ],
+      "positive_assertions": [
+        "Emit a resumable checkpoint with first unproven gate, evidence anchors, blocker, next action, and proof ceiling."
+      ],
+      "negative_assertions": [
+        "Do not start a fresh implementation slice merely because one is available."
+      ],
+      "prompt_markers": [
+        "CLOSEOUT: produce a resumable durable handoff/checkpoint",
+        "first unproven gate",
+        "Do not start a new implementation slice merely because one is available."
+      ],
+      "proof_ceiling": "Repository/static regression only; downstream model obedience remains unproven."
+    },
+    {
+      "case_id": "P02R-004",
+      "title": "Continue remains execution-first after alignment",
+      "mode": "CONTINUE",
+      "stimulus": "Operator explicitly asks to continue unfinished implementation from a previous chat.",
+      "capabilities": [
+        "mode_routing",
+        "execution_first_continue",
+        "current_reality"
+      ],
+      "positive_assertions": [
+        "Recover and align first, then select and execute the highest-value safe unfinished slice."
+      ],
+      "negative_assertions": [
+        "Do not stop at orientation, summary, planning, branch status, or TODO output while safe execution remains."
+      ],
+      "prompt_markers": [
+        "CONTINUE THAT CHAT AS AN ACTIVE IMPLEMENTATION SPRINT",
+        "planning is subordinate to implementation",
+        "SELECT THE FIRST UNFINISHED EXECUTION SLICE — CONTINUE ONLY",
+        "IMPLEMENT NOW — CONTINUE ONLY",
+        "VALIDATE AND DELIVER — CONTINUE ONLY"
+      ],
+      "proof_ceiling": "Repository/static regression only; downstream model obedience remains unproven."
+    },
+    {
+      "case_id": "P02R-005",
+      "title": "Conversation fidelity and current reality remain independent axes",
+      "mode": "AUTO",
+      "stimulus": "Conversation says work is open but current repository evidence says it is already merged.",
+      "capabilities": [
+        "conversation_fidelity",
+        "current_reality",
+        "independent_alignment"
+      ],
+      "positive_assertions": [
+        "Recover what the conversation said and separately verify current repository reality before reconciliation."
+      ],
+      "negative_assertions": [
+        "Do not let remembered intent overwrite current fact or current repository fact erase unresolved operator intent."
+      ],
+      "prompt_markers": [
+        "AXIS A — CONVERSATION FIDELITY",
+        "AXIS B — CURRENT REALITY",
+        "Only after both axes are independently established",
+        "A passing conversation axis cannot erase a reality conflict."
+      ],
+      "proof_ceiling": "Repository/static regression only; downstream model obedience remains unproven."
+    },
+    {
+      "case_id": "P02R-006",
+      "title": "Repository fallback cannot invent operator intent",
+      "mode": "AUTO",
+      "stimulus": "Historical chat retrieval is unavailable but repository/provider truth is accessible.",
+      "capabilities": [
+        "current_reality",
+        "conversation_fidelity",
+        "evidence_provenance"
+      ],
+      "positive_assertions": [
+        "Reconstruct material implementation state from durable evidence and preserve unknown operator intent as unknown."
+      ],
+      "negative_assertions": [
+        "Do not claim repository state reveals an unstated user decision."
+      ],
+      "prompt_markers": [
+        "REPOSITORY RECONSTRUCTION FALLBACK",
+        "without pretending that repository truth reveals unstated operator intent",
+        "Loss of historical transcript or tool output is not itself a blocker"
+      ],
+      "proof_ceiling": "Repository/static regression only; downstream model obedience remains unproven."
+    },
+    {
+      "case_id": "P02R-007",
+      "title": "Rich handoff bootstraps without transcript dependency",
+      "mode": "AUTO",
+      "stimulus": "A supplied handoff is rich enough to start while transcript retrieval is incomplete.",
+      "capabilities": [
+        "conversation_fidelity",
+        "evidence_provenance"
+      ],
+      "positive_assertions": [
+        "Use supplied context immediately and deepen or falsify it with history when available."
+      ],
+      "negative_assertions": [
+        "Do not make transcript retrieval a prerequisite for safe current-truth inspection."
+      ],
+      "prompt_markers": [
+        "PROVIDED-CONTEXT MODE",
+        "a rich pasted handoff is sufficient to begin",
+        "cannot block repository/provider inspection"
+      ],
+      "proof_ceiling": "Repository/static regression only; downstream model obedience remains unproven."
+    },
+    {
+      "case_id": "P02R-008",
+      "title": "Later explicit correction supersedes earlier intent",
+      "mode": "AUTO",
+      "stimulus": "The operator reverses or corrects an earlier decision later in the conversation.",
+      "capabilities": [
+        "conversation_fidelity",
+        "supersession"
+      ],
+      "positive_assertions": [
+        "Preserve chronology and treat the later explicit correction as the active intent when it proves a real decision change."
+      ],
+      "negative_assertions": [
+        "Do not average contradictory instructions or keep the older one because it appeared first."
+      ],
+      "prompt_markers": [
+        "resolve state transitions and later superseding decisions",
+        "Later explicit operator corrections supersede earlier intent"
+      ],
+      "proof_ceiling": "Repository/static regression only; downstream model obedience remains unproven."
+    },
+    {
+      "case_id": "P02R-009",
+      "title": "Reviewer findings remain hypotheses until anchors are checked",
+      "mode": "AUTO",
+      "stimulus": "A recovery/review lane reports a consequential finding with a cited source.",
+      "capabilities": [
+        "evidence_provenance",
+        "independent_alignment"
+      ],
+      "positive_assertions": [
+        "Verify consequential cited anchors before action."
+      ],
+      "negative_assertions": [
+        "Do not promote a reviewer conclusion to fact merely because another agent emitted it."
+      ],
+      "prompt_markers": [
+        "For consequential claims, verify the cited anchor before acting.",
+        "Reviewer output is a hypothesis until its evidence is checked."
+      ],
+      "proof_ceiling": "Repository/static regression only; downstream model obedience remains unproven."
+    },
+    {
+      "case_id": "P02R-010",
+      "title": "Review converges by evidence change rather than repeated clean verdicts",
+      "mode": "AUTO",
+      "stimulus": "First reconciliation completed and a second review pass finds no new material evidence.",
+      "capabilities": [
+        "bounded_review"
+      ],
+      "positive_assertions": [
+        "Run one deliberate contradiction/gap pass and stop reviewing when no material evidence changes."
+      ],
+      "negative_assertions": [
+        "Do not repeatedly invoke review until a stochastic reviewer says clean."
+      ],
+      "prompt_markers": [
+        "Run one deliberate contradiction/gap pass",
+        "Repeat only when the new pass changes material evidence.",
+        "Do not review repeatedly until an agent happens to say 'clean'."
+      ],
+      "proof_ceiling": "Repository/static regression only; downstream model obedience remains unproven."
+    },
+    {
+      "case_id": "P02R-011",
+      "title": "P02 recovery cannot recursively spawn P02",
+      "mode": "AUTO",
+      "stimulus": "A sub-review lane notices that the task itself is conversation recovery.",
+      "capabilities": [
+        "non_recursive_recovery"
+      ],
+      "positive_assertions": [
+        "Keep P02 as single convergence owner while allowing independent evidence reviewers."
+      ],
+      "negative_assertions": [
+        "Do not recursively invoke P02 from a P02 recovery or review lane."
+      ],
+      "prompt_markers": [
+        "Do not recursively invoke P02 from a P02 recovery/review lane.",
+        "P02 remains the single convergence owner."
+      ],
+      "proof_ceiling": "Repository/static regression only; downstream model obedience remains unproven."
+    },
+    {
+      "case_id": "P02R-012",
+      "title": "Checkpoint validity does not impersonate factual freshness",
+      "mode": "CLOSEOUT",
+      "stimulus": "A structurally valid live-thread checkpoint is resumed after mutable provider state has changed.",
+      "capabilities": [
+        "checkpoint_continuity",
+        "current_reality",
+        "evidence_provenance"
+      ],
+      "positive_assertions": [
+        "Preserve settled proof, refresh mutable anchors, and resume from the first unproven gate."
+      ],
+      "negative_assertions": [
+        "Do not treat schema-valid checkpoint state as current provider truth."
+      ],
+      "prompt_markers": [
+        "VALIDATED LIVE-THREAD CHECKPOINT MODE",
+        "Refresh mutable evidence anchors before treating them as current truth.",
+        "Structural checkpoint validity proves resumability, not factual freshness."
+      ],
+      "proof_ceiling": "Repository/static regression only; downstream model obedience remains unproven."
+    }
+  ],
+  "proof_ceiling": "This matrix proves repository-owned static semantics and effective-override binding for P02. It does not prove downstream model obedience, external conversation-history availability, repository/provider access, or runtime action success."
+}
