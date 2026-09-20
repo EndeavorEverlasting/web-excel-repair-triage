@@ -66,7 +66,7 @@ def _string_list(value: Any, field: str, *, min_items: int = 1) -> list[str]:
 
 
 def _git_blob_sha1(data: bytes) -> str:
-    header = f"blob {len(data)}\\0".encode("utf-8")
+    header = f"blob {len(data)}".encode("ascii") + bytes([0])
     return hashlib.sha1(header + data).hexdigest()
 
 
