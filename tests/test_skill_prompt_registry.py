@@ -32,7 +32,7 @@ class SkillPromptRegistryTests(unittest.TestCase):
         self.assertEqual(by_id["P65"]["discoveryRank"], 1)
         self.assertEqual(by_id["P65"]["displayOrderPolicy"], "prompt-kit-guided-discovery-order")
 
-    def test_p02_previous_chat_executor_is_execution_first(self) -> None:
+    def test_p02_previous_chat_executor_routes_mode_without_losing_continue_strength(self) -> None:
         prompt = {
             item["id"]: item for item in build_prompt_kit_registry.load_prompt_registry()
         }["P02"]
@@ -44,28 +44,35 @@ class SkillPromptRegistryTests(unittest.TestCase):
         self.assertEqual(content.count("xyz_previous_chat_name"), 1)
         for phrase in (
             "PREVIOUS CHAT:",
+            "MODE: AUTO | ORIENT | SUMMARIZE | CLOSEOUT | CONTINUE",
+            "MODE ROUTING — WORDS MATTER",
+            "AXIS A — CONVERSATION FIDELITY",
+            "AXIS B — CURRENT REALITY",
+            "ALIGNMENT / RECONCILIATION",
             "CONTINUE THAT CHAT AS AN ACTIVE IMPLEMENTATION SPRINT",
             "planning is subordinate to implementation",
-            "RECOVER THE NAMED CHAT",
+            "RECOVER THE PRIOR CONVERSATION FAITHFULLY",
             "VERIFY THE CURRENT FLOOR",
             "SELECT THE FIRST UNFINISHED EXECUTION SLICE",
             "IMPLEMENT NOW",
             "VALIDATE AND DELIVER",
-            "Do not stop at a summary, TODO list, architecture discussion, branch listing, PR status, or plan",
+            "Do not stop at a summary, TODO list, architecture discussion, branch listing, PR status, or plan while safe executable work remains",
             "NEXT COMMAND: one exact executable action",
         ):
             self.assertIn(phrase, content)
-        for plan_only_marker in (
-            "NEXT CHAT PANELS",
-            "SUPPORTING SPRINT MAP",
-            "one prompt panel goes into one new chat",
-        ):
-            self.assertNotIn(plan_only_marker, content)
+        self.assertNotIn(
+            "CONTINUE THAT CHAT AS AN ACTIVE IMPLEMENTATION SPRINT. DO NOT MERELY SUMMARIZE IT OR RETURN A PLAN.",
+            content,
+        )
         for keyword in (
             "previous chat",
             "continue chat",
             "resume conversation",
             "implement previous chat",
+            "orient previous chat",
+            "summarize chat",
+            "closeout chat",
+            "conversation alignment",
         ):
             self.assertIn(keyword, prompt["keywords"])
 
