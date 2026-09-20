@@ -68,7 +68,7 @@ for(const options of [
     process.exit(1);
   }
 }
-const explicitEfficient=api.resolveCopyContent(prompt,{promptOverride:'efficient'});
+const explicitEfficient=api.resolveCopyContent(prompt,{promptOverride:'Efficient'});
 if(explicitEfficient!=='COMPILED EFFICIENT'){
   console.error('explicit efficient: '+explicitEfficient);
   process.exit(2);
@@ -77,6 +77,11 @@ const variants=api.availablePromptVariants(prompt);
 if(JSON.stringify(variants)!==JSON.stringify(['exhaustive','efficient'])){
   console.error('variants: '+JSON.stringify(variants));
   process.exit(3);
+}
+const plainVariants=api.availablePromptVariants({id:'P00',copyContent:'PLAIN CANONICAL'});
+if(JSON.stringify(plainVariants)!==JSON.stringify(['exhaustive'])){
+  console.error('plain variants: '+JSON.stringify(plainVariants));
+  process.exit(5);
 }
 const fallback=api.resolveCopyContent(
   {id:'P07',compiledEffectivePrompts:{exhaustive:'COMPILED ONLY'}},
