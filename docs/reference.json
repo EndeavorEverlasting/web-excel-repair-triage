@@ -646,15 +646,15 @@
     {
       "seq": "02",
       "promptId": "P02",
-      "moment": "Conversation Closeout + Ordered Copy-Panel Sprint Mapper",
-      "useItFor": "A chat contains decisions, gaps, unfinished work, or several next-chat lanes.",
-      "doNotUseWhen": "A different prompt more directly owns the requested moment.",
-      "produces": "Launch order first, ordered copy panels, then a durable sprint and factoring map.",
-      "gate": "Context is preserved and panel display matches the recommended order.",
-      "then": "Use P03 or P04.",
-      "mutatesRepo": "No",
-      "authority": "Advisory or bounded support scope",
-      "proofCeiling": "Context preventing rework is preserved.",
+      "moment": "Previous Chat Continuity + Alignment",
+      "useItFor": "A prior chat must be oriented, summarized, closed out, or continued without losing decisions or confusing historical intent with current reality.",
+      "doNotUseWhen": "No prior-conversation continuity problem exists, or a specialized owner can act without recovering prior context.",
+      "produces": "Mode-resolved bearings, faithful summary, resumable closeout, or aligned active execution.",
+      "gate": "Conversation fidelity and current reality are independently sourced before reconciliation; the selected mode is not silently broadened.",
+      "then": "Use the mode result directly; CONTINUE may route implementation to P07 when appropriate.",
+      "mutatesRepo": "CONTINUE only, when authorized",
+      "authority": "Continuity/alignment owner; execution composes with the canonical implementation owner",
+      "proofCeiling": "Repository/static continuity proof; downstream model obedience remains unproven.",
       "copySafeSheet": "P02_COPY_SAFE"
     },
     {
@@ -1333,13 +1333,13 @@
       "promptType": "HARVEST",
       "promptClass": "CLOSEOUT / CONVERSATION",
       "promptIds": "P02",
-      "whenToUse": "Preserve long-chat decisions and emit ordered launch panels",
-      "progressUse": "No",
-      "proofGate": "Context prevents rework",
-      "fillRole": "Conversation intake",
+      "whenToUse": "Recover a prior conversation for orientation, summary, closeout, or continuation",
+      "progressUse": "Mode-dependent",
+      "proofGate": "Independent conversation/reality axes plus mode-correct disposition",
+      "fillRole": "Conversation continuity and alignment",
       "fillHex": "#E5E7EB",
       "color": "Gray",
-      "meaning": "Context preservation and handoff; records state without active mutation."
+      "meaning": "Preserves conversation intent, checks present reality independently, then orients, summarizes, closes out, or continues without mode drift."
     },
     {
       "promptType": "DISCOVERY + BUILD",
