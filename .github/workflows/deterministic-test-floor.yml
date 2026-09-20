@@ -65,6 +65,15 @@ jobs:
             --report "$RUNNER_TEMP/negative-canary-report.json" \
             --floor-report "$RUNNER_TEMP/negative-canary-floor-report.json"
 
+      - name: Negative P07 semantic-weakening canary must prove declared failure
+        shell: bash
+        run: |
+          set -euo pipefail
+          python scripts/run_deterministic_test_floor_canary.py \
+            --contract harness/contracts/prompt-semantic-weakening-canary.v1.json \
+            --report "$RUNNER_TEMP/semantic-weakening-canary-report.json" \
+            --floor-report "$RUNNER_TEMP/semantic-weakening-canary-floor-report.json"
+
       - name: Private-input gate must block on clean public runner
         shell: bash
         run: |
@@ -106,6 +115,8 @@ jobs:
           path: |
             ${{ runner.temp }}/negative-canary-report.json
             ${{ runner.temp }}/negative-canary-floor-report.json
+            ${{ runner.temp }}/semantic-weakening-canary-report.json
+            ${{ runner.temp }}/semantic-weakening-canary-floor-report.json
             ${{ runner.temp }}/private-input-blocked-report.json
             ${{ runner.temp }}/deterministic-test-floor-report.json
           if-no-files-found: error

@@ -105,6 +105,12 @@ Failure contract: nonzero for contract error, failed proof, failed restoration, 
 Observability: receipt records transition states, return codes, digests, and bounded tails.
 Test seam: pure proof-evaluation function plus small filesystem primitives for atomic replacement and fresh-receipt preparation.
 
+### `harness/contracts/prompt-semantic-weakening-canary.v1.json`
+
+Responsibility: declare the second materially different canary: a temporary canonical P07 text weakening that must be rejected by Prompt Semantic Coverage.
+Owned data: P07 target path, one bounded text replacement, semantic-validator witness, expected deterministic-floor failure gate, and proof ceiling.
+Safety boundary: the weakened prompt is never committed; the orchestrator restores the canonical file byte-identically in `finally`.
+
 ### Existing `scripts/run_deterministic_test_floor.py`
 
 Responsibility remains unchanged: own the real deterministic floor and its report.
@@ -230,6 +236,12 @@ Create the versioned canary contract, orchestrator, focused tests, atomic mutati
 
 Run targeted tests, deterministic test-floor CI, review the receipt, falsify with the same-gate/wrong-cause and stale-receipt cases, then integrate the exact green head into `main`.
 
+### Phase 3 — Canonical P07 semantic-weakening canary
+
+The second materially different canary deliberately replaces one mainline-convergence sentence in canonical P07 with a weaker branch-only completion sentence. The direct witness is `scripts/validate_prompt_semantic_coverage.py`, which must reject the temporary body drift with PSC009 and identify P07. The full deterministic floor must also fail closed at its earliest registered gate, and restoration must return `docs/prompts.json` to the exact pre-probe digest.
+
+This phase extends the existing orchestrator with one bounded `replace_text` primitive and focused fail-closed tests. It does not add a mutation plugin framework, change accepted prompt profiles, or persist weakened prompt text.
+
 ## Deferred work
 
-A multi-canary registry or generalized mutation plugin system is not justified by one canary. Add that only after a second materially different canary demonstrates repeated orchestration pressure.
+Two canaries justify the shared append/replace mutation seam but still do not justify a registry or generalized mutation-plugin framework. Add a broader registry only when another materially different canary demonstrates repeated orchestration/registration pressure that the two explicit contracts cannot cleanly absorb.

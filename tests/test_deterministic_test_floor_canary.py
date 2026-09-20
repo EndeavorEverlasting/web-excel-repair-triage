@@ -11,12 +11,16 @@ from scripts import run_deterministic_test_floor_canary as canary
 
 ROOT = Path(__file__).resolve().parents[1]
 CONTRACT = ROOT / "harness/contracts/deterministic-test-floor-canary.v1.json"
+SEMANTIC_WEAKENING_CONTRACT = (
+    ROOT / "harness/contracts/prompt-semantic-weakening-canary.v1.json"
+)
 
 
 class DeterministicTestFloorCanaryTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls) -> None:
         cls.contract = canary.load_contract(CONTRACT)
+        cls.semantic_contract = canary.load_contract(SEMANTIC_WEAKENING_CONTRACT)
 
     def test_contract_binds_real_target_witness_and_canonical_floor(self) -> None:
         self.assertEqual(self.contract["schema_version"], "deterministic-test-floor-canary/v1")
@@ -33,6 +37,42 @@ class DeterministicTestFloorCanaryTests(unittest.TestCase):
             self.contract["full_floor"]["expected_failed_step"],
             "test-floor-self-tests",
         )
+
+    def test_semantic_weakening_contract_targets_real_p07_without_mutating_source(self) -> None:
+        contract = self.semantic_contract
+        self.assertEqual(contract["canary_id"], "p07-semantic-weakening")
+        self.assertEqual(contract["target_path"], "docs/prompts.json")
+        self.assertEqual(contract["mutation"]["mode"], "replace_text")
+        self.assertEqual(contract["mutation"]["expected_occurrences"], 1)
+        self.assertIn(
+            "scripts/validate_prompt_semantic_coverage.py",
+            " ".join(contract["witness"]["argv"]),
+        )
+        self.assertIn(
+            "PSC009 BODY_CHANGE_REQUIRES_PROFILE_DISPOSITION",
+            contract["witness"]["required_failure_signatures"],
+        )
+        target = ROOT / contract["target_path"]
+        original = target.read_bytes()
+        mutated = canary._apply_declared_mutation(original, contract["mutation"])
+        self.assertNotEqual(mutated, original)
+        self.assertEqual(mutated.decode("utf-8").count("CANARY_WEAKENED_P07"), 1)
+        self.assertEqual(target.read_bytes(), original)
+
+    def test_replace_text_mutation_fails_closed_on_occurrence_drift(self) -> None:
+        mutation = copy.deepcopy(self.semantic_contract["mutation"])
+        mutation["old_text"] = "THIS TEXT IS INTENTIONALLY ABSENT"
+        with self.assertRaisesRegex(canary.ContractError, "occurrence mismatch"):
+            canary._apply_declared_mutation(b"canonical prompt", mutation)
+
+    def test_replace_text_contract_rejects_noop_mutation(self) -> None:
+        broken = copy.deepcopy(self.semantic_contract)
+        broken["mutation"]["new_text"] = broken["mutation"]["old_text"]
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp) / "canary.json"
+            path.write_text(json.dumps(broken), encoding="utf-8")
+            with self.assertRaisesRegex(canary.ContractError, "must change"):
+                canary.load_contract(path)
 
     def test_proof_accepts_declared_mutation_specific_failure(self) -> None:
         marker = self.contract["witness"]["required_failure_signatures"][0]
