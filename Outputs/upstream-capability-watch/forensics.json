@@ -77,7 +77,7 @@
   ],
   "correction": {
     "direct_teach_revision_missed": false,
-    "statement": "The inspected September drift was a Matt repository change centered on the PR skill, not a productivitiy/teach file revision. Local teaching owners still require separate semantic reconciliation."
+    "statement": "The inspected September drift was a Matt repository change centered on the PR skill, not a productivity/teach file revision. Local teaching owners still require separate semantic reconciliation."
   },
   "next_transition": {
     "lane_id": "u1-capability-watch-contract-floor",
