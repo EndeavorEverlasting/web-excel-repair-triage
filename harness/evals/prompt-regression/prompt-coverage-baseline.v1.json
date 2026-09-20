@@ -157,35 +157,39 @@
         "harness/evals/prompt-strength/p02-continuity-regression-matrix.v1.json",
         "tests/test_p02_continuity_regression_matrix.py",
         "tests/test_skill_prompt_registry.py"
-      ]
+      ],
+      "marker_match_mode": "SUBSTRING"
     },
     {
       "prompt_id": "P13",
       "required_markers": [
-        "THE SAME PROBLEM HAS REPEATED",
-        "MANDATORY CANARY / EXECUTION POSTURE GATE",
-        "ESTABLISH THE CURRENT CRITICAL PATH",
-        "EXECUTE ONE CRITICAL-PATH ADVANCEMENT NOW",
-        "PARALLEL EXECUTION — P07 OWNS ACTUAL DISPATCH"
+        "THE SAME PROBLEM HAS REPEATED. TREAT THAT AS A PROCESS DEFECT AND FIX THE SYSTEM THAT LET IT RECUR.",
+        "0A. MANDATORY CANARY / EXECUTION POSTURE GATE — P114 OWNER",
+        "3. ESTABLISH THE CURRENT CRITICAL PATH",
+        "4. EXECUTE ONE CRITICAL-PATH ADVANCEMENT NOW",
+        "5. PARALLEL EXECUTION — P07 OWNS ACTUAL DISPATCH"
       ],
       "focused_regression_refs": [
         "tests/test_skill_prompt_registry.py",
         "tests/test_prompt_regression_safety_prompt.py"
-      ]
+      ],
+      "marker_match_mode": "EXACT_LINE"
     },
     {
       "prompt_id": "P19",
       "required_markers": [
-        "RECOVER CONTEXT + PIN THE DEPLOYMENT SUBJECT",
-        "DIRECT OPERATOR INTERFACE GUIDANCE — NO HUNTING",
-        "DIRECT ENTRY POINT",
-        "current operator screen"
+        "0. RECOVER CONTEXT + PIN THE DEPLOYMENT SUBJECT",
+        "2. DIRECT OPERATOR INTERFACE GUIDANCE — NO HUNTING",
+        "- DIRECT ENTRY POINT: the exact URL/deep link when known from evidence, or the precise product/site area and first navigation control when a direct URL is not established.",
+        "5. FAILURE RECOVERY WITHOUT RESTARTING THE WHOLE FLOW"
       ],
       "focused_regression_refs": [
         "tests/test_prompt_kit_mainline_delivery.py",
         "tests/test_prompt_regression_safety_prompt.py"
-      ]
+      ],
+      "marker_match_mode": "EXACT_LINE"
     }
   ],
-  "proof_ceiling": "This baseline proves repository-owned regression coverage accounting: known unprofiled operational prompts cannot increase unnoticed, closeout/review ownership drift is surfaced, and every current override source is blob-bound and marker-guarded. It does not claim the 79 known unprofiled prompts already have semantic profiles, does not replace Prompt Semantic Coverage lifecycle enforcement, and does not prove downstream model obedience."
+  "proof_ceiling": "This baseline proves repository-owned regression coverage accounting: known unprofiled operational prompts cannot increase unnoticed, closeout/review ownership drift is surfaced, and every current override source is blob-bound and marker-guarded. It does not claim the 79 known unprofiled prompts already have semantic profiles, does not replace Prompt Semantic Coverage lifecycle enforcement, and does not prove downstream model obedience.",
+  "known_unprofiled_seed_sha256": "75d6746dc6310b157fb7526f20939c849b1b0c05dc07f863c58d5ac30c6c4cfd"
 }
