@@ -1,55 +1,17 @@
 {
   "schema_version": "prompt-parallel-dispatch/v1",
-  "run_id": "upstream-capability-watch-20260920-wave1",
-  "graph_width": 2,
-  "parallel_disposition": "DEGRADED",
-  "autonomy_gap": "No native sub-agent API, local repository runner, AgentSwitchboard/OpenCode/Cursor execution adapter, workflow-dispatch action, or mounted repository process runner is exposed in the current ChatGPT environment. The GitHub connector provides provider inspection/mutation but not an autonomous bounded coding-worker operation. Consume this manifest through the first evidenced local/AgentSwitchboard runner when available; do not claim observed parallelism from serial provider calls.",
+  "run_id": "upstream-capability-watch-20260920-u1",
+  "graph_width": 1,
+  "parallel_disposition": "NOT_APPLICABLE",
+  "autonomy_gap": null,
   "lanes": [
-    {
-      "lane_id": "u0b-design-authoring-source-research",
-      "mission": "Establish authoritative, versionable Claude/Anthropic design and skill-authoring source surfaces and map reusable mechanics to existing Prompt Kit owners without registry mutation.",
-      "dependencies": [],
-      "owned_mutation_surfaces": [
-        "harness/reports/UPSTREAM_DESIGN_AUTHORING_SOURCE_RESEARCH.md"
-      ],
-      "forbidden_surfaces": [
-        "Prompt Kit registries",
-        "external-resource source registration",
-        "generated Prompt Kit",
-        "automatic donor import"
-      ],
-      "adapter": {
-        "kind": "connected_provider",
-        "rung": 3
-      },
-      "launch": {
-        "mode": "runtime_tool",
-        "tool": "GitHub",
-        "operation": "design_authoring_source_research",
-        "arguments": {
-          "repository": "EndeavorEverlasting/web-excel-repair-triage",
-          "plan": "docs/plans/UPSTREAM_CAPABILITY_WATCH_SPRINT_MAP.md"
-        }
-      },
-      "expected_artifacts": [
-        "authoritative-source/version disposition",
-        "license/usage boundary",
-        "local owner map",
-        "REGISTER/REFERENCE_ONLY/REJECT recommendation"
-      ],
-      "validation": [
-        "source provenance is authoritative",
-        "no donor authority is promoted into local mutation authority"
-      ],
-      "convergence_owner": "P79 / UX owner research coordinator",
-      "status": "PLANNED"
-    },
     {
       "lane_id": "u1-capability-watch-contract-floor",
       "mission": "Inspect and extend the current canonical external-resource contracts first to express watched-capability identity/state/event/impact/dedupe/promotion semantics; create a new watch contract only after evidence proves the canonical owners cannot represent the required state, and refresh this manifest before owning any new contract path.",
       "dependencies": [],
       "owned_mutation_surfaces": [
         "harness/contracts/operant-external-resource-intake.v1.json",
+        "scripts/upstream_capability_watch.py",
         "registry/resources/upstream-capability-impact-edges.v1.json",
         "tests/test_upstream_capability_watch.py",
         "harness/test-floor.v1.json"
@@ -75,6 +37,7 @@
       },
       "expected_artifacts": [
         "canonical external-resource contract extension decision with evidence",
+        "deterministic capability-watch state kernel consumed by later runtime wiring",
         "impact-edge registry shape",
         "A/B/C identity fixtures",
         "routing-failure lost-event negative fixture",
@@ -83,8 +46,10 @@
       ],
       "validation": [
         "existing canonical contracts are inspected and extended where sufficient; no new contract path is created by assumption",
-        "last_observed_identity and last_processed_identity are distinct",
+        "UNSEEN first observation establishes CURRENT baseline",
+        "last_observed_identity and last_processed_identity are distinct after A→B until durable routing succeeds",
         "transition dedupe is enforced",
+        "routing failure preserves processed identity",
         "missing impact edge retains source event",
         "promotion cannot jump changed to integrated"
       ],
