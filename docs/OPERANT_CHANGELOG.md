@@ -10,6 +10,7 @@ Human-facing Operant releases. Git commit/artifact identity remains the forensic
 - feat(governance): establish binding law that copy panels are agent transport (#602) (`895e7cdf`)
 - feat(prompt-kit): add per-prompt compute variant controls (#608) (`c9bcf5b2`)
 - feat(prompt-kit): gate conversation to repository promotion (`4a216763`)
+- feat(prompt-kit): strengthen P02 continuity alignment (#613) (`3defbc21`)
 
 ### Fixes / performance
 
