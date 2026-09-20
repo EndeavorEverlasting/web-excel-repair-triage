@@ -15,7 +15,9 @@ Merged PR alone is not DONE.
 DONE is strict.
 Canonical terminal action: none; no safe actionable work remains
 
-## TRQ-001 — Initial r- **Status:** DONE
+## TRQ-001 — Initial repository work ledger adoption
+
+- **Status:** DONE
 - **Priority:** P1
 - **Owner:** chatgpt-cross-repo-ledger-20260809
 - **Work item:** ledger:TRQ-001
@@ -30,7 +32,9 @@ Canonical terminal action: none; no safe actionable work remains
 - **Next action:** none; no safe actionable work remains
 - **Updated:** 2026-08-09T19:49:00Z
 
-## TRQ-002 — Reconcile portable ledge- **Status:** DONE
+## TRQ-002 — Reconcile portable ledger authority to BlacksmithGuild
+
+- **Status:** DONE
 - **Priority:** P1
 - **Owner:** chatgpt-blacksmith-ledger-authority-reconcile-20260809
 - **Work item:** ledger:TRQ-002
@@ -45,7 +49,9 @@ Canonical terminal action: none; no safe actionable work remains
 - **Next action:** none; no safe actionable work remains
 - **Updated:** 2026-08-09T19:55:00Z
 
-## TRQ-003 — Add repository work ledger st- **Status:** DONE
+## TRQ-003 — Add repository work ledger stewardship prompt to Prompt Kit
+
+- **Status:** DONE
 - **Priority:** P1
 - **Owner:** chatgpt-prompt-ledger-p66-20260809
 - **Work item:** ledger:TRQ-003
@@ -60,7 +66,9 @@ Canonical terminal action: none; no safe actionable work remains
 - **Next action:** none; no safe actionable work remains
 - **Updated:** 2026-08-09T20:10:00Z
 
-## TRQ-004 — Build Lua embedding- **Status:** DONE
+## TRQ-004 — Build Lua embedding-readiness operational harness
+
+- **Status:** DONE
 - **Priority:** P1
 - **Owner:** chatgpt-lua-harness-20260810
 - **Work item:** ledger:TRQ-004
@@ -75,7 +83,9 @@ Canonical terminal action: none; no safe actionable work remains
 - **Next action:** none; no safe actionable work remains
 - **Updated:** 2026-08-10T14:41:00-04:00
 
-## TRQ-005 — Make P02 previous-chat execution-f- **Status:** DONE
+## TRQ-005 — Make P02 previous-chat execution-first and restore full All view
+
+- **Status:** DONE
 - **Priority:** P1
 - **Owner:** chatgpt-prompt-kit-chat-continuation-all-reset-20260810
 - **Work item:** ledger:TRQ-005
@@ -90,7 +100,9 @@ Canonical terminal action: none; no safe actionable work remains
 - **Next action:** none; no safe actionable work remains
 - **Updated:** 2026-08-10T15:18:00-04:00
 
-## TRQ-006 — Add safe Prompt Kit browser- **Status:** DONE
+## TRQ-006 — Add safe Prompt Kit browser-proof scratch cleanup harness
+
+- **Status:** DONE
 - **Priority:** P1
 - **Owner:** chatgpt-browser-proof-cleanup-harness-20260810
 - **Work item:** ledger:TRQ-006
@@ -105,7 +117,9 @@ Canonical terminal action: none; no safe actionable work remains
 - **Next action:** none; no safe actionable work remains
 - **Updated:** 2026-08-10T18:20:00-04:00
 
-## TRQ-007 — Measure Prompt Kit compute-authority ef- **Status:** READY
+## TRQ-007 — Measure Prompt Kit compute-authority effectiveness on external agents
+
+- **Status:** READY
 - **Priority:** P1
 - **Owner:** P67 / skill-evaluation
 - **Work item:** ledger:TRQ-007
@@ -120,7 +134,9 @@ Canonical terminal action: none; no safe actionable work remains
 - **Next action:** Execute ADP-04 (observed adapter smoke) from `harness/evals/COMPUTE_AUTHORITY_EVALUATION_SPRINT_PLAN.md` §16 adapter phase map when operator provider auth and workstation access are available; ADP-01/02/03 INTEGRATED; ADP-04 blocked on operator provider authentication/workstation configuration; observed pilot remains gated on ADP-05
 - **Updated:** 2026-09-19T21:50:00Z
 
-## TRQ-008 — Execute Prompt Execu- **Status:** DONE
+## TRQ-008 — Execute Prompt Execution Evidence Spine sprint map
+
+- **Status:** DONE
 - **Priority:** P1
 - **Owner:** Prompt Topology / P95 lifecycle architecture coordinator
 - **Work item:** ledger:TRQ-008
@@ -135,7 +151,9 @@ Canonical terminal action: none; no safe actionable work remains
 - **Next action:** none; no safe actionable work remains
 - **Updated:** 2026-09-14T13:00:00-04:00
 
-## TRQ-009 — Prompt Compilation & Adaptive - **Status:** DONE
+## TRQ-009 — Prompt Compilation & Adaptive Language Architecture Sprint 1
+
+- **Status:** DONE
 - **Priority:** P1
 - **Owner:** prompt-compilation-sprint1-20260914
 - **Work item:** ledger:TRQ-009
@@ -150,7 +168,9 @@ Canonical terminal action: none; no safe actionable work remains
 - **Next action:** none; no safe actionable work remains
 - **Updated:** 2026-09-14T14:40:00-04:00
 
-## TRQ-010 — Prompt Compilation Sprint 2 context- **Status:** DONE
+## TRQ-010 — Prompt Compilation Sprint 2 context adapters + profile precedence
+
+- **Status:** DONE
 - **Priority:** P1
 - **Owner:** prompt-compilation-sprint2-20260914
 - **Work item:** ledger:TRQ-010
@@ -165,7 +185,9 @@ Canonical terminal action: none; no safe actionable work remains
 - **Next action:** none; no safe actionable work remains
 - **Updated:** 2026-09-14T14:50:00-04:00
 
-## TRQ-011 — Prompt Kit UI format align- **Status:** DONE
+## TRQ-011 — Prompt Kit UI format alignment ledger and Storage repair
+
+- **Status:** DONE
 - **Priority:** P1
 - **Owner:** cursor-ui-format-alignment-20260915
 - **Work item:** ledger:TRQ-011
@@ -180,7 +202,9 @@ Canonical terminal action: none; no safe actionable work remains
 - **Next action:** none; no safe actionable work remains
 - **Updated:** 2026-09-15T06:45:00Z
 
-## TRQ-012 — Prompt Compilation Sprint 3 Impro- **Status:** DONE
+## TRQ-012 — Prompt Compilation Sprint 3 Improvement Compiler program design
+
+- **Status:** DONE
 - **Priority:** P1
 - **Owner:** design/prompt-compilation-program-20260916
 - **Work item:** ledger:TRQ-012
@@ -195,7 +219,9 @@ Canonical terminal action: none; no safe actionable work remains
 - **Next action:** none; no safe actionable work remains
 - **Updated:** 2026-09-16T19:10:00-04:00
 
-## TRQ-013 — Prompt Compilation - **Status:** DONE
+## TRQ-013 — Prompt Compilation Sprint 4 wiring + Compute Mode
+
+- **Status:** DONE
 - **Priority:** P1
 - **Owner:** feat/prompt-compilation-sprint4-wiring-20260916
 - **Work item:** ledger:TRQ-013
@@ -210,7 +236,9 @@ Canonical terminal action: none; no safe actionable work remains
 - **Next action:** none; no safe actionable work remains
 - **Updated:** 2026-09-16T22:35:00-04:00
 
-## TRQ-014 — Prompt Compilatio- **Status:** DONE
+## TRQ-014 — Prompt Compilation Sprint 5 eval-loop hardening
+
+- **Status:** DONE
 - **Priority:** P1
 - **Owner:** feat/prompt-compilation-sprint5-eval-hardening-20260916
 - **Work item:** ledger:TRQ-014
@@ -225,7 +253,9 @@ Canonical terminal action: none; no safe actionable work remains
 - **Next action:** none; no safe actionable work remains
 - **Updated:** 2026-09-16T23:20:00-04:00
 
-## TRQ-015 — Define and prove P123 s- **Status:** DONE
+## TRQ-015 — Define and prove P123 source-coverage scoring harness
+
+- **Status:** DONE
 - **Priority:** P1
 - **Owner:** feat/p123-source-coverage-proof-20260917
 - **Work item:** ledger:TRQ-015
@@ -240,7 +270,9 @@ Canonical terminal action: none; no safe actionable work remains
 - **Next action:** none; no safe actionable work remains
 - **Updated:** 2026-09-17T14:05:00Z
 
-## TRQ-016 — Prompt Compilation Sprint 6 Compu- **Status:** DONE
+## TRQ-016 — Prompt Compilation Sprint 6 Compute Mode observed browser proof
+
+- **Status:** DONE
 - **Priority:** P1
 - **Owner:** test/prompt-compilation-compute-mode-browser-proof-20260916
 - **Work item:** ledger:TRQ-016
@@ -255,7 +287,9 @@ Canonical terminal action: none; no safe actionable work remains
 - **Next action:** none; no safe actionable work remains
 - **Updated:** 2026-09-19T21:24:00Z
 
-## TRQ-017 — Prompt Semant- **Status:** DONE
+## TRQ-017 — Prompt Semantic Capability Coverage program
+
+- **Status:** DONE
 - **Priority:** P1
 - **Owner:** P79 + Prompt Topology + Prompt Quality History + Prompt Strength
 - **Work item:** ledger:TRQ-017
@@ -270,7 +304,9 @@ Canonical terminal action: none; no safe actionable work remains
 - **Next action:** none; no safe actionable work remains
 - **Updated:** 2026-09-19T21:24:00Z
 
-## TRQ-018 — Prompt Runtime Compliance Sprint 4 d- **Status:** DONE
+## TRQ-018 — Prompt Runtime Compliance Sprint 4 deterministic floor convergence
+
+- **Status:** DONE
 - **Priority:** P1
 - **Owner:** runtime-compliance-sprint4-safe-convergence-20260919
 - **Work item:** ledger:TRQ-018
@@ -285,7 +321,9 @@ Canonical terminal action: none; no safe actionable work remains
 - **Next action:** none; no safe actionable work remains
 - **Updated:** 2026-09-19T21:24:00Z
 
-## TRQ-019 — FirstMate + AgentSwitchboard + Prompt - **Status:** READY
+## TRQ-019 — FirstMate + AgentSwitchboard + Prompt Kit durable vision & owner map
+
+- **Status:** READY
 - **Priority:** P1
 - **Owner:** vision-map-firstmate-asb-prompt-kit-20260919
 - **Work item:** ledger:TRQ-019
@@ -309,11 +347,11 @@ Canonical terminal action: none; no safe actionable work remains
 - **Branch / PR:** `feat/issue-centered-afkaf-progression-20260920` / PR pending
 - **Scope:** define and enforce the issue-centered AFK work model in the repository-local P66 ledger seam so the stable work item owns progression state while branches, worktrees, PRs, commits, checks, reviews, and merges remain execution evidence; map existing READY/CLAIMED/VERIFY/REVIEW/MERGE/BLOCKED/OPERATOR/DONE states onto that model
 - **Forbidden:** replacing the pinned BlacksmithGuild portability contract; adopting GitHub Projects as a new repository authority; rewriting unrelated Prompt Kit prompts/UI; deleting historical TRQ state; treating a PR or branch as the work identity; claiming live scheduler/agent dispatch proof from static contract tests
-- **Dependencies:** issue:#614; current main at sprint start `3defbc21812522f9bc454d96835ba6bb7ea1552c`
+- **Dependencies:** issue:#614; current main at sprint start `3defbc21812522f9bc454d96835ba6bb7ea1552c`; preserve separately owned PR #611 / TRQ-020
 - **References:** `.ai/issue-centered-work-progression.v1.json`, `.ai/work-ledger-adoption.json`, `.ai/WORK_QUEUE.md`, `scripts/validate_repository_work_ledger.py`, `tests/test_repository_work_ledger.py`, `.github/workflows/repository-work-ledger-contract.yml`
 - **Acceptance gate:** issue:#614 remains the work identity across the execution branch/PR; the local contract makes READY explicitly AFK-dispatchable, separates work-item truth from execution evidence, allows multiple attempts/PRs per work item, rejects PR/branch/commit/workflow/merge anchors as work identity, and prevents merged-PR-only DONE; focused ledger validation/tests and patch hygiene pass; exact validated work integrates to main; issue #614 and this ledger item close only after the whole acceptance gate is proven
 - **Gate:** none
 - **Last proof:** issue:#614 created as canonical sprint work item; branch:feat/issue-centered-afkaf-progression-20260920 created from commit:3defbc21812522f9bc454d96835ba6bb7ea1552c
 - **Next action:** validate the issue-centered progression contract and focused ledger regressions, then open the exact-head integration PR
-- **Updated:** 2026-09-20T17:30:00-04:00
+- **Updated:** 2026-09-20T17:34:00-04:00
 
