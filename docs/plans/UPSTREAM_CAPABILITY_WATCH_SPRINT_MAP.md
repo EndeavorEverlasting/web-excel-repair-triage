@@ -137,7 +137,7 @@ A observed/processed → B observed → durable change event → impact resoluti
 
 ### U1 — Capability watch contract + fixtures
 **Primary surface:** harness spine.
-**Expected contract:** watched source/capability locator; immutable identity; repository revision provenance; poll state; append-only receipt; impact edge; dedupe transition; promotion policy; event schema.
+**Expected contract:** watched source/capability locator; immutable identity; repository revision provenance; poll state; append-only receipt; impact edge; dedupe transition; promotion policy; event schema. U1 also owns the deterministic state-transition kernel at `scripts/upstream_capability_watch.py`; U2A later owns provider polling, persistence, workflow, and P115 wiring around that kernel.
 **Required tests:** initial observation; unchanged; A→B; replay B; B→C; routing failure leaves processed=A; missing impact edge retains event; promotion cannot jump changed→integrated.
 **Proof ceiling:** deterministic repository proof.
 
@@ -211,7 +211,7 @@ Therefore current execution posture is **DEGRADED** for autonomous implementatio
 | Contract | Owner | Status | Next transition |
 |---|---|---|---|
 | forensic classification | U0A | PROVEN | closed by `harness/reports/UPSTREAM_CAPABILITY_WATCH_FORENSICS.md` + `harness/reports/upstream-capability-watch-forensics.v1.json` |
-| design-source authority research | U0B | REQUIRED SUCCESSOR WORK | pin authoritative donor/version surfaces |
+| design-source authority research | U0B | PROVEN | `harness/reports/UPSTREAM_DESIGN_AUTHORING_SOURCE_RESEARCH.md` integrated by PR #618 |
 | watch data/event contract | U1 | REQUIRED SUCCESSOR WORK | implement schema + fixtures |
 | runtime detection/routing | U2A | REQUIRED SUCCESSOR WORK | emit durable capability events + P115 routing |
 | teach reconciliation | U2B | REQUIRED SUCCESSOR WORK | add impact mapping and semantic disposition |
@@ -222,9 +222,9 @@ Therefore current execution posture is **DEGRADED** for autonomous implementatio
 
 ## First executable continuation
 
-Owners: U0B design/authoring source research and U1 capability-watch contract-floor lanes.
-Dependency: U0A forensic report is PROVEN; both lanes are independently dependency-ready on refreshed main. The executable manifest is `Outputs/prompt-parallel-dispatch/manifest.json` with run id `upstream-capability-watch-20260920-wave1`.
-Action: inspect `harness/contracts/operant-external-resource-intake.v1.json` and adjacent existing contracts, then implement the smallest canonical extension that can represent per-capability identity, observed-vs-processed state, transition dedupe, impact edges, and review-required event routing. If those owners are demonstrably insufficient, update the dispatch manifest first to own a new contract path before creating it.
+Owner: U1 capability-watch contract-floor lane.
+Dependency: U0A forensics and U0B source research are PROVEN. Graph width is now 1, so parallel execution is NOT_APPLICABLE. The executable manifest is `Outputs/prompt-parallel-dispatch/manifest.json` with run id `upstream-capability-watch-20260920-u1`.
+Action: continue PR #619 on refreshed main: repair the `UNSEEN -> CURRENT` baseline transition, implement the deterministic state kernel in `scripts/upstream_capability_watch.py`, make the routing-failure fixture exercise that kernel, and register the focused suite in the deterministic floor only after reconciling the active #606 owner of `harness/test-floor.v1.json`.
 Completion gate: deterministic A→B/replay/B→C fixtures plus routing-failure preservation prove that a new observed identity cannot be silently consumed before durable routing.
 
 Coordination note: `.ai/WORK_QUEUE.md` is temporarily owned by open PR #615, so U0A ledger synchronization is deferred to convergence rather than racing that shared file.
