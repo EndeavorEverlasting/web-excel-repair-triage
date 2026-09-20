@@ -143,6 +143,7 @@
     ],
     "rules": [
       "Known unprofiled operational prompt debt may shrink but may not grow; any operational prompt outside the accepted-profile set and outside the reviewed baseline fails closed.",
+      "The reviewed known_unprofiled_prompt_ids seed is immutable after establishment; new IDs may never be added to it. Debt reduction is measured from current accepted profiles without rewriting the historical seed.",
       "Every current override prompt must have an explicit baseline binding, critical behavioral markers, and repository-owned focused regression references.",
       "The current override registry Git blob must match the reviewed baseline; an intentional override edit must refresh the coverage baseline in the same reviewed change.",
       "Closeout OR review owner classification is derived from prompt ownership metadata, not incidental wording in proof text, and any owner-set drift requires explicit baseline review.",
