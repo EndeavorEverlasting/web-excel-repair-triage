@@ -2,12 +2,16 @@
 
 Human-facing Operant releases. Git commit/artifact identity remains the forensic freshness proof.
 
-## 0.11.0 - 2026-09-19
+## 0.11.0 - 2026-09-20
 
 ### Features / breaking pre-1.0 changes
 
 - feat(harness): Sprint 2 — P79 semantic coverage lifecycle + required checks (#594) (`7ecbf642`)
 - feat(governance): establish binding law that copy panels are agent transport (#602) (`895e7cdf`)
+
+### Fixes / performance
+
+- fix(prompt-kit): recover canonical P07 copy identity (#607) (`1ea0e465`)
 
 ## 0.10.1 - 2026-09-19
 
