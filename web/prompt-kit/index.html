@@ -997,6 +997,35 @@ function resolveProfile(options){
   }
 }
 
+function compiledProfileText(prompt,profile){
+  var compiled=prompt&&prompt.compiledEffectivePrompts;
+  if(!compiled||typeof compiled!=='object'||Array.isArray(compiled))return '';
+  var text=compiled[profile];
+  return typeof text==='string'&&text.trim()?text:''
+}
+
+function promptVariantText(prompt,profile){
+  var canonical=prompt&&prompt.copyContent!=null?String(prompt.copyContent):'';
+  if(profile==='exhaustive'&&canonical.trim())return canonical;
+  var compiled=compiledProfileText(prompt,profile);
+  if(compiled)return compiled;
+  return canonical.trim()?canonical:''
+}
+
+function availablePromptVariants(prompt){
+  var variants=[];
+  var canonical=prompt&&prompt.copyContent!=null?String(prompt.copyContent):'';
+  if(canonical.trim()||compiledProfileText(prompt,'exhaustive'))variants.push('exhaustive');
+  if(compiledProfileText(prompt,'efficient'))variants.push('efficient');
+  return variants
+}
+
+function findPrompt(catalog,promptId){
+  if(!Array.isArray(catalog))return null;
+  var id=String(promptId||'').trim().toUpperCase();
+  return catalog.find(function(prompt){return String(prompt&&prompt.id||'').trim().toUpperCase()===id})||null
+}
+
 function resolveCopyContent(prompt,options){
   options=options||{};
   var storage=options.storage||boundStorage;
@@ -1012,18 +1041,18 @@ function resolveCopyContent(prompt,options){
     userDefault:userDefault,
     productDefault:options.productDefault!=null?options.productDefault:PRODUCT_DEFAULT
   });
-  if(prompt&&prompt.copyContent!=null){
-    var canonical=String(prompt.copyContent);
-    if(canonical.trim())return canonical
+  var canonical=prompt&&prompt.copyContent!=null?String(prompt.copyContent):'';
+  if(canonical.trim()){
+    var contentVariant=promptOverride!=null&&String(promptOverride).trim()?normalizeProfile(promptOverride,'prompt override'):null;
+    if(contentVariant==='efficient'){
+      var explicitEfficient=compiledProfileText(prompt,'efficient');
+      if(explicitEfficient)return explicitEfficient
+    }
+    return canonical
   }
-  var compiled=prompt&&prompt.compiledEffectivePrompts;
-  if(compiled&&typeof compiled==='object'&&!Array.isArray(compiled)){
-    var text=compiled[resolved.profile];
-    if(typeof text==='string'&&text.trim())return text
-  }
-  return ''
+  var fallback=compiledProfileText(prompt,resolved.profile);
+  return fallback||''
 }
-
 function ensureStyles(doc){
   if(!doc||doc.getElementById('promptComputeModeStyles'))return;
   var style=doc.createElement('style');
@@ -1036,6 +1065,12 @@ function ensureStyles(doc){
     '.prompt-compute-mode-toggle button.active{background:var(--accent-glow);color:var(--text-primary)}',
     '.prompt-compute-mode-toggle button:focus-visible{outline:2px solid var(--accent);outline-offset:-2px}',
     '.prompt-compute-mode-detail{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:0 0 14px;padding:8px;border:1px solid var(--border);border-radius:8px;background:var(--bg-surface);color:var(--text-secondary);font-size:10px}',
+    '.prompt-compute-variant-label{font-size:10px;font-weight:800;letter-spacing:.04em;text-transform:uppercase;color:var(--text-muted)}',
+    '.prompt-compute-variant-toggle{display:inline-flex;border:1px solid var(--border);border-radius:8px;overflow:hidden;background:var(--bg-primary)}',
+    '.prompt-compute-variant-toggle button{appearance:none;border:0;background:transparent;color:var(--text-secondary);font-size:11px;font-weight:800;padding:7px 10px;cursor:pointer;min-height:34px}',
+    '.prompt-compute-variant-toggle button+button{border-left:1px solid var(--border)}',
+    '.prompt-compute-variant-toggle button.active{background:var(--accent-glow);color:var(--text-primary)}',
+    '.prompt-compute-variant-toggle button:focus-visible{outline:2px solid var(--accent);outline-offset:-2px}',
     '.prompt-compute-mode-source{color:var(--text-muted);font-family:ui-monospace,SFMono-Regular,Consolas,monospace}'
   ].join('');
   doc.head.appendChild(style)
@@ -1051,54 +1086,67 @@ function syncToggle(doc,profile){
   })
 }
 
-function refreshDetail(doc,storage,promptId){
+function refreshDetail(doc,storage,promptId,catalog){
   if(!doc)return;
   var detail=doc.getElementById('promptDetail');
   if(!detail||String(detail.getAttribute('data-prompt-id')||'').toUpperCase()!==String(promptId||'').toUpperCase())return;
-  var resolution=resolveProfile({
-    runOverride:sessionRunOverride,
-    promptOverride:getPromptOverride(promptId,storage),
-    userDefault:readUserDefault(storage),
-    productDefault:PRODUCT_DEFAULT
-  });
+  var prompt=findPrompt(catalog,promptId);
+  var variants=availablePromptVariants(prompt);
   var wrap=detail.querySelector('.prompt-compute-mode-detail');
+  if(!prompt||variants.length<2){
+    if(wrap&&wrap.parentNode)wrap.parentNode.removeChild(wrap);
+    return
+  }
+  var explicit=getPromptOverride(promptId,storage);
+  var active=explicit==='efficient'?'efficient':'exhaustive';
   if(!wrap){
     wrap=doc.createElement('div');
     wrap.className='prompt-compute-mode-detail';
     wrap.setAttribute('data-prompt-detail-no-copy','');
+    wrap.setAttribute('data-prompt-variant-control',promptId);
     var badges=detail.querySelector('.pd-badges');
     if(badges&&badges.parentNode)badges.parentNode.insertBefore(wrap,badges.nextSibling);
     else detail.insertBefore(wrap,detail.firstChild)
   }
   wrap.innerHTML='';
-  var label=doc.createElement('label');
-  label.appendChild(doc.createTextNode('This prompt '));
-  var select=doc.createElement('select');
-  select.id='promptComputeOverride';
-  select.setAttribute('aria-label','Compute mode override for '+promptId);
-  var inherited=doc.createElement('option');
-  inherited.value='';
-  inherited.textContent='Inherit · '+readUserDefault(storage);
-  select.appendChild(inherited);
-  [['exhaustive','Exhaustive'],['efficient','Efficient']].forEach(function(item){
-    var option=doc.createElement('option');
-    option.value=item[0];
-    option.textContent=item[1];
-    select.appendChild(option)
-  });
-  select.value=getPromptOverride(promptId,storage)||'';
-  select.addEventListener('change',function(){
-    setPromptOverride(promptId,select.value||null,storage);
-    refreshDetail(doc,storage,promptId)
-  });
-  label.appendChild(select);
+  var label=doc.createElement('span');
+  label.className='prompt-compute-variant-label';
+  label.textContent='Prompt variant';
   wrap.appendChild(label);
+  var toggle=doc.createElement('div');
+  toggle.className='prompt-compute-variant-toggle';
+  toggle.setAttribute('role','group');
+  toggle.setAttribute('aria-label','Prompt variant for '+promptId);
+  [['exhaustive','Exhaustive'],['efficient','Efficient']].forEach(function(item){
+    if(variants.indexOf(item[0])===-1)return;
+    var button=doc.createElement('button');
+    button.type='button';
+    button.setAttribute('data-prompt-variant',item[0]);
+    button.setAttribute('aria-pressed',item[0]===active?'true':'false');
+    button.classList.toggle('active',item[0]===active);
+    button.textContent=item[1];
+    button.addEventListener('click',function(){
+      setPromptOverride(promptId,item[0]==='efficient'?'efficient':null,storage);
+      refreshDetail(doc,storage,promptId,catalog)
+    });
+    toggle.appendChild(button)
+  });
+  wrap.appendChild(toggle);
   var source=doc.createElement('span');
   source.className='prompt-compute-mode-source';
-  source.textContent='effective '+resolution.profile+' · '+resolution.resolved_from;
-  wrap.appendChild(source)
+  source.textContent=active==='efficient'?'copy Efficient · explicit prompt choice':'copy Exhaustive · full canonical';
+  wrap.appendChild(source);
+  var content=promptVariantText(prompt,active);
+  var sections=detail.querySelectorAll('.pd-section');
+  for(var i=0;i<sections.length;i++){
+    var heading=sections[i].querySelector('h4');
+    if(heading&&heading.textContent==='Prompt Content'){
+      var preview=sections[i].querySelector('pre');
+      if(preview)preview.textContent=content;
+      break
+    }
+  }
 }
-
 function install(root){
   if(!root||!root.document)return null;
   if(root.__promptKitComputeModeController)return root.__promptKitComputeModeController;
@@ -1112,7 +1160,7 @@ function install(root){
     var normalized=writeUserDefault(storage,profile);
     syncToggle(doc,normalized);
     var openId=doc.getElementById('promptDetail');
-    if(openId&&openId.getAttribute('data-prompt-id'))refreshDetail(doc,storage,openId.getAttribute('data-prompt-id'));
+    if(openId&&openId.getAttribute('data-prompt-id'))refreshDetail(doc,storage,openId.getAttribute('data-prompt-id'),root.PROMPTS);
     if(typeof root.showToast==='function')root.showToast('Compute Mode: '+normalized);
     return normalized
   }
@@ -1148,7 +1196,7 @@ function install(root){
     if(typeof baseOpen!=='function'||baseOpen.__promptKitComputeModeWrapped)return;
     var wrapped=function(id){
       var result=baseOpen.apply(root,arguments);
-      try{refreshDetail(doc,storage,id)}catch(error){}
+      try{refreshDetail(doc,storage,id,root.PROMPTS)}catch(error){}
       return result
     };
     wrapped.__promptKitComputeModeWrapped=true;
@@ -1182,7 +1230,7 @@ function install(root){
     clearRunOverride:clearRunOverride,
     getRunOverride:getRunOverride,
     installUi:ensureUi,
-    refreshDetail:function(promptId){return refreshDetail(doc,storage,promptId)}
+    refreshDetail:function(promptId){return refreshDetail(doc,storage,promptId,root.PROMPTS)}
   };
   root.__promptKitComputeModeController=controller;
   api.getUserDefault=controller.getUserDefault;
@@ -1203,6 +1251,8 @@ var api={
   ComputeModeError:ComputeModeError,
   normalizeProfile:normalizeProfile,
   resolveProfile:resolveProfile,
+  availablePromptVariants:availablePromptVariants,
+  promptVariantText:promptVariantText,
   resolveCopyContent:resolveCopyContent,
   getUserDefault:function(){return readUserDefault(boundStorage)},
   setUserDefault:function(profile){return writeUserDefault(boundStorage,profile)},
