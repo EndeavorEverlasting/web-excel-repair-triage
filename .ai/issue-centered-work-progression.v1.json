@@ -88,7 +88,7 @@
       "id": "DONE",
       "terminal": true,
       "afk_dispatchable": false,
-      "meaning": "The whole work-item acceptance gate is satisfied, durable non-merge proof exists, integration is complete when required, Gate is none, and no safe actionable work remains."
+      "meaning": "The whole work-item acceptance gate is satisfied, durable validation/acceptance proof and durable merge integration proof exist, Gate is none, and no safe actionable work remains."
     }
   ],
   "transition_rules": [
@@ -102,7 +102,7 @@
     "required": [
       "acceptance_gate_satisfied",
       "durable_non_merge_validation_or_acceptance_proof",
-      "integration_complete_when_required",
+      "durable_merge_integration_proof",
       "gate_none",
       "canonical_terminal_next_action"
     ]

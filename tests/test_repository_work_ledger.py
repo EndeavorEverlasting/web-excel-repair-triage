@@ -120,6 +120,17 @@ class RepositoryWorkLedgerTests(unittest.TestCase):
         self.assertNotEqual(result.returncode, 0)
         self.assertIn('merged/committed code alone cannot satisfy DONE', result.stderr)
 
+    def test_validation_without_merge_cannot_make_work_item_done(self):
+        result = self.run_temp(task(
+            Status='DONE',
+            Owner='agent-session',
+            **{
+                'Last proof': 'workflow:123456789',
+                'Next action': 'none; no safe actionable work remains',
+            }
+        ))
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn('durable merge integration proof is required', result.stderr)
     def test_done_accepts_merge_plus_validation_evidence(self):
         result = self.run_temp(task(
             Status='DONE',
@@ -169,7 +180,7 @@ class RepositoryWorkLedgerTests(unittest.TestCase):
         self.assertIn('DONE requires canonical terminal Next action', result.stderr)
 
     def test_done_accepts_durable_proof(self):
-        result = self.run_temp(task(Status='DONE', Owner='agent-session', **{'Last proof': 'commit:1234567; workflow:123456789', 'Next action': 'none; no safe actionable work remains'}))
+        result = self.run_temp(task(Status='DONE', Owner='agent-session', **{'Last proof': 'merge:1234567890abcdef1234567890abcdef12345678; workflow:123456789', 'Next action': 'none; no safe actionable work remains'}))
         self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
 
     def test_operator_requires_gate(self):

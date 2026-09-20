@@ -119,7 +119,7 @@ Canonical terminal action: none; no safe actionable work remains
 
 ## TRQ-007 — Measure Prompt Kit compute-authority effectiveness on external agents
 
-- **Status:** READY
+- **Status:** OPERATOR
 - **Priority:** P1
 - **Owner:** P67 / skill-evaluation
 - **Work item:** ledger:TRQ-007

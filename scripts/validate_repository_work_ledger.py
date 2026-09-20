@@ -84,6 +84,9 @@ def non_merge_acceptance_proof(value):
         r'\boperator-proof:\S+',
     ))
 
+def merge_integration_proof(value):
+    return re.search(r'\bmerge:[0-9a-f]{7,40}\b', value, re.I) is not None
+
 
 def validate_issue_progression_contract(path):
     errors = []
@@ -137,6 +140,8 @@ def validate_issue_progression_contract(path):
     required = done_gate.get('required')
     if not isinstance(required, list) or 'durable_non_merge_validation_or_acceptance_proof' not in required:
         errors.append('DONE gate must require durable non-merge validation or acceptance proof')
+    if not isinstance(required, list) or 'durable_merge_integration_proof' not in required:
+        errors.append('DONE gate must require durable merge integration proof')
     return errors
 
 
@@ -263,6 +268,8 @@ def validate(ledger_path, adoption_path=ADOPTION):
                 errors.append(f'{task_id}: DONE requires durable Last proof')
             if durable_proof(proof) and not non_merge_acceptance_proof(proof):
                 errors.append(f'{task_id}: merged/committed code alone cannot satisfy DONE; durable non-merge validation or acceptance proof is required')
+            if durable_proof(proof) and not merge_integration_proof(proof):
+                errors.append(f'{task_id}: validation/acceptance proof alone cannot satisfy DONE; durable merge integration proof is required')
             if gate != 'none':
                 errors.append(f'{task_id}: DONE requires Gate: none')
             if next_action != TERMINAL:
