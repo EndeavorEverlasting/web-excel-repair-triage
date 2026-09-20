@@ -344,14 +344,14 @@ Canonical terminal action: none; no safe actionable work remains
 - **Priority:** P1
 - **Owner:** chatgpt-issue-centered-afkaf-20260920
 - **Work item:** issue:#614
-- **Branch / PR:** `feat/issue-centered-afkaf-progression-20260920` / PR pending
+- **Branch / PR:** `feat/issue-centered-afkaf-progression-20260920` / #615
 - **Scope:** define and enforce the issue-centered AFK work model in the repository-local P66 ledger seam so the stable work item owns progression state while branches, worktrees, PRs, commits, checks, reviews, and merges remain execution evidence; map existing READY/CLAIMED/VERIFY/REVIEW/MERGE/BLOCKED/OPERATOR/DONE states onto that model
 - **Forbidden:** replacing the pinned BlacksmithGuild portability contract; adopting GitHub Projects as a new repository authority; rewriting unrelated Prompt Kit prompts/UI; deleting historical TRQ state; treating a PR or branch as the work identity; claiming live scheduler/agent dispatch proof from static contract tests
 - **Dependencies:** issue:#614; current main at sprint start `3defbc21812522f9bc454d96835ba6bb7ea1552c`; preserve separately owned PR #611 / TRQ-020
 - **References:** `.ai/issue-centered-work-progression.v1.json`, `.ai/work-ledger-adoption.json`, `.ai/WORK_QUEUE.md`, `scripts/validate_repository_work_ledger.py`, `tests/test_repository_work_ledger.py`, `.github/workflows/repository-work-ledger-contract.yml`
 - **Acceptance gate:** issue:#614 remains the work identity across the execution branch/PR; the local contract makes READY explicitly AFK-dispatchable, separates work-item truth from execution evidence, allows multiple attempts/PRs per work item, rejects PR/branch/commit/workflow/merge anchors as work identity, and prevents merged-PR-only DONE; focused ledger validation/tests and patch hygiene pass; exact validated work integrates to main; issue #614 and this ledger item close only after the whole acceptance gate is proven
 - **Gate:** none
-- **Last proof:** issue:#614 created as canonical sprint work item; branch:feat/issue-centered-afkaf-progression-20260920 created from commit:3defbc21812522f9bc454d96835ba6bb7ea1552c
+- **Last proof:** issue:#614 created as canonical sprint work item; branch:feat/issue-centered-afkaf-progression-20260920 created from commit:3defbc21812522f9bc454d96835ba6bb7ea1552c; pr:#615 opened with candidate commit:00979b41fa115b35b62f1564cc5244072a2098eb
 - **Next action:** validate the issue-centered progression contract and focused ledger regressions, then open the exact-head integration PR
 - **Updated:** 2026-09-20T17:34:00-04:00
 
