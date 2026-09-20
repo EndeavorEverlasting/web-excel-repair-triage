@@ -1,0 +1,66 @@
+name: Temporary P07 canonical copy materializer
+
+on:
+  push:
+    branches:
+      - fix/p07-canonical-copy-recovery-20260920
+    paths:
+      - docs/prompt-kit-compute-mode.js
+      - harness/test-floor.v1.json
+      - tests/prompt_kit_compute_mode_browser_proof.py
+      - tests/test_p07_effective_prompt_identity.py
+      - web/prompt-kit/index.html
+      - .github/workflows/tmp-p07-canonical-copy-materializer.yml
+
+permissions:
+  contents: write
+
+concurrency:
+  group: p07-canonical-copy-materializer
+  cancel-in-progress: false
+
+jobs:
+  materialize:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: fix/p07-canonical-copy-recovery-20260920
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Prove canonical P07 copy identity
+        run: python -m unittest tests.test_p07_effective_prompt_identity -v
+      - name: Regenerate Prompt Kit through canonical builder
+        run: python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html
+      - name: Prove generated parity
+        run: python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html --check
+      - name: Restrict materialized diff
+        id: diff
+        shell: bash
+        run: |
+          set -euo pipefail
+          changed="$(git diff --name-only)"
+          if [[ -z "$changed" ]]; then
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          if [[ "$changed" != "web/prompt-kit/index.html" ]]; then
+            echo "Unexpected generated diff:" >&2
+            printf '%s\n' "$changed" >&2
+            exit 1
+          fi
+          git diff --check
+          echo "changed=true" >> "$GITHUB_OUTPUT"
+      - name: Commit builder-owned output
+        if: steps.diff.outputs.changed == 'true'
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add web/prompt-kit/index.html
+          git diff --cached --check
+          git commit -m 'build(prompt-kit): regenerate canonical P07 copy [p07-materialized]'
+          git push origin HEAD:fix/p07-canonical-copy-recovery-20260920
