@@ -1,0 +1,32 @@
+{
+  "schema_version": "upstream-capability-impact-edges/v1",
+  "contract": "harness/contracts/operant-external-resource-intake.v1.json#capability_watch",
+  "edge_schema": {
+    "required_fields": [
+      "edge_id",
+      "source_id",
+      "resource_id",
+      "local_owner_kind",
+      "local_owner_id",
+      "rationale"
+    ],
+    "local_owner_kinds": [
+      "prompt",
+      "skill",
+      "contract",
+      "capability"
+    ]
+  },
+  "policy": {
+    "unique_key_fields": [
+      "source_id",
+      "resource_id",
+      "local_owner_kind",
+      "local_owner_id"
+    ],
+    "zero_edge_is_valid": true,
+    "zero_edge_status": "NO_IMPACT_EDGE",
+    "donor_change_never_grants_local_mutation_authority": true
+  },
+  "edges": []
+}

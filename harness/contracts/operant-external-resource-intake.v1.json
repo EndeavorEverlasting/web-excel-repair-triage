@@ -37,7 +37,9 @@
       "resource_filename": "SKILL.md",
       "resource_kind": "agent-skill",
       "max_depth": 2,
-      "exclude_root_segments": ["deprecated"],
+      "exclude_root_segments": [
+        "deprecated"
+      ],
       "url_mode": "github_blob"
     },
     {
@@ -93,7 +95,10 @@
     "existing_coverage_prompt_action": "NO_NEW_PROMPT",
     "promotion_owner_prompt": "P79",
     "automatic_prompt_authoring": false,
-    "catalog_hit_dispositions": ["REFERENCE_ONLY", "ADAPT"],
+    "catalog_hit_dispositions": [
+      "REFERENCE_ONLY",
+      "ADAPT"
+    ],
     "rule": "Prefer an existing Operant prompt or local skill when deterministic title/keyword coverage is strong; otherwise keep the donor resource directly usable and route the missing internal capability to P79 for strategic strengthen-before-add review. Before P79 may ADD a new identity for a prompt-like use case, search registered external sources/catalogs, extract commonality with current owners, and prove a distinct residual; REVIEW_ADD_PROMPT is a candidate for that comparison, not permission to author.",
     "p79_external_evidence": {
       "required_before_add": [
@@ -110,5 +115,101 @@
     "license_review_required_before_copy_or_adaptation": true,
     "resource_links_may_point_to_upstream_without_copying_content": true
   },
-  "proof_ceiling": "Repository sync, source-SHA pinning, metadata projection, catalog floor-only receipts, deterministic coverage classification, on-demand catalog search (fixture plus CI live latency budget against the pinned catalog SHA), lazy-loading contract, generated-site parity, and scheduled drift evidence. It does not prove upstream resource quality, license compatibility for copied/adapted content, live browser network success, MCP client success, or automatic prompt quality."
+  "proof_ceiling": "Repository sync, source-SHA pinning, metadata projection, catalog floor-only receipts, deterministic coverage classification, on-demand catalog search (fixture plus CI live latency budget against the pinned catalog SHA), lazy-loading contract, generated-site parity, and scheduled drift evidence. It does not prove upstream resource quality, license compatibility for copied/adapted content, live browser network success, MCP client success, or automatic prompt quality.",
+  "capability_watch": {
+    "schema_version": "operant-upstream-capability-watch/v1",
+    "identity": {
+      "repository_revision_field": "source_sha",
+      "capability_identity_field": "resource_identity",
+      "capability_identity_algorithm": "git_blob_sha",
+      "rule": "Repository revision provenance and per-capability immutable identity are distinct. Unrelated repository commits must not imply that an unchanged capability changed."
+    },
+    "state": {
+      "required_fields": [
+        "last_observed_identity",
+        "last_processed_identity",
+        "last_observed_repository_revision",
+        "status"
+      ],
+      "statuses": [
+        "UNSEEN",
+        "CURRENT",
+        "UPSTREAM_CHANGED",
+        "EVALUATING",
+        "CANDIDATE",
+        "DECLINED",
+        "INTEGRATED"
+      ],
+      "observed_rule": "Advance last_observed_identity when polling observes a new capability identity.",
+      "processed_rule": "Advance last_processed_identity only after the durable change event, impact resolution, and routing checkpoint are persisted.",
+      "routing_failure_rule": "A routing failure leaves last_processed_identity unchanged."
+    },
+    "events": {
+      "schema_version": "upstream-capability-changed/v1",
+      "required_fields": [
+        "event_id",
+        "source_id",
+        "resource_id",
+        "previous_processed_identity",
+        "observed_identity",
+        "repository_revision",
+        "impact_edge_ids",
+        "status"
+      ],
+      "transition_key_fields": [
+        "resource_id",
+        "previous_processed_identity",
+        "observed_identity"
+      ],
+      "event_id_algorithm": "sha256(canonical transition_key_fields)",
+      "dedupe_rule": "The same transition key emits at most one durable change event.",
+      "raw_donor_body_allowed": false,
+      "zero_impact_event_retained": true
+    },
+    "impact_edges": {
+      "registry": "registry/resources/upstream-capability-impact-edges.v1.json",
+      "missing_edge_status": "NO_IMPACT_EDGE",
+      "missing_edge_rule": "A missing impact edge is diagnosable and never drops the source change event."
+    },
+    "promotion": {
+      "owner_prompt": "P79",
+      "allowed_transitions": [
+        [
+          "CURRENT",
+          "UPSTREAM_CHANGED"
+        ],
+        [
+          "UPSTREAM_CHANGED",
+          "EVALUATING"
+        ],
+        [
+          "EVALUATING",
+          "CANDIDATE"
+        ],
+        [
+          "EVALUATING",
+          "DECLINED"
+        ],
+        [
+          "CANDIDATE",
+          "INTEGRATED"
+        ],
+        [
+          "DECLINED",
+          "CURRENT"
+        ],
+        [
+          "INTEGRATED",
+          "CURRENT"
+        ]
+      ],
+      "forbidden_direct_transitions": [
+        [
+          "UPSTREAM_CHANGED",
+          "INTEGRATED"
+        ]
+      ],
+      "automatic_prompt_authoring": false
+    }
+  }
 }
