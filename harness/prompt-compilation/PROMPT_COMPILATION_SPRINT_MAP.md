@@ -176,13 +176,13 @@ Move Prompt Kit from a library of hand-maintained English prompts toward a **sel
 
 ### Sprint 6 — Compute Mode observed browser proof
 
-**Status:** IMPLEMENTING on `test/prompt-compilation-compute-mode-browser-proof-20260916`
+**Status:** HISTORICAL SPRINT COMPLETE; canonical-copy acceptance corrected by the P07 recovery lane after #524 reintroduced compiled-copy routing.
 
 **Dependency:** Sprint 4 Compute Mode product surface INTEGRATED; Sprint 5 hardening INTEGRATED; existing observed-behavior proof harness present on current main.
 
 **Owned:**
 
-- exact-head Playwright proof of Compute Mode product default, persisted user default, per-prompt override, explicit run override, and effective P07 clipboard content
+- exact-head Playwright proof of Compute Mode product default, persisted user default, per-prompt override, explicit run override, and canonical P07 clipboard identity while profile resolution remains observable metadata
 - `browser_runtime_observed` receipt + screenshot under CI `Outputs/observed-proof/`
 - observed-proof manifest registration, exact-head preflight regression, and owning workflow execution
 - Sprint-6 plan/ledger continuity only; no product behavior mutation unless the observed proof exposes an in-scope defect
@@ -208,7 +208,7 @@ Move Prompt Kit from a library of hand-maintained English prompts toward a **sel
 
 **Validation:**
 
-1. `python -m unittest tests.test_observed_behavior_proof_harness tests.test_prompt_kit_compute_mode -v`
+1. `python -m unittest tests.test_observed_behavior_proof_harness tests.test_prompt_kit_compute_mode tests.test_p07_effective_prompt_identity -v`
 2. `python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html --check`
 3. `python tests/prompt_kit_compute_mode_browser_proof.py --receipt Outputs/observed-proof/compute-mode-receipt.json --screenshot Outputs/observed-proof/compute-mode.png`
 4. `python scripts/validate_observed_behavior_receipt.py Outputs/observed-proof/compute-mode-receipt.json --expected-sha "$(git rev-parse HEAD)" --summary`
