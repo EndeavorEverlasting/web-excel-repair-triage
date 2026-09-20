@@ -57,6 +57,24 @@
         "tests/test_prompt_parallel_execution_contract.py",
         "tests/test_p02_p07_autonomous_iteration.py"
       ]
+    },
+    {
+      "migration_id": "2026-09-20-p02-continuity-alignment-modes",
+      "path": "registry/prompts/prompt-overrides.v1.json",
+      "from_git_blob_sha1": "087ba54b9c109760fe812a4212d4d15a404b6f06",
+      "to_git_blob_sha1": "c829602236b58aceeedd18c273255825179b45cc",
+      "affected_prompt_ids": [
+        "P02"
+      ],
+      "change_kind": "strengthening",
+      "effective_identity_change": "preserve_canonical",
+      "rationale": "Strengthen P02 continuity without losing its existing recovery and CONTINUE execution-first behavior: add explicit AUTO routing for ORIENT, SUMMARIZE, CLOSEOUT, or CONTINUE; require independently sourced conversation-fidelity and current-reality axes before reconciliation; preserve exact operator alternatives such as 'closeout or review'; bound contradiction review; and bind the effective override to a dedicated adversarial regression matrix. Stable P02 identity is preserved.",
+      "focused_tests": [
+        "tests/test_p02_continuity_regression_matrix.py",
+        "tests/test_skill_prompt_registry.py",
+        "tests/test_p02_p07_autonomous_iteration.py",
+        "harness/evals/prompt-strength/p02-continuity-regression-matrix.v1.json"
+      ]
     }
   ]
 }
