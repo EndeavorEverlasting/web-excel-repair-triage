@@ -27,14 +27,20 @@
     "validator": "scripts/validate_repository_work_ledger.py",
     "tests": "tests/test_repository_work_ledger.py",
     "ci": ".github/workflows/repository-work-ledger-contract.yml",
-    "hooks": [".githooks/pre-commit", ".githooks/pre-push"]
+    "hooks": [
+      ".githooks/pre-commit",
+      ".githooks/pre-push"
+    ],
+    "issueProgressionContract": ".ai/issue-centered-work-progression.v1.json"
   },
   "capabilitiesAdopted": [
     "shared unfinished-work coordination ledger",
     "claim and continuation state semantics",
     "durable DONE proof tokens",
     "exact gate and executable next-action requirements",
-    "concurrent ledger preservation boundary"
+    "concurrent ledger preservation boundary",
+    "issue-centered work identity with PR-as-evidence separation",
+    "AFK-dispatchable READY semantics bound to stable work items"
   ],
   "mustNotCopyOrReimplement": [
     "AxTask AXQ task namespace or task contents",
@@ -45,5 +51,5 @@
     "BlacksmithGuild consumer queue state or runtime behavior",
     "remote validator execution"
   ],
-  "proofCeiling": "static local ledger contract and hook/CI wiring only; no Prompt Kit behavior, browser, launcher, deployment, or live-runtime proof"
+  "proofCeiling": "static local ledger contract, issue-centered progression semantics, and hook/CI wiring only; no live scheduler, GitHub Projects board, Prompt Kit behavior, browser, launcher, deployment, or external-agent runtime proof"
 }

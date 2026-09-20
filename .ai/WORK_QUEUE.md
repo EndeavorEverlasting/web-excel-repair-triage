@@ -7,15 +7,18 @@ localAuthority: AGENTS.md
 This is the repository-local coordination ledger for unfinished triage and Prompt Kit work. It routes work; it does not replace `AGENTS.md`, source, tests, builders, generated-artifact contracts, PRs, CI, or browser/runtime evidence. BlacksmithGuild owns the portable ledger compatibility contract; this repository owns TRQ task state and all local product/artifact truth.
 
 Continuation states are not stopping states.
+Work item owns progression state.
+Branch / PR is execution evidence, not work identity.
+READY is AFK-dispatchable only when fully specified and dependency-ready.
 PR opened is not completion.
+Merged PR alone is not DONE.
 DONE is strict.
 Canonical terminal action: none; no safe actionable work remains
 
-## TRQ-001 — Initial repository work ledger adoption
-
-- **Status:** DONE
+## TRQ-001 — Initial r- **Status:** DONE
 - **Priority:** P1
 - **Owner:** chatgpt-cross-repo-ledger-20260809
+- **Work item:** ledger:TRQ-001
 - **Branch / PR:** main / #160 merged
 - **Scope:** historically add a triage-local work ledger, adoption manifest, validator, positive/negative tests, CI, and existing hook integration; the original AgentSwitchboard portable-authority pin is superseded by BlacksmithGuild RepoLedgerInteroperability.v1 and reconciled by TRQ-002
 - **Forbidden:** copying AxTask `AXQ-*` tasks; changing Prompt Kit product behavior; treating ledger prose as browser/runtime proof; weakening `AGENTS.md`; fetching or executing a remote validator at validation time
@@ -27,11 +30,10 @@ Canonical terminal action: none; no safe actionable work remains
 - **Next action:** none; no safe actionable work remains
 - **Updated:** 2026-08-09T19:49:00Z
 
-## TRQ-002 — Reconcile portable ledger authority to BlacksmithGuild
-
-- **Status:** DONE
+## TRQ-002 — Reconcile portable ledge- **Status:** DONE
 - **Priority:** P1
 - **Owner:** chatgpt-blacksmith-ledger-authority-reconcile-20260809
+- **Work item:** ledger:TRQ-002
 - **Branch / PR:** main / #162 merged
 - **Scope:** repoint the existing triage adoption manifest, queue header, validator, and tests directly to BlacksmithGuild RepoLedgerInteroperability.v1 while preserving the repository-local TRQ ledger, CI, hooks, Prompt Kit authority, and artifact-engine boundaries
 - **Forbidden:** changing Prompt Kit product behavior; changing workbook/artifact engines; adopting AgentSwitchboard Work class/frontier as a portable requirement; copying AxTask domain tasks; executing remote BlacksmithGuild or AgentSwitchboard validators
@@ -43,11 +45,10 @@ Canonical terminal action: none; no safe actionable work remains
 - **Next action:** none; no safe actionable work remains
 - **Updated:** 2026-08-09T19:55:00Z
 
-## TRQ-003 — Add repository work ledger stewardship prompt to Prompt Kit
-
-- **Status:** DONE
+## TRQ-003 — Add repository work ledger st- **Status:** DONE
 - **Priority:** P1
 - **Owner:** chatgpt-prompt-ledger-p66-20260809
+- **Work item:** ledger:TRQ-003
 - **Branch / PR:** main / #163 merged
 - **Scope:** add P66 Repository Work Ledger Steward as a versioned prompt extension, integrate it with registry loading and both interactive and copyable guided discovery, add focused regression coverage, regenerate the canonical Prompt Kit website, and preserve the existing safe Windows acquisition route
 - **Forbidden:** changing BlacksmithGuild RepoLedgerInteroperability.v1 or repository-local ledger semantics; changing AxTask or AgentSwitchboard domain authority; unrelated Prompt Kit UX; hand-editing generated `web/prompt-kit/index.html`; hard-coded Windows usernames; destructive checkout cleanup
@@ -59,11 +60,10 @@ Canonical terminal action: none; no safe actionable work remains
 - **Next action:** none; no safe actionable work remains
 - **Updated:** 2026-08-09T20:10:00Z
 
-## TRQ-004 — Build Lua embedding-readiness operational harness
-
-- **Status:** DONE
+## TRQ-004 — Build Lua embedding- **Status:** DONE
 - **Priority:** P1
 - **Owner:** chatgpt-lua-harness-20260810
+- **Work item:** ledger:TRQ-004
 - **Branch / PR:** main / #167 merged
 - **Scope:** build a tracked Lua embedding-readiness harness with codebase map, workflow, artifact/validator/capability/trigger registries, explicit host-controlled design contract, scoped skill, focused hook fragments, operator report, fail-closed validator/tests, CI report artifact, and root harness registration while preserving the concurrent Prompt Kit release-identity harness dependency
 - **Forbidden:** changing `AGENTS.md`; implementing a Lua interpreter, host binding, native module, or `.lua` product behavior; selecting a product host runtime without a product lane; secrets; destructive cleanup; force-push; claiming runtime proof from static harness evidence
@@ -75,11 +75,10 @@ Canonical terminal action: none; no safe actionable work remains
 - **Next action:** none; no safe actionable work remains
 - **Updated:** 2026-08-10T14:41:00-04:00
 
-## TRQ-005 — Make P02 previous-chat execution-first and restore full All view
-
-- **Status:** DONE
+## TRQ-005 — Make P02 previous-chat execution-f- **Status:** DONE
 - **Priority:** P1
 - **Owner:** chatgpt-prompt-kit-chat-continuation-all-reset-20260810
+- **Work item:** ledger:TRQ-005
 - **Branch / PR:** main / #169 merged
 - **Scope:** replace effective P02 with a stable-identity Previous Chat → Active Sprint Executor that takes only the previous chat name and drives unfinished work through implementation; add explicit versioned prompt-override authority; make Favorites → All an atomic full-filter reset for click and keyboard `1`; add filtering, override-identity, raw-language-audit, generated-site, and CI regressions; regenerate the canonical Prompt Kit; and publish that exact artifact through GitHub Pages
 - **Forbidden:** changing `AGENTS.md`; unrelated prompt rewrites; workbook/artifact-engine product behavior; Lua runtime/harness changes; secrets; destructive cleanup; force-push; claiming interactive browser behavior from static tests alone
@@ -91,11 +90,10 @@ Canonical terminal action: none; no safe actionable work remains
 - **Next action:** none; no safe actionable work remains
 - **Updated:** 2026-08-10T15:18:00-04:00
 
-## TRQ-006 — Add safe Prompt Kit browser-proof scratch cleanup harness
-
-- **Status:** DONE
+## TRQ-006 — Add safe Prompt Kit browser- **Status:** DONE
 - **Priority:** P1
 - **Owner:** chatgpt-browser-proof-cleanup-harness-20260810
+- **Work item:** ledger:TRQ-006
 - **Branch / PR:** main / #171 merged
 - **Scope:** classify and safely remove only detached `prompt-kit-browser-proof-*` directories directly under the OS temp root through a preview-first, explicit-apply PowerShell runner; build the subordinate codebase map/workflow/artifact/validator/trigger/hook/skill/report harness; register the capability in canonical root discovery; preserve previous cleanup receipts before replacement; and prove test-owned preview/retention/apply behavior without changing Prompt Kit product behavior
 - **Forbidden:** changing `AGENTS.md`; broad `%TEMP%` cleanup; deleting canonical repository checkouts or unrelated `Outputs/` evidence; clearing browser profile data, cookies/cache/history, localStorage, or Prompt Kit Favorites; product-code changes; secrets; force-push; claiming native P-Top deletion from CI fixtures
@@ -107,11 +105,10 @@ Canonical terminal action: none; no safe actionable work remains
 - **Next action:** none; no safe actionable work remains
 - **Updated:** 2026-08-10T18:20:00-04:00
 
-## TRQ-007 — Measure Prompt Kit compute-authority effectiveness on external agents
-
-- **Status:** READY
+## TRQ-007 — Measure Prompt Kit compute-authority ef- **Status:** READY
 - **Priority:** P1
 - **Owner:** P67 / skill-evaluation
+- **Work item:** ledger:TRQ-007
 - **Branch / PR:** main; Sprint 1+2+Gen2+ADP-00 INTEGRATED; observed pilot UNPROVEN_RUNTIME
 - **Scope:** build and execute the bounded paired A/B evaluation that measures whether the strengthened Prompt Kit compute-authority contract increases decision-relevant useful compute, defect/contract discovery, evidence honesty, parallelism when available, and fixed-point quality without widening mutation scope or rewarding endless churn
 - **Forbidden:** changing Prompt Kit treatment behavior inside the frozen study; duplicating the P67 eval framework or skill-evaluation identity; modifying separately owned #431/#462/#242 surfaces outside an explicit reconciliation; secrets/private transcripts/personal data; promoting static proof to observed external-agent effectiveness
@@ -123,11 +120,10 @@ Canonical terminal action: none; no safe actionable work remains
 - **Next action:** Execute ADP-04 (observed adapter smoke) from `harness/evals/COMPUTE_AUTHORITY_EVALUATION_SPRINT_PLAN.md` §16 adapter phase map when operator provider auth and workstation access are available; ADP-01/02/03 INTEGRATED; ADP-04 blocked on operator provider authentication/workstation configuration; observed pilot remains gated on ADP-05
 - **Updated:** 2026-09-19T21:50:00Z
 
-## TRQ-008 — Execute Prompt Execution Evidence Spine sprint map
-
-- **Status:** DONE
+## TRQ-008 — Execute Prompt Execu- **Status:** DONE
 - **Priority:** P1
 - **Owner:** Prompt Topology / P95 lifecycle architecture coordinator
+- **Work item:** ledger:TRQ-008
 - **Branch / PR:** main / #471 merged; Waves 0–2 landed via #467/#477, #473, #474/#475
 - **Scope:** index the canonical three-wave Evidence Spine execution map covering PR #467 autonomous-dispatch floor repair and convergence, P95 lifecycle/state-owner architecture, then only the runtime routing/observation/recurrence-to-work/agent-continuation seams admitted by P95
 - **Forbidden:** replacing the canonical sprint map with this row; duplicating PR #467/#450/#431 owners; production Phase D; generic event bus; raw prompt/response/clipboard/transcript telemetry; hosted telemetry/vector DB; hand-editing generated Prompt Kit output; promoting static design to runtime adoption proof
@@ -139,11 +135,10 @@ Canonical terminal action: none; no safe actionable work remains
 - **Next action:** none; no safe actionable work remains
 - **Updated:** 2026-09-14T13:00:00-04:00
 
-## TRQ-009 — Prompt Compilation & Adaptive Language Architecture Sprint 1
-
-- **Status:** DONE
+## TRQ-009 — Prompt Compilation & Adaptive - **Status:** DONE
 - **Priority:** P1
 - **Owner:** prompt-compilation-sprint1-20260914
+- **Work item:** ledger:TRQ-009
 - **Branch / PR:** main / #483 merged
 - **Scope:** formalize Prompt Compilation as a bounded prompt-compilation subsystem with `prompt-semantics/v1`, `prompt-context/v1`, `prompt-execution-profile/v1`, language compiler contract, effective-prompt build receipt, modality/non-weakening validator, deterministic improvement-candidate format, TC06 parallelism-modality fixtures, durable architecture/sprint map, and focused tests while preserving P95 adapter-only Evidence Spine boundaries
 - **Forbidden:** UI Compute Mode toggle; PR #450/#431 donor work; raw conversation/transcript ingestion; new Evidence Spine event types; universal event bus; automatic source mutation; automatic PR merge; model-generated policy promotion; mutating TRQ-007 frozen prompt identities; hand-editing generated Prompt Kit output
@@ -155,11 +150,10 @@ Canonical terminal action: none; no safe actionable work remains
 - **Next action:** none; no safe actionable work remains
 - **Updated:** 2026-09-14T14:40:00-04:00
 
-## TRQ-010 — Prompt Compilation Sprint 2 context adapters + profile precedence
-
-- **Status:** DONE
+## TRQ-010 — Prompt Compilation Sprint 2 context- **Status:** DONE
 - **Priority:** P1
 - **Owner:** prompt-compilation-sprint2-20260914
+- **Work item:** ledger:TRQ-010
 - **Branch / PR:** main / #485 merged
 - **Scope:** implement thin read-only Context Engine adapters that project dispatch receipts, continuation dispositions, P99 outcome receipts, and recurrence findings into `prompt-context/v1`, plus deterministic execution-profile precedence (`run > prompt > user > product`) and focused tests, without owning lifecycle events
 - **Forbidden:** UI Compute Mode toggle; PR #450/#431 donor work; raw conversation ingestion; new Evidence Spine event types; universal event bus; automatic source mutation; automatic PR merge; model-generated policy promotion; hand-editing generated Prompt Kit output
@@ -171,11 +165,10 @@ Canonical terminal action: none; no safe actionable work remains
 - **Next action:** none; no safe actionable work remains
 - **Updated:** 2026-09-14T14:50:00-04:00
 
-## TRQ-011 — Prompt Kit UI format alignment ledger and Storage repair
-
-- **Status:** DONE
+## TRQ-011 — Prompt Kit UI format align- **Status:** DONE
 - **Priority:** P1
 - **Owner:** cursor-ui-format-alignment-20260915
+- **Work item:** ledger:TRQ-011
 - **Branch / PR:** main / #498 merged
 - **Scope:** repair Storage header control to the Resources formatting sequence; install UI format-alignment contract, aligned/deferred ledger, fail-closed validator, focused tests, regenerate Prompt Kit site; coerce lazy unclassed UI into deferred ledger fodder
 - **Forbidden:** unrelated redesign; privacy/storage policy mutation; force-push; hand-editing generated HTML without builder; weakening storage lifecycle or header protected contracts
@@ -187,11 +180,10 @@ Canonical terminal action: none; no safe actionable work remains
 - **Next action:** none; no safe actionable work remains
 - **Updated:** 2026-09-15T06:45:00Z
 
-## TRQ-012 — Prompt Compilation Sprint 3 Improvement Compiler program design
-
-- **Status:** DONE
+## TRQ-012 — Prompt Compilation Sprint 3 Impro- **Status:** DONE
 - **Priority:** P1
 - **Owner:** design/prompt-compilation-program-20260916
+- **Work item:** ledger:TRQ-012
 - **Branch / PR:** main / #515 merged
 - **Scope:** revise Prompt Compilation program design so Sprint 3 owns Improvement-Candidate Compiler call-stack prototypes (success + failure) before UI; persist architecture module/ownership/call-stack/alternatives evidence; add hypothesis catalog, journey fixtures, `scripts/prompt_improvement_compiler.py`, focused tests; reorder sprint map so UI Compute Mode is Sprint 4; preserve P95 adapter-only and `reviewed_pr_only` boundaries
 - **Forbidden:** UI Compute Mode toggle; PR #450/#431 donor work; raw conversation ingestion; new Evidence Spine event types; universal event bus; automatic source mutation; automatic PR merge; model-generated policy promotion; mutating TRQ-007 frozen prompt identities; hand-editing generated Prompt Kit output
@@ -203,11 +195,10 @@ Canonical terminal action: none; no safe actionable work remains
 - **Next action:** none; no safe actionable work remains
 - **Updated:** 2026-09-16T19:10:00-04:00
 
-## TRQ-013 — Prompt Compilation Sprint 4 wiring + Compute Mode
-
-- **Status:** DONE
+## TRQ-013 — Prompt Compilation - **Status:** DONE
 - **Priority:** P1
 - **Owner:** feat/prompt-compilation-sprint4-wiring-20260916
+- **Work item:** ledger:TRQ-013
 - **Branch / PR:** main / #519 merged
 - **Scope:** wire Language Engine compiled effective prompts into Prompt Kit builder for semantics-backed prompts (P07); add Compute Mode runtime (Exhaustive/Efficient) with run>prompt>user>product precedence and personal-state storage keys; route polish copy through Compute Mode; regenerate site via builder; focused tests; update sprint map
 - **Forbidden:** weakening safety gates; bypassing builder-owned generation; auto-promotion of improvement candidates; PR #450/#431 donor work; mutating TRQ-007 frozen prompt identities; hand-editing generated HTML outside the builder; new Evidence Spine event types; universal event bus
@@ -219,11 +210,10 @@ Canonical terminal action: none; no safe actionable work remains
 - **Next action:** none; no safe actionable work remains
 - **Updated:** 2026-09-16T22:35:00-04:00
 
-## TRQ-014 — Prompt Compilation Sprint 5 eval-loop hardening
-
-- **Status:** DONE
+## TRQ-014 — Prompt Compilatio- **Status:** DONE
 - **Priority:** P1
 - **Owner:** feat/prompt-compilation-sprint5-eval-hardening-20260916
+- **Work item:** ledger:TRQ-014
 - **Branch / PR:** main / #522 merged
 - **Scope:** broaden improvement hypothesis/fingerprint catalog; add TC07 mainline-convergence gold fixture and IJ03 journey; optional Outputs/prompt-improvement-drafts retention; emit P115-compatible work-request handoff without absorbing P115; keep reviewed_pr_only; focused tests; update sprint map
 - **Forbidden:** auto-merge; model-only policy promotion; Evidence Spine event invention; absorbing P115 ownership; PR #450/#431 donor work; mutating TRQ-007 frozen prompt identities; hand-editing generated Prompt Kit HTML
@@ -235,11 +225,10 @@ Canonical terminal action: none; no safe actionable work remains
 - **Next action:** none; no safe actionable work remains
 - **Updated:** 2026-09-16T23:20:00-04:00
 
-## TRQ-015 — Define and prove P123 source-coverage scoring harness
-
-- **Status:** DONE
+## TRQ-015 — Define and prove P123 s- **Status:** DONE
 - **Priority:** P1
 - **Owner:** feat/p123-source-coverage-proof-20260917
+- **Work item:** ledger:TRQ-015
 - **Branch / PR:** main / #527 merged
 - **Scope:** durable P123 full-source/tail coverage proof plan; versioned coverage contract; deterministic coverage-receipt scorer; gold partial fixture derived from `7UyhyhxdFsQ` quality evidence; synthetic COMPLETE candidate; focused tests; deterministic test-floor registration; keep document-identity receipt unpromoted for coverage
 - **Forbidden:** claiming provider OBSERVED complete coverage from synthetic PASS; mutating Gemini/Drive live artifacts in this lane; absorbing PR #450/#524/#526 surfaces; rewriting P123 prompt copy unless scorer evidence requires it; inventing unrepresented-tail facts
@@ -251,11 +240,10 @@ Canonical terminal action: none; no safe actionable work remains
 - **Next action:** none; no safe actionable work remains
 - **Updated:** 2026-09-17T14:05:00Z
 
-## TRQ-016 — Prompt Compilation Sprint 6 Compute Mode observed browser proof
-
-- **Status:** DONE
+## TRQ-016 — Prompt Compilation Sprint 6 Compu- **Status:** DONE
 - **Priority:** P1
 - **Owner:** test/prompt-compilation-compute-mode-browser-proof-20260916
+- **Work item:** ledger:TRQ-016
 - **Branch / PR:** main / #524 merged
 - **Scope:** close the explicit Sprint 4 Compute Mode runtime proof gap with an exact-head Playwright journey covering product default, persisted user default, per-prompt override, explicit run override, and canonical P07 clipboard identity while Compute Mode remains execution-profile metadata; register the proof in the existing observed-behavior harness and preserve Sprint 6 plan continuity
 - **Forbidden:** changing Compute Mode semantics or precedence merely to make proof pass; new Evidence Spine events or lifecycle ownership; PR #450/#431 donor work; mutating TRQ-007 frozen identities; raw conversation/transcript persistence; automatic improvement promotion/merge; hand-editing generated Prompt Kit HTML
@@ -267,11 +255,10 @@ Canonical terminal action: none; no safe actionable work remains
 - **Next action:** none; no safe actionable work remains
 - **Updated:** 2026-09-19T21:24:00Z
 
-## TRQ-017 — Prompt Semantic Capability Coverage program
-
-- **Status:** DONE
+## TRQ-017 — Prompt Semant- **Status:** DONE
 - **Priority:** P1
 - **Owner:** P79 + Prompt Topology + Prompt Quality History + Prompt Strength
+- **Work item:** ledger:TRQ-017
 - **Branch / PR:** main / #588 #591 #592 #594 merged
 - **Scope:** protect Prompt Kit behavior across ADD, EDIT/STRENGTHEN, and RETIRE by making each prompt's accepted semantic capabilities versioned repository truth; add canonical prompt-by-capability matrix as a deterministic projection of versioned profiles; detect when a change preserves syntax/ID/generated-site parity while silently removing existing behavior; integrate Sprint 1A baseline semantic capability profiles, Sprint 1B semantic diff validator + lifecycle engine, and Sprint 2 semantic coverage lifecycle + required checks
 - **Forbidden:** replacing Prompt Kit identity/Prompt Strength/Prompt Quality History; letting generated topology artifacts become prompt-registry authority; unrelated prompt behavior mutation; secrets; hand-editing generated Prompt Kit output
@@ -283,11 +270,10 @@ Canonical terminal action: none; no safe actionable work remains
 - **Next action:** none; no safe actionable work remains
 - **Updated:** 2026-09-19T21:24:00Z
 
-## TRQ-018 — Prompt Runtime Compliance Sprint 4 deterministic floor convergence
-
-- **Status:** DONE
+## TRQ-018 — Prompt Runtime Compliance Sprint 4 d- **Status:** DONE
 - **Priority:** P1
 - **Owner:** runtime-compliance-sprint4-safe-convergence-20260919
+- **Work item:** ledger:TRQ-018
 - **Branch / PR:** main / #585 merged
 - **Scope:** converge runtime-compliance Sprint 4 deterministic floor onto refreshed main containing #524 browser proof; preserve Compute Mode profile precedence without treating #524's compiled-first clipboard regression as authority; preserve frozen Gen1 treatment; keep validator/pilot UNPROVEN_RUNTIME honest; preserve runtime-compliance planning authority; integrate exact validated head to current default branch
 - **Forbidden:** changing frozen Gen1 treatment prompt identity; claiming OBSERVED effectiveness from deterministic floor alone; weakening runtime-compliance validator; absorbing separately-owned browser-proof or compute-authority surfaces; product runtime behavior mutation outside reconciliation scope; secrets
@@ -299,11 +285,10 @@ Canonical terminal action: none; no safe actionable work remains
 - **Next action:** none; no safe actionable work remains
 - **Updated:** 2026-09-19T21:24:00Z
 
-## TRQ-019 — FirstMate + AgentSwitchboard + Prompt Kit durable vision & owner map
-
-- **Status:** READY
+## TRQ-019 — FirstMate + AgentSwitchboard + Prompt - **Status:** READY
 - **Priority:** P1
 - **Owner:** vision-map-firstmate-asb-prompt-kit-20260919
+- **Work item:** ledger:TRQ-019
 - **Branch / PR:** `cursor/firstmate-asb-prompt-kit-vision-map-5b39` / PR pending
 - **Scope:** persist canonical one-page vision + owner/phase map under Triage plan conventions so Agent Flow family and peers share one durable authority surface; state completion definition (FirstMate parallel with ASB consuming Prompt Kit panels/manifests as machine inputs); paint proven/unproven boundaries; map authority (Triage doctrine, ASB consumer, FirstMate crew runtime); index collision ledger and phase ladder with honest gates
 - **Forbidden:** claiming live dual-path complete or live lane dispatch PASS without observed runtime evidence; mutating ASB repo, FirstMate product, g3 live-dispatch surfaces, generated Prompt Kit HTML, SSH sprint map, or #320 deliverables
@@ -314,3 +299,21 @@ Canonical terminal action: none; no safe actionable work remains
 - **Last proof:** artifact:`docs/plans/FIRSTMATE_ASB_PROMPT_KIT_VISION_OWNER_MAP.md` created on branch; planning floor pinned; awaiting commit/push/PR
 - **Next action:** commit, push, open PR, run local proof, merge if gates pass
 - **Updated:** 2026-09-19T21:54:00Z
+
+## TRQ-020 — Adopt issue-centered AFKAF work progression
+
+- **Status:** CLAIMED
+- **Priority:** P1
+- **Owner:** chatgpt-issue-centered-afkaf-20260920
+- **Work item:** issue:#614
+- **Branch / PR:** `feat/issue-centered-afkaf-progression-20260920` / PR pending
+- **Scope:** define and enforce the issue-centered AFK work model in the repository-local P66 ledger seam so the stable work item owns progression state while branches, worktrees, PRs, commits, checks, reviews, and merges remain execution evidence; map existing READY/CLAIMED/VERIFY/REVIEW/MERGE/BLOCKED/OPERATOR/DONE states onto that model
+- **Forbidden:** replacing the pinned BlacksmithGuild portability contract; adopting GitHub Projects as a new repository authority; rewriting unrelated Prompt Kit prompts/UI; deleting historical TRQ state; treating a PR or branch as the work identity; claiming live scheduler/agent dispatch proof from static contract tests
+- **Dependencies:** issue:#614; current main at sprint start `3defbc21812522f9bc454d96835ba6bb7ea1552c`
+- **References:** `.ai/issue-centered-work-progression.v1.json`, `.ai/work-ledger-adoption.json`, `.ai/WORK_QUEUE.md`, `scripts/validate_repository_work_ledger.py`, `tests/test_repository_work_ledger.py`, `.github/workflows/repository-work-ledger-contract.yml`
+- **Acceptance gate:** issue:#614 remains the work identity across the execution branch/PR; the local contract makes READY explicitly AFK-dispatchable, separates work-item truth from execution evidence, allows multiple attempts/PRs per work item, rejects PR/branch/commit/workflow/merge anchors as work identity, and prevents merged-PR-only DONE; focused ledger validation/tests and patch hygiene pass; exact validated work integrates to main; issue #614 and this ledger item close only after the whole acceptance gate is proven
+- **Gate:** none
+- **Last proof:** issue:#614 created as canonical sprint work item; branch:feat/issue-centered-afkaf-progression-20260920 created from commit:3defbc21812522f9bc454d96835ba6bb7ea1552c
+- **Next action:** validate the issue-centered progression contract and focused ledger regressions, then open the exact-head integration PR
+- **Updated:** 2026-09-20T17:30:00-04:00
+

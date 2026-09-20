@@ -5,6 +5,7 @@ on:
     paths:
       - ".ai/WORK_QUEUE.md"
       - ".ai/work-ledger-adoption.json"
+      - ".ai/issue-centered-work-progression.v1.json"
       - "scripts/validate_repository_work_ledger.py"
       - "tests/test_repository_work_ledger.py"
       - ".githooks/pre-commit"
