@@ -128,6 +128,40 @@
           "summary": "Evaluation prompt identity hashing required explicit newline normalization so CRLF and LF environments agreed."
         }
       ]
+    },
+    {
+      "id": "PROMPT_REGRESSION_COVERAGE_GAP",
+      "status": "SYSTEMIC",
+      "classification": "PROMPT_SEMANTICS",
+      "recurring_across_repositories": false,
+      "matrix_capture_required": true,
+      "canonical_owner": "Prompt Regression Safety coverage ratchet composed with Prompt Semantic Coverage lifecycle",
+      "prompt_strengthening": "SCOPED_SHARED_POLICY",
+      "detector_commands": [
+        "python scripts/validate_prompt_regression_safety.py --summary",
+        "python -m unittest tests.test_prompt_regression_safety_prompt -v"
+      ],
+      "prevention_surfaces": [
+        "harness/contracts/prompt-regression-safety.v1.json",
+        "harness/evals/prompt-regression/prompt-coverage-baseline.v1.json",
+        "scripts/validate_prompt_regression_safety.py",
+        "harness/prompt-topology/prompt-capability-profiles.v1.json",
+        "harness/evals/prompt-strength/p02-continuity-regression-matrix.v1.json"
+      ],
+      "regression_gate": "tests/test_prompt_regression_safety_prompt.py",
+      "local_first_requirement": "Run the regression-safety validator and focused coverage-ratchet fixtures before accepting Prompt Kit registry or override changes; hosted CI is additional exact-head proof, not the semantic owner.",
+      "occurrences": [
+        {
+          "repository": "EndeavorEverlasting/web-excel-repair-triage",
+          "commit": "92d077ca2e5e15a5b1ac75c01fee636c3971ba8e",
+          "summary": "Sprint 1A accepted a 62-prompt semantic profile baseline while operational extension registries already existed, leaving later operational prompts outside PSC001 coverage."
+        },
+        {
+          "repository": "EndeavorEverlasting/web-excel-repair-triage",
+          "commit": "3defbc21812522f9bc454d96835ba6bb7ea1552c",
+          "summary": "P02 required a dedicated effective-override regression matrix because PSC002 binds the raw canonical record rather than the live override body, exposing a second semantic coverage seam."
+        }
+      ]
     }
   ]
 }
