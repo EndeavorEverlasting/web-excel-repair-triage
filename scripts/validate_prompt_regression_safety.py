@@ -29,6 +29,7 @@ COVERAGE_BASELINE_PATH = ROOT / "harness" / "evals" / "prompt-regression" / "pro
 SEMANTIC_PROFILES_PATH = ROOT / "harness" / "prompt-topology" / "prompt-capability-profiles.v1.json"
 OVERRIDE_REGISTRY_PATH = ROOT / "registry" / "prompts" / "prompt-overrides.v1.json"
 COMMIT_RE = re.compile(r"^[0-9a-f]{40}$")
+KNOWN_UNPROFILED_SEED_SHA256 = "75d6746dc6310b157fb7526f20939c849b1b0c05dc07f863c58d5ac30c6c4cfd"
 CANONICAL_LF_PATTERNS = [".gitattributes","*.py","*.json","*.md","*.yml","*.yaml","*.toml","*.ini","*.cfg","*.js","*.css","*.html","*.sh","*.ps1","*.txt","*.csv","*.tsv","*.xml","*.sha256","*.webmanifest"]
 CANONICAL_CRLF_PATTERNS = ["*.cmd","*.bat"]
 CANONICAL_BINARY_PATTERNS = ["*.xlsx","*.xlsm","*.xlsb","*.xls","*.docx","*.pptx","*.pdf","*.zip","*.png","*.jpg","*.jpeg","*.gif","*.webp"]
@@ -68,6 +69,11 @@ def _string_list(value: Any, field: str, *, min_items: int = 1) -> list[str]:
 def _git_blob_sha1(data: bytes) -> str:
     header = f"blob {len(data)}".encode("ascii") + bytes([0])
     return hashlib.sha1(header + data).hexdigest()
+
+
+def _string_list_sha256(values: list[str]) -> str:
+    canonical = json.dumps(sorted(values), separators=(",", ":"), ensure_ascii=True)
+    return hashlib.sha256(canonical.encode("utf-8")).hexdigest()
 
 
 def _load_operational_prompts() -> list[dict[str, Any]]:
@@ -125,6 +131,13 @@ def _validate_coverage_baseline_shape(
         "coverage_baseline.known_unprofiled_prompt_ids",
         min_items=1,
     )
+    seed_sha = baseline.get("known_unprofiled_seed_sha256")
+    if seed_sha != KNOWN_UNPROFILED_SEED_SHA256:
+        raise RegressionSafetyError("coverage baseline known-unprofiled debt seed identity drifted")
+    if _string_list_sha256(debt) != KNOWN_UNPROFILED_SEED_SHA256:
+        raise RegressionSafetyError(
+            "coverage baseline known-unprofiled debt seed is immutable; new IDs cannot be allowlisted"
+        )
     if operational_count - accepted_count != len(debt):
         raise RegressionSafetyError(
             "coverage baseline counts must exactly explain known unprofiled debt"
@@ -167,6 +180,11 @@ def _validate_coverage_baseline_shape(
             raise RegressionSafetyError(f"duplicate override binding: {prompt_id}")
         seen.add(prompt_id)
         _string_list(binding.get("required_markers"), f"{prompt_id}.required_markers")
+        marker_match_mode = binding.get("marker_match_mode")
+        if marker_match_mode not in {"SUBSTRING", "EXACT_LINE"}:
+            raise RegressionSafetyError(
+                f"{prompt_id}.marker_match_mode must be SUBSTRING or EXACT_LINE"
+            )
         refs = _string_list(
             binding.get("focused_regression_refs"),
             f"{prompt_id}.focused_regression_refs",
@@ -243,7 +261,7 @@ def validate_prompt_coverage_ratchet(
         if any(_contains_owner_term(text, term) for term in (*closeout_terms, *review_terms)):
             current_owner_ids.append(str(prompt["id"]))
 
-    if current_owner_ids != baseline["closeout_or_review_owner_ids"]:
+    if set(current_owner_ids) != set(baseline["closeout_or_review_owner_ids"]):
         raise RegressionSafetyError(
             "closeout OR review owner set drifted; refresh the reviewed coverage baseline"
         )
@@ -281,15 +299,18 @@ def validate_prompt_coverage_ratchet(
         by_id[prompt_id] = row
 
     bindings = {item["prompt_id"]: item for item in baseline["override_bindings"]}
-    if list(by_id) != list(bindings):
+    if set(by_id) != set(bindings):
         raise RegressionSafetyError(
             "override registry IDs drifted from effective regression bindings"
         )
     for prompt_id, row in by_id.items():
         binding = bindings[prompt_id]
         copy_content = str(row.get("copyContent", ""))
+        marker_mode = binding["marker_match_mode"]
+        exact_lines = {line.strip() for line in copy_content.splitlines()}
         for marker in binding["required_markers"]:
-            if marker not in copy_content:
+            marker_present = marker in copy_content if marker_mode == "SUBSTRING" else marker in exact_lines
+            if not marker_present:
                 raise RegressionSafetyError(
                     f"{prompt_id} effective override lost required regression marker: {marker}"
                 )
