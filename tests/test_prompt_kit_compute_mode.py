@@ -114,6 +114,19 @@ class PromptKitComputeModeTests(unittest.TestCase):
         self.assertEqual(product_default["resolution"]["resolved_from"], "product_default")
         self.assertEqual(product_default["profile"]["profile"], "exhaustive")
 
+    def test_per_prompt_variant_control_is_lazy_explicit_and_sparse(self) -> None:
+        source = COMPUTE_MODE_JS.read_text(encoding='utf-8')
+        for marker in (
+            "function availablePromptVariants(prompt)",
+            "if(!prompt||variants.length<2)",
+            "data-prompt-variant",
+            "copy Efficient · explicit prompt choice",
+            "copy Exhaustive · full canonical",
+            "setPromptOverride(promptId,item[0]==='efficient'?'efficient':null,storage)",
+        ):
+            self.assertIn(marker, source)
+        self.assertNotIn("querySelectorAll('[data-prompt-id]')", source)
+        self.assertIn("var PRODUCT_DEFAULT='exhaustive'", source)
     def test_observed_browser_workflow_tracks_compiler_inputs(self) -> None:
         workflow = OBSERVED_BROWSER_WORKFLOW.read_text(encoding="utf-8")
         for dependency in (
