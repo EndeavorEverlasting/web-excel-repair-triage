@@ -3,7 +3,7 @@ name: Deterministic repository test floor
 on:
   pull_request:
   push:
-    branches: [main]
+    branches: [main, fix/prompt-regression-coverage-ratchet-20260920]
   workflow_dispatch:
 
 permissions:
