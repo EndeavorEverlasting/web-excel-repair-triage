@@ -259,6 +259,13 @@ Move Prompt Kit from a library of hand-maintained English prompts toward a **sel
 
 **Proof ceiling:** repository tests and generated parity prove the explicit variant contract statically; exact-head headless Chromium may prove it at `browser_runtime_observed`. Neither proves physical-device/operator acceptance or external-agent behavior.
 
+**Review reconciliation:**
+
+- Fixed variant eligibility so a prompt exposes Efficient only when a real compiled Efficient body exists; canonical fallback no longer creates a phantom Efficient option on every copyable prompt.
+- Normalized explicit prompt-profile casing before content selection, so `Efficient` and `efficient` cannot diverge.
+- Proved card/detail clipboard convergence through the final `docs/prompt-kit-polish.js` `window.copyPrompt` owner, which delegates to `PromptKitComputeMode.resolveCopyContent`; no duplicate detail-copy implementation was introduced.
+- Regenerated the checked-in Prompt Kit only through `scripts/build_prompt_kit_registry.py`; temporary provider materialization infrastructure is not retained.
+
 ## Acceptance for Sprint 3
 
 - Architecture records module map, ownership, SUCCESS CALL STACK, FAILURE CALL STACK, and alternatives compared.
