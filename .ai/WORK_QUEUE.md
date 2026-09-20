@@ -320,7 +320,7 @@ Canonical terminal action: none; no safe actionable work remains
 - **Status:** READY
 - **Priority:** P1
 - **Owner:** upstream-capability-watch-20260920
-- **Branch / PR:** `plan/upstream-capability-watch-20260920` / PR pending
+- **Branch / PR:** `plan/upstream-capability-watch-20260920` / #611 open
 - **Scope:** classify the missed Matt Pocock `teach` signal; add capability-level identity and observed-vs-processed watch state; preserve external-resource intake as donor discovery authority; add deduped source-change events, impact edges, review-required promotion policy, and P115 visibility routing; reconcile P96/P98/P65 only from evidence; research and then admit authoritative design/skill-authoring donor surfaces; expose receipt-derived capability status; prove synthetic A→B routing and dedupe
 - **Forbidden:** second donor registry; browser telemetry as provider polling; raw donor-body persistence; automatic prompt rewrite/promotion; P79 bypass; human scheduling as the primary parallel-dispatch path; claiming due-time AFK observation from schedule configuration; overwriting open PR #431/#561/#600/#606 owned surfaces without refresh/reconciliation
 - **Dependencies:** `main@70178017ffa5c27f4428d6aae733a61113a6f4ad`; `harness/contracts/operant-external-resource-intake.v1.json`; `.github/workflows/operant-external-resource-refresh.yml`; P102 polling semantics; P115 AFK coordinator; P79 upstream prior-art gate
