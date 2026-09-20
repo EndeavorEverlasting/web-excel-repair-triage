@@ -159,9 +159,9 @@ function promptVariantText(prompt,profile){
 
 function availablePromptVariants(prompt){
   var variants=[];
-  ['exhaustive','efficient'].forEach(function(profile){
-    if(promptVariantText(prompt,profile))variants.push(profile)
-  });
+  var canonical=prompt&&prompt.copyContent!=null?String(prompt.copyContent):'';
+  if(canonical.trim()||compiledProfileText(prompt,'exhaustive'))variants.push('exhaustive');
+  if(compiledProfileText(prompt,'efficient'))variants.push('efficient');
   return variants
 }
 
@@ -188,7 +188,8 @@ function resolveCopyContent(prompt,options){
   });
   var canonical=prompt&&prompt.copyContent!=null?String(prompt.copyContent):'';
   if(canonical.trim()){
-    if(promptOverride==='efficient'){
+    var contentVariant=promptOverride!=null&&String(promptOverride).trim()?normalizeProfile(promptOverride,'prompt override'):null;
+    if(contentVariant==='efficient'){
       var explicitEfficient=compiledProfileText(prompt,'efficient');
       if(explicitEfficient)return explicitEfficient
     }
