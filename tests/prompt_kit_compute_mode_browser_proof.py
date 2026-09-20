@@ -230,7 +230,7 @@ def observe(port: int, screenshot: Path):
             expected_efficient = page.evaluate(
                 "PROMPTS.find(p => p.id === 'P07').compiledEffectivePrompts.efficient"
             )
-            card = page.locator('[data-prompt-id="P07"]')
+            card = page.locator('.prompt-card[data-prompt-id="P07"]')
             card.scroll_into_view_if_needed()
             card.locator('.prompt-copy-btn').click()
             page.wait_for_timeout(240)
@@ -267,7 +267,7 @@ def observe(port: int, screenshot: Path):
                 }
             )
 
-            card = page.locator('[data-prompt-id="P07"]')
+            card = page.locator('.prompt-card[data-prompt-id="P07"]')
             card.scroll_into_view_if_needed()
             card.locator('.prompt-open-btn').click()
             variant_control = page.locator('#promptDetail [data-prompt-variant-control="P07"]')
@@ -430,7 +430,7 @@ def observe(port: int, screenshot: Path):
             )
 
             page.locator('#promptDetail .prompt-detail-close').click()
-            plain_card = page.locator('[data-prompt-id="P00"]')
+            plain_card = page.locator('.prompt-card[data-prompt-id="P00"]')
             plain_card.scroll_into_view_if_needed()
             plain_card.locator('.prompt-open-btn').click()
             nonvariant_count = page.locator('#promptDetail [data-prompt-variant-control]').count()
@@ -445,7 +445,7 @@ def observe(port: int, screenshot: Path):
             )
 
             page.locator('#promptDetail .prompt-detail-close').click()
-            card = page.locator('[data-prompt-id="P07"]')
+            card = page.locator('.prompt-card[data-prompt-id="P07"]')
             card.scroll_into_view_if_needed()
             card.locator('.prompt-open-btn').click()
             page.locator('#promptDetail [data-prompt-variant-control="P07"]').wait_for(state="visible")
