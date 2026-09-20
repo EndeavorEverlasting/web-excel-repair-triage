@@ -74,6 +74,27 @@ class DeterministicTestFloorCanaryTests(unittest.TestCase):
             with self.assertRaisesRegex(canary.ContractError, "must change"):
                 canary.load_contract(path)
 
+    def test_clean_floor_baseline_accepts_only_a_fresh_pass(self) -> None:
+        self.assertEqual(
+            canary.evaluate_clean_floor_baseline(
+                {"returncode": 0},
+                {"status": "PASS", "failed_step": None},
+            ),
+            [],
+        )
+
+    def test_clean_floor_baseline_rejects_unrelated_same_gate_failure(self) -> None:
+        errors = canary.evaluate_clean_floor_baseline(
+            {"returncode": 1},
+            {"status": "FAIL", "failed_step": "test-floor-self-tests"},
+        )
+        self.assertIn("CLEAN_FLOOR_BASELINE_PROCESS_FAILED", errors)
+        self.assertIn("CLEAN_FLOOR_BASELINE_RECEIPT_NOT_PASS", errors)
+
+    def test_clean_floor_baseline_rejects_missing_current_receipt(self) -> None:
+        errors = canary.evaluate_clean_floor_baseline({"returncode": 0}, None)
+        self.assertEqual(errors, ["CLEAN_FLOOR_BASELINE_RECEIPT_NOT_PASS"])
+
     def test_proof_accepts_declared_mutation_specific_failure(self) -> None:
         marker = self.contract["witness"]["required_failure_signatures"][0]
         errors = canary.evaluate_proof(

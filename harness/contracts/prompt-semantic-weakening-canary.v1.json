@@ -22,5 +22,5 @@
     "runner": "scripts/run_deterministic_test_floor.py",
     "expected_failed_step": "test-floor-self-tests"
   },
-  "proof_ceiling": "Proves that the current canonical P07 text is semantically bound, a deliberate branch-only completion weakening is rejected by Prompt Semantic Coverage with the declared PSC009/P07 witness, the canonical deterministic floor fails closed at its declared earliest gate, and docs/prompts.json is restored byte-identically before the ordinary clean floor runs. It does not prove every possible semantic weakening, external-agent obedience, or production runtime behavior."
+  "proof_ceiling": "Proves that the exact clean checkout/environment passes the canonical deterministic floor immediately before mutation; the current canonical P07 text is semantically bound; a deliberate branch-only completion weakening is rejected by Prompt Semantic Coverage with the declared PSC009/P07 witness; the mutated deterministic floor then fails closed at its declared earliest gate; and docs/prompts.json is restored byte-identically before the ordinary workflow clean floor runs. It does not prove every possible semantic weakening, external-agent obedience, or production runtime behavior."
 }
