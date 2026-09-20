@@ -87,12 +87,12 @@
     },
     {
       "lane_id": "u1-capability-watch-contract-floor",
-      "mission": "Implement the minimal watched-capability identity/state/event/impact/dedupe/promotion contract and deterministic fixtures, reusing the existing external-resource intake as donor discovery authority.",
+      "mission": "Inspect and extend the current canonical external-resource contracts first to express watched-capability identity/state/event/impact/dedupe/promotion semantics; create a new watch contract only after evidence proves the canonical owners cannot represent the required state, and refresh this manifest before owning any new contract path.",
       "dependencies": [
         "u0a-missed-teach-forensics"
       ],
       "owned_mutation_surfaces": [
-        "harness/contracts/upstream-capability-watch.v1.json",
+        "harness/contracts/operant-external-resource-intake.v1.json",
         "registry/resources/upstream-capability-impact-edges.v1.json",
         "tests/test_upstream_capability_watch.py",
         "harness/test-floor.v1.json"
@@ -117,13 +117,15 @@
         }
       },
       "expected_artifacts": [
-        "versioned watch contract",
+        "canonical external-resource contract extension decision with evidence",
         "impact-edge registry shape",
         "A/B/C identity fixtures",
         "routing-failure lost-event negative fixture",
-        "deterministic test-floor registration"
+        "deterministic test-floor registration",
+        "if canonical contracts are insufficient: an evidence-backed manifest amendment that explicitly owns the new contract path before creation"
       ],
       "validation": [
+        "existing canonical contracts are inspected and extended where sufficient; no new contract path is created by assumption",
         "last_observed_identity and last_processed_identity are distinct",
         "transition dedupe is enforced",
         "missing impact edge retains source event",
