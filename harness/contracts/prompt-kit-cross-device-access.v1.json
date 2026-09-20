@@ -300,6 +300,126 @@
     "future_hosted_sync_status": "not implemented by this contract",
     "future_collective_ingestion_status": "not implemented by this contract"
   },
+  "conversation_repository_promotion_contract": {
+    "schema": "conversation-repository-promotion/v1",
+    "authority": "prompt-kit-cross-device-access/v1",
+    "purpose": "Govern the one-way graduation of conversation-derived working context into shared Prompt Kit repository truth without publishing user-specific learning, reasoning, identity, or other personal state.",
+    "governing_invariants": [
+      "Conversation and device-local state may inform repository decisions but do not become repository truth merely because they were useful.",
+      "Only repository-specific conclusions that can stand independently of the person who supplied them are eligible for shared repository promotion.",
+      "Interrogate privately; publish impersonally.",
+      "When any promotion gate is failed or unknown, keep the material private/local or in ephemeral working state rather than committing it."
+    ],
+    "states": {
+      "private_user_context": {
+        "repository_eligible": false,
+        "persistence": "chat-or-user-device-only",
+        "examples": [
+          "what the user knows or does not know",
+          "mistakes, uncertainty, confidence, preferences and learning progress",
+          "raw user messages, dialogue and reasoning history",
+          "personal identity, profile, contact or unrelated life context"
+        ]
+      },
+      "working_specification": {
+        "repository_eligible": false,
+        "persistence": "ephemeral-working-state-unless-promoted",
+        "examples": [
+          "candidate requirement derived from conversation",
+          "tentative interpretation of intent",
+          "unreconciled design question or branch",
+          "draft wording that still depends on the originating dialogue"
+        ]
+      },
+      "repository_candidate": {
+        "repository_eligible": false,
+        "persistence": "ephemeral-until-all-gates-pass",
+        "requirement": "A repository-specific, impersonal conclusion has been derived but is not canonical until every promotion gate passes and the smallest repository owner accepts it."
+      },
+      "repository_truth": {
+        "repository_eligible": true,
+        "persistence": "smallest-canonical-repository-owner",
+        "requirement": "The promoted artifact is repository-specific, impersonal, evidence-bound, privacy-safe, discoverable to downstream consumers, and no longer depends on the originating conversation."
+      }
+    },
+    "promotion_gate": {
+      "mode": "all-of",
+      "required_checks": [
+        "repository_relevant",
+        "impersonal_repository_statement",
+        "canonical_owner_identified",
+        "downstream_consumer_exists",
+        "evidence_or_explicit_project_decision",
+        "minimal_necessary_content",
+        "privacy_and_secret_safe",
+        "no_raw_conversation_or_learning_state",
+        "reconciled_with_stronger_repository_truth"
+      ],
+      "transformation": [
+        "derive the repository-relevant conclusion from the conversation",
+        "remove user identity, learning state, confidence, mistakes, reasoning history and irrelevant personal context",
+        "rewrite the result as repository-level behavior, requirement, decision, invariant, interface, acceptance gate, unresolved project question or sanitized evidence",
+        "reconcile the candidate against current canonical repository/provider/runtime authority",
+        "write only the minimum durable form to the smallest canonical owner"
+      ],
+      "default_disposition": "KEEP_PRIVATE_OR_EPHEMERAL"
+    },
+    "repository_worthy_artifacts": {
+      "allowed": [
+        "repository requirements and constraints",
+        "project or architecture decisions",
+        "acceptance criteria and behavioral invariants",
+        "interfaces, schemas and ownership boundaries",
+        "implementation or migration plans",
+        "test, validation and proof requirements",
+        "unresolved repository questions with owner and blocking status",
+        "sanitized fixtures and repository examples",
+        "repository evidence or proof receipts that contain no forbidden personal context",
+        "rejected or superseded technical alternatives only when needed to prevent material rediscovery"
+      ],
+      "forbidden": [
+        "raw user messages or conversation transcripts",
+        "learning records, quiz results, mistakes or mastery history",
+        "knowledge gaps, uncertainty or confidence assessments",
+        "personal reasoning history or hidden chain-of-thought",
+        "personal preferences that are not themselves repository requirements",
+        "user identity, profile, contact or account data",
+        "private notes or local-journal history",
+        "health, career, financial, relationship or other unrelated personal context",
+        "credentials, secrets, recovery material or private tokens",
+        "session, conversation, trace or persistent user/device identifiers",
+        "private customer, organization or project context that is not authorized public repository truth"
+      ]
+    },
+    "provenance_policy": {
+      "personal_identity_required": false,
+      "allowed_repository_provenance": [
+        "operator decision",
+        "repository evidence",
+        "provider evidence",
+        "test or runtime evidence"
+      ],
+      "rule": "Record the decision/evidence class when provenance matters; do not name or profile the person merely because they supplied the input."
+    },
+    "consumer_test": "A competent contributor who knows nothing about the originating user must be able to understand, implement, test, operate or maintain the promoted artifact without needing the private conversation.",
+    "examples": [
+      {
+        "private_input": "I do not really understand leases, but I want ownership to expire eventually.",
+        "repository_output": "Sprint ownership uses an expiring lease with an explicit renewal rule.",
+        "disposition": "PROMOTE_OUTPUT_ONLY"
+      },
+      {
+        "private_input": "I am worried agents will stomp on one another because this has happened to me repeatedly.",
+        "repository_output": "Concurrent sprint ownership is rejected unless an explicit ownership-transfer rule succeeds.",
+        "disposition": "PROMOTE_OUTPUT_ONLY"
+      },
+      {
+        "private_input": "I failed this concept twice and am only about 60% confident.",
+        "repository_output": null,
+        "disposition": "KEEP_PRIVATE"
+      }
+    ]
+  },
   "guardrails": [
     "Do not tell a normal phone or browser user to clone the repository merely to use the Prompt Kit.",
     "Do not tell a mobile GitHub-app user to hunt for or download web/prompt-kit/index.html as the primary access path.",
@@ -310,7 +430,8 @@
     "Do not claim Add to Home Screen, PWA installation, Termux, Git authentication, browser storage, or clipboard behavior succeeded without device observation.",
     "Resolve the canonical website through this contract and harness/artifacts.v1.json instead of guessing an index.html path.",
     "Do not put plaintext personal state, local journals, raw prompt history, recovery material, or PrivacyReducer buffers in the repository or GitHub Pages bundle.",
-    "Do not require a Prompt Kit-owned backend for v1 private state portability; encrypted save transport remains user-selected."
+    "Do not require a Prompt Kit-owned backend for v1 private state portability; encrypted save transport remains user-selected.",
+    "Do not commit raw Socratic dialogue, user learning state, uncertainty, reasoning history or personal context merely because it influenced a repository decision; promote only the impersonal repository conclusion through conversation_repository_promotion_contract."
   ],
-  "proof_ceiling": "Repository/static architecture and contract proof only. This contract defines and validates ownership boundaries, current GitHub Pages bundle mapping, local-only data classes, portable encrypted-save requirements, and PrivacyReducer output/batching policy. It does not prove browser IndexedDB/local persistence, encryption implementation, .pkenc export/import runtime, cross-device pairing, hosted sync, network anonymity, Collective Learning ingestion, or physical device behavior."
+  "proof_ceiling": "Repository/static architecture and contract proof only. This contract defines and validates ownership boundaries, current GitHub Pages bundle mapping, local-only data classes, portable encrypted-save requirements, and PrivacyReducer output/batching policy. It does not prove browser IndexedDB/local persistence, encryption implementation, .pkenc export/import runtime, cross-device pairing, hosted sync, network anonymity, Collective Learning ingestion, or physical device behavior. It also proves the declared conversation-to-repository graduation states, all-of promotion gate, repository-worthy artifact allowlist, and forbidden personal-state classes; it does not prove an agent runtime actually applied the gate to a live conversation."
 }
