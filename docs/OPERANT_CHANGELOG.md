@@ -9,10 +9,12 @@ Human-facing Operant releases. Git commit/artifact identity remains the forensic
 - feat(harness): Sprint 2 — P79 semantic coverage lifecycle + required checks (#594) (`7ecbf642`)
 - feat(governance): establish binding law that copy panels are agent transport (#602) (`895e7cdf`)
 - feat(prompt-kit): add per-prompt compute variant controls (#608) (`c9bcf5b2`)
+- feat(prompt-kit): gate conversation to repository promotion (`4a216763`)
 
 ### Fixes / performance
 
 - fix(prompt-kit): recover canonical P07 copy identity (#607) (`1ea0e465`)
+- fix(prompt-kit): fail closed on promotion policy drift (`3316ac50`)
 
 ## 0.10.1 - 2026-09-19
 
