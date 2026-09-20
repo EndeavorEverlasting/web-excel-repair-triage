@@ -1,0 +1,89 @@
+{
+  "schema_version": "upstream-capability-watch-forensics/v1",
+  "repository": "EndeavorEverlasting/web-excel-repair-triage",
+  "evidence_floor": {
+    "main_sha": "b9089975e5dd87bc710102b4d35af54e4c499709",
+    "plan_pr": 611,
+    "plan_merge_sha": "b9089975e5dd87bc710102b4d35af54e4c499709"
+  },
+  "subject": {
+    "source_id": "mattpocock-skills",
+    "source_repository": "mattpocock/skills",
+    "resource_id": "mattpocock-skills:productivity/teach",
+    "resource_path": "skills/productivity/teach/SKILL.md",
+    "observed_teach_blob_sha": "c679eeccd48ca720c8196e5d9a9e58223abf213b"
+  },
+  "decisive_runtime_evidence": {
+    "workflow": "Operant external resource refresh",
+    "schedule": "37 5 * * *",
+    "run_id": 35332457839,
+    "run_started_at": "2026-09-18T10:00:22Z",
+    "run_conclusion": "failure",
+    "failing_step": "Compare live donor candidate with tracked projection",
+    "artifact_id": 10541966248,
+    "tracked_matt_floor": "959a8e9f1edc3adbe2f7e3054bb6fbefa6696260",
+    "tracked_matt_resource_count": 37,
+    "candidate_matt_floor": "74ca5fe077456a0b3b2f5310cf9430999fd0b5fd",
+    "candidate_matt_resource_count": 38,
+    "added_resource_id": "mattpocock-skills:in-progress/pr"
+  },
+  "upstream_comparisons": [
+    {
+      "base": "959a8e9f1edc3adbe2f7e3054bb6fbefa6696260",
+      "head": "74ca5fe077456a0b3b2f5310cf9430999fd0b5fd",
+      "teach_changed": false,
+      "changed_skill_paths": [
+        "skills/in-progress/pr/SKILL.md"
+      ]
+    },
+    {
+      "base": "74ca5fe077456a0b3b2f5310cf9430999fd0b5fd",
+      "head": "c55ee46073ed923f86ce59a5eb3b6d895095d1b7",
+      "teach_changed": false,
+      "changed_skill_paths": [
+        "skills/in-progress/pr/SKILL.md"
+      ]
+    }
+  ],
+  "dispositions": [
+    {
+      "id": "SOURCE_UNWATCHED",
+      "result": "CONFIRMED_FALSE",
+      "root_cause": false
+    },
+    {
+      "id": "POLL_NOT_SCHEDULED",
+      "result": "CONFIRMED_FALSE",
+      "root_cause": false
+    },
+    {
+      "id": "IDENTITY_DETECTION_GAP",
+      "result": "CONFIRMED_DEFECT",
+      "root_cause": false,
+      "notes": "precision defect; donor drift was still detected"
+    },
+    {
+      "id": "IMPACT_EDGE_MISSING",
+      "result": "CONFIRMED_DEFECT",
+      "root_cause": false,
+      "notes": "independent downstream routing defect"
+    },
+    {
+      "id": "VISIBILITY_GAP",
+      "result": "CONFIRMED_DEFECT",
+      "root_cause": true,
+      "notes": "earliest proven post-detection break"
+    }
+  ],
+  "correction": {
+    "direct_teach_revision_missed": false,
+    "statement": "The inspected September drift was a Matt repository change centered on the PR skill, not a productivity/teach file revision. Local teaching owners still require separate semantic reconciliation."
+  },
+  "next_transition": {
+    "lane_id": "u1-capability-watch-contract-floor",
+    "owner": "P102 / harness contract owner",
+    "action": "Inspect and extend canonical contracts first for capability identity, observed-vs-processed state, dedupe, impact edges, event routing, and promotion policy.",
+    "new_contract_rule": "Create a new watch contract only after evidence proves canonical contracts are insufficient and the dispatch manifest is refreshed before owning that new path."
+  },
+  "proof_ceiling": "Repository/provider/runtime-history forensics only; no live repaired AFK path or teaching-efficacy proof."
+}

@@ -1,51 +1,10 @@
 {
   "schema_version": "prompt-parallel-dispatch/v1",
-  "run_id": "upstream-capability-watch-20260920",
+  "run_id": "upstream-capability-watch-20260920-wave1",
   "graph_width": 2,
   "parallel_disposition": "DEGRADED",
   "autonomy_gap": "No native sub-agent API, local repository runner, AgentSwitchboard/OpenCode/Cursor execution adapter, workflow-dispatch action, or mounted repository process runner is exposed in the current ChatGPT environment. The GitHub connector provides provider inspection/mutation but not an autonomous bounded coding-worker operation. Consume this manifest through the first evidenced local/AgentSwitchboard runner when available; do not claim observed parallelism from serial provider calls.",
   "lanes": [
-    {
-      "lane_id": "u0a-missed-teach-forensics",
-      "mission": "Classify SOURCE_UNWATCHED, POLL_NOT_SCHEDULED, IDENTITY_DETECTION_GAP, IMPACT_EDGE_MISSING, and VISIBILITY_GAP for the missed Matt Pocock teach update from current repository/provider evidence.",
-      "dependencies": [],
-      "owned_mutation_surfaces": [
-        "harness/reports/UPSTREAM_CAPABILITY_WATCH_FORENSICS.md",
-        "Outputs/upstream-capability-watch/forensics.json"
-      ],
-      "forbidden_surfaces": [
-        "Prompt Kit prompt bodies",
-        "external-resource canonical projections except read-only inspection",
-        "scheduler mutation",
-        "automatic prompt promotion"
-      ],
-      "adapter": {
-        "kind": "connected_provider",
-        "rung": 3
-      },
-      "launch": {
-        "mode": "runtime_tool",
-        "tool": "GitHub",
-        "operation": "upstream_capability_watch_forensics",
-        "arguments": {
-          "repository": "EndeavorEverlasting/web-excel-repair-triage",
-          "plan": "docs/plans/UPSTREAM_CAPABILITY_WATCH_SPRINT_MAP.md",
-          "source_id": "mattpocock-skills",
-          "resource_id": "mattpocock-skills:productivity/teach"
-        }
-      },
-      "expected_artifacts": [
-        "evidence-backed five-disposition forensic report",
-        "machine-readable forensic receipt when repo convention supports it"
-      ],
-      "validation": [
-        "every disposition is PASS/FAIL/UNKNOWN with evidence",
-        "actual schedule execution is not inferred from schedule configuration",
-        "earliest broken boundary and independent downstream defects are both recorded"
-      ],
-      "convergence_owner": "Prompt Kit upstream-capability-watch coordinator",
-      "status": "BLOCKED"
-    },
     {
       "lane_id": "u0b-design-authoring-source-research",
       "mission": "Establish authoritative, versionable Claude/Anthropic design and skill-authoring source surfaces and map reusable mechanics to existing Prompt Kit owners without registry mutation.",
@@ -83,14 +42,12 @@
         "no donor authority is promoted into local mutation authority"
       ],
       "convergence_owner": "P79 / UX owner research coordinator",
-      "status": "BLOCKED"
+      "status": "PLANNED"
     },
     {
       "lane_id": "u1-capability-watch-contract-floor",
       "mission": "Inspect and extend the current canonical external-resource contracts first to express watched-capability identity/state/event/impact/dedupe/promotion semantics; create a new watch contract only after evidence proves the canonical owners cannot represent the required state, and refresh this manifest before owning any new contract path.",
-      "dependencies": [
-        "u0a-missed-teach-forensics"
-      ],
+      "dependencies": [],
       "owned_mutation_surfaces": [
         "harness/contracts/operant-external-resource-intake.v1.json",
         "registry/resources/upstream-capability-impact-edges.v1.json",
@@ -132,247 +89,7 @@
         "promotion cannot jump changed to integrated"
       ],
       "convergence_owner": "P102 / harness contract owner",
-      "status": "BLOCKED"
-    },
-    {
-      "lane_id": "u2a-runtime-detection-p115-routing",
-      "mission": "Extend the current external-resource refresh seam to detect per-capability identities, persist/process transitions safely, emit deduped change events, and route accepted impact events to P115 without scheduler or merge authority.",
-      "dependencies": [
-        "u1-capability-watch-contract-floor"
-      ],
-      "owned_mutation_surfaces": [
-        "scripts/upstream_capability_watch.py",
-        "scripts/prompt_kit_afk_signal_router.py",
-        ".github/workflows/operant-external-resource-refresh.yml",
-        "tests/test_upstream_capability_watch_runtime.py",
-        "tests/test_prompt_kit_afk_signal_router.py"
-      ],
-      "forbidden_surfaces": [
-        "registry/prompts/tutorial-discovery-prompts.v1.json",
-        "Prompt Kit generated HTML",
-        "automatic prompt rewrite",
-        "scheduler direct default-branch mutation",
-        "credentials or donor bodies in receipts"
-      ],
-      "adapter": {
-        "kind": "connected_provider",
-        "rung": 3
-      },
-      "launch": {
-        "mode": "runtime_tool",
-        "tool": "GitHub",
-        "operation": "runtime_detection_p115_routing",
-        "arguments": {
-          "repository": "EndeavorEverlasting/web-excel-repair-triage",
-          "plan": "docs/plans/UPSTREAM_CAPABILITY_WATCH_SPRINT_MAP.md"
-        }
-      },
-      "expected_artifacts": [
-        "per-capability observed/processed state machine",
-        "deduped upstream_capability.changed event",
-        "P115 routing adapter",
-        "workflow proof artifact"
-      ],
-      "validation": [
-        "A→B emits once",
-        "repeated B emits none",
-        "routing failure leaves processed=A",
-        "sensitive/raw donor content rejected"
-      ],
-      "convergence_owner": "P115 / P102 integration coordinator",
-      "status": "BLOCKED"
-    },
-    {
-      "lane_id": "u2b-teach-impact-reconciliation",
-      "mission": "Add explicit Matt teach impact mappings and reconcile P96/P98/P65 only where semantic comparison proves a local gap.",
-      "dependencies": [
-        "u1-capability-watch-contract-floor"
-      ],
-      "owned_mutation_surfaces": [
-        "registry/resources/upstream-capability-impact-edges.v1.json",
-        "registry/prompts/tutorial-discovery-prompts.v1.json",
-        "tests/test_prompt_registry_expansion_regression_design_teach.py",
-        "tests/test_prompt_kit_discovery.py"
-      ],
-      "forbidden_surfaces": [
-        "scripts/upstream_capability_watch.py",
-        "scripts/prompt_kit_afk_signal_router.py",
-        "donor wording copied wholesale",
-        "P79 bypass",
-        "hand-edited generated Prompt Kit"
-      ],
-      "adapter": {
-        "kind": "connected_provider",
-        "rung": 3
-      },
-      "launch": {
-        "mode": "runtime_tool",
-        "tool": "GitHub",
-        "operation": "teach_impact_reconciliation",
-        "arguments": {
-          "repository": "EndeavorEverlasting/web-excel-repair-triage",
-          "plan": "docs/plans/UPSTREAM_CAPABILITY_WATCH_SPRINT_MAP.md",
-          "blocking_prs": [
-            561
-          ]
-        }
-      },
-      "expected_artifacts": [
-        "teach→local-owner impact edges",
-        "semantic delta/disposition receipt",
-        "bounded prompt changes only if evidence requires them"
-      ],
-      "validation": [
-        "current upstream teach blob identity pinned in review evidence",
-        "teaching semantic regressions pass",
-        "generated-site parity passes if prompt sources change"
-      ],
-      "convergence_owner": "P79 / teaching prompt owner",
-      "status": "BLOCKED"
-    },
-    {
-      "lane_id": "u3-design-authoring-intake",
-      "mission": "Register only authoritative design/skill-authoring donor surfaces admitted by research and map them to existing prompt/UX owners through the capability-watch contract.",
-      "dependencies": [
-        "u0b-design-authoring-source-research",
-        "u1-capability-watch-contract-floor",
-        "u2b-teach-impact-reconciliation"
-      ],
-      "owned_mutation_surfaces": [
-        "harness/contracts/operant-external-resource-intake.v1.json",
-        "registry/resources/upstream-capability-impact-edges.v1.json",
-        "tests/test_operant_external_resources.py"
-      ],
-      "forbidden_surfaces": [
-        "new universal design prompt identity without owner-gap proof",
-        "donor-body bulk import",
-        "automatic promotion",
-        "generated Prompt Kit source bypass"
-      ],
-      "adapter": {
-        "kind": "connected_provider",
-        "rung": 3
-      },
-      "launch": {
-        "mode": "runtime_tool",
-        "tool": "GitHub",
-        "operation": "design_authoring_intake",
-        "arguments": {
-          "repository": "EndeavorEverlasting/web-excel-repair-triage",
-          "plan": "docs/plans/UPSTREAM_CAPABILITY_WATCH_SPRINT_MAP.md"
-        }
-      },
-      "expected_artifacts": [
-        "authoritative donor registration where justified",
-        "authoring→P79 impact mappings",
-        "design/UX→current UX owner mappings"
-      ],
-      "validation": [
-        "external-resource validation green",
-        "all registered sources remain bounded and pinned",
-        "impact edges resolve to current canonical owners"
-      ],
-      "convergence_owner": "P79 / external-resource intake owner",
-      "status": "BLOCKED"
-    },
-    {
-      "lane_id": "u4-capability-radar-ux",
-      "mission": "Expose receipt-derived capability-watch state in Prompt Kit without creating a second state owner, after reconciling current UI/generated-output PR collisions.",
-      "dependencies": [
-        "u2a-runtime-detection-p115-routing",
-        "u3-design-authoring-intake"
-      ],
-      "owned_mutation_surfaces": [
-        "docs/prompt-kit-external-resources.js",
-        "docs/prompt-kit-guided-recommendations.js",
-        "web/prompt-kit/index.html",
-        "tests/test_ux_design_prompt_suite.py"
-      ],
-      "forbidden_surfaces": [
-        "watch-state persistence ownership",
-        "P115 routing semantics",
-        "raw donor bodies",
-        "unreconciled overwrite of PR #431 or #561 work"
-      ],
-      "adapter": {
-        "kind": "connected_provider",
-        "rung": 3
-      },
-      "launch": {
-        "mode": "runtime_tool",
-        "tool": "GitHub",
-        "operation": "capability_radar_ux",
-        "arguments": {
-          "repository": "EndeavorEverlasting/web-excel-repair-triage",
-          "plan": "docs/plans/UPSTREAM_CAPABILITY_WATCH_SPRINT_MAP.md",
-          "blocking_prs": [
-            431,
-            561
-          ]
-        }
-      },
-      "expected_artifacts": [
-        "CURRENT/UPSTREAM_CHANGED/EVALUATING/CANDIDATE/DECLINED/INTEGRATED presentation",
-        "provenance link to watch event/review state",
-        "responsive/keyboard behavior through current UX owners"
-      ],
-      "validation": [
-        "UI reads canonical state",
-        "browser/UX regressions pass",
-        "generated-site parity exact"
-      ],
-      "convergence_owner": "Prompt Kit UX owner",
-      "status": "BLOCKED"
-    },
-    {
-      "lane_id": "u5-end-to-end-replay-convergence",
-      "mission": "Prove the synthetic A→B→visible→processed chain, dedupe replay, B→C next transition, promotion boundary, and converge exact green owners onto refreshed main.",
-      "dependencies": [
-        "u2a-runtime-detection-p115-routing",
-        "u2b-teach-impact-reconciliation",
-        "u3-design-authoring-intake",
-        "u4-capability-radar-ux"
-      ],
-      "owned_mutation_surfaces": [
-        "tests/test_upstream_capability_watch_e2e.py",
-        "Outputs/upstream-capability-watch/",
-        "docs/plans/UPSTREAM_CAPABILITY_WATCH_SPRINT_MAP.md",
-        ".ai/WORK_QUEUE.md"
-      ],
-      "forbidden_surfaces": [
-        "promotion without required approval",
-        "production/due-time observation claims without evidence",
-        "unrelated open PR cleanup"
-      ],
-      "adapter": {
-        "kind": "connected_provider",
-        "rung": 3
-      },
-      "launch": {
-        "mode": "runtime_tool",
-        "tool": "GitHub",
-        "operation": "upstream_capability_watch_convergence",
-        "arguments": {
-          "repository": "EndeavorEverlasting/web-excel-repair-triage",
-          "plan": "docs/plans/UPSTREAM_CAPABILITY_WATCH_SPRINT_MAP.md"
-        }
-      },
-      "expected_artifacts": [
-        "end-to-end transition receipt",
-        "dedupe proof",
-        "mainline containment/content proof",
-        "updated durable plan/ledger closeout"
-      ],
-      "validation": [
-        "A→B exactly once",
-        "failed routing preserves processed=A",
-        "B replay no duplicate",
-        "B→C exactly once",
-        "review-required promotion enforced",
-        "required deterministic floor passes"
-      ],
-      "convergence_owner": "P07 / upstream-capability-watch convergence coordinator",
-      "status": "BLOCKED"
+      "status": "PLANNED"
     }
   ]
 }
