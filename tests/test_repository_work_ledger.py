@@ -131,6 +131,42 @@ class RepositoryWorkLedgerTests(unittest.TestCase):
         ))
         self.assertNotEqual(result.returncode, 0)
         self.assertIn('durable merge integration proof is required', result.stderr)
+    def test_nonexistent_artifact_cannot_satisfy_done(self):
+        result = self.run_temp(task(
+            Status='DONE',
+            Owner='agent-session',
+            **{
+                'Last proof': 'merge:1234567890abcdef1234567890abcdef12345678; artifact:this-does-not-exist',
+                'Next action': 'none; no safe actionable work remains',
+            }
+        ))
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn('declared existing artifact/operator-proof', result.stderr)
+
+    def test_declared_existing_artifact_can_supply_non_merge_acceptance_proof(self):
+        result = self.run_temp(task(
+            Status='DONE',
+            Owner='agent-session',
+            References='`AGENTS.md`',
+            **{
+                'Last proof': 'merge:1234567890abcdef1234567890abcdef12345678; artifact:AGENTS.md',
+                'Next action': 'none; no safe actionable work remains',
+            }
+        ))
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+
+    def test_done_rejects_placeholder_acceptance_gate(self):
+        result = self.run_temp(task(
+            Status='DONE',
+            Owner='agent-session',
+            **{
+                'Acceptance gate': 'pending',
+                'Last proof': 'merge:1234567890abcdef1234567890abcdef12345678; workflow:123456789',
+                'Next action': 'none; no safe actionable work remains',
+            }
+        ))
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn('DONE requires a non-placeholder Acceptance gate', result.stderr)
     def test_done_accepts_merge_plus_validation_evidence(self):
         result = self.run_temp(task(
             Status='DONE',
@@ -183,6 +219,10 @@ class RepositoryWorkLedgerTests(unittest.TestCase):
         result = self.run_temp(task(Status='DONE', Owner='agent-session', **{'Last proof': 'merge:1234567890abcdef1234567890abcdef12345678; workflow:123456789', 'Next action': 'none; no safe actionable work remains'}))
         self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
 
+    def test_ready_rejects_active_gate(self):
+        result = self.run_temp(task(Status='READY', Gate='operator authentication required'))
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn('READY is AFK-dispatchable only with Gate: none', result.stderr)
     def test_operator_requires_gate(self):
         result = self.run_temp(task(Status='OPERATOR', Owner='operator', Gate='none'))
         self.assertNotEqual(result.returncode, 0)

@@ -100,12 +100,16 @@
   "done_gate": {
     "merged_pr_alone_sufficient": false,
     "required": [
-      "acceptance_gate_satisfied",
+      "acceptance_gate_non_placeholder",
       "durable_non_merge_validation_or_acceptance_proof",
       "durable_merge_integration_proof",
       "gate_none",
       "canonical_terminal_next_action"
     ]
   },
-  "proof_ceiling": "Static repository coordination semantics only. This contract proves issue/ticket-versus-execution-evidence separation and AFK state meaning; it does not prove a live scheduler, GitHub Projects board, autonomous agent dispatch, or external runtime behavior."
+  "proof_ceiling": "Static repository coordination semantics only. This contract proves issue/ticket-versus-execution-evidence separation, AFK state meaning, gate-state consistency, and durable proof-shape requirements. It does not prove that Acceptance gate prose is semantically satisfied, a live scheduler exists, GitHub Projects is configured, autonomous dispatch occurred, or external runtime behavior succeeded.",
+  "ready_gate": {
+    "gate_must_equal": "none",
+    "unresolved_dependency_rule": "Any unresolved dependency or operator-only prerequisite must be represented by a non-none Gate and a BLOCKED or OPERATOR state rather than READY."
+  }
 }

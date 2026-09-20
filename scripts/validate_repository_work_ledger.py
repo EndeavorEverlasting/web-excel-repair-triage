@@ -35,6 +35,7 @@ REQUIRED = [
 ]
 TERMINAL = 'none; no safe actionable work remains'
 UNASSIGNED_OWNERS = {'unclaimed', 'none', 'unknown', 'tbd', 'n/a'}
+INVALID_ACCEPTANCE_GATES = {'none', 'unknown', 'tbd', 'pending', 'n/a'}
 NON_ACTIONS = {
     TERMINAL, 'none', 'tbd', 'status unchanged', 'pr opened', 'tests passed',
     'ci green', 'wait', 'wait for review', 'review later', 'merge later', 'test later',
@@ -77,12 +78,17 @@ def durable_proof(value):
     ))
 
 
-def non_merge_acceptance_proof(value):
-    return any(re.search(pattern, value, re.I) for pattern in (
-        r'\b(?:workflow|run):#?\d+\b',
-        r'\bartifact:\S+',
-        r'\boperator-proof:\S+',
-    ))
+def non_merge_acceptance_proof(value, references):
+    if re.search(r'\b(?:workflow|run):#?\d+\b', value, re.I):
+        return True
+    candidates = []
+    candidates.extend(re.findall(r'\bartifact:([^\s;,]+)', value, re.I))
+    candidates.extend(re.findall(r'\boperator-proof:([^\s;,]+)', value, re.I))
+    for candidate in candidates:
+        normalized = candidate.rstrip(').')
+        if normalized in references and (ROOT / normalized).exists():
+            return True
+    return False
 
 def merge_integration_proof(value):
     return re.search(r'\bmerge:[0-9a-f]{7,40}\b', value, re.I) is not None
@@ -115,6 +121,11 @@ def validate_issue_progression_contract(path):
         errors.append('issue progression allowed anchor patterns drifted')
     if tuple(identity.get('forbidden_anchor_prefixes', [])) != FORBIDDEN_WORK_ITEM_PREFIXES:
         errors.append('issue progression forbidden work-item prefixes drifted')
+    ready_gate = payload.get('ready_gate', {})
+    if ready_gate.get('gate_must_equal') != 'none':
+        errors.append('READY gate must remain none')
+    if 'BLOCKED or OPERATOR' not in str(ready_gate.get('unresolved_dependency_rule', '')):
+        errors.append('READY unresolved dependency routing rule drifted')
     evidence = payload.get('execution_evidence', {})
     if evidence.get('ledger_field') != 'Branch / PR':
         errors.append('execution evidence must remain bound to Branch / PR')
@@ -138,6 +149,8 @@ def validate_issue_progression_contract(path):
     if done_gate.get('merged_pr_alone_sufficient') is not False:
         errors.append('merged PR alone must never satisfy DONE')
     required = done_gate.get('required')
+    if not isinstance(required, list) or 'acceptance_gate_non_placeholder' not in required:
+        errors.append('DONE gate must require a non-placeholder acceptance gate')
     if not isinstance(required, list) or 'durable_non_merge_validation_or_acceptance_proof' not in required:
         errors.append('DONE gate must require durable non-merge validation or acceptance proof')
     if not isinstance(required, list) or 'durable_merge_integration_proof' not in required:
@@ -241,6 +254,8 @@ def validate(ledger_path, adoption_path=ADOPTION):
         owner = fields.get('Owner', '')
         work_item = fields.get('Work item', '')
         gate = fields.get('Gate', '')
+        acceptance = fields.get('Acceptance gate', '')
+        references = fields.get('References', '')
         proof = fields.get('Last proof', '')
         next_action = fields.get('Next action', '')
         if status and status not in STATUSES:
@@ -255,6 +270,8 @@ def validate(ledger_path, adoption_path=ADOPTION):
                 errors.append(f'{task_id}: invalid Work item anchor')
             elif work_item.startswith('ledger:') and work_item != f'ledger:{task_id}':
                 errors.append(f'{task_id}: ledger Work item anchor must match its task id')
+        if status == 'READY' and gate != 'none':
+            errors.append(f'{task_id}: READY is AFK-dispatchable only with Gate: none; use BLOCKED or OPERATOR for unresolved prerequisites')
         if status == 'CLAIMED' and (not owner or owner.strip().lower() in UNASSIGNED_OWNERS):
             errors.append(f'{task_id}: CLAIMED requires a concrete owner')
         if status in CONTINUATION:
@@ -266,8 +283,10 @@ def validate(ledger_path, adoption_path=ADOPTION):
         if status == 'DONE':
             if not durable_proof(proof):
                 errors.append(f'{task_id}: DONE requires durable Last proof')
-            if durable_proof(proof) and not non_merge_acceptance_proof(proof):
-                errors.append(f'{task_id}: merged/committed code alone cannot satisfy DONE; durable non-merge validation or acceptance proof is required')
+            if acceptance.strip().lower() in INVALID_ACCEPTANCE_GATES:
+                errors.append(f'{task_id}: DONE requires a non-placeholder Acceptance gate')
+            if durable_proof(proof) and not non_merge_acceptance_proof(proof, references):
+                errors.append(f'{task_id}: merged/committed code alone cannot satisfy DONE; durable validation/acceptance proof must be a workflow/run receipt or a declared existing artifact/operator-proof')
             if durable_proof(proof) and not merge_integration_proof(proof):
                 errors.append(f'{task_id}: validation/acceptance proof alone cannot satisfy DONE; durable merge integration proof is required')
             if gate != 'none':
