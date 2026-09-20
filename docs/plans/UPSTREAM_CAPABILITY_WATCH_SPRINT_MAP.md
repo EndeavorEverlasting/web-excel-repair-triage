@@ -27,7 +27,7 @@ Separately, route Claude/Anthropic design and skill-authoring prior art through 
 
 ## U0A forensic classification — PROVEN
 
-Canonical evidence: `harness/reports/UPSTREAM_CAPABILITY_WATCH_FORENSICS.md` and `Outputs/upstream-capability-watch/forensics.json`.
+Canonical evidence: `harness/reports/UPSTREAM_CAPABILITY_WATCH_FORENSICS.md` and `harness/reports/upstream-capability-watch-forensics.v1.json`.
 
 | Disposition | Proven result | Consequence |
 |---|---|---|

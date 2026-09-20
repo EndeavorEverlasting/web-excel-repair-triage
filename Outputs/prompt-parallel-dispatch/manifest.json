@@ -11,7 +11,7 @@
       "dependencies": [],
       "owned_mutation_surfaces": [
         "harness/reports/UPSTREAM_CAPABILITY_WATCH_FORENSICS.md",
-        "Outputs/upstream-capability-watch/forensics.json"
+        "harness/reports/upstream-capability-watch-forensics.v1.json"
       ],
       "forbidden_surfaces": [
         "Prompt Kit prompt bodies",
@@ -36,7 +36,7 @@
       },
       "expected_artifacts": [
         "harness/reports/UPSTREAM_CAPABILITY_WATCH_FORENSICS.md",
-        "Outputs/upstream-capability-watch/forensics.json"
+        "harness/reports/upstream-capability-watch-forensics.v1.json"
       ],
       "validation": [
         "SOURCE_UNWATCHED classified CONFIRMED_FALSE from registered donor/resource evidence",
