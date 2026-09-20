@@ -108,6 +108,38 @@ Prompt Kit local state
 
 **The raw Local Journal history stays on the device.** It is not eligible for Private Sync even merely because encryption is available.
 
+## Conversation → repository graduation
+
+Conversation is working memory, not automatic repository authority. The canonical machine-readable gate is `conversation_repository_promotion_contract` inside `harness/contracts/prompt-kit-cross-device-access.v1.json`.
+
+The governing rule is: **Interrogate privately; publish impersonally.** A user's answers may influence a repository decision, but the user's learning path, uncertainty, reasoning history, identity, and unrelated personal context do not become repository information.
+
+Promotion uses four states:
+
+1. **Private user context** — chat/device-local material such as knowledge gaps, mistakes, confidence, learning progress, identity, or raw dialogue. Never repository-eligible.
+2. **Working specification** — tentative interpretations, candidate requirements, or unresolved branches. Useful during discussion, but still non-canonical and non-repository by default.
+3. **Repository candidate** — an impersonal repository-specific conclusion has been derived, but it remains non-canonical until every gate passes.
+4. **Repository truth** — the smallest canonical owner contains the reconciled, privacy-safe result and a fresh contributor no longer needs the originating conversation.
+
+Every promotion check is required. The candidate must be repository-relevant, stated impersonally, bound to a canonical owner and downstream consumer, supported by repository evidence or an explicit project decision, minimal, privacy/secret-safe, free of raw conversation or learning state, and reconciled against stronger current repository/provider/runtime truth. Any failed or unknown check means **keep it private or ephemeral**.
+
+Repository-worthy results include requirements, constraints, project/architecture decisions, acceptance criteria, invariants, interfaces, schemas, ownership boundaries, implementation/migration plans, test/proof requirements, unresolved repository questions with ownership, sanitized fixtures/examples, and privacy-safe evidence receipts. The repository does **not** receive raw conversation transcripts, quiz/mastery records, mistakes, knowledge gaps, confidence assessments, personal reasoning history, unrelated preferences, identity/contact data, private notes/journals, unrelated personal life context, credentials/secrets, session/device identifiers, or unauthorized private customer/project context.
+
+A useful transformation looks like:
+
+```text
+private conversation
+  -> derive repository-specific conclusion
+  -> remove user-specific context
+  -> rewrite as impersonal repository behavior/decision
+  -> reconcile with canonical evidence
+  -> write the minimum durable form to the smallest owner
+```
+
+Example: “I do not understand leases, but I want ownership to expire eventually” is not repository documentation. The promotable result is the project-level requirement that sprint ownership uses an expiring lease with an explicit renewal rule. The learning statement stays private.
+
+The consumer test is simple: **would a competent contributor who knows nothing about the originating user need this information to correctly understand, implement, test, operate, or maintain the repository?** If not, it does not graduate.
+
 ## Portable Private Sync v1
 
 Private Sync v1 is a protocol, not a Prompt Kit-owned cloud service.

@@ -122,6 +122,49 @@ EXPECTED_PAGES_BUNDLE = {
     ),
     ("/roster-log-v2/", "web/roster-log-v2/", "separate-static-app"),
 }
+EXPECTED_PROMOTION_STATES = {
+    "private_user_context",
+    "working_specification",
+    "repository_candidate",
+    "repository_truth",
+}
+EXPECTED_PROMOTION_GATE_CHECKS = {
+    "repository_relevant",
+    "impersonal_repository_statement",
+    "canonical_owner_identified",
+    "downstream_consumer_exists",
+    "evidence_or_explicit_project_decision",
+    "minimal_necessary_content",
+    "privacy_and_secret_safe",
+    "no_raw_conversation_or_learning_state",
+    "reconciled_with_stronger_repository_truth",
+}
+EXPECTED_REPOSITORY_WORTHY_ARTIFACTS = {
+    "repository requirements and constraints",
+    "project or architecture decisions",
+    "acceptance criteria and behavioral invariants",
+    "interfaces, schemas and ownership boundaries",
+    "implementation or migration plans",
+    "test, validation and proof requirements",
+    "unresolved repository questions with owner and blocking status",
+    "sanitized fixtures and repository examples",
+    "repository evidence or proof receipts that contain no forbidden personal context",
+    "rejected or superseded technical alternatives only when needed to prevent material rediscovery",
+}
+EXPECTED_NON_PROMOTABLE_CONVERSATION_CLASSES = {
+    "raw user messages or conversation transcripts",
+    "learning records, quiz results, mistakes or mastery history",
+    "knowledge gaps, uncertainty or confidence assessments",
+    "personal reasoning history or hidden chain-of-thought",
+    "personal preferences that are not themselves repository requirements",
+    "user identity, profile, contact or account data",
+    "private notes or local-journal history",
+    "health, career, financial, relationship or other unrelated personal context",
+    "credentials, secrets, recovery material or private tokens",
+    "session, conversation, trace or persistent user/device identifiers",
+    "private customer, organization or project context that is not authorized public repository truth",
+}
+
 PUBLIC_SOURCE_ROOTS = (
     "web/prompt-kit-mobile",
     "web/prompt-kit",
@@ -323,6 +366,65 @@ def validate_contract(payload: dict[str, Any]) -> dict[str, Any]:
         "collective_learning.must_never_receive",
     )
 
+    promotion = payload.get("conversation_repository_promotion_contract")
+    if not isinstance(promotion, dict):
+        raise PrivacyStorageError("conversation_repository_promotion_contract must be an object")
+    if promotion.get("schema") != "conversation-repository-promotion/v1":
+        raise PrivacyStorageError("conversation repository promotion schema drifted")
+    if promotion.get("authority") != "prompt-kit-cross-device-access/v1":
+        raise PrivacyStorageError("conversation repository promotion authority drifted")
+
+    states = promotion.get("states")
+    if not isinstance(states, dict) or set(states) != EXPECTED_PROMOTION_STATES:
+        raise PrivacyStorageError(
+            "conversation repository promotion states must be exactly "
+            + repr(sorted(EXPECTED_PROMOTION_STATES))
+        )
+    for state_name in EXPECTED_PROMOTION_STATES - {"repository_truth"}:
+        if states[state_name].get("repository_eligible") is not False:
+            raise PrivacyStorageError(f"{state_name} must remain ineligible for repository promotion")
+    if states["repository_truth"].get("repository_eligible") is not True:
+        raise PrivacyStorageError("repository_truth must remain the only repository-eligible state")
+
+    gate = promotion.get("promotion_gate")
+    if not isinstance(gate, dict) or gate.get("mode") != "all-of":
+        raise PrivacyStorageError("conversation repository promotion gate must remain all-of")
+    _require_exact_string_set(
+        gate.get("required_checks"),
+        EXPECTED_PROMOTION_GATE_CHECKS,
+        "conversation_repository_promotion.required_checks",
+    )
+    if gate.get("default_disposition") != "KEEP_PRIVATE_OR_EPHEMERAL":
+        raise PrivacyStorageError("failed/unknown promotion checks must default to private or ephemeral")
+    transformation = _require_nonempty_string_list(
+        gate.get("transformation"),
+        "conversation_repository_promotion.transformation",
+    )
+    _require_substrings(
+        transformation,
+        ("remove user identity", "rewrite the result as repository-level", "smallest canonical owner"),
+        "conversation_repository_promotion.transformation",
+    )
+
+    artifacts = promotion.get("repository_worthy_artifacts")
+    if not isinstance(artifacts, dict) or set(artifacts) != {"allowed", "forbidden"}:
+        raise PrivacyStorageError("repository_worthy_artifacts must contain allowed and forbidden")
+    _require_exact_string_set(
+        artifacts.get("allowed"),
+        EXPECTED_REPOSITORY_WORTHY_ARTIFACTS,
+        "conversation_repository_promotion.allowed",
+    )
+    _require_exact_string_set(
+        artifacts.get("forbidden"),
+        EXPECTED_NON_PROMOTABLE_CONVERSATION_CLASSES,
+        "conversation_repository_promotion.forbidden",
+    )
+    provenance = promotion.get("provenance_policy")
+    if not isinstance(provenance, dict) or provenance.get("personal_identity_required") is not False:
+        raise PrivacyStorageError("repository provenance must not require personal identity")
+    if "knows nothing about the originating user" not in str(promotion.get("consumer_test", "")):
+        raise PrivacyStorageError("conversation repository consumer test lost user-independence boundary")
+
     deployment = payload.get("deployment_surfaces")
     if not isinstance(deployment, dict) or set(deployment) != {"repository_authority", "github_pages", "user_device"}:
         raise PrivacyStorageError("deployment surfaces must be repository_authority, github_pages, and user_device")
@@ -432,6 +534,8 @@ def validate_contract(payload: dict[str, Any]) -> dict[str, Any]:
         "pages_bundle_count": len(bundle),
         "privacy_output_field_count": len(output_allowlist),
         "sync_allowed_field_count": len(allowed_fields),
+        "conversation_promotion_gate_count": len(EXPECTED_PROMOTION_GATE_CHECKS),
+        "repository_worthy_artifact_count": len(EXPECTED_REPOSITORY_WORTHY_ARTIFACTS),
     }
 
 
@@ -455,6 +559,9 @@ def validate_repository_surfaces() -> None:
         "web/prompt-kit-mobile/",
         "/afk-agent-flow/index.html",
         "raw Local Journal history stays on the device",
+        "Interrogate privately; publish impersonally",
+        "Repository candidate",
+        "repository-specific conclusion",
         "git ls-files",
     ):
         if phrase not in guide:

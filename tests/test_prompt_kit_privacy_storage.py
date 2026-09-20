@@ -201,5 +201,55 @@ class PromptKitPrivacyStorageTests(unittest.TestCase):
             privacy_storage.validate_contract(payload)
 
 
+    def test_conversation_to_repository_promotion_is_impersonal_and_all_of(self) -> None:
+        payload = self.load_contract()
+        promotion = payload["conversation_repository_promotion_contract"]
+        states = promotion["states"]
+        self.assertFalse(states["private_user_context"]["repository_eligible"])
+        self.assertFalse(states["working_specification"]["repository_eligible"])
+        self.assertFalse(states["repository_candidate"]["repository_eligible"])
+        self.assertTrue(states["repository_truth"]["repository_eligible"])
+        self.assertEqual(promotion["promotion_gate"]["mode"], "all-of")
+        self.assertEqual(
+            set(promotion["promotion_gate"]["required_checks"]),
+            privacy_storage.EXPECTED_PROMOTION_GATE_CHECKS,
+        )
+        self.assertIn(
+            "raw user messages or conversation transcripts",
+            promotion["repository_worthy_artifacts"]["forbidden"],
+        )
+        self.assertIn(
+            "learning records, quiz results, mistakes or mastery history",
+            promotion["repository_worthy_artifacts"]["forbidden"],
+        )
+        self.assertIn(
+            "repository requirements and constraints",
+            promotion["repository_worthy_artifacts"]["allowed"],
+        )
+        self.assertFalse(promotion["provenance_policy"]["personal_identity_required"])
+        self.assertIn("Interrogate privately; publish impersonally.", promotion["governing_invariants"])
+
+    def test_conversation_promotion_cannot_weaken_impersonal_gate(self) -> None:
+        payload = copy.deepcopy(self.load_contract())
+        checks = payload["conversation_repository_promotion_contract"]["promotion_gate"]["required_checks"]
+        checks.remove("impersonal_repository_statement")
+        checks.append("raw_dialogue_is_repository_truth")
+        with self.assertRaisesRegex(
+            privacy_storage.PrivacyStorageError,
+            "authoritative exact policy set",
+        ):
+            privacy_storage.validate_contract(payload)
+
+    def test_learning_or_reasoning_state_cannot_be_reclassified_as_repo_artifact(self) -> None:
+        payload = copy.deepcopy(self.load_contract())
+        forbidden = payload["conversation_repository_promotion_contract"]["repository_worthy_artifacts"]["forbidden"]
+        forbidden.remove("personal reasoning history or hidden chain-of-thought")
+        with self.assertRaisesRegex(
+            privacy_storage.PrivacyStorageError,
+            "authoritative exact policy set",
+        ):
+            privacy_storage.validate_contract(payload)
+
+
 if __name__ == "__main__":
     unittest.main()
