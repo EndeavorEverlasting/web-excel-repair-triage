@@ -1,28 +1,22 @@
 {
   "schema_version": "prompt-parallel-dispatch/v1",
-  "run_id": "runtime-compliance-sprint4-convergence-20260919",
-  "graph_width": 1,
-  "parallel_disposition": "NOT_APPLICABLE",
-  "autonomy_gap": null,
+  "run_id": "upstream-capability-watch-20260920-wave1",
+  "graph_width": 2,
+  "parallel_disposition": "DEGRADED",
+  "autonomy_gap": "No native sub-agent API, local repository runner, AgentSwitchboard/OpenCode/Cursor execution adapter, workflow-dispatch action, or mounted repository process runner is exposed in the current ChatGPT environment. The GitHub connector provides provider inspection/mutation but not an autonomous bounded coding-worker operation. Consume this manifest through the first evidenced local/AgentSwitchboard runner when available; do not claim observed parallelism from serial provider calls.",
   "lanes": [
     {
-      "lane_id": "lane-runtime-compliance-sprint4-safe-convergence",
-      "mission": "Register the Prompt Runtime Compliance deterministic suite in the repository test floor, rotate the active dispatch state to the current Sprint 4 convergence, and persist the current plan checkpoint without racing shared owners.",
+      "lane_id": "u0b-design-authoring-source-research",
+      "mission": "Establish authoritative, versionable Claude/Anthropic design and skill-authoring source surfaces and map reusable mechanics to existing Prompt Kit owners without registry mutation.",
       "dependencies": [],
       "owned_mutation_surfaces": [
-        "harness/test-floor.v1.json",
-        "Outputs/prompt-parallel-dispatch/manifest.json",
-        "harness/evals/PROMPT_RUNTIME_COMPLIANCE_PILOT_PLAN.md"
+        "harness/reports/UPSTREAM_DESIGN_AUTHORING_SOURCE_RESEARCH.md"
       ],
       "forbidden_surfaces": [
-        "harness/evals/repository-ai-evals.v1.json while PR #450 is open",
-        ".ai/WORK_QUEUE.md while PR #524 is open",
-        "harness/manifest.v1.json while PR #584 is open",
-        "harness/validators.v1.json while PR #584 is open",
-        "scripts/validate_harness.py while PR #584 is open",
-        "tests/test_harness_contract.py while PR #584 is open",
-        "Prompt Kit prompt bodies or generated site",
-        "external runtime evidence or provider credentials"
+        "Prompt Kit registries",
+        "external-resource source registration",
+        "generated Prompt Kit",
+        "automatic donor import"
       ],
       "adapter": {
         "kind": "connected_provider",
@@ -31,40 +25,40 @@
       "launch": {
         "mode": "runtime_tool",
         "tool": "GitHub",
-        "operation": "sprint4_safe_convergence",
+        "operation": "design_authoring_source_research",
         "arguments": {
           "repository": "EndeavorEverlasting/web-excel-repair-triage",
-          "base_sha": "42c53fa6445d39aa74dabdfeec4eb45bfa5d7a4d",
-          "proof_ceiling": "Repository deterministic/harness convergence only; external-agent compliance remains unobserved."
+          "plan": "docs/plans/UPSTREAM_CAPABILITY_WATCH_SPRINT_MAP.md"
         }
       },
       "expected_artifacts": [
-        "deterministic test-floor registration for all seven runtime-compliance regression modules",
-        "active dispatch manifest bound to the current Sprint 4 state",
-        "canonical plan checkpoint naming integrated floors and exact remaining owner blockers"
+        "authoritative-source/version disposition",
+        "license/usage boundary",
+        "local owner map",
+        "REGISTER/REFERENCE_ONLY/REJECT recommendation"
       ],
       "validation": [
-        "python3 -m pytest tests/test_deterministic_test_floor.py tests/test_prompt_runtime_compliance_contract.py tests/test_prompt_runtime_compliance_fixtures.py tests/test_prompt_runtime_compliance_validator.py tests/test_prompt_runtime_compliance_validator_hardening.py tests/test_prompt_runtime_compliance_runner.py tests/test_prompt_runtime_compliance_receipt_corpus.py tests/test_prompt_runtime_compliance_linkage.py -q",
-        "python3 scripts/prompt_parallel_dispatch.py validate --manifest Outputs/prompt-parallel-dispatch/manifest.json",
-        "python3 scripts/run_deterministic_test_floor.py --summary"
+        "source provenance is authoritative",
+        "no donor authority is promoted into local mutation authority"
       ],
-      "convergence_owner": "P07 runtime-compliance Sprint 4 coordinator",
+      "convergence_owner": "P79 / UX owner research coordinator",
       "status": "PLANNED"
     },
     {
-      "lane_id": "lane-runtime-compliance-p67-eval-registry",
-      "mission": "Register the runtime-compliance suite in the shared P67 repository AI evaluation registry after its existing owner releases the surface.",
-      "dependencies": [
-        "lane-runtime-compliance-sprint4-safe-convergence"
-      ],
+      "lane_id": "u1-capability-watch-contract-floor",
+      "mission": "Inspect and extend the current canonical external-resource contracts first to express watched-capability identity/state/event/impact/dedupe/promotion semantics; create a new watch contract only after evidence proves the canonical owners cannot represent the required state, and refresh this manifest before owning any new contract path.",
+      "dependencies": [],
       "owned_mutation_surfaces": [
-        "harness/evals/repository-ai-evals.v1.json"
+        "harness/contracts/operant-external-resource-intake.v1.json",
+        "registry/resources/upstream-capability-impact-edges.v1.json",
+        "tests/test_upstream_capability_watch.py",
+        "harness/test-floor.v1.json"
       ],
       "forbidden_surfaces": [
-        "PR #450 mutation or overwrite",
-        "P67 routing identities outside a refreshed reconciliation",
-        "Prompt Kit treatment behavior",
-        "observed external-agent proof promotion"
+        "browser feedback telemetry semantics",
+        "Prompt Kit prompt bodies",
+        "generated Prompt Kit",
+        "automatic donor-body persistence"
       ],
       "adapter": {
         "kind": "connected_provider",
@@ -73,22 +67,29 @@
       "launch": {
         "mode": "runtime_tool",
         "tool": "GitHub",
-        "operation": "reconcile_p67_eval_registry_after_owner_release",
+        "operation": "capability_watch_contract_floor",
         "arguments": {
           "repository": "EndeavorEverlasting/web-excel-repair-triage",
-          "blocking_pr": 450,
-          "target": "harness/evals/repository-ai-evals.v1.json"
+          "plan": "docs/plans/UPSTREAM_CAPABILITY_WATCH_SPRINT_MAP.md"
         }
       },
       "expected_artifacts": [
-        "one canonical runtime-compliance P67 suite registration with deterministic contract command and separate runtime proof ceiling"
+        "canonical external-resource contract extension decision with evidence",
+        "impact-edge registry shape",
+        "A/B/C identity fixtures",
+        "routing-failure lost-event negative fixture",
+        "deterministic test-floor registration",
+        "if canonical contracts are insufficient: an evidence-backed manifest amendment that explicitly owns the new contract path before creation"
       ],
       "validation": [
-        "python3 scripts/validate_harness.py",
-        "python3 -m unittest tests.test_repository_ai_eval_framework -v"
+        "existing canonical contracts are inspected and extended where sufficient; no new contract path is created by assumption",
+        "last_observed_identity and last_processed_identity are distinct",
+        "transition dedupe is enforced",
+        "missing impact edge retains source event",
+        "promotion cannot jump changed to integrated"
       ],
-      "convergence_owner": "P67 / skill-evaluation",
-      "status": "BLOCKED"
+      "convergence_owner": "P102 / harness contract owner",
+      "status": "PLANNED"
     }
   ]
 }
