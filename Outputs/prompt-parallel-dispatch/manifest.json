@@ -35,16 +35,20 @@
         }
       },
       "expected_artifacts": [
-        "evidence-backed five-disposition forensic report",
-        "machine-readable forensic receipt when repo convention supports it"
+        "harness/reports/UPSTREAM_CAPABILITY_WATCH_FORENSICS.md",
+        "Outputs/upstream-capability-watch/forensics.json"
       ],
       "validation": [
-        "every disposition is PASS/FAIL/UNKNOWN with evidence",
-        "actual schedule execution is not inferred from schedule configuration",
-        "earliest broken boundary and independent downstream defects are both recorded"
+        "SOURCE_UNWATCHED classified CONFIRMED_FALSE from registered donor/resource evidence",
+        "POLL_NOT_SCHEDULED classified CONFIRMED_FALSE from observed scheduled workflow runs",
+        "IDENTITY_DETECTION_GAP classified CONFIRMED_DEFECT from repo-SHA-only resource projection",
+        "IMPACT_EDGE_MISSING classified CONFIRMED_DEFECT from teach target_id=null",
+        "VISIBILITY_GAP classified CONFIRMED_DEFECT from run 35332457839 drift detection without P115/user routing",
+        "direct productivity/teach file change in the inspected September interval is explicitly rejected by upstream compare evidence",
+        "parallel execution remains DEGRADED; this serial coordinator proof does not claim observed parallelism"
       ],
       "convergence_owner": "Prompt Kit upstream-capability-watch coordinator",
-      "status": "BLOCKED"
+      "status": "PASS"
     },
     {
       "lane_id": "u0b-design-authoring-source-research",

@@ -4,7 +4,7 @@
 **Planning floor:** `main@70178017ffa5c27f4428d6aae733a61113a6f4ad`
 **Planning branch:** `plan/upstream-capability-watch-20260920`
 **Owner:** Prompt Kit upstream capability watch / P102 + P115 integration
-**Status:** TRACKED PLAN — implementation and live AFK visibility remain unproven.
+**Status:** TRACKED PLAN — U0A forensic classification PROVEN; U0B/U1+ implementation and live AFK visibility remain unproven.
 
 ## Mission
 
@@ -25,17 +25,19 @@ Separately, route Claude/Anthropic design and skill-authoring prior art through 
 - The historical /teach workspace implementation and P96/P98 strengthening live in `registry/prompts/tutorial-discovery-prompts.v1.json`.
 - Current open PR collision floor: #600 touches `harness/prompt-topology/EVIDENCE_SPINE_SPRINT_MAP.md`; #606 touches semantic/capability profile floors; #561 touches `registry/prompts/tutorial-discovery-prompts.v1.json` and generated Prompt Kit; #431 touches feedback workflow/runtime UI and generated Prompt Kit. No inspected open PR owns this new plan path or the active dispatch manifest.
 
-## Forensic dispositions to prove
+## U0A forensic classification — PROVEN
 
-Do not force one root cause. Record PASS / FAIL / UNKNOWN independently.
+Canonical evidence: `harness/reports/UPSTREAM_CAPABILITY_WATCH_FORENSICS.md` and `Outputs/upstream-capability-watch/forensics.json`.
 
-| Disposition | Current evidence | Planning posture |
+| Disposition | Proven result | Consequence |
 |---|---|---|
-| SOURCE_UNWATCHED | Donor source and `productivity/teach` resource are registered. No capability-watch state record is evidenced. | Donor-level registration PASS; capability-watch registration UNPROVEN. |
-| POLL_NOT_SCHEDULED | Daily workflow configuration exists. Scheduled-run history is not exposed by the current connector. | Configuration PASS; actual due-time execution UNKNOWN. |
-| IDENTITY_DETECTION_GAP | External projection tracks donor repo SHA; no per-resource blob identity is persisted in the index. | Strong candidate defect; must reproduce with unrelated repo SHA change vs stable skill blob and changed skill blob. |
-| IMPACT_EDGE_MISSING | `productivity/teach` has `target_id: null`; no P96/P98/P65 edge is evidenced. | Strong candidate defect. |
-| VISIBILITY_GAP | Workflow only compares/upload artifacts; no P115 event or user-facing status step is present. | Strong candidate defect. |
+| `SOURCE_UNWATCHED` | FALSE — Matt source and `productivity/teach` are registered. | Registration was not the incident cause. |
+| `POLL_NOT_SCHEDULED` | FALSE — daily scheduled runs are observed. | Scheduler absence was not the incident cause. |
+| `IDENTITY_DETECTION_GAP` | CONFIRMED DEFECT — resource rows use donor repo SHA rather than per-resource blob identity. | Capability-specific change attribution is noisy/imprecise. |
+| `IMPACT_EDGE_MISSING` | CONFIRMED DEFECT — current `teach` target is null. | No deterministic P96/P98/P65 evaluation route exists. |
+| `VISIBILITY_GAP` | CONFIRMED DEFECT — earliest proven post-detection break. | Run `35332457839` detected drift and uploaded evidence but emitted no P115/user signal. |
+
+Incident correction: the inspected September upstream delta did **not** modify `skills/productivity/teach/SKILL.md`; it added and then refined `skills/in-progress/pr/SKILL.md`. The local teaching lane may still be semantically behind broader upstream practice, but that is U2B work and is not promoted to fact by U0A.
 
 ## Non-negotiable data invariants
 
@@ -120,6 +122,7 @@ A observed/processed → B observed → durable change event → impact resoluti
 ## Sprint definitions
 
 ### U0A — Missed teach forensic classification
+**Status:** PROVEN on provider/runtime-history evidence.
 **Primary surface:** research/runtime proof.
 **Read first:** external-resource contract/index/sync/workflow; workflow evidence if accessible; P102 history; P115 routing contract/router; teaching prompt registry; P79 prior-art gate.
 **Outputs:** `harness/reports/UPSTREAM_CAPABILITY_WATCH_FORENSICS.md` plus machine-readable evidence receipt under an approved Outputs path if repo convention supports it.
@@ -219,7 +222,9 @@ Therefore current execution posture is **DEGRADED** for autonomous implementatio
 
 ## First executable continuation
 
-Owner: U0A forensic lane.
-Dependency: refreshed main and current provider evidence.
-Action: inspect the current external-resource workflow/run evidence available to the executing environment, compare registered donor floor and per-capability blob identity, inspect P115 routing inputs and impact metadata, then write the forensic report with every disposition typed PASS/FAIL/UNKNOWN.
-Completion gate: no disposition is inferred from absence; the earliest broken boundary and any independent downstream defects are explicitly recorded.
+Owner: U1 capability-watch contract-floor lane.
+Dependency: U0A forensic report is PROVEN; refreshed main and current canonical contracts.
+Action: inspect `harness/contracts/operant-external-resource-intake.v1.json` and adjacent existing contracts, then implement the smallest canonical extension that can represent per-capability identity, observed-vs-processed state, transition dedupe, impact edges, and review-required event routing. If those owners are demonstrably insufficient, update the dispatch manifest first to own a new contract path before creating it.
+Completion gate: deterministic A→B/replay/B→C fixtures plus routing-failure preservation prove that a new observed identity cannot be silently consumed before durable routing.
+
+Coordination note: `.ai/WORK_QUEUE.md` is temporarily owned by open PR #615, so U0A ledger synchronization is deferred to convergence rather than racing that shared file.
