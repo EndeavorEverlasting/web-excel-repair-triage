@@ -34,6 +34,7 @@
     "tests/test_p100_closeout_replay_prompt.py",
     "tests/test_p123_youtube_ingestion_behavior_eval_prompt.py",
     "tests/test_p67_source_faithfulness_eval_prompt.py",
+    "tests/test_p07_effective_prompt_identity.py",
     "tests/test_permissioned_repository_polling_prompt.py",
     "tests/test_prompt_classification_refiner_prompt.py",
     "tests/test_prompt_kit_durability_graduation_prompt.py",
@@ -140,5 +141,5 @@
   "validator_registry": "harness/validators.v1.json",
   "validator_profile": "pre_push",
   "canary_contract": "harness/contracts/deterministic-test-floor-canary.v1.json",
-  "proof_ceiling": "Deterministic clean-checkout Python, pinned direct test dependencies, test-floor self-contract, convention-covered Prompt Kit semantic regressions with the registered generated-site negative canary, public/synthetic artifact-engine tests with fail-closed private-input handling, registered harness/validator checks, Prompt Kit static/generated-parity checks, repository hygiene, and branch patch hygiene on the executed checkout. The separate canonical private-input gate runs exact real-input regressions only when its registered operator inputs are supplied. Hosted provider workflows may independently contribute exact-candidate CI evidence, but this deterministic-floor report does not itself prove provider-workflow execution, production behavior, privileged-device behavior, secret-bearing behavior, operator acceptance, or observed external-agent compliance. Prompt Runtime Compliance contract, oracle-corpus, semantic-validator/hardening, runner, and linkage regressions are directly included in this floor."
+  "proof_ceiling": "Deterministic clean-checkout Python, pinned direct test dependencies, test-floor self-contract, convention-covered Prompt Kit semantic regressions with the registered generated-site negative canary, public/synthetic artifact-engine tests with fail-closed private-input handling, registered harness/validator checks, Prompt Kit static/generated-parity checks, repository hygiene, and branch patch hygiene on the executed checkout. The separate canonical private-input gate runs exact real-input regressions only when its registered operator inputs are supplied. Hosted provider workflows may independently contribute exact-candidate CI evidence, but this deterministic-floor report does not itself prove provider-workflow execution, production behavior, privileged-device behavior, secret-bearing behavior, operator acceptance, or observed external-agent compliance. P07 canonical-copy identity is directly retained in the floor so Compute Mode cannot replace canonical prompt text with compiled profile metadata. Prompt Runtime Compliance contract, oracle-corpus, semantic-validator/hardening, runner, and linkage regressions are directly included in this floor."
 }
