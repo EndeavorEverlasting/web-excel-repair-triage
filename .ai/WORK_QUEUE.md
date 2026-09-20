@@ -314,3 +314,19 @@ Canonical terminal action: none; no safe actionable work remains
 - **Last proof:** artifact:`docs/plans/FIRSTMATE_ASB_PROMPT_KIT_VISION_OWNER_MAP.md` created on branch; planning floor pinned; awaiting commit/push/PR
 - **Next action:** commit, push, open PR, run local proof, merge if gates pass
 - **Updated:** 2026-09-19T21:54:00Z
+
+## TRQ-020 — Upstream capability watch + prompt impact sprint map
+
+- **Status:** READY
+- **Priority:** P1
+- **Owner:** upstream-capability-watch-20260920
+- **Branch / PR:** `plan/upstream-capability-watch-20260920` / #611 open
+- **Scope:** classify the missed Matt Pocock `teach` signal; add capability-level identity and observed-vs-processed watch state; preserve external-resource intake as donor discovery authority; add deduped source-change events, impact edges, review-required promotion policy, and P115 visibility routing; reconcile P96/P98/P65 only from evidence; research and then admit authoritative design/skill-authoring donor surfaces; expose receipt-derived capability status; prove synthetic A→B routing and dedupe
+- **Forbidden:** second donor registry; browser telemetry as provider polling; raw donor-body persistence; automatic prompt rewrite/promotion; P79 bypass; human scheduling as the primary parallel-dispatch path; claiming due-time AFK observation from schedule configuration; overwriting open PR #431/#561/#600/#606 owned surfaces without refresh/reconciliation
+- **Dependencies:** `main@70178017ffa5c27f4428d6aae733a61113a6f4ad`; `harness/contracts/operant-external-resource-intake.v1.json`; `.github/workflows/operant-external-resource-refresh.yml`; P102 polling semantics; P115 AFK coordinator; P79 upstream prior-art gate
+- **References:** `docs/plans/UPSTREAM_CAPABILITY_WATCH_SPRINT_MAP.md`, `Outputs/prompt-parallel-dispatch/manifest.json`, `scripts/prompt_kit_afk_signal_router.py`, `registry/prompts/tutorial-discovery-prompts.v1.json`, `web/prompt-kit/resources.v1.json`
+- **Acceptance gate:** five forensic dispositions evidence-typed; per-capability immutable identity tracked separately from repository revision; `last_observed_identity` cannot advance `last_processed_identity` before durable routing; one A→B transition yields one event; zero-impact retains a diagnosable event; P115 receives bounded actionable change evidence; promotion remains review-required; teaching/design changes require owner/semantic proof; user-visible status reads canonical watch/review state; exact green result converges to refreshed main
+- **Gate:** current ChatGPT environment has no exposed native/local autonomous repo worker or workflow-dispatch action; manifest graph width is 2 and records DEGRADED execution with an explicit autonomy gap
+- **Last proof:** plan:78809b8cb264715731d4dbb57824385566ce0ece; dispatch-manifest:74d9196c3f88f5f81f5607d3a9871a758d3f6903; provider evidence confirms registered Matt donor, daily drift-proof schedule, current `teach` resource with null local target, and read-only workflow with no P115 routing
+- **Next action:** Execute U0A's evidence-backed missed-`teach` forensic lane and write `harness/reports/UPSTREAM_CAPABILITY_WATCH_FORENSICS.md`; dispatch U0B authoritative design/skill-authoring source research in parallel when an autonomous adapter is available; start U1 only after U0A establishes the exact failure boundary
+- **Updated:** 2026-09-20T20:00:00Z
