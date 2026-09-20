@@ -1,6 +1,6 @@
 # Prompt Compilation & Adaptive Language — Canonical Sprint Map
 
-**Status:** TRACKED / SPRINTS 1–5 INTEGRATED ON MAIN VIA #483/#485/#515/#519/#522; SPRINT 6 IMPLEMENTING
+**Status:** TRACKED / SPRINTS 1–6 INTEGRATED; P07 CANONICAL-COPY RECOVERY INTEGRATED VIA #607; SPRINT 7 IMPLEMENTING
 **Repository:** `EndeavorEverlasting/web-excel-repair-triage`
 **Planning floor:** refreshed `main@6330440281d7d970db726140b44f033be819c9d0` (provider refresh 2026-09-17)
 **Architecture authority:** `harness/prompt-compilation/PROMPT_COMPILATION_ARCHITECTURE.md`
@@ -131,7 +131,7 @@ Move Prompt Kit from a library of hand-maintained English prompts toward a **sel
 
 - `docs/prompt-kit-compute-mode.js` (user default + prompt overrides + run override; Exhaustive/Efficient UI)
 - storage lifecycle personal-state keys for Compute Mode
-- polish copy routing through `PromptKitComputeMode.resolveCopyContent` while preserving operator-visible canonical `copyContent`; `compiledEffectivePrompts` remain execution-profile metadata/fallback and may not replace a present canonical body
+- polish copy routing through `PromptKitComputeMode.resolveCopyContent` while preserving operator-visible canonical `copyContent`; global/user/run execution-profile resolution may not replace a present canonical body, and a compiled Efficient variant may replace canonical copy only after an explicit per-prompt Efficient choice
 - builder Language Engine attachment of `compiledEffectivePrompts` for semantics-backed prompts (P07)
 - `harness/prompt-compilation/semantics/P07.json` + `build-context/default.v1.json`
 - regenerate `web/prompt-kit/index.html` via `scripts/build_prompt_kit_registry.py`
@@ -216,6 +216,48 @@ Move Prompt Kit from a library of hand-maintained English prompts toward a **sel
 6. `git diff --check`
 
 **Proof ceiling:** exact-head headless Chromium may promote the Compute Mode browser journey to `browser_runtime_observed`. It does not prove public-Pages deployment, physical-device/operator acceptance, external-agent behavior, or live P115 consumption.
+
+### Sprint 7 — Explicit per-prompt content variants
+
+**Status:** IMPLEMENTING on PR #608 from recovered `main@1ea0e465ab20b8fcb7a6071d85345e0c3916eabb`.
+
+**Dependency:** #607 restored canonical P07 copy identity and retained it in the deterministic floor. Sprint 7 may expose compiled variants again only behind an explicit prompt-level user choice; it may not reintroduce compiled-first clipboard routing.
+
+**Product contract:**
+
+- Exhaustive is the product/default prompt-content variant and maps to the full canonical `copyContent` when canonical content exists.
+- Efficient is an optional shorter compiled variant and is selected only by an explicit per-prompt control in that prompt's detail panel.
+- Global Compute Mode user preference and explicit run profile remain execution-policy metadata; neither may silently change the clipboard body of a canonical prompt.
+- Selecting Efficient stores only that prompt's sparse override. Selecting Exhaustive clears the prompt override and returns to the full canonical body.
+- The detail control mounts lazily only for a prompt that actually exposes at least two usable variants. Prompts without variants render no per-prompt variant control.
+- Catalog size must not create one persistent UI control or stored override per prompt. Variant UI cost follows the opened detail/variant-bearing prompt, not total catalog size.
+
+**Owned:**
+
+- `docs/prompt-kit-compute-mode.js` explicit variant discovery, copy resolution, lazy detail control, and sparse override behavior
+- retained P07 copy-identity regression in `tests/test_p07_effective_prompt_identity.py`
+- focused Compute Mode regression in `tests/test_prompt_kit_compute_mode.py` and deterministic-floor registration
+- exact-head browser journey proving visible variant selection, preview, clipboard, sparse storage, reset-to-Exhaustive, and no selector on a non-variant prompt
+- canonical builder regeneration of `web/prompt-kit/index.html`
+
+**Forbidden:**
+
+- rewriting canonical P07 content or weakening its execution contract
+- changing PromptSemantics/compiler obligations merely to make a UI test pass
+- global/user/run profile changes that silently select Efficient prompt content
+- eager per-card/per-catalog variant controls or preallocated override state
+- hand-editing generated `web/prompt-kit/index.html`
+
+**Validation:**
+
+1. `python -m unittest tests.test_p07_effective_prompt_identity tests.test_prompt_kit_compute_mode -v`
+2. `python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html --check`
+3. `python tests/prompt_kit_compute_mode_browser_proof.py --receipt Outputs/observed-proof/compute-mode-receipt.json --screenshot Outputs/observed-proof/compute-mode.png`
+4. `python scripts/validate_observed_behavior_receipt.py Outputs/observed-proof/compute-mode-receipt.json --expected-sha "$(git rev-parse HEAD)" --summary`
+5. `python scripts/run_deterministic_test_floor.py --summary`
+6. `git diff --check`
+
+**Proof ceiling:** repository tests and generated parity prove the explicit variant contract statically; exact-head headless Chromium may prove it at `browser_runtime_observed`. Neither proves physical-device/operator acceptance or external-agent behavior.
 
 ## Acceptance for Sprint 3
 
