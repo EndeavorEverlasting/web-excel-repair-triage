@@ -49,9 +49,9 @@ ACTIONABLE_NEXT = re.compile(
 )
 EXACT_COMMIT = re.compile(r'^[0-9a-f]{40}$')
 WORK_ITEM_PATTERNS = (
-    re.compile(r'^issue:#\\d+$'),
+    re.compile(r'^issue:#\d+$'),
     re.compile(r'^ticket:[A-Za-z0-9._/-]+$'),
-    re.compile(r'^ledger:TRQ-\\d{3,}$'),
+    re.compile(r'^ledger:TRQ-\d{3,}$'),
 )
 FORBIDDEN_WORK_ITEM_PREFIXES = (
     'pr:', 'branch:', 'worktree:', 'commit:', 'workflow:', 'run:', 'artifact:', 'merge:',
