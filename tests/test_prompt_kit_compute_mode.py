@@ -11,6 +11,7 @@ from scripts import prompt_language_compiler as compiler
 ROOT = Path(__file__).resolve().parents[1]
 BUILDER_SOURCE = ROOT / "scripts" / "build_prompt_kit_registry.py"
 COMPUTE_MODE_JS = ROOT / "docs" / "prompt-kit-compute-mode.js"
+PROMPT_KIT_POLISH_JS = ROOT / "docs" / "prompt-kit-polish.js"
 COMPUTE_MODE_BROWSER_PROOF = ROOT / "tests" / "prompt_kit_compute_mode_browser_proof.py"
 OBSERVED_BROWSER_WORKFLOW = (
     ROOT / ".github" / "workflows" / "prompt-kit-observed-browser-proof.yml"
@@ -114,6 +115,26 @@ class PromptKitComputeModeTests(unittest.TestCase):
         self.assertEqual(product_default["resolution"]["resolved_from"], "product_default")
         self.assertEqual(product_default["profile"]["profile"], "exhaustive")
 
+    def test_per_prompt_variant_control_is_lazy_explicit_and_sparse(self) -> None:
+        source = COMPUTE_MODE_JS.read_text(encoding='utf-8')
+        for marker in (
+            "function availablePromptVariants(prompt)",
+            "if(!prompt||variants.length<2)",
+            "data-prompt-variant",
+            "copy Efficient · explicit prompt choice",
+            "copy Exhaustive · full canonical",
+            "setPromptOverride(promptId,item[0]==='efficient'?'efficient':null,storage)",
+        ):
+            self.assertIn(marker, source)
+        self.assertNotIn("querySelectorAll('[data-prompt-id]')", source)
+        self.assertIn("var PRODUCT_DEFAULT='exhaustive'", source)
+    def test_detail_and_card_copy_share_compute_mode_resolver(self) -> None:
+        polish = PROMPT_KIT_POLISH_JS.read_text(encoding='utf-8')
+        self.assertIn('function resolvePromptCopyContent(prompt)', polish)
+        self.assertIn("PromptKitComputeMode.resolveCopyContent(prompt)", polish)
+        copy_start = polish.index('window.copyPrompt=function(id)')
+        copy_body = polish[copy_start:copy_start + 600]
+        self.assertIn('var copyContent=resolvePromptCopyContent(p)', copy_body)
     def test_observed_browser_workflow_tracks_compiler_inputs(self) -> None:
         workflow = OBSERVED_BROWSER_WORKFLOW.read_text(encoding="utf-8")
         for dependency in (

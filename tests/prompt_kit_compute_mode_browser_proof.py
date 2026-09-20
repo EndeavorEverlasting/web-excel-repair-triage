@@ -51,22 +51,23 @@ def build_receipt(subject: dict[str, object], observations: list[dict[str, objec
             "compute_mode_product_default",
             "compute_mode_user_switch",
             "compute_mode_user_default_reload",
+            "compute_mode_global_efficient_canonical_copy",
         )
     )
-    effective_copy = all(
+    variant_copy = all(
         by_id[item]["passed"]
         for item in (
-            "compute_mode_efficient_copy",
-            "compute_mode_prompt_override_copy",
-            "compute_mode_run_override_copy",
+            "compute_mode_variant_default_exhaustive",
+            "compute_mode_variant_efficient_selection",
+            "compute_mode_variant_efficient_copy",
+            "compute_mode_variant_reset_exhaustive",
+            "compute_mode_variant_exhaustive_copy",
+            "compute_mode_nonvariant_control_hidden",
         )
     )
     precedence = all(
         by_id[item]["passed"]
         for item in (
-            "compute_mode_detail_inherits_user_default",
-            "compute_mode_prompt_override",
-            "compute_mode_prompt_override_clear",
             "compute_mode_run_override_precedence",
             "compute_mode_run_override_clear",
         )
@@ -81,35 +82,36 @@ def build_receipt(subject: dict[str, object], observations: list[dict[str, objec
         "claims": [
             {
                 "id": "compute_mode_user_default",
-                "statement": "Compute Mode starts Exhaustive, accepts an Efficient user default, and persists that default across reload",
+                "statement": "Compute Mode starts Exhaustive, accepts an Efficient global execution preference, persists it, and never silently shrinks canonical prompt copy",
                 "status": "PASS" if user_default else "FAIL",
                 "required_evidence_class": "browser_runtime_observed",
                 "observation_ids": [
                     "compute_mode_product_default",
                     "compute_mode_user_switch",
                     "compute_mode_user_default_reload",
+                    "compute_mode_global_efficient_canonical_copy",
                 ],
             },
             {
-                "id": "compute_mode_effective_copy",
-                "statement": "P07 Copy preserves canonical prompt content while Efficient user default, Exhaustive prompt override, and Exhaustive run override change only execution-profile resolution metadata",
-                "status": "PASS" if effective_copy else "FAIL",
+                "id": "compute_mode_prompt_variant",
+                "statement": "Variant-bearing prompt detail exposes an explicit Exhaustive/Efficient selector; Exhaustive is full canonical by default, Efficient changes preview/copy only after explicit prompt choice, and non-variant prompts pay no selector cost",
+                "status": "PASS" if variant_copy else "FAIL",
                 "required_evidence_class": "browser_runtime_observed",
                 "observation_ids": [
-                    "compute_mode_efficient_copy",
-                    "compute_mode_prompt_override_copy",
-                    "compute_mode_run_override_copy",
+                    "compute_mode_variant_default_exhaustive",
+                    "compute_mode_variant_efficient_selection",
+                    "compute_mode_variant_efficient_copy",
+                    "compute_mode_variant_reset_exhaustive",
+                    "compute_mode_variant_exhaustive_copy",
+                    "compute_mode_nonvariant_control_hidden",
                 ],
             },
             {
                 "id": "compute_mode_precedence",
-                "statement": "Browser runtime enforces run > prompt > user > product precedence and clearing overrides restores the next lower authority",
+                "statement": "Execution-profile precedence remains run > prompt > user > product independently of prompt-copy variant selection",
                 "status": "PASS" if precedence else "FAIL",
                 "required_evidence_class": "browser_runtime_observed",
                 "observation_ids": [
-                    "compute_mode_detail_inherits_user_default",
-                    "compute_mode_prompt_override",
-                    "compute_mode_prompt_override_clear",
                     "compute_mode_run_override_precedence",
                     "compute_mode_run_override_clear",
                 ],
@@ -117,7 +119,6 @@ def build_receipt(subject: dict[str, object], observations: list[dict[str, objec
         ],
         "observations": observations,
     }
-
 
 def build_failure_receipt(subject: dict[str, object], exc: Exception) -> dict[str, object]:
     observation_id = "compute_mode_browser_exception"
@@ -216,7 +217,7 @@ def observe(port: int, screenshot: Path):
             observations.append(
                 {
                     "id": "compute_mode_user_switch",
-                    "event": "Efficient header control persists the user default and updates pressed state",
+                    "event": "Efficient header control persists the global execution preference and updates pressed state",
                     "occurred": True,
                     "passed": bool(switch_ok),
                     "state": switched,
@@ -226,18 +227,21 @@ def observe(port: int, screenshot: Path):
             expected_canonical = page.evaluate(
                 "PROMPTS.find(p => p.id === 'P07').copyContent"
             )
-            card = page.locator('[data-prompt-id="P07"]')
+            expected_efficient = page.evaluate(
+                "PROMPTS.find(p => p.id === 'P07').compiledEffectivePrompts.efficient"
+            )
+            card = page.locator('.prompt-card[data-prompt-id="P07"]')
             card.scroll_into_view_if_needed()
             card.locator('.prompt-copy-btn').click()
             page.wait_for_timeout(240)
-            efficient_clipboard = canonical(page.evaluate("navigator.clipboard.readText()"))
+            global_efficient_clipboard = canonical(page.evaluate("navigator.clipboard.readText()"))
             observations.append(
                 {
-                    "id": "compute_mode_efficient_copy",
-                    "event": "P07 card Copy preserves canonical prompt content under the Efficient user default",
+                    "id": "compute_mode_global_efficient_canonical_copy",
+                    "event": "Global Efficient execution preference does not silently shorten P07 card Copy",
                     "occurred": True,
-                    "passed": efficient_clipboard == canonical(expected_canonical),
-                    "actual_length": len(efficient_clipboard),
+                    "passed": global_efficient_clipboard == canonical(expected_canonical),
+                    "actual_length": len(global_efficient_clipboard),
                     "expected_length": len(canonical(expected_canonical)),
                 }
             )
@@ -253,7 +257,7 @@ def observe(port: int, screenshot: Path):
             observations.append(
                 {
                     "id": "compute_mode_user_default_reload",
-                    "event": "Efficient user default survives reload",
+                    "event": "Efficient global execution preference survives reload",
                     "occurred": True,
                     "passed": bool(
                         persisted["stored"] == "efficient"
@@ -263,59 +267,102 @@ def observe(port: int, screenshot: Path):
                 }
             )
 
-            card = page.locator('[data-prompt-id="P07"]')
+            card = page.locator('.prompt-card[data-prompt-id="P07"]')
             card.scroll_into_view_if_needed()
             card.locator('.prompt-open-btn').click()
-            page.locator("#promptComputeOverride").wait_for(state="visible")
-            inherited_source = page.locator(
-                "#promptDetail .prompt-compute-mode-source"
-            ).inner_text()
-            inherited_ok = (
-                page.locator("#promptComputeOverride").input_value() == ""
-                and "effective efficient" in inherited_source
-                and "user_default" in inherited_source
+            variant_control = page.locator('#promptDetail [data-prompt-variant-control="P07"]')
+            variant_control.wait_for(state="visible")
+            exhaustive_button = variant_control.locator('[data-prompt-variant="exhaustive"]')
+            efficient_button = variant_control.locator('[data-prompt-variant="efficient"]')
+            prompt_content = page.locator('#promptDetail .pd-section').filter(has_text='Prompt Content').locator('pre')
+            default_variant_ok = (
+                exhaustive_button.get_attribute('aria-pressed') == 'true'
+                and efficient_button.get_attribute('aria-pressed') == 'false'
+                and canonical(prompt_content.inner_text()) == canonical(expected_canonical)
             )
             observations.append(
                 {
-                    "id": "compute_mode_detail_inherits_user_default",
-                    "event": "P07 detail shows inherited Efficient mode and user_default provenance",
+                    "id": "compute_mode_variant_default_exhaustive",
+                    "event": "P07 detail lazily exposes a prompt-variant selector whose default Exhaustive preview is the full canonical prompt",
                     "occurred": True,
-                    "passed": bool(inherited_ok),
-                    "source": inherited_source,
+                    "passed": bool(default_variant_ok),
+                    "expected_length": len(canonical(expected_canonical)),
+                    "actual_length": len(canonical(prompt_content.inner_text())),
                 }
             )
 
-            page.locator("#promptComputeOverride").select_option("exhaustive")
-            page.wait_for_timeout(80)
-            prompt_override_state = page.evaluate(
+            efficient_button.click()
+            page.wait_for_timeout(100)
+            variant_state = page.evaluate(
                 """() => ({
                   overrides: JSON.parse(localStorage.getItem('promptKit.computeMode.promptOverrides.v1') || '{}'),
-                  source: document.querySelector('#promptDetail .prompt-compute-mode-source').textContent
+                  efficientPressed: document.querySelector('[data-prompt-variant="efficient"]').getAttribute('aria-pressed'),
+                  exhaustivePressed: document.querySelector('[data-prompt-variant="exhaustive"]').getAttribute('aria-pressed')
                 })"""
             )
-            override_ok = (
-                prompt_override_state["overrides"].get("P07") == "exhaustive"
-                and "effective exhaustive" in prompt_override_state["source"]
-                and "prompt_override" in prompt_override_state["source"]
-            )
+            efficient_preview = canonical(prompt_content.inner_text())
             observations.append(
                 {
-                    "id": "compute_mode_prompt_override",
-                    "event": "P07 prompt override persists Exhaustive and outranks the Efficient user default",
+                    "id": "compute_mode_variant_efficient_selection",
+                    "event": "Explicit P07 Efficient selection stores one sparse prompt override and switches the visible prompt preview",
                     "occurred": True,
-                    "passed": bool(override_ok),
-                    "state": prompt_override_state,
+                    "passed": bool(
+                        variant_state["overrides"].get("P07") == "efficient"
+                        and variant_state["efficientPressed"] == "true"
+                        and variant_state["exhaustivePressed"] == "false"
+                        and efficient_preview == canonical(expected_efficient)
+                    ),
+                    "actual_length": len(efficient_preview),
+                    "expected_length": len(canonical(expected_efficient)),
                 }
             )
 
-            page.evaluate("navigator.clipboard.writeText('sentinel-compute-mode')")
-            page.locator("#promptDetail .pd-section h4").nth(1).click()
-            page.wait_for_timeout(260)
+            page.locator('#promptDetailCopy').click()
+            page.wait_for_timeout(240)
+            efficient_clipboard = canonical(page.evaluate("navigator.clipboard.readText()"))
+            observations.append(
+                {
+                    "id": "compute_mode_variant_efficient_copy",
+                    "event": "Explicit P07 Efficient prompt choice copies the Efficient compiled variant",
+                    "occurred": True,
+                    "passed": efficient_clipboard == canonical(expected_efficient),
+                    "actual_length": len(efficient_clipboard),
+                    "expected_length": len(canonical(expected_efficient)),
+                }
+            )
+
+            exhaustive_button = page.locator('#promptDetail [data-prompt-variant="exhaustive"]')
+            exhaustive_button.click()
+            page.wait_for_timeout(100)
+            reset_state = page.evaluate(
+                """() => ({
+                  overrides: JSON.parse(localStorage.getItem('promptKit.computeMode.promptOverrides.v1') || '{}'),
+                  exhaustivePressed: document.querySelector('[data-prompt-variant="exhaustive"]').getAttribute('aria-pressed')
+                })"""
+            )
+            exhaustive_preview = canonical(prompt_content.inner_text())
+            observations.append(
+                {
+                    "id": "compute_mode_variant_reset_exhaustive",
+                    "event": "Selecting Exhaustive clears the P07 sparse override and restores the full canonical preview",
+                    "occurred": True,
+                    "passed": bool(
+                        "P07" not in reset_state["overrides"]
+                        and reset_state["exhaustivePressed"] == "true"
+                        and exhaustive_preview == canonical(expected_canonical)
+                    ),
+                    "actual_length": len(exhaustive_preview),
+                    "expected_length": len(canonical(expected_canonical)),
+                }
+            )
+
+            page.locator('#promptDetailCopy').click()
+            page.wait_for_timeout(240)
             exhaustive_clipboard = canonical(page.evaluate("navigator.clipboard.readText()"))
             observations.append(
                 {
-                    "id": "compute_mode_prompt_override_copy",
-                    "event": "Prompt-detail neutral-surface Copy preserves canonical P07 content under the Exhaustive prompt override",
+                    "id": "compute_mode_variant_exhaustive_copy",
+                    "event": "P07 Exhaustive prompt choice copies the full canonical prompt",
                     "occurred": True,
                     "passed": exhaustive_clipboard == canonical(expected_canonical),
                     "actual_length": len(exhaustive_clipboard),
@@ -323,38 +370,17 @@ def observe(port: int, screenshot: Path):
                 }
             )
 
-            page.locator("#promptComputeOverride").select_option("")
-            page.wait_for_timeout(80)
-            restored_source = page.locator(
-                "#promptDetail .prompt-compute-mode-source"
-            ).inner_text()
-            override_cleared = page.evaluate(
-                """() => !Object.prototype.hasOwnProperty.call(
-                  JSON.parse(localStorage.getItem('promptKit.computeMode.promptOverrides.v1') || '{}'),
-                  'P07'
-                )"""
-            )
-            observations.append(
-                {
-                    "id": "compute_mode_prompt_override_clear",
-                    "event": "Clearing the P07 override restores the Efficient user-default resolution",
-                    "occurred": True,
-                    "passed": bool(
-                        override_cleared
-                        and "effective efficient" in restored_source
-                        and "user_default" in restored_source
-                    ),
-                    "source": restored_source,
-                }
-            )
-
             run_state = page.evaluate(
                 """() => {
                   PromptKitComputeMode.setRunOverride('exhaustive');
-                  PromptKitComputeMode.getController().refreshDetail('P07');
+                  const resolved = PromptKitComputeMode.resolveProfile({
+                    runOverride: PromptKitComputeMode.getRunOverride(),
+                    userDefault: PromptKitComputeMode.getUserDefault()
+                  });
                   return {
                     runOverride: PromptKitComputeMode.getRunOverride(),
-                    source: document.querySelector('#promptDetail .prompt-compute-mode-source').textContent,
+                    resolved: resolved.profile,
+                    resolvedFrom: resolved.resolved_from,
                     storedUser: localStorage.getItem('promptKit.computeMode.userDefault.v1')
                   };
                 }"""
@@ -362,41 +388,28 @@ def observe(port: int, screenshot: Path):
             observations.append(
                 {
                     "id": "compute_mode_run_override_precedence",
-                    "event": "Explicit run override resolves Exhaustive ahead of the persisted Efficient user default without mutating that default",
+                    "event": "Explicit run override resolves Exhaustive ahead of the persisted Efficient user preference without changing prompt-copy variant state",
                     "occurred": True,
                     "passed": bool(
                         run_state["runOverride"] == "exhaustive"
+                        and run_state["resolved"] == "exhaustive"
+                        and run_state["resolvedFrom"] == "explicit_run_override"
                         and run_state["storedUser"] == "efficient"
-                        and "effective exhaustive" in run_state["source"]
-                        and "explicit_run_override" in run_state["source"]
                     ),
                     "state": run_state,
-                }
-            )
-
-            run_sentinel = "sentinel-compute-mode-run"
-            page.evaluate("value => navigator.clipboard.writeText(value)", run_sentinel)
-            page.locator("#promptDetail .pd-section h4").nth(1).click()
-            page.wait_for_timeout(260)
-            run_clipboard = canonical(page.evaluate("navigator.clipboard.readText()"))
-            observations.append(
-                {
-                    "id": "compute_mode_run_override_copy",
-                    "event": "P07 Copy preserves canonical prompt content under the explicit Exhaustive run override",
-                    "occurred": run_clipboard != run_sentinel,
-                    "passed": run_clipboard == canonical(expected_canonical),
-                    "actual_length": len(run_clipboard),
-                    "expected_length": len(canonical(expected_canonical)),
                 }
             )
 
             final_state = page.evaluate(
                 """() => {
                   PromptKitComputeMode.clearRunOverride();
-                  PromptKitComputeMode.getController().refreshDetail('P07');
+                  const resolved = PromptKitComputeMode.resolveProfile({
+                    userDefault: PromptKitComputeMode.getUserDefault()
+                  });
                   return {
                     runOverride: PromptKitComputeMode.getRunOverride(),
-                    source: document.querySelector('#promptDetail .prompt-compute-mode-source').textContent,
+                    resolved: resolved.profile,
+                    resolvedFrom: resolved.resolved_from,
                     storedUser: localStorage.getItem('promptKit.computeMode.userDefault.v1')
                   };
                 }"""
@@ -404,18 +417,38 @@ def observe(port: int, screenshot: Path):
             observations.append(
                 {
                     "id": "compute_mode_run_override_clear",
-                    "event": "Clearing the run override restores Efficient user-default resolution",
+                    "event": "Clearing the run override restores the Efficient user execution preference",
                     "occurred": True,
                     "passed": bool(
                         final_state["runOverride"] is None
+                        and final_state["resolved"] == "efficient"
+                        and final_state["resolvedFrom"] == "user_default"
                         and final_state["storedUser"] == "efficient"
-                        and "effective efficient" in final_state["source"]
-                        and "user_default" in final_state["source"]
                     ),
                     "state": final_state,
                 }
             )
 
+            page.locator('#promptDetail .prompt-detail-close').click()
+            plain_card = page.locator('.prompt-card[data-prompt-id="P00"]')
+            plain_card.scroll_into_view_if_needed()
+            plain_card.locator('.prompt-open-btn').click()
+            nonvariant_count = page.locator('#promptDetail [data-prompt-variant-control]').count()
+            observations.append(
+                {
+                    "id": "compute_mode_nonvariant_control_hidden",
+                    "event": "Prompt detail without compiled variants renders no per-prompt variant selector",
+                    "occurred": True,
+                    "passed": nonvariant_count == 0,
+                    "count": nonvariant_count,
+                }
+            )
+
+            page.locator('#promptDetail .prompt-detail-close').click()
+            card = page.locator('.prompt-card[data-prompt-id="P07"]')
+            card.scroll_into_view_if_needed()
+            card.locator('.prompt-open-btn').click()
+            page.locator('#promptDetail [data-prompt-variant-control="P07"]').wait_for(state="visible")
             screenshot.parent.mkdir(parents=True, exist_ok=True)
             page.screenshot(path=str(screenshot), full_page=False)
             context.close()
