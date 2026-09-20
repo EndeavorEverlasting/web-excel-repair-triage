@@ -71,6 +71,7 @@
     "tests/test_*_prompt_registry.py",
     "tests/test_*_prompt_suite.py",
     "tests/test_prompt_registry_*.py",
+    "tests/test_p07_effective_prompt_identity.py",
     "tests/test_prompt_runtime_compliance_*.py"
   ],
   "prompt_semantic_test_excludes": [
