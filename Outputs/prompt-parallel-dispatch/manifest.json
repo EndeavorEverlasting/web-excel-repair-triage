@@ -34,7 +34,11 @@
         "operation": "capability_watch_contract_floor",
         "arguments": {
           "repository": "EndeavorEverlasting/web-excel-repair-triage",
-          "plan": "docs/plans/UPSTREAM_CAPABILITY_WATCH_SPRINT_MAP.md"
+          "plan": "docs/plans/UPSTREAM_CAPABILITY_WATCH_SPRINT_MAP.md",
+          "pr_number": 619,
+          "branch": "feat/upstream-capability-watch-contract-floor-20260920",
+          "expected_head_sha": "d2e0274de04b8a39f8183cf3ebda29387793ce84",
+          "continuation_rule": "reuse_existing_pr_writer_and_refresh_before_mutation"
         }
       },
       "expected_artifacts": [
