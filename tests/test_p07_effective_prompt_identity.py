@@ -45,8 +45,8 @@ class P07CanonicalCopyIdentityTests(unittest.TestCase):
         self.assertNotIn('data-prompt-effective-content="true"', source)
         self.assertNotIn("function resolvePromptDetailContent(prompt)", source)
 
-    def test_copy_resolver_preserves_canonical_p07_across_compute_modes(self) -> None:
-        script = r"""
+    def test_copy_resolver_requires_explicit_prompt_choice_for_efficient_variant(self) -> None:
+        script = r'''
 const api=require('./docs/prompt-kit-compute-mode.js');
 const prompt={
   id:'P07',
@@ -56,12 +56,27 @@ const prompt={
     efficient:'COMPILED EFFICIENT'
   }
 };
-for(const profile of ['exhaustive','efficient']){
-  const got=api.resolveCopyContent(prompt,{userDefault:profile});
+for(const options of [
+  {userDefault:'exhaustive'},
+  {userDefault:'efficient'},
+  {runOverride:'efficient',userDefault:'efficient'},
+  {promptOverride:'exhaustive',userDefault:'efficient'}
+]){
+  const got=api.resolveCopyContent(prompt,options);
   if(got!==prompt.copyContent){
-    console.error(profile+': '+got);
+    console.error('silent shrink: '+JSON.stringify(options)+' => '+got);
     process.exit(1);
   }
+}
+const explicitEfficient=api.resolveCopyContent(prompt,{promptOverride:'efficient'});
+if(explicitEfficient!=='COMPILED EFFICIENT'){
+  console.error('explicit efficient: '+explicitEfficient);
+  process.exit(2);
+}
+const variants=api.availablePromptVariants(prompt);
+if(JSON.stringify(variants)!==JSON.stringify(['exhaustive','efficient'])){
+  console.error('variants: '+JSON.stringify(variants));
+  process.exit(3);
 }
 const fallback=api.resolveCopyContent(
   {id:'P07',compiledEffectivePrompts:{exhaustive:'COMPILED ONLY'}},
@@ -69,18 +84,18 @@ const fallback=api.resolveCopyContent(
 );
 if(fallback!=='COMPILED ONLY'){
   console.error('fallback: '+fallback);
-  process.exit(2);
+  process.exit(4);
 }
-process.stdout.write('canonical-copy-preserved');
-"""
+process.stdout.write('explicit-variant-authority-preserved');
+'''
         result = subprocess.run(
-            ["node", "-e", script],
+            ['node', '-e', script],
             cwd=ROOT,
             check=True,
             capture_output=True,
             text=True,
         )
-        self.assertEqual(result.stdout, "canonical-copy-preserved")
+        self.assertEqual(result.stdout, 'explicit-variant-authority-preserved')
 
 
 if __name__ == "__main__":
