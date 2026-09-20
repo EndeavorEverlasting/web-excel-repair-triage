@@ -15,8 +15,9 @@
   ],
   "semantic_coverage_boundary": {
     "current_profile_owner": "harness/prompt-topology/prompt-capability-profiles.v1.json",
-    "known_gap": "PSC002 currently hashes raw canonical prompt records and does not bind the effective P02 override body.",
-    "local_guard": "This matrix and its focused test bind the effective P02 override directly until the broader all-prompts effective-semantic audit is completed."
+    "known_gap": "The broader audit confirmed a Prompt Kit-wide coverage gap: semantic profiles currently cover the 62 raw base prompts, while 79 operational extension prompts remain unprofiled; PSC002 still does not bind the effective P02 override body and likewise does not bind the other live override bodies.",
+    "local_guard": "P02 retains its focused effective-body matrix. Shared prevention is now owned by the Prompt Regression Safety coverage ratchet at harness/evals/prompt-regression/prompt-coverage-baseline.v1.json, which prevents new unprofiled debt and binds every current override registry revision plus critical P02/P13/P19 markers. Full extension-profile backfill remains a separate Prompt Semantic Coverage lifecycle obligation.",
+    "systemic_owner": "harness/contracts/prompt-regression-safety.v1.json:prompt_coverage_ratcheting"
   },
   "capability_ids": [
     "mode_routing",
