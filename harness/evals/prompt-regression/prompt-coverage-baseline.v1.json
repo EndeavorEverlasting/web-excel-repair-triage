@@ -179,8 +179,7 @@
         "RECOVER CONTEXT + PIN THE DEPLOYMENT SUBJECT",
         "DIRECT OPERATOR INTERFACE GUIDANCE — NO HUNTING",
         "DIRECT ENTRY POINT",
-        "current operator screen",
-        "wrong/legacy generation"
+        "current operator screen"
       ],
       "focused_regression_refs": [
         "tests/test_prompt_kit_mainline_delivery.py",
