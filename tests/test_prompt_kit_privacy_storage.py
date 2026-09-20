@@ -251,5 +251,26 @@ class PromptKitPrivacyStorageTests(unittest.TestCase):
             privacy_storage.validate_contract(payload)
 
 
+    def test_contradictory_promotion_transformation_cannot_pass_by_keyword(self) -> None:
+        payload = copy.deepcopy(self.load_contract())
+        steps = payload["conversation_repository_promotion_contract"]["promotion_gate"]["transformation"]
+        steps[1] = "do not remove user identity, learning state, confidence, mistakes, reasoning history and irrelevant personal context"
+        with self.assertRaisesRegex(
+            privacy_storage.PrivacyStorageError,
+            "authoritative exact policy sequence",
+        ):
+            privacy_storage.validate_contract(payload)
+
+    def test_personal_identity_cannot_enter_repository_provenance_allowlist(self) -> None:
+        payload = copy.deepcopy(self.load_contract())
+        provenance = payload["conversation_repository_promotion_contract"]["provenance_policy"]["allowed_repository_provenance"]
+        provenance[0] = "personal identity"
+        with self.assertRaisesRegex(
+            privacy_storage.PrivacyStorageError,
+            "authoritative exact policy set",
+        ):
+            privacy_storage.validate_contract(payload)
+
+
 if __name__ == "__main__":
     unittest.main()

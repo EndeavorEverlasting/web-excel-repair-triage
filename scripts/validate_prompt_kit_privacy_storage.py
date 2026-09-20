@@ -139,6 +139,19 @@ EXPECTED_PROMOTION_GATE_CHECKS = {
     "no_raw_conversation_or_learning_state",
     "reconciled_with_stronger_repository_truth",
 }
+EXPECTED_PROMOTION_TRANSFORMATION = [
+    "derive the repository-relevant conclusion from the conversation",
+    "remove user identity, learning state, confidence, mistakes, reasoning history and irrelevant personal context",
+    "rewrite the result as repository-level behavior, requirement, decision, invariant, interface, acceptance gate, unresolved project question or sanitized evidence",
+    "reconcile the candidate against current canonical repository/provider/runtime authority",
+    "write only the minimum durable form to the smallest canonical owner",
+]
+EXPECTED_REPOSITORY_PROVENANCE = {
+    "operator decision",
+    "repository evidence",
+    "provider evidence",
+    "test or runtime evidence",
+}
 EXPECTED_REPOSITORY_WORTHY_ARTIFACTS = {
     "repository requirements and constraints",
     "project or architecture decisions",
@@ -400,11 +413,10 @@ def validate_contract(payload: dict[str, Any]) -> dict[str, Any]:
         gate.get("transformation"),
         "conversation_repository_promotion.transformation",
     )
-    _require_substrings(
-        transformation,
-        ("remove user identity", "rewrite the result as repository-level", "smallest canonical owner"),
-        "conversation_repository_promotion.transformation",
-    )
+    if transformation != EXPECTED_PROMOTION_TRANSFORMATION:
+        raise PrivacyStorageError(
+            "conversation_repository_promotion.transformation must match the authoritative exact policy sequence"
+        )
 
     artifacts = promotion.get("repository_worthy_artifacts")
     if not isinstance(artifacts, dict) or set(artifacts) != {"allowed", "forbidden"}:
@@ -422,6 +434,11 @@ def validate_contract(payload: dict[str, Any]) -> dict[str, Any]:
     provenance = promotion.get("provenance_policy")
     if not isinstance(provenance, dict) or provenance.get("personal_identity_required") is not False:
         raise PrivacyStorageError("repository provenance must not require personal identity")
+    _require_exact_string_set(
+        provenance.get("allowed_repository_provenance"),
+        EXPECTED_REPOSITORY_PROVENANCE,
+        "conversation_repository_promotion.allowed_repository_provenance",
+    )
     if "knows nothing about the originating user" not in str(promotion.get("consumer_test", "")):
         raise PrivacyStorageError("conversation repository consumer test lost user-independence boundary")
 
