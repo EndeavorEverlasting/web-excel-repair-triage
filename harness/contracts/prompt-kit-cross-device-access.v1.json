@@ -29,71 +29,32 @@
   "modes": [
     {
       "id": "browser-use",
-      "intent": [
-        "open",
-        "use",
-        "try",
-        "share"
-      ],
-      "devices": [
-        "android",
-        "ios",
-        "windows",
-        "macos",
-        "linux",
-        "tablet"
-      ],
+      "intent": ["open", "use", "try", "share"],
+      "devices": ["android", "ios", "windows", "macos", "linux", "tablet"],
       "manual_clone_required": false,
       "entry_point": "https://endeavoreverlasting.github.io/web-excel-repair-triage/afk-agent-flow/",
       "operator_message": "Open the public AFK Agent Flow surface directly. Do not require Git, ZIP extraction, PowerShell, Python, or Termux for normal use."
     },
     {
       "id": "phone-install",
-      "intent": [
-        "install",
-        "add to home screen",
-        "phone",
-        "tablet"
-      ],
-      "devices": [
-        "android",
-        "ios",
-        "tablet"
-      ],
+      "intent": ["install", "add to home screen", "phone", "tablet"],
+      "devices": ["android", "ios", "tablet"],
       "manual_clone_required": false,
       "entry_point": "https://endeavoreverlasting.github.io/web-excel-repair-triage/",
       "operator_message": "Open the phone launcher in the system browser, then use the install or Add to Home Screen surface."
     },
     {
       "id": "windows-local-app",
-      "intent": [
-        "windows local app",
-        "favorites preserving",
-        "offline-ish local launch",
-        "stable local origin"
-      ],
-      "devices": [
-        "windows"
-      ],
+      "intent": ["windows local app", "favorites preserving", "offline-ish local launch", "stable local origin"],
+      "devices": ["windows"],
       "manual_clone_required": false,
       "entry_point": "Open-Latest-PromptKit.cmd",
       "operator_message": "Use the repository-owned CMD. It owns safe clone or fast-forward behavior, resolves the single canonical Desktop\\dev checkout independently of where the CMD was downloaded, and serves the validated portable Prompt Kit on the stable loopback origin."
     },
     {
       "id": "editable-checkout",
-      "intent": [
-        "edit",
-        "commit",
-        "push",
-        "develop",
-        "local source checkout"
-      ],
-      "devices": [
-        "android",
-        "windows",
-        "macos",
-        "linux"
-      ],
+      "intent": ["edit", "commit", "push", "develop", "local source checkout"],
+      "devices": ["android", "windows", "macos", "linux"],
       "manual_clone_required": true,
       "entry_point": "git clone --branch main --single-branch https://github.com/EndeavorEverlasting/web-excel-repair-triage.git",
       "android_prerequisites": [
@@ -119,18 +80,8 @@
     },
     {
       "id": "zip-snapshot",
-      "intent": [
-        "download snapshot",
-        "no git client"
-      ],
-      "devices": [
-        "android",
-        "ios",
-        "windows",
-        "macos",
-        "linux",
-        "tablet"
-      ],
+      "intent": ["download snapshot", "no git client"],
+      "devices": ["android", "ios", "windows", "macos", "linux", "tablet"],
       "manual_clone_required": false,
       "entry_point": "https://github.com/EndeavorEverlasting/web-excel-repair-triage/archive/refs/heads/main.zip",
       "operator_message": "Treat ZIP as a point-in-time snapshot. It is not the preferred normal-use or Favorites-preserving update path."
@@ -236,36 +187,12 @@
       "role": "public read-only distribution",
       "source_workflow": ".github/workflows/prompt-kit-pages.yml",
       "bundle": [
-        {
-          "public_path": "/",
-          "source": "web/prompt-kit-mobile/",
-          "kind": "launcher-pwa"
-        },
-        {
-          "public_path": "/afk-agent-flow/index.html",
-          "source": "scripts/build_prompt_kit_registry.py -> web/prompt-kit/index.html",
-          "kind": "generated-canonical-app"
-        },
-        {
-          "public_path": "/afk-agent-flow/resources.v1.json",
-          "source": "web/prompt-kit/resources.v1.json",
-          "kind": "public-resource-index"
-        },
-        {
-          "public_path": "/prompt-kit/index.html",
-          "source": "web/prompt-kit-legacy-redirect/index.html",
-          "kind": "legacy-redirect"
-        },
-        {
-          "public_path": "/operant/index.html",
-          "source": "web/operant-legacy-redirect/index.html",
-          "kind": "legacy-redirect"
-        },
-        {
-          "public_path": "/roster-log-v2/",
-          "source": "web/roster-log-v2/",
-          "kind": "separate-static-app"
-        }
+        {"public_path": "/", "source": "web/prompt-kit-mobile/", "kind": "launcher-pwa"},
+        {"public_path": "/afk-agent-flow/index.html", "source": "scripts/build_prompt_kit_registry.py -> web/prompt-kit/index.html", "kind": "generated-canonical-app"},
+        {"public_path": "/afk-agent-flow/resources.v1.json", "source": "web/prompt-kit/resources.v1.json", "kind": "public-resource-index"},
+        {"public_path": "/prompt-kit/index.html", "source": "web/prompt-kit-legacy-redirect/index.html", "kind": "legacy-redirect"},
+        {"public_path": "/operant/index.html", "source": "web/operant-legacy-redirect/index.html", "kind": "legacy-redirect"},
+        {"public_path": "/roster-log-v2/", "source": "web/roster-log-v2/", "kind": "separate-static-app"}
       ],
       "publication_rule": "A file may be published only when anonymous worldwide download is acceptable.",
       "must_never_publish": [
@@ -343,97 +270,20 @@
       "count"
     ],
     "forbidden_output_classes": {
-      "identity": [
-        "user_id",
-        "username",
-        "name",
-        "email",
-        "phone",
-        "account_id",
-        "github_user",
-        "employee_id"
-      ],
-      "persistent_pseudonym": [
-        "anonymous_user_id",
-        "installation_id",
-        "client_id",
-        "tracking_id",
-        "analytics_id",
-        "persistent_uuid",
-        "hashed_email",
-        "hashed_user_id"
-      ],
-      "private_sync": [
-        "vault_id",
-        "sync_account_id",
-        "device_slot_id",
-        "recovery_id"
-      ],
-      "device": [
-        "device_id",
-        "hostname",
-        "machine_name",
-        "hardware_id",
-        "browser_profile",
-        "browser_fingerprint",
-        "advertising_id"
-      ],
-      "session": [
-        "session_id",
-        "conversation_id",
-        "chat_id",
-        "execution_id",
-        "trace_id",
-        "correlation_id",
-        "request_id",
-        "workflow_instance_id"
-      ],
-      "project": [
-        "repository",
-        "repository_url",
-        "repository_owner",
-        "branch",
-        "project_name",
-        "customer_name",
-        "workspace",
-        "organization",
-        "company",
-        "file_path",
-        "directory",
-        "ticket_id",
-        "issue_id",
-        "pull_request_id",
-        "domain",
-        "url"
-      ],
-      "raw_text": [
-        "task_text",
-        "prompt_text",
-        "user_message",
-        "assistant_message",
-        "agent_output",
-        "notes",
-        "comments",
-        "error_text",
-        "stack_trace"
-      ],
-      "exact_time": [
-        "timestamp",
-        "started_at",
-        "ended_at",
-        "timezone",
-        "local_time",
-        "exact_duration"
-      ]
+      "identity": ["user_id", "username", "name", "email", "phone", "account_id", "github_user", "employee_id"],
+      "persistent_pseudonym": ["anonymous_user_id", "installation_id", "client_id", "tracking_id", "analytics_id", "persistent_uuid", "hashed_email", "hashed_user_id"],
+      "private_sync": ["vault_id", "sync_account_id", "device_slot_id", "recovery_id"],
+      "device": ["device_id", "hostname", "machine_name", "hardware_id", "browser_profile", "browser_fingerprint", "advertising_id"],
+      "session": ["session_id", "conversation_id", "chat_id", "execution_id", "trace_id", "correlation_id", "request_id", "workflow_instance_id"],
+      "project": ["repository", "repository_url", "repository_owner", "branch", "project_name", "customer_name", "workspace", "organization", "company", "file_path", "directory", "ticket_id", "issue_id", "pull_request_id", "domain", "url"],
+      "raw_text": ["task_text", "prompt_text", "user_message", "assistant_message", "agent_output", "notes", "comments", "error_text", "stack_trace"],
+      "exact_time": ["timestamp", "started_at", "ended_at", "timezone", "local_time", "exact_duration"]
     },
     "batching": {
       "minimum_local_count": 5,
       "minimum_distinct_aggregates": 3,
       "minimum_batch_age_hours": 6,
-      "randomized_flush_window_hours": [
-        12,
-        24
-      ],
+      "randomized_flush_window_hours": [12, 24],
       "aggregate_buffer_max_days": 90
     },
     "invariants": [
@@ -445,19 +295,8 @@
   },
   "v1_backend_policy": {
     "prompt_kit_owned_backend_required": false,
-    "required_remote_infrastructure": [
-      "GitHub repository",
-      "GitHub Pages static hosting"
-    ],
-    "optional_user_managed_transports": [
-      "OneDrive",
-      "Google Drive",
-      "iCloud",
-      "Dropbox",
-      "Syncthing",
-      "NAS",
-      "USB or ordinary file transfer"
-    ],
+    "required_remote_infrastructure": ["GitHub repository", "GitHub Pages static hosting"],
+    "optional_user_managed_transports": ["OneDrive", "Google Drive", "iCloud", "Dropbox", "Syncthing", "NAS", "USB or ordinary file transfer"],
     "future_hosted_sync_status": "not implemented by this contract",
     "future_collective_ingestion_status": "not implemented by this contract"
   },
