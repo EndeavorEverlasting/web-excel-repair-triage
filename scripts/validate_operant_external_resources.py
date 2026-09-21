@@ -18,6 +18,8 @@ from scripts.operant_external_resource_paths import normalize_resource_root, res
 CONTRACT = ROOT / "harness" / "contracts" / "operant-external-resource-intake.v1.json"
 INDEX = ROOT / "web" / "prompt-kit" / "resources.v1.json"
 GAPS = ROOT / "registry" / "resources" / "operant-external-resource-gaps.v1.json"
+IMPACT_EDGES = ROOT / "registry" / "resources" / "upstream-capability-impact-edges.v1.json"
+CAPABILITY_WATCH_KERNEL = ROOT / "scripts" / "upstream_capability_watch.py"
 RUNTIME = ROOT / "docs" / "prompt-kit-external-resources.js"
 BUILDER = ROOT / "scripts" / "build_prompt_kit_registry.py"
 SITE = ROOT / "web" / "prompt-kit" / "index.html"
@@ -212,6 +214,7 @@ def validate() -> dict[str, Any]:
     contract = load(CONTRACT)
     index = load(INDEX)
     gaps = load(GAPS)
+    impact_edges = load(IMPACT_EDGES)
     if contract.get("schema_version") != "operant-external-resource-intake/v1":
         raise ValidationError("unsupported external resource contract schema")
     if index.get("schema_version") != "operant-external-resource-index/v1":
@@ -241,6 +244,7 @@ def validate() -> dict[str, Any]:
     ):
         if marker not in active_workflow:
             raise ValidationError(f"refresh workflow missing live catalog-search proof marker: {marker}")
+    validate_capability_watch_contract(contract, impact_edges, active_workflow)
 
     configured = {str(source["id"]): source for source in contract.get("sources", [])}
     floors = index.get("source_floor", [])
