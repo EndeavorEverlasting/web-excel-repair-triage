@@ -25,5 +25,9 @@ jobs:
       - uses: actions/setup-python@v7
         with:
           python-version: '3.11'
+      - name: Configure carrier commit identity
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
       - name: Run canonical P55 lifecycle finalizer
         run: python scripts/tmp_p55_provider_neutral_finalizer.py
