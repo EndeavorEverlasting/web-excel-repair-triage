@@ -13,6 +13,8 @@ class CapabilityWatchError(ValueError):
 
 
 REQUIRED_STATE_FIELDS = (
+    "source_id",
+    "resource_id",
     "last_observed_identity",
     "last_processed_identity",
     "last_observed_repository_revision",
@@ -52,9 +54,11 @@ def _impact_edge_ids(values: Iterable[str]) -> list[str]:
     return sorted(normalized)
 
 
-def new_watch_state() -> dict[str, Any]:
-    """Return the canonical pre-observation state."""
+def new_watch_state(*, source_id: str, resource_id: str) -> dict[str, Any]:
+    """Return the canonical pre-observation state for one source/capability."""
     return {
+        "source_id": _required_text(source_id, "source_id"),
+        "resource_id": _required_text(resource_id, "resource_id"),
         "last_observed_identity": None,
         "last_processed_identity": None,
         "last_observed_repository_revision": None,
@@ -94,6 +98,8 @@ def observe_capability(
     resource_id = _required_text(resource_id, "resource_id")
     observed_identity = _required_text(observed_identity, "observed_identity")
     repository_revision = _required_text(repository_revision, "repository_revision")
+    if next_state["source_id"] != source_id or next_state["resource_id"] != resource_id:
+        raise CapabilityWatchError("watch state locator does not match source_id/resource_id")
 
     if next_state["status"] == "UNSEEN":
         if next_state["last_observed_identity"] is not None or next_state["last_processed_identity"] is not None:
@@ -156,6 +162,8 @@ def record_routing_result(
     )
     if event.get("event_id") != expected_event_id:
         raise CapabilityWatchError("event_id does not match the canonical transition key")
+    if next_state["source_id"] != event.get("source_id") or next_state["resource_id"] != event.get("resource_id"):
+        raise CapabilityWatchError("event locator does not match watch state")
     if next_state["status"] != "UPSTREAM_CHANGED":
         raise CapabilityWatchError("routing result requires UPSTREAM_CHANGED state")
     if next_state["last_processed_identity"] != event["previous_processed_identity"]:
@@ -163,7 +171,8 @@ def record_routing_result(
     if next_state["last_observed_identity"] != event["observed_identity"]:
         raise CapabilityWatchError("event observed identity was superseded by a later observation")
 
-    if event_persisted and impact_resolution_persisted and routing_checkpoint_persisted:
+    checkpoints = (event_persisted, impact_resolution_persisted, routing_checkpoint_persisted)
+    if all(value is True for value in checkpoints):
         next_state["last_processed_identity"] = event["observed_identity"]
         next_state["status"] = "EVALUATING"
     return next_state

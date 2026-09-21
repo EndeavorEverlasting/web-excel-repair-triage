@@ -23,7 +23,10 @@ class UpstreamCapabilityWatchContractTests(unittest.TestCase):
 
     def baseline(self, identity: str = "A") -> dict[str, object]:
         state, event = watch.observe_capability(
-            watch.new_watch_state(),
+            watch.new_watch_state(
+                source_id="mattpocock-skills",
+                resource_id="mattpocock-skills:productivity/teach",
+            ),
             source_id="mattpocock-skills",
             resource_id="mattpocock-skills:productivity/teach",
             observed_identity=identity,
@@ -58,6 +61,8 @@ class UpstreamCapabilityWatchContractTests(unittest.TestCase):
     def test_first_observation_establishes_current_baseline(self) -> None:
         state = self.baseline()
         self.assertEqual(state["status"], "CURRENT")
+        self.assertEqual(state["source_id"], "mattpocock-skills")
+        self.assertEqual(state["resource_id"], "mattpocock-skills:productivity/teach")
         self.assertEqual(state["last_observed_identity"], "A")
         self.assertEqual(state["last_processed_identity"], "A")
         self.assertEqual(state["last_observed_repository_revision"], "repo-a")
@@ -86,6 +91,17 @@ class UpstreamCapabilityWatchContractTests(unittest.TestCase):
         self.assertIn("ROUTING_DEFERRED", receipts["outcomes"])
         self.assertIn("ROUTED", receipts["outcomes"])
 
+    def test_watch_state_rejects_cross_capability_reuse(self) -> None:
+        state = self.baseline()
+        with self.assertRaisesRegex(watch.CapabilityWatchError, "locator"):
+            watch.observe_capability(
+                state,
+                source_id="mattpocock-skills",
+                resource_id="mattpocock-skills:other",
+                observed_identity="B",
+                repository_revision="repo-b",
+            )
+
     def test_routing_failure_preserves_processed_identity_and_replay_event_id(self) -> None:
         state = self.baseline()
         changed, event = watch.observe_capability(
@@ -101,7 +117,7 @@ class UpstreamCapabilityWatchContractTests(unittest.TestCase):
         failed = watch.record_routing_result(
             changed,
             event,
-            event_persisted=True,
+            event_persisted="truthy-but-not-boolean",  # type: ignore[arg-type]
             impact_resolution_persisted=False,
             routing_checkpoint_persisted=False,
         )

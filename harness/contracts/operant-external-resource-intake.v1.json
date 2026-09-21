@@ -37,9 +37,7 @@
       "resource_filename": "SKILL.md",
       "resource_kind": "agent-skill",
       "max_depth": 2,
-      "exclude_root_segments": [
-        "deprecated"
-      ],
+      "exclude_root_segments": ["deprecated"],
       "url_mode": "github_blob"
     },
     {
@@ -95,10 +93,7 @@
     "existing_coverage_prompt_action": "NO_NEW_PROMPT",
     "promotion_owner_prompt": "P79",
     "automatic_prompt_authoring": false,
-    "catalog_hit_dispositions": [
-      "REFERENCE_ONLY",
-      "ADAPT"
-    ],
+    "catalog_hit_dispositions": ["REFERENCE_ONLY", "ADAPT"],
     "rule": "Prefer an existing Operant prompt or local skill when deterministic title/keyword coverage is strong; otherwise keep the donor resource directly usable and route the missing internal capability to P79 for strategic strengthen-before-add review. Before P79 may ADD a new identity for a prompt-like use case, search registered external sources/catalogs, extract commonality with current owners, and prove a distinct residual; REVIEW_ADD_PROMPT is a candidate for that comparison, not permission to author.",
     "p79_external_evidence": {
       "required_before_add": [
@@ -126,6 +121,8 @@
     },
     "state": {
       "required_fields": [
+        "source_id",
+        "resource_id",
         "last_observed_identity",
         "last_processed_identity",
         "last_observed_repository_revision",
@@ -145,7 +142,8 @@
       "routing_failure_rule": "A routing failure leaves last_processed_identity unchanged.",
       "initial_status": "UNSEEN",
       "first_observation_rule": "UNSEEN -> CURRENT establishes the first observed identity as both observed and processed without emitting a change event.",
-      "supersession_rule": "A later observed identity may supersede CURRENT, EVALUATING, CANDIDATE, DECLINED, INTEGRATED, or an already pending UPSTREAM_CHANGED observation; last_processed_identity remains the durable transition base until routing succeeds."
+      "supersession_rule": "A later observed identity may supersede CURRENT, EVALUATING, CANDIDATE, DECLINED, INTEGRATED, or an already pending UPSTREAM_CHANGED observation; last_processed_identity remains the durable transition base until routing succeeds.",
+      "locator_rule": "Each persisted watch state is bound to exactly one source_id/resource_id pair; cross-capability state reuse fails closed."
     },
     "events": {
       "schema_version": "upstream-capability-changed/v1",

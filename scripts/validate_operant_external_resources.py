@@ -104,6 +104,8 @@ def validate_capability_watch_contract(
 
     state = watch.get("state")
     required_state = {
+        "source_id",
+        "resource_id",
         "last_observed_identity",
         "last_processed_identity",
         "last_observed_repository_revision",
