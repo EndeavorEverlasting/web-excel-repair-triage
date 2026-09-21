@@ -142,7 +142,10 @@
       ],
       "observed_rule": "Advance last_observed_identity when polling observes a new capability identity.",
       "processed_rule": "Advance last_processed_identity only after the durable change event, impact resolution, and routing checkpoint are persisted.",
-      "routing_failure_rule": "A routing failure leaves last_processed_identity unchanged."
+      "routing_failure_rule": "A routing failure leaves last_processed_identity unchanged.",
+      "initial_status": "UNSEEN",
+      "first_observation_rule": "UNSEEN -> CURRENT establishes the first observed identity as both observed and processed without emitting a change event.",
+      "supersession_rule": "A later observed identity may supersede CURRENT, EVALUATING, CANDIDATE, DECLINED, INTEGRATED, or an already pending UPSTREAM_CHANGED observation; last_processed_identity remains the durable transition base until routing succeeds."
     },
     "events": {
       "schema_version": "upstream-capability-changed/v1",
@@ -157,6 +160,7 @@
         "status"
       ],
       "transition_key_fields": [
+        "source_id",
         "resource_id",
         "previous_processed_identity",
         "observed_identity"
@@ -175,7 +179,27 @@
       "owner_prompt": "P79",
       "allowed_transitions": [
         [
+          "UNSEEN",
+          "CURRENT"
+        ],
+        [
           "CURRENT",
+          "UPSTREAM_CHANGED"
+        ],
+        [
+          "EVALUATING",
+          "UPSTREAM_CHANGED"
+        ],
+        [
+          "CANDIDATE",
+          "UPSTREAM_CHANGED"
+        ],
+        [
+          "DECLINED",
+          "UPSTREAM_CHANGED"
+        ],
+        [
+          "INTEGRATED",
           "UPSTREAM_CHANGED"
         ],
         [
@@ -210,6 +234,15 @@
         ]
       ],
       "automatic_prompt_authoring": false
+    },
+    "kernel": {
+      "path": "scripts/upstream_capability_watch.py",
+      "entrypoints": [
+        "new_watch_state",
+        "observe_capability",
+        "record_routing_result",
+        "transition_event_id"
+      ]
     }
   }
 }

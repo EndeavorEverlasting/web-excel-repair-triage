@@ -66,6 +66,148 @@ def active_workflow_text(workflow: str) -> str:
     return "\n".join(lines)
 
 
+
+def validate_capability_watch_contract(
+    contract: dict[str, Any],
+    impact_edges: dict[str, Any],
+    active_workflow: str,
+) -> None:
+    watch = contract.get("capability_watch")
+    if not isinstance(watch, dict) or watch.get("schema_version") != "operant-upstream-capability-watch/v1":
+        raise ValidationError("capability_watch contract block is missing or unsupported")
+
+    identity = watch.get("identity")
+    if not isinstance(identity, dict):
+        raise ValidationError("capability_watch.identity is required")
+    if identity.get("repository_revision_field") != "source_sha":
+        raise ValidationError("capability_watch repository revision must remain source_sha provenance")
+    if identity.get("capability_identity_field") != "resource_identity":
+        raise ValidationError("capability_watch capability identity must remain resource_identity")
+    if identity.get("capability_identity_algorithm") != "git_blob_sha":
+        raise ValidationError("capability_watch identity must use git_blob_sha")
+
+    kernel = watch.get("kernel")
+    expected_entrypoints = {
+        "new_watch_state",
+        "observe_capability",
+        "record_routing_result",
+        "transition_event_id",
+    }
+    if not isinstance(kernel, dict) or kernel.get("path") != "scripts/upstream_capability_watch.py":
+        raise ValidationError("capability_watch kernel path is missing or incorrect")
+    if set(kernel.get("entrypoints", [])) != expected_entrypoints:
+        raise ValidationError("capability_watch kernel entrypoints are incomplete")
+    if not CAPABILITY_WATCH_KERNEL.is_file():
+        raise ValidationError("capability_watch kernel file is missing")
+
+    state = watch.get("state")
+    required_state = {
+        "last_observed_identity",
+        "last_processed_identity",
+        "last_observed_repository_revision",
+        "status",
+    }
+    if not isinstance(state, dict) or set(state.get("required_fields", [])) != required_state:
+        raise ValidationError("capability_watch state fields are incomplete")
+    if state.get("initial_status") != "UNSEEN":
+        raise ValidationError("capability_watch initial status must be UNSEEN")
+
+    events = watch.get("events")
+    if not isinstance(events, dict) or events.get("schema_version") != "upstream-capability-changed/v1":
+        raise ValidationError("capability_watch event schema is missing or unsupported")
+    if events.get("transition_key_fields") != [
+        "source_id",
+        "resource_id",
+        "previous_processed_identity",
+        "observed_identity",
+    ]:
+        raise ValidationError("capability_watch dedupe key must bind source/capability and previous/current identity")
+    if events.get("event_id_algorithm") != "sha256(canonical transition_key_fields)":
+        raise ValidationError("capability_watch event identity algorithm is unsupported")
+    if events.get("raw_donor_body_allowed") is not False:
+        raise ValidationError("capability_watch events must not persist raw donor bodies")
+    if events.get("zero_impact_event_retained") is not True:
+        raise ValidationError("capability_watch must retain zero-impact events")
+
+    promotion = watch.get("promotion")
+    if not isinstance(promotion, dict):
+        raise ValidationError("capability_watch promotion policy is required")
+    transitions = {
+        tuple(item)
+        for item in promotion.get("allowed_transitions", [])
+        if isinstance(item, list) and len(item) == 2
+    }
+    required_transitions = {
+        ("UNSEEN", "CURRENT"),
+        ("CURRENT", "UPSTREAM_CHANGED"),
+        ("EVALUATING", "UPSTREAM_CHANGED"),
+        ("CANDIDATE", "UPSTREAM_CHANGED"),
+        ("DECLINED", "UPSTREAM_CHANGED"),
+        ("INTEGRATED", "UPSTREAM_CHANGED"),
+        ("UPSTREAM_CHANGED", "EVALUATING"),
+        ("EVALUATING", "CANDIDATE"),
+        ("EVALUATING", "DECLINED"),
+        ("CANDIDATE", "INTEGRATED"),
+        ("DECLINED", "CURRENT"),
+        ("INTEGRATED", "CURRENT"),
+    }
+    missing = required_transitions - transitions
+    if missing:
+        formatted = ", ".join(f"{source} -> {target}" for source, target in sorted(missing))
+        raise ValidationError("capability_watch missing required transition(s): " + formatted)
+    if ("UPSTREAM_CHANGED", "INTEGRATED") in transitions:
+        raise ValidationError("capability_watch must not promote UPSTREAM_CHANGED directly to INTEGRATED")
+    if ["UPSTREAM_CHANGED", "INTEGRATED"] not in promotion.get("forbidden_direct_transitions", []):
+        raise ValidationError("capability_watch must explicitly forbid UPSTREAM_CHANGED -> INTEGRATED")
+    if promotion.get("automatic_prompt_authoring") is not False:
+        raise ValidationError("capability_watch must not auto-author prompts")
+
+    impact = watch.get("impact_edges")
+    if not isinstance(impact, dict) or impact.get("registry") != "registry/resources/upstream-capability-impact-edges.v1.json":
+        raise ValidationError("capability_watch impact-edge registry path is missing or incorrect")
+    if impact.get("missing_edge_status") != "NO_IMPACT_EDGE":
+        raise ValidationError("capability_watch missing-edge status must remain NO_IMPACT_EDGE")
+    if impact_edges.get("schema_version") != "upstream-capability-impact-edges/v1":
+        raise ValidationError("unsupported capability-watch impact-edge registry schema")
+    policy = impact_edges.get("policy")
+    if not isinstance(policy, dict) or policy.get("zero_edge_is_valid") is not True:
+        raise ValidationError("capability-watch impact-edge registry must permit zero-edge events")
+    if policy.get("zero_edge_status") != "NO_IMPACT_EDGE":
+        raise ValidationError("capability-watch impact-edge registry must use NO_IMPACT_EDGE")
+    if policy.get("donor_change_never_grants_local_mutation_authority") is not True:
+        raise ValidationError("donor changes must never grant local mutation authority")
+    unique_fields = policy.get("unique_key_fields")
+    required_edge_fields = impact_edges.get("edge_schema", {}).get("required_fields")
+    if not isinstance(unique_fields, list) or not unique_fields:
+        raise ValidationError("capability-watch impact-edge unique key is missing")
+    if not isinstance(required_edge_fields, list) or not required_edge_fields:
+        raise ValidationError("capability-watch impact-edge required fields are missing")
+    seen_ids: set[str] = set()
+    seen_keys: set[tuple[str, ...]] = set()
+    for edge in impact_edges.get("edges", []):
+        if not isinstance(edge, dict):
+            raise ValidationError("capability-watch impact edge must be an object")
+        missing_fields = [field for field in required_edge_fields if not str(edge.get(field, "")).strip()]
+        if missing_fields:
+            raise ValidationError("capability-watch impact edge missing field(s): " + ", ".join(missing_fields))
+        edge_id = str(edge["edge_id"])
+        if edge_id in seen_ids:
+            raise ValidationError(f"duplicate capability-watch impact edge id: {edge_id}")
+        seen_ids.add(edge_id)
+        key = tuple(str(edge.get(field, "")) for field in unique_fields)
+        if key in seen_keys:
+            raise ValidationError("duplicate capability-watch impact edge mapping")
+        seen_keys.add(key)
+
+    for marker in (
+        "scripts/upstream_capability_watch.py",
+        "registry/resources/upstream-capability-impact-edges.v1.json",
+        "tests/test_upstream_capability_watch.py",
+        "tests.test_upstream_capability_watch",
+    ):
+        if marker not in active_workflow:
+            raise ValidationError(f"refresh workflow missing capability-watch marker: {marker}")
+
 def validate() -> dict[str, Any]:
     contract = load(CONTRACT)
     index = load(INDEX)

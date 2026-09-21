@@ -1,55 +1,143 @@
 from __future__ import annotations
 
-import hashlib
+import copy
 import json
 import unittest
 from pathlib import Path
 
+from scripts import upstream_capability_watch as watch
+from scripts import validate_operant_external_resources as validator
+
 ROOT = Path(__file__).resolve().parents[1]
 CONTRACT = ROOT / "harness/contracts/operant-external-resource-intake.v1.json"
 EDGES = ROOT / "registry/resources/upstream-capability-impact-edges.v1.json"
-
-
-def transition_id(resource_id: str, previous: str, observed: str) -> str:
-    payload = "|".join((resource_id, previous, observed))
-    return hashlib.sha256(payload.encode("utf-8")).hexdigest()
+WORKFLOW = ROOT / ".github/workflows/operant-external-resource-refresh.yml"
 
 
 class UpstreamCapabilityWatchContractTests(unittest.TestCase):
     def setUp(self) -> None:
-        self.contract = json.loads(CONTRACT.read_text(encoding="utf-8"))["capability_watch"]
+        self.root_contract = json.loads(CONTRACT.read_text(encoding="utf-8"))
+        self.contract = self.root_contract["capability_watch"]
         self.edges = json.loads(EDGES.read_text(encoding="utf-8"))
+        self.workflow = validator.active_workflow_text(WORKFLOW.read_text(encoding="utf-8"))
+
+    def baseline(self, identity: str = "A") -> dict[str, object]:
+        state, event = watch.observe_capability(
+            watch.new_watch_state(),
+            source_id="mattpocock-skills",
+            resource_id="mattpocock-skills:productivity/teach",
+            observed_identity=identity,
+            repository_revision="repo-a",
+        )
+        self.assertIsNone(event)
+        return state
+
+    def test_contract_validator_accepts_current_watch_floor(self) -> None:
+        validator.validate_capability_watch_contract(self.root_contract, self.edges, self.workflow)
+
+    def test_validator_rejects_missing_initial_transition(self) -> None:
+        broken = copy.deepcopy(self.root_contract)
+        broken["capability_watch"]["promotion"]["allowed_transitions"] = [
+            item
+            for item in broken["capability_watch"]["promotion"]["allowed_transitions"]
+            if item != ["UNSEEN", "CURRENT"]
+        ]
+        with self.assertRaisesRegex(validator.ValidationError, "UNSEEN -> CURRENT"):
+            validator.validate_capability_watch_contract(broken, self.edges, self.workflow)
 
     def test_identity_separates_repository_revision_from_capability_identity(self) -> None:
         identity = self.contract["identity"]
         self.assertEqual(identity["repository_revision_field"], "source_sha")
         self.assertEqual(identity["capability_identity_field"], "resource_identity")
         self.assertEqual(identity["capability_identity_algorithm"], "git_blob_sha")
-
-    def test_observed_and_processed_identity_are_distinct_and_routing_failure_fails_closed(self) -> None:
-        state = self.contract["state"]
-        self.assertIn("last_observed_identity", state["required_fields"])
-        self.assertIn("last_processed_identity", state["required_fields"])
-        before = {"last_observed_identity": "A", "last_processed_identity": "A"}
-        after_poll = {**before, "last_observed_identity": "B"}
-        after_routing_failure = dict(after_poll)
-        self.assertEqual(after_routing_failure["last_processed_identity"], "A")
-        self.assertIn("leaves last_processed_identity unchanged", state["routing_failure_rule"])
-
-    def test_transition_dedupe_a_b_replay_and_b_c(self) -> None:
-        first = transition_id("source:capability", "A", "B")
-        replay = transition_id("source:capability", "A", "B")
-        second = transition_id("source:capability", "B", "C")
-        self.assertEqual(first, replay)
-        self.assertNotEqual(first, second)
         self.assertEqual(
             self.contract["events"]["transition_key_fields"],
-            ["resource_id", "previous_processed_identity", "observed_identity"],
+            ["source_id", "resource_id", "previous_processed_identity", "observed_identity"],
         )
 
-    def test_missing_impact_edge_retains_event(self) -> None:
-        self.assertEqual(self.edges["edges"], [])
-        self.assertTrue(self.edges["policy"]["zero_edge_is_valid"])
+    def test_first_observation_establishes_current_baseline(self) -> None:
+        state = self.baseline()
+        self.assertEqual(state["status"], "CURRENT")
+        self.assertEqual(state["last_observed_identity"], "A")
+        self.assertEqual(state["last_processed_identity"], "A")
+        self.assertEqual(state["last_observed_repository_revision"], "repo-a")
+
+    def test_routing_failure_preserves_processed_identity_and_replay_event_id(self) -> None:
+        state = self.baseline()
+        changed, event = watch.observe_capability(
+            state,
+            source_id="mattpocock-skills",
+            resource_id="mattpocock-skills:productivity/teach",
+            observed_identity="B",
+            repository_revision="repo-b",
+        )
+        self.assertIsNotNone(event)
+        self.assertEqual(changed["last_observed_identity"], "B")
+        self.assertEqual(changed["last_processed_identity"], "A")
+        failed = watch.record_routing_result(
+            changed,
+            event,
+            event_persisted=True,
+            impact_resolution_persisted=False,
+            routing_checkpoint_persisted=False,
+        )
+        self.assertEqual(failed["last_processed_identity"], "A")
+        self.assertEqual(failed["status"], "UPSTREAM_CHANGED")
+
+        replay, replay_event = watch.observe_capability(
+            failed,
+            source_id="mattpocock-skills",
+            resource_id="mattpocock-skills:productivity/teach",
+            observed_identity="B",
+            repository_revision="repo-b2",
+        )
+        self.assertEqual(replay["last_processed_identity"], "A")
+        self.assertEqual(replay_event["event_id"], event["event_id"])
+
+    def test_successful_route_advances_processed_identity_and_b_to_c_is_new_event(self) -> None:
+        state = self.baseline()
+        changed, event_b = watch.observe_capability(
+            state,
+            source_id="mattpocock-skills",
+            resource_id="mattpocock-skills:productivity/teach",
+            observed_identity="B",
+            repository_revision="repo-b",
+            impact_edge_ids=["teach-p96", "teach-p96", "teach-p98"],
+        )
+        routed = watch.record_routing_result(
+            changed,
+            event_b,
+            event_persisted=True,
+            impact_resolution_persisted=True,
+            routing_checkpoint_persisted=True,
+        )
+        self.assertEqual(routed["status"], "EVALUATING")
+        self.assertEqual(routed["last_processed_identity"], "B")
+
+        changed_c, event_c = watch.observe_capability(
+            routed,
+            source_id="mattpocock-skills",
+            resource_id="mattpocock-skills:productivity/teach",
+            observed_identity="C",
+            repository_revision="repo-c",
+        )
+        self.assertEqual(changed_c["status"], "UPSTREAM_CHANGED")
+        self.assertEqual(event_c["previous_processed_identity"], "B")
+        self.assertNotEqual(event_c["event_id"], event_b["event_id"])
+        self.assertEqual(event_b["impact_edge_ids"], ["teach-p96", "teach-p98"])
+
+    def test_missing_impact_edge_retains_diagnosable_event(self) -> None:
+        state = self.baseline()
+        changed, event = watch.observe_capability(
+            state,
+            source_id="mattpocock-skills",
+            resource_id="mattpocock-skills:productivity/teach",
+            observed_identity="B",
+            repository_revision="repo-b",
+        )
+        self.assertEqual(changed["status"], "UPSTREAM_CHANGED")
+        self.assertEqual(event["impact_edge_ids"], [])
+        self.assertEqual(event["status"], "NO_IMPACT_EDGE")
         self.assertTrue(self.contract["events"]["zero_impact_event_retained"])
         self.assertEqual(self.contract["impact_edges"]["missing_edge_status"], "NO_IMPACT_EDGE")
 
