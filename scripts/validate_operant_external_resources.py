@@ -131,6 +131,29 @@ def validate_capability_watch_contract(
     if events.get("zero_impact_event_retained") is not True:
         raise ValidationError("capability_watch must retain zero-impact events")
 
+    receipts = watch.get("receipts")
+    if not isinstance(receipts, dict) or receipts.get("schema_version") != "upstream-capability-watch-receipt/v1":
+        raise ValidationError("capability_watch receipt contract is missing or unsupported")
+    if receipts.get("append_only") is not True:
+        raise ValidationError("capability_watch receipts must be append-only")
+    if receipts.get("raw_donor_body_allowed") is not False:
+        raise ValidationError("capability_watch receipts must not persist raw donor bodies")
+    required_receipt_fields = {
+        "receipt_id",
+        "source_id",
+        "resource_id",
+        "repository_revision",
+        "observed_identity",
+        "processed_identity_before",
+        "event_id",
+        "outcome",
+    }
+    if set(receipts.get("required_fields", [])) != required_receipt_fields:
+        raise ValidationError("capability_watch receipt fields are incomplete")
+    required_outcomes = {"BASELINE", "UNCHANGED", "CHANGE_EVENT", "ROUTING_DEFERRED", "ROUTED"}
+    if set(receipts.get("outcomes", [])) != required_outcomes:
+        raise ValidationError("capability_watch receipt outcomes are incomplete")
+
     promotion = watch.get("promotion")
     if not isinstance(promotion, dict):
         raise ValidationError("capability_watch promotion policy is required")

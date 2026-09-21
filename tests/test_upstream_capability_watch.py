@@ -62,6 +62,30 @@ class UpstreamCapabilityWatchContractTests(unittest.TestCase):
         self.assertEqual(state["last_processed_identity"], "A")
         self.assertEqual(state["last_observed_repository_revision"], "repo-a")
 
+    def test_unchanged_identity_emits_no_event_and_refreshes_repository_provenance(self) -> None:
+        state = self.baseline()
+        unchanged, event = watch.observe_capability(
+            state,
+            source_id="mattpocock-skills",
+            resource_id="mattpocock-skills:productivity/teach",
+            observed_identity="A",
+            repository_revision="repo-a2",
+        )
+        self.assertIsNone(event)
+        self.assertEqual(unchanged["status"], "CURRENT")
+        self.assertEqual(unchanged["last_observed_identity"], "A")
+        self.assertEqual(unchanged["last_processed_identity"], "A")
+        self.assertEqual(unchanged["last_observed_repository_revision"], "repo-a2")
+
+    def test_receipt_contract_is_append_only_and_metadata_only(self) -> None:
+        receipts = self.contract["receipts"]
+        self.assertTrue(receipts["append_only"])
+        self.assertFalse(receipts["raw_donor_body_allowed"])
+        self.assertEqual(receipts["schema_version"], "upstream-capability-watch-receipt/v1")
+        self.assertIn("event_id", receipts["required_fields"])
+        self.assertIn("ROUTING_DEFERRED", receipts["outcomes"])
+        self.assertIn("ROUTED", receipts["outcomes"])
+
     def test_routing_failure_preserves_processed_identity_and_replay_event_id(self) -> None:
         state = self.baseline()
         changed, event = watch.observe_capability(

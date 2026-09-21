@@ -243,6 +243,30 @@
         "record_routing_result",
         "transition_event_id"
       ]
+    },
+    "receipts": {
+      "schema_version": "upstream-capability-watch-receipt/v1",
+      "append_only": true,
+      "required_fields": [
+        "receipt_id",
+        "source_id",
+        "resource_id",
+        "repository_revision",
+        "observed_identity",
+        "processed_identity_before",
+        "event_id",
+        "outcome"
+      ],
+      "outcomes": [
+        "BASELINE",
+        "UNCHANGED",
+        "CHANGE_EVENT",
+        "ROUTING_DEFERRED",
+        "ROUTED"
+      ],
+      "receipt_id_algorithm": "sha256(canonical source_id/resource_id/repository_revision/observed_identity/outcome)",
+      "raw_donor_body_allowed": false,
+      "persistence_boundary": "U1 defines the receipt contract; U2A owns durable runtime receipt persistence."
     }
   }
 }
