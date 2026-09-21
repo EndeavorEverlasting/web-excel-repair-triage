@@ -226,4 +226,3 @@ Dependency: U1 implementation is VALIDATED on PR #619 head `ab35d72f7149e79fcd15
 Action: reconcile PR #606 against current main and add `tests/test_upstream_capability_watch.py` to `harness/test-floor.v1.json` -> `self_tests`; run the canonical deterministic test floor and integrate/release that shared surface. PR #619 must not race this file.
 Expected proof: current-main `harness/test-floor.v1.json` contains the focused suite and the deterministic repository test-floor run is green.
 Completion gate: after that proof, refresh PR #619 against current main, resolve the two remaining test-floor review threads, rerun proof-relevant exact-head checks, and merge U1.
-
