@@ -95,6 +95,40 @@ class P55RepositoryBootstrapTests(unittest.TestCase):
             "keywords",
         }
         self.assertTrue(required.issubset(prompt_registry_ops.EDITABLE_PROMPT_FIELDS))
+        self.assertEqual(
+            prompt_registry_ops.SEMANTIC_EDITABLE_PROMPT_FIELDS,
+            {"name", "copyContent", "sprintRole", "useWhen"},
+        )
+        self.assertTrue(
+            {"class", "inspectFirst", "expectedOutput", "proofGate", "keywords"}.issubset(
+                prompt_registry_ops.METADATA_EDITABLE_PROMPT_FIELDS
+            )
+        )
+
+    def test_metadata_only_edit_cannot_fake_semantic_lifecycle_progress(self) -> None:
+        with self.assertRaisesRegex(SystemExit, "cannot independently advance"):
+            prompt_registry_ops.edit_prompt(
+                "P55",
+                {"keywords": ["repository creation"]},
+                "NO_CAPABILITY_CHANGE",
+                ["tests/test_p55_repository_bootstrap.py"],
+                "metadata-only negative control",
+                dry_run=True,
+            )
+
+    def test_edit_rejects_non_string_keyword_metadata(self) -> None:
+        with self.assertRaisesRegex(SystemExit, "only non-empty strings"):
+            prompt_registry_ops.edit_prompt(
+                "P55",
+                {
+                    "name": self.p55["name"] + " test-only candidate",
+                    "keywords": [None],
+                },
+                "NO_CAPABILITY_CHANGE",
+                ["tests/test_p55_repository_bootstrap.py"],
+                "invalid keyword type negative control",
+                dry_run=True,
+            )
 
     def test_discovery_synonyms_route_repository_creation_to_p55(self) -> None:
         for term in (
