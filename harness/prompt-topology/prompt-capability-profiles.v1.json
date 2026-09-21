@@ -1834,9 +1834,9 @@
     },
     {
       "prompt_id": "P55",
-      "profile_version": 1,
-      "canonical_prompt_hash": "d904065dcd12ba1c556e3441049d980d1677385740a78c56a00db2fde8a03fe8",
-      "acceptance_commit": "55148914364e2988bc6096b7c8d142eca3f62c28",
+      "profile_version": 2,
+      "canonical_prompt_hash": "f786f044cc3d675fadad2a7ee048075f1f968cb094be76f34664504196a11d00",
+      "acceptance_commit": "c4f02ad4483f695d250e63f189116268bdc7c80c",
       "direct_assignments": [
         {
           "capability_id": "execution.implementation",
@@ -1860,10 +1860,16 @@
       "semantic_dependency_fingerprint": "c61fe644e2c4c8d6be4601c5be31e5ee1250c7dfa0dcf4284e000cb1f6c7de20",
       "evidence_refs": [
         "docs/prompts.json:P55",
-        "harness/contracts/prompt-strength.v1.json"
+        "harness/contracts/prompt-strength.v1.json",
+        "scripts/prompt_registry_ops.py",
+        "tests/test_p55_repository_bootstrap.py"
       ],
       "profile_status": "ACCEPTED",
-      "profile_sha256": "c2433cff44ed6cf27510cb584a56f8b25e4a7a0aadd9ac571f7d8c69293ac29e"
+      "prior_profile_ref": {
+        "profile_version": 1,
+        "profile_sha256": "c2433cff44ed6cf27510cb584a56f8b25e4a7a0aadd9ac571f7d8c69293ac29e"
+      },
+      "profile_sha256": "dcb31a2df64439e9edeb6a5a570e19e4570760976a36a4f6cbe4ed510d58246f"
     },
     {
       "prompt_id": "P56",

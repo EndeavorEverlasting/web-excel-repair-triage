@@ -75,6 +75,22 @@
         "tests/test_p02_p07_autonomous_iteration.py",
         "harness/evals/prompt-strength/p02-continuity-regression-matrix.v1.json"
       ]
+    },
+    {
+      "migration_id": "p79-no-capability-change-p55-005",
+      "path": "docs/prompts.json",
+      "from_git_blob_sha1": "aa4dd85a41f374db82d7800bc0ecdf78f62803cd",
+      "to_git_blob_sha1": "04e703e63e7d87358ba6e79b5a01dad0297a9ea2",
+      "affected_prompt_ids": [
+        "P55"
+      ],
+      "change_kind": "strengthening",
+      "effective_identity_change": "preserve_canonical",
+      "rationale": "Strengthen the existing P55 repository-creation owner for context recovery, explicit missing-parameter completion policy, namespace screening, and provider-neutral Git execution while preserving its accepted capability ownership.",
+      "focused_tests": [
+        "tests/test_prompt_semantic_coverage.py",
+        "tests/test_prompt_quality_history.py"
+      ]
     }
   ]
 }

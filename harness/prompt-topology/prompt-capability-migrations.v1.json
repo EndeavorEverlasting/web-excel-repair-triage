@@ -4,7 +4,15 @@
   "purpose": "Append-only ledger of semantic capability transitions across prompt ADD, STRENGTHEN, CHANGE, TRANSFER, and RETIRE lifecycle operations.",
   "established_at": "2026-09-19",
   "status": "sprint0_floor",
-  "migration_kinds": ["ADD", "STRENGTHEN", "NO_CAPABILITY_CHANGE", "INTENTIONAL_CHANGE", "TRANSFER", "RETIRE", "RESTORE"],
+  "migration_kinds": [
+    "ADD",
+    "STRENGTHEN",
+    "NO_CAPABILITY_CHANGE",
+    "INTENTIONAL_CHANGE",
+    "TRANSFER",
+    "RETIRE",
+    "RESTORE"
+  ],
   "migrations": [
     {
       "migration_id": "2026-09-19-agent-transport-panels-p02",
@@ -49,6 +57,80 @@
       "rationale": "Strengthen P59 to make explicit that copyable panels are machine-readable transport that agents must ingest and dispatch",
       "semantic_diff": "No capability changes",
       "effective_identity_change": "preserve_canonical"
+    },
+    {
+      "migration_id": "NO_CAPABILITY_CHANGE_P55_005",
+      "migration_kind": "NO_CAPABILITY_CHANGE",
+      "prompt_id": "P55",
+      "old_canonical_prompt_hash": "d904065dcd12ba1c556e3441049d980d1677385740a78c56a00db2fde8a03fe8",
+      "new_canonical_prompt_hash": "f786f044cc3d675fadad2a7ee048075f1f968cb094be76f34664504196a11d00",
+      "from_profile_version": 1,
+      "to_profile_version": 2,
+      "from_profile_sha256": "c2433cff44ed6cf27510cb584a56f8b25e4a7a0aadd9ac571f7d8c69293ac29e",
+      "to_profile_sha256": "dcb31a2df64439e9edeb6a5a570e19e4570760976a36a4f6cbe4ed510d58246f",
+      "capability_deltas": [
+        {
+          "capability_id": "execution.implementation",
+          "before": {
+            "presence": "AWARE",
+            "ownership": "NONE"
+          },
+          "after": {
+            "presence": "AWARE",
+            "ownership": "NONE"
+          }
+        }
+      ],
+      "rationale": "Strengthen the existing P55 repository-creation owner for context recovery, explicit missing-parameter completion policy, namespace screening, and provider-neutral Git execution while preserving its accepted capability ownership.",
+      "evidence_refs": [
+        "docs/prompts.json:P55",
+        "harness/contracts/prompt-strength.v1.json",
+        "scripts/prompt_registry_ops.py",
+        "tests/test_p55_repository_bootstrap.py"
+      ],
+      "focused_tests": [
+        "tests/test_prompt_semantic_coverage.py",
+        "tests/test_prompt_semantic_validator_1b.py"
+      ],
+      "source_history_migration_id": "p79-no-capability-change-p55-005",
+      "source_history_from_git_blob_sha1": "aa4dd85a41f374db82d7800bc0ecdf78f62803cd",
+      "source_history_to_git_blob_sha1": "04e703e63e7d87358ba6e79b5a01dad0297a9ea2",
+      "coverage_before_fingerprint": "a73eb32987243e2e9697c6d04f6321a449453d2c8224a3160d7fd42a8fd8cbec",
+      "coverage_after_fingerprint": "a73eb32987243e2e9697c6d04f6321a449453d2c8224a3160d7fd42a8fd8cbec",
+      "acceptance_state": "ACCEPTED",
+      "prior_profile_snapshot": {
+        "prompt_id": "P55",
+        "profile_version": 1,
+        "canonical_prompt_hash": "d904065dcd12ba1c556e3441049d980d1677385740a78c56a00db2fde8a03fe8",
+        "acceptance_commit": "55148914364e2988bc6096b7c8d142eca3f62c28",
+        "direct_assignments": [
+          {
+            "capability_id": "execution.implementation",
+            "presence": "AWARE",
+            "ownership": "NONE",
+            "capability_relation": "ROUTES_TO",
+            "delivery_source": "ROUTED_OWNER",
+            "evidence_refs": [
+              "docs/prompts.json:P55"
+            ],
+            "rationale": "P55 routes to P07 for implementation execution"
+          }
+        ],
+        "inherited_sources": [
+          {
+            "source_id": "prompt-strength-shared-policy",
+            "source_version": "v1",
+            "source_hash": "e249da6706d86733cd03a046ef9e16552a3ae87dc8cc644281c5c1fd9c08c796"
+          }
+        ],
+        "semantic_dependency_fingerprint": "c61fe644e2c4c8d6be4601c5be31e5ee1250c7dfa0dcf4284e000cb1f6c7de20",
+        "evidence_refs": [
+          "docs/prompts.json:P55",
+          "harness/contracts/prompt-strength.v1.json"
+        ],
+        "profile_status": "ACCEPTED",
+        "profile_sha256": "c2433cff44ed6cf27510cb584a56f8b25e4a7a0aadd9ac571f7d8c69293ac29e"
+      }
     }
   ],
   "note": "Migrations recorded after Sprint 1A baseline. Every lifecycle transition after baseline acceptance must be explicit and recorded here."

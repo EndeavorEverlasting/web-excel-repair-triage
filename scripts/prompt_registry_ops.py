@@ -57,7 +57,10 @@ SEMANTIC_PROFILE_FIELDS = {
     "distinct_residual",
     "transfer_targets",
 }
-EDITABLE_PROMPT_FIELDS = {"name", "copyContent", "sprintRole", "useWhen"}
+EDITABLE_PROMPT_FIELDS = {
+    "name", "class", "sprintRole", "useWhen", "inspectFirst",
+    "expectedOutput", "proofGate", "copyContent", "keywords",
+}
 
 
 def _read_json(path_value: str) -> dict[str, Any]:
@@ -1442,6 +1445,16 @@ def edit_prompt(
     new_record = _clone_json(record)
     for field in changed_fields:
         value = patch[field]
+        if field == "keywords":
+            if not isinstance(value, list) or not value:
+                raise SystemExit("Prompt edit keywords must be a non-empty list")
+            normalized = [str(item).strip() for item in value]
+            if any(not item for item in normalized):
+                raise SystemExit("Prompt edit keywords must contain only non-empty strings")
+            if len(normalized) != len({_normalize_text(item) for item in normalized}):
+                raise SystemExit("Prompt edit keywords must not contain duplicates")
+            new_record[field] = normalized
+            continue
         if not isinstance(value, str) or not value.strip():
             raise SystemExit(f"Prompt edit field must be a non-empty string: {field}")
         new_record[field] = value.rstrip() if field == "copyContent" else value.strip()
