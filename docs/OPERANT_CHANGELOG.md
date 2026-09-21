@@ -16,6 +16,9 @@ Human-facing Operant releases. Git commit/artifact identity remains the forensic
 
 - fix(prompt-kit): recover canonical P07 copy identity (#607) (`1ea0e465`)
 - fix(prompt-kit): fail closed on promotion policy drift (`3316ac50`)
+- fix(prompt-kit): preserve explicit mode precedence (`6a9bade2`)
+- fix(prompt-kit): validate disposition guard phrase (`7c6ad15f`)
+- fix(prompt-kit): make mode authorization terminal (`4a54437f`)
 
 ## 0.10.1 - 2026-09-19
 
