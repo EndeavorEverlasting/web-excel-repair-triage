@@ -225,7 +225,7 @@ def load_actionability_policy() -> dict[str, Any]:
     disposition_marker = str(payload["disposition_marker"]).strip()
     if disposition_marker not in appendix:
         raise SystemExit("Actionability appendix must include its disposition precedence marker")
-    if disposition_marker not in str(payload["next_step_suffix"]):
+    if "Respect explicit mode/disposition authority" not in str(payload["next_step_suffix"]):
         raise SystemExit("Actionability next-step suffix must include disposition precedence")
     disposition = payload.get("disposition_precedence")
     if not isinstance(disposition, dict):
