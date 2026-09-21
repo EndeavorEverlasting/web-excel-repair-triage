@@ -4,7 +4,7 @@
 **Planning floor:** `main@70178017ffa5c27f4428d6aae733a61113a6f4ad`
 **Planning branch:** `plan/upstream-capability-watch-20260920`
 **Owner:** Prompt Kit upstream capability watch / P102 + P115 integration
-**Status:** TRACKED PLAN — U0A forensics and U0B source research PROVEN; U1 implementation is active on PR #619; U1 integration and U2+ runtime/visibility remain unproven.
+**Status:** TRACKED PLAN — U0A/U0B PROVEN and integrated; U1 implementation/contract/workflow proof is VALIDATED on PR #619 head `ab35d72f7149e79fcd15cabd5f65ec8081a3470c`, but U1 integration is BLOCKED on PR #606 ownership of `harness/test-floor.v1.json`; U2+ runtime/visibility remain unproven.
 
 ## Mission
 
@@ -136,6 +136,7 @@ A observed/processed → B observed → durable change event → impact resoluti
 **Proof ceiling:** authoritative-source research.
 
 ### U1 — Capability watch contract + fixtures
+**Status:** IMPLEMENTED / VALIDATED on PR #619 head `ab35d72f7149e79fcd15cabd5f65ec8081a3470c`; integration BLOCKED on deterministic test-floor registration owned by PR #606.
 **Primary surface:** harness spine.
 **Expected contract:** watched source/capability locator; immutable identity; repository revision provenance; poll state; append-only receipt; impact edge; dedupe transition; promotion policy; event schema. U1 also owns the deterministic state-transition kernel at `scripts/upstream_capability_watch.py`, the capability-watch checks inside `scripts/validate_operant_external_resources.py`, and focused-suite wiring in `.github/workflows/operant-external-resource-refresh.yml`; U2A later owns provider polling, durable runtime persistence, and P115 routing around that proven kernel.
 **Required tests:** initial observation; unchanged; A→B; replay B; B→C; routing failure leaves processed=A; missing impact edge retains event; promotion cannot jump changed→integrated.
@@ -198,7 +199,7 @@ A observed/processed → B observed → durable change event → impact resoluti
 
 ### Current executable graph
 
-After U0A and U0B integration, the active executable graph contains only U1. Current graph width is **1**, so parallel execution is **NOT_APPLICABLE** for the active wave. The machine-readable manifest is `Outputs/prompt-parallel-dispatch/manifest.json`, run id `upstream-capability-watch-20260920-u1`, and it is pinned to existing writer PR #619 / branch `feat/upstream-capability-watch-contract-floor-20260920`.
+After U0A and U0B integration, the active executable graph contains only U1. Current graph width is **1**, so parallel execution is **NOT_APPLICABLE** for the active wave. The machine-readable manifest is `Outputs/prompt-parallel-dispatch/manifest.json`, run id `upstream-capability-watch-20260920-u1-blocked`, and it is pinned to existing writer PR #619 / branch `feat/upstream-capability-watch-contract-floor-20260920`.
 
 ### Historical wave
 
@@ -210,7 +211,7 @@ The prior U0B/U1 successor wave had graph width 2 and ran under DEGRADED coordin
 |---|---|---|---|
 | forensic classification | U0A | PROVEN | closed by `harness/reports/UPSTREAM_CAPABILITY_WATCH_FORENSICS.md` + `harness/reports/upstream-capability-watch-forensics.v1.json` |
 | design-source authority research | U0B | PROVEN | `harness/reports/UPSTREAM_DESIGN_AUTHORING_SOURCE_RESEARCH.md` integrated by PR #618 |
-| watch data/event contract | U1 | REQUIRED SUCCESSOR WORK | implement schema + fixtures |
+| watch data/event contract | U1 | BLOCKED | implementation/contract/workflow proof VALIDATED on PR #619 head `ab35d72f7149e79fcd15cabd5f65ec8081a3470c`; register `tests/test_upstream_capability_watch.py` in PR #606-owned deterministic test floor, then integrate U1 |
 | runtime detection/routing | U2A | REQUIRED SUCCESSOR WORK | emit durable capability events + P115 routing |
 | teach reconciliation | U2B | REQUIRED SUCCESSOR WORK | add impact mapping and semantic disposition |
 | design/authoring intake | U3 | REQUIRED SUCCESSOR WORK | register/adapt only authoritative donors |
@@ -220,9 +221,8 @@ The prior U0B/U1 successor wave had graph width 2 and ran under DEGRADED coordin
 
 ## First executable continuation
 
-Owner: U1 capability-watch contract-floor lane.
-Dependency: U0A forensics and U0B source research are PROVEN. Graph width is now 1, so parallel execution is NOT_APPLICABLE. The executable manifest is `Outputs/prompt-parallel-dispatch/manifest.json` with run id `upstream-capability-watch-20260920-u1`.
-Action: continue PR #619 on refreshed main: repair the `UNSEEN -> CURRENT` baseline transition, implement the deterministic state kernel in `scripts/upstream_capability_watch.py`, validate the contract/impact-edge invariants through `scripts/validate_operant_external_resources.py`, make the refresh workflow execute the focused capability-watch suite, make the routing-failure fixture exercise the kernel, and wire the focused suite into the external-resource refresh workflow now; deterministic-floor registration remains BLOCKED by active #606 ownership of `harness/test-floor.v1.json` and must be converged by that owner before U1 can reach its full acceptance ceiling.
-Completion gate: deterministic A→B/replay/B→C fixtures plus routing-failure preservation prove that a new observed identity cannot be silently consumed before durable routing.
-
-Coordination note: `.ai/WORK_QUEUE.md` is temporarily owned by open PR #615, so U0A ledger synchronization is deferred to convergence rather than racing that shared file.
+Owner: PR #606 / current `harness/test-floor.v1.json` writer.
+Dependency: U1 implementation is VALIDATED on PR #619 head `ab35d72f7149e79fcd15cabd5f65ec8081a3470c`; external-resource refresh run `35547575957`, App Harness, Pages, Artifact Engine, Operational Harness, the generic deterministic floor, and CodeRabbit are green at that head. The focused suite is executed by the PR #619 version of the external-resource refresh workflow; current main does not contain that wiring until U1 integrates.
+Action: reconcile PR #606 against current main and add `tests/test_upstream_capability_watch.py` to `harness/test-floor.v1.json` -> `self_tests`; run the canonical deterministic test floor and integrate/release that shared surface. PR #619 must not race this file.
+Expected proof: current-main `harness/test-floor.v1.json` contains the focused suite and the deterministic repository test-floor run is green.
+Completion gate: after that proof, refresh PR #619 against current main, resolve the two remaining test-floor review threads, rerun proof-relevant exact-head checks, and merge U1.
