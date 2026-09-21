@@ -4,7 +4,7 @@
 **Planning floor:** `main@70178017ffa5c27f4428d6aae733a61113a6f4ad`
 **Planning branch:** `plan/upstream-capability-watch-20260920`
 **Owner:** Prompt Kit upstream capability watch / P102 + P115 integration
-**Status:** TRACKED PLAN — U0A forensics and U0B source research PROVEN; U1 implementation is active on PR #619; U1 integration and U2+ runtime/visibility remain unproven.
+**Status:** TRACKED PLAN — U0A/U0B PROVEN and integrated; U1 implementation/contract/workflow proof is VALIDATED on PR #619 head `ab35d72f7149e79fcd15cabd5f65ec8081a3470c`, but U1 integration is BLOCKED on PR #606 ownership of `harness/test-floor.v1.json`; U2+ runtime/visibility remain unproven.
 
 ## Mission
 
@@ -136,6 +136,7 @@ A observed/processed → B observed → durable change event → impact resoluti
 **Proof ceiling:** authoritative-source research.
 
 ### U1 — Capability watch contract + fixtures
+**Status:** IMPLEMENTED / VALIDATED on PR #619 head `ab35d72f7149e79fcd15cabd5f65ec8081a3470c`; integration BLOCKED on deterministic test-floor registration owned by PR #606.
 **Primary surface:** harness spine.
 **Expected contract:** watched source/capability locator; immutable identity; repository revision provenance; poll state; append-only receipt; impact edge; dedupe transition; promotion policy; event schema. U1 also owns the deterministic state-transition kernel at `scripts/upstream_capability_watch.py`, the capability-watch checks inside `scripts/validate_operant_external_resources.py`, and focused-suite wiring in `.github/workflows/operant-external-resource-refresh.yml`; U2A later owns provider polling, durable runtime persistence, and P115 routing around that proven kernel.
 **Required tests:** initial observation; unchanged; A→B; replay B; B→C; routing failure leaves processed=A; missing impact edge retains event; promotion cannot jump changed→integrated.
@@ -220,9 +221,9 @@ The prior U0B/U1 successor wave had graph width 2 and ran under DEGRADED coordin
 
 ## First executable continuation
 
-Owner: U1 capability-watch contract-floor lane.
-Dependency: U0A forensics and U0B source research are PROVEN. Graph width is now 1, so parallel execution is NOT_APPLICABLE. The executable manifest is `Outputs/prompt-parallel-dispatch/manifest.json` with run id `upstream-capability-watch-20260920-u1`.
-Action: continue PR #619 on refreshed main: repair the `UNSEEN -> CURRENT` baseline transition, implement the deterministic state kernel in `scripts/upstream_capability_watch.py`, validate the contract/impact-edge invariants through `scripts/validate_operant_external_resources.py`, make the refresh workflow execute the focused capability-watch suite, make the routing-failure fixture exercise the kernel, and wire the focused suite into the external-resource refresh workflow now; deterministic-floor registration remains BLOCKED by active #606 ownership of `harness/test-floor.v1.json` and must be converged by that owner before U1 can reach its full acceptance ceiling.
-Completion gate: deterministic A→B/replay/B→C fixtures plus routing-failure preservation prove that a new observed identity cannot be silently consumed before durable routing.
+Owner: PR #606 / current `harness/test-floor.v1.json` writer.
+Dependency: U1 implementation is VALIDATED on PR #619 head `ab35d72f7149e79fcd15cabd5f65ec8081a3470c`; external-resource refresh, App Harness, Pages, Artifact Engine, Operational Harness, and CodeRabbit are green at that head. The focused suite is already executed by the external-resource refresh workflow.
+Action: reconcile PR #606 against current main and add `tests/test_upstream_capability_watch.py` to `harness/test-floor.v1.json` -> `self_tests`; run the canonical deterministic test floor and integrate/release that shared surface. PR #619 must not race this file.
+Expected proof: current-main `harness/test-floor.v1.json` contains the focused suite and the deterministic repository test-floor run is green.
+Completion gate: after that proof, refresh PR #619 against current main, resolve the two remaining test-floor review threads, rerun proof-relevant exact-head checks, and merge U1.
 
-Coordination note: `.ai/WORK_QUEUE.md` is temporarily owned by open PR #615, so U0A ledger synchronization is deferred to convergence rather than racing that shared file.
