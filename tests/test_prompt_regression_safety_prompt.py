@@ -13,6 +13,7 @@ from scripts import validate_prompt_regression_safety as regression
 ROOT = Path(__file__).resolve().parents[1]
 CONTRACT = ROOT / "harness" / "contracts" / "prompt-regression-safety.v1.json"
 REGISTER = ROOT / "harness" / "evals" / "prompt-regression" / "defect-families.v1.json"
+COVERAGE_BASELINE = ROOT / "harness" / "evals" / "prompt-regression" / "prompt-coverage-baseline.v1.json"
 MARKER = "REGRESSION SAFETY / RECURRING DEFECT CONTRACT"
 
 
@@ -31,6 +32,7 @@ class PromptRegressionSafetyTests(unittest.TestCase):
     def setUpClass(cls) -> None:
         cls.contract = json.loads(CONTRACT.read_text(encoding="utf-8"))
         cls.register = json.loads(REGISTER.read_text(encoding="utf-8"))
+        cls.coverage_baseline = json.loads(COVERAGE_BASELINE.read_text(encoding="utf-8"))
         cls.policy = regression.load_json(regression.POLICY_PATH)
         cls.floor = regression.load_json(regression.TEST_FLOOR_PATH)
         cls.required_checks = regression.load_json(regression.REQUIRED_CHECKS_PATH)
@@ -54,7 +56,7 @@ class PromptRegressionSafetyTests(unittest.TestCase):
         self.assertEqual(result["families"], len(self.register["families"]))
         self.assertEqual(
             {family["id"] for family in self.register["families"]},
-            {"TRAILING_WHITESPACE", "PROVIDER_QUOTA_TERMINATION", "LINE_ENDING_DRIFT"},
+            {"TRAILING_WHITESPACE", "PROVIDER_QUOTA_TERMINATION", "LINE_ENDING_DRIFT", "PROMPT_REGRESSION_COVERAGE_GAP"},
         )
         self.assertGreaterEqual(
             result["occurrences"],
@@ -62,6 +64,190 @@ class PromptRegressionSafetyTests(unittest.TestCase):
         )
         self.assertFalse(result["matrix_is_exhaustive"])
         self.assertFalse(result["hosted_provider_is_semantic_owner"])
+
+    def test_prompt_coverage_ratchet_current_baseline_passes(self) -> None:
+        coverage = regression.validate_prompt_coverage_ratchet(
+            copy.deepcopy(self.contract),
+            copy.deepcopy(self.coverage_baseline),
+        )
+        self.assertEqual(coverage["operational_prompts"], 141)
+        self.assertEqual(coverage["accepted_profiles"], 62)
+        self.assertEqual(coverage["unprofiled_prompts"], 79)
+        self.assertEqual(coverage["closeout_or_review_owners"], 18)
+        self.assertEqual(coverage["closeout_or_review_unprofiled"], 12)
+        self.assertEqual(coverage["override_bindings"], 3)
+
+    def test_prompt_coverage_ratchet_rejects_new_unprofiled_operational_prompt(self) -> None:
+        operational = builder.load_prompt_registry()
+        profiles = regression.load_json(regression.SEMANTIC_PROFILES_PATH)
+        overrides = regression.load_json(regression.OVERRIDE_REGISTRY_PATH)
+        synthetic = dict(operational[0])
+        synthetic.update(
+            {
+                "id": "P9999",
+                "seq": "9999",
+                "name": "Synthetic Coverage Probe",
+                "class": "TEST / COVERAGE",
+                "sprintRole": "Probe semantic coverage",
+                "useWhen": "Synthetic coverage probe only.",
+                "keywords": ["coverage-probe"],
+                "copyContent": "Synthetic coverage probe body.",
+            }
+        )
+        with self.assertRaisesRegex(
+            regression.RegressionSafetyError,
+            "new unprofiled operational prompt",
+        ):
+            regression.validate_prompt_coverage_ratchet(
+                self.contract,
+                self.coverage_baseline,
+                operational_prompts=[*operational, synthetic],
+                profiles_data=profiles,
+                override_payload=overrides,
+                override_bytes=regression.OVERRIDE_REGISTRY_PATH.read_bytes(),
+            )
+
+    def test_prompt_coverage_ratchet_rejects_new_debt_even_if_baseline_is_edited(self) -> None:
+        baseline = copy.deepcopy(self.coverage_baseline)
+        baseline["known_unprofiled_prompt_ids"].append("P9999")
+        baseline["operational_prompt_count"] += 1
+        operational = builder.load_prompt_registry()
+        profiles = regression.load_json(regression.SEMANTIC_PROFILES_PATH)
+        overrides = regression.load_json(regression.OVERRIDE_REGISTRY_PATH)
+        synthetic = dict(operational[0])
+        synthetic.update(
+            {
+                "id": "P9999",
+                "seq": "9999",
+                "name": "Synthetic Coverage Probe",
+                "class": "TEST / COVERAGE",
+                "sprintRole": "Probe semantic coverage",
+                "useWhen": "Synthetic coverage probe only.",
+                "keywords": ["coverage-probe"],
+                "copyContent": "Synthetic coverage probe body.",
+            }
+        )
+        with self.assertRaisesRegex(
+            regression.RegressionSafetyError,
+            "known-unprofiled debt seed is immutable",
+        ):
+            regression.validate_prompt_coverage_ratchet(
+                self.contract,
+                baseline,
+                operational_prompts=[*operational, synthetic],
+                profiles_data=profiles,
+                override_payload=overrides,
+                override_bytes=regression.OVERRIDE_REGISTRY_PATH.read_bytes(),
+            )
+
+    def test_prompt_coverage_owner_classification_is_order_insensitive(self) -> None:
+        coverage = regression.validate_prompt_coverage_ratchet(
+            self.contract,
+            self.coverage_baseline,
+            operational_prompts=list(reversed(builder.load_prompt_registry())),
+        )
+        self.assertEqual(coverage["closeout_or_review_owners"], 18)
+        self.assertEqual(coverage["closeout_or_review_unprofiled"], 12)
+
+    def test_prompt_coverage_ratchet_allows_new_prompt_when_profiled_atomically(self) -> None:
+        operational = builder.load_prompt_registry()
+        profiles = copy.deepcopy(regression.load_json(regression.SEMANTIC_PROFILES_PATH))
+        overrides = regression.load_json(regression.OVERRIDE_REGISTRY_PATH)
+        synthetic = dict(operational[0])
+        synthetic.update(
+            {
+                "id": "P9999",
+                "seq": "9999",
+                "name": "Synthetic Coverage Probe",
+                "class": "TEST / COVERAGE",
+                "sprintRole": "Probe semantic coverage",
+                "useWhen": "Synthetic coverage probe only.",
+                "keywords": ["coverage-probe"],
+                "copyContent": "Synthetic coverage probe body.",
+            }
+        )
+        profiles["profiles"].append(
+            {"prompt_id": "P9999", "profile_status": "ACCEPTED"}
+        )
+        coverage = regression.validate_prompt_coverage_ratchet(
+            self.contract,
+            self.coverage_baseline,
+            operational_prompts=[*operational, synthetic],
+            profiles_data=profiles,
+            override_payload=overrides,
+            override_bytes=regression.OVERRIDE_REGISTRY_PATH.read_bytes(),
+        )
+        self.assertEqual(coverage["operational_prompts"], 142)
+        self.assertEqual(coverage["accepted_profiles"], 63)
+        self.assertEqual(coverage["unprofiled_prompts"], 79)
+
+    def test_prompt_coverage_ratchet_rejects_override_marker_loss_even_after_blob_review(self) -> None:
+        baseline = copy.deepcopy(self.coverage_baseline)
+        operational = builder.load_prompt_registry()
+        profiles = regression.load_json(regression.SEMANTIC_PROFILES_PATH)
+        overrides = copy.deepcopy(regression.load_json(regression.OVERRIDE_REGISTRY_PATH))
+        p13 = next(row for row in overrides["overrides"] if row["id"] == "P13")
+        p13["copyContent"] = p13["copyContent"].replace(
+            "ESTABLISH THE CURRENT CRITICAL PATH",
+            "ESTABLISH CURRENT PATH",
+        )
+        mutated_bytes = (json.dumps(overrides, indent=2) + "\n").encode("utf-8")
+        baseline["override_registry_git_blob_sha1"] = regression._git_blob_sha1(mutated_bytes)
+        with self.assertRaisesRegex(
+            regression.RegressionSafetyError,
+            "P13 effective override lost required regression marker",
+        ):
+            regression.validate_prompt_coverage_ratchet(
+                self.contract,
+                baseline,
+                operational_prompts=operational,
+                profiles_data=profiles,
+                override_payload=overrides,
+                override_bytes=mutated_bytes,
+            )
+
+    def test_prompt_coverage_ratchet_exact_line_marker_rejects_incidental_substring(self) -> None:
+        baseline = copy.deepcopy(self.coverage_baseline)
+        overrides = copy.deepcopy(regression.load_json(regression.OVERRIDE_REGISTRY_PATH))
+        p19 = next(row for row in overrides["overrides"] if row["id"] == "P19")
+        exact_marker = "2. DIRECT OPERATOR INTERFACE GUIDANCE — NO HUNTING"
+        p19["copyContent"] = p19["copyContent"].replace(
+            exact_marker,
+            exact_marker + " (example only)",
+            1,
+        )
+        mutated_bytes = (json.dumps(overrides, indent=2) + "\n").encode("utf-8")
+        baseline["override_registry_git_blob_sha1"] = regression._git_blob_sha1(mutated_bytes)
+        with self.assertRaisesRegex(
+            regression.RegressionSafetyError,
+            "P19 effective override lost required regression marker",
+        ):
+            regression.validate_prompt_coverage_ratchet(
+                self.contract,
+                baseline,
+                operational_prompts=builder.load_prompt_registry(),
+                profiles_data=regression.load_json(regression.SEMANTIC_PROFILES_PATH),
+                override_payload=overrides,
+                override_bytes=mutated_bytes,
+            )
+
+    def test_prompt_coverage_gap_is_retained_as_systemic_semantic_defect(self) -> None:
+        family = next(
+            row
+            for row in self.register["families"]
+            if row["id"] == "PROMPT_REGRESSION_COVERAGE_GAP"
+        )
+        self.assertEqual(family["classification"], "PROMPT_SEMANTICS")
+        self.assertEqual(family["prompt_strengthening"], "SCOPED_SHARED_POLICY")
+        self.assertTrue(family["matrix_capture_required"])
+        self.assertGreaterEqual(
+            len(family["occurrences"]),
+            self.contract["recurrence"]["systemic_threshold"],
+        )
+        self.assertIn(
+            "harness/evals/prompt-regression/prompt-coverage-baseline.v1.json",
+            family["prevention_surfaces"],
+        )
 
     def test_trailing_whitespace_is_systemic_cross_repo_evidence(self) -> None:
         family = self.register["families"][0]
