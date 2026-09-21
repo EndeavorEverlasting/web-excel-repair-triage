@@ -51,13 +51,13 @@
         "impact-edge registry shape",
         "A/B/C identity fixtures",
         "routing-failure lost-event negative fixture",
-        "focused suite is wired into and proven by the external-resource refresh workflow; deterministic test-floor registration is BLOCKED on PR #606",
+        "PR #619 head ab35d72f7149e79fcd15cabd5f65ec8081a3470c wires and proves the focused suite in its external-resource refresh workflow; mainline adoption remains blocked with U1 integration",
         "if canonical contracts are insufficient: an evidence-backed manifest amendment that explicitly owns the new contract path before creation"
       ],
       "validation": [
         "existing canonical contracts are inspected and extended where sufficient; no new contract path is created by assumption",
         "canonical external-resource validator validates capability-watch/impact-edge invariants",
-        "external-resource refresh workflow runs the focused capability-watch suite on PR #619; deterministic-floor registration remains BLOCKED on PR #606",
+        "PR #619 head ab35d72f7149e79fcd15cabd5f65ec8081a3470c external-resource refresh run 35547575957 is green and executes the focused capability-watch suite; current main does not gain that wiring until U1 integrates; deterministic-floor registration remains BLOCKED on PR #606",
         "UNSEEN first observation establishes CURRENT baseline",
         "last_observed_identity and last_processed_identity are distinct after A→B until durable routing succeeds",
         "transition dedupe is enforced",
