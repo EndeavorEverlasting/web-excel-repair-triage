@@ -16,7 +16,7 @@
   "semantic_coverage_boundary": {
     "current_profile_owner": "harness/prompt-topology/prompt-capability-profiles.v1.json",
     "known_gap": "The broader audit confirmed a Prompt Kit-wide coverage gap: semantic profiles currently cover the 62 raw base prompts, while 79 operational extension prompts remain unprofiled; PSC002 still does not bind the effective P02 override body and likewise does not bind the other live override bodies.",
-    "local_guard": "P02 retains its focused effective-body matrix. Shared prevention is now owned by the Prompt Regression Safety coverage ratchet at harness/evals/prompt-regression/prompt-coverage-baseline.v1.json, which prevents new unprofiled debt and binds every current override registry revision plus critical P02/P13/P19 markers. Full extension-profile backfill remains a separate Prompt Semantic Coverage lifecycle obligation.",
+    "local_guard": "P02 retains its focused effective-body matrix. Shared prevention is now owned by the Prompt Regression Safety coverage ratchet at harness/evals/prompt-regression/prompt-coverage-baseline.v1.json, which prevents new unprofiled debt and binds every current override registry revision plus critical P02/P13/P19 markers. Full extension-profile backfill remains a separate Prompt Semantic Coverage lifecycle obligation. The effective P02 regression matrix also binds the shared disposition-precedence marker so later global continuation text cannot silently promote ORIENT/SUMMARIZE/CLOSEOUT into implementation.",
     "systemic_owner": "harness/contracts/prompt-regression-safety.v1.json:prompt_coverage_ratcheting"
   },
   "capability_ids": [
@@ -32,7 +32,7 @@
     "supersession"
   ],
   "case_contract": {
-    "minimum_cases": 12,
+    "minimum_cases": 13,
     "required_fields": [
       "case_id",
       "title",
@@ -312,6 +312,30 @@
         "Structural checkpoint validity proves resumability, not factual freshness."
       ],
       "proof_ceiling": "Repository/static regression only; downstream model obedience remains unproven."
+    },
+    {
+      "case_id": "P02R-013",
+      "title": "Later shared continuation policy cannot promote a non-execution mode",
+      "mode": "AUTO",
+      "stimulus": "The composed effective P02 appends global continuation and integration policy after the P02 mode router while AUTO resolves to ORIENT, SUMMARIZE, or CLOSEOUT.",
+      "capabilities": [
+        "mode_routing",
+        "execution_first_continue",
+        "evidence_provenance"
+      ],
+      "positive_assertions": [
+        "Treat the selected disposition as the authorization boundary: global execution rules strengthen CONTINUE, while CLOSEOUT may persist only its authorized checkpoint/handoff."
+      ],
+      "negative_assertions": [
+        "Do not let later generic must-continue, merge, deploy, or successor-work language promote ORIENT, SUMMARIZE, or CLOSEOUT into a new implementation slice."
+      ],
+      "prompt_markers": [
+        "do not turn a request to orient, summarize, or close out into implementation.",
+        "DISPOSITION / MODE PRECEDENCE CONTRACT",
+        "For P02 specifically, ORIENT and SUMMARIZE do not authorize repository implementation",
+        "A later shared suffix does not override an earlier explicit disposition boundary"
+      ],
+      "proof_ceiling": "Repository/static composition regression only; downstream model obedience remains unproven."
     }
   ],
   "proof_ceiling": "This matrix proves repository-owned static semantics and effective-override binding for P02. It does not prove downstream model obedience, external conversation-history availability, repository/provider access, or runtime action success."

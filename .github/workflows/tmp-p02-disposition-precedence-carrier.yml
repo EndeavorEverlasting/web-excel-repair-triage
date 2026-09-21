@@ -1,0 +1,44 @@
+name: Temporary P02 disposition precedence carrier
+
+on:
+  push:
+    branches: [fix/p02-disposition-precedence-20260920]
+
+permissions:
+  contents: write
+
+concurrency:
+  group: p02-disposition-precedence-carrier
+  cancel-in-progress: false
+
+jobs:
+  materialize:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout exact carrier branch
+        uses: actions/checkout@v7
+        with:
+          ref: fix/p02-disposition-precedence-20260920
+          fetch-depth: 0
+      - name: Set up Python
+        uses: actions/setup-python@v7
+        with:
+          python-version: '3.11'
+      - name: Build, prove, and commit canonical artifact
+        shell: bash
+        run: |
+          set -euo pipefail
+          export PYTHONPATH="$PWD${PYTHONPATH:+:$PYTHONPATH}"
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          python -m py_compile scripts/build_prompt_kit_registry.py tests/test_actionable_prompt_registry.py tests/test_p02_continuity_regression_matrix.py
+          python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html
+          python -m unittest tests.test_actionable_prompt_registry tests.test_p02_continuity_regression_matrix -v
+          python scripts/validate_prompt_regression_safety.py --summary
+          python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html --check
+          git diff --check
+          git rm -f .github/workflows/tmp-p02-disposition-precedence-carrier.yml
+          git add web/prompt-kit/index.html
+          git diff --cached --check
+          git commit -m "chore(prompt-kit): regenerate mode precedence artifact"
+          git push origin HEAD:fix/p02-disposition-precedence-20260920

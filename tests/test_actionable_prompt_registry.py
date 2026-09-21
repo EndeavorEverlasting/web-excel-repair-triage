@@ -416,6 +416,30 @@ class ActionablePromptRegistryTests(unittest.TestCase):
         ):
             self.assertIn(phrase, joined)
 
+    def test_explicit_disposition_precedence_limits_global_continuation(self) -> None:
+        marker = "DISPOSITION / MODE PRECEDENCE CONTRACT"
+        self.assertEqual(self.policy["disposition_marker"], marker)
+        contract = self.policy["disposition_precedence"]
+        self.assertIn("authorization boundary", contract["rule"])
+        self.assertIn("P02 specifically", contract["p02_rule"])
+        self.assertIn("checkpoint or handoff persistence", contract["closeout_rule"])
+
+        appendix = self.policy["copy_content_appendix"]
+        suffix = self.policy["next_step_suffix"]
+        for phrase in (
+            marker,
+            "MUST NOT promote a non-execution disposition into implementation",
+            "Resolve the active disposition before applying generic continuation language",
+            "For P02 specifically, ORIENT and SUMMARIZE do not authorize repository implementation",
+            "A later shared suffix does not override an earlier explicit disposition boundary",
+        ):
+            self.assertIn(phrase, appendix)
+        self.assertIn("MUST NOT promote an ORIENT/SUMMARIZE/CLOSEOUT-style disposition into implementation", suffix)
+
+        for prompt in self.prompts:
+            with self.subTest(prompt=prompt["id"]):
+                self.assertEqual(prompt["copyContent"].count(marker), 1)
+
     def test_execution_brief_contract_is_global_for_operational_prompts(self) -> None:
         marker = "EXECUTION BRIEF / SOURCE / DONE / SELF-CHECK CONTRACT"
         appendix = self.policy["copy_content_appendix"]

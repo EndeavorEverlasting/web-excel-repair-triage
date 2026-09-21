@@ -110,6 +110,20 @@ class P02ContinuityRegressionMatrixTests(unittest.TestCase):
         self.assertIn("such as 'closeout or review', preserve the OR relationship", content)
         self.assertIn("Do not silently rewrite alternatives as cumulative requirements.", content)
 
+    def test_global_policy_cannot_promote_non_execution_dispositions(self) -> None:
+        content = self.effective["copyContent"]
+        marker = "DISPOSITION / MODE PRECEDENCE CONTRACT"
+        self.assertGreater(content.index(marker), content.index("MODE: AUTO | ORIENT | SUMMARIZE | CLOSEOUT | CONTINUE"))
+        for phrase in (
+            "do not turn a request to orient, summarize, or close out into implementation.",
+            marker,
+            "For P02 specifically, ORIENT and SUMMARIZE do not authorize repository implementation",
+            "CLOSEOUT may persist the mode-authorized checkpoint/handoff but must not start a new implementation slice",
+            "CONTINUE is the execution-bearing disposition",
+            "A later shared suffix does not override an earlier explicit disposition boundary",
+        ):
+            self.assertIn(phrase, content)
+
     def test_matrix_regression_runs_in_deterministic_floor(self) -> None:
         floor = json.loads(TEST_FLOOR.read_text(encoding="utf-8"))
         self.assertIn(TEST_PATH, floor["self_tests"])

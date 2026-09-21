@@ -85,6 +85,8 @@ REQUIRED_ACTIONABILITY_POLICY_FIELDS = {
     "integration_marker",
     "freshness_marker",
     "closeout_marker",
+    "disposition_marker",
+    "disposition_precedence",
     "integration_target",
     "applies_to",
     "next_step_suffix",
@@ -153,6 +155,7 @@ def load_actionability_policy() -> dict[str, Any]:
         "integration_marker",
         "freshness_marker",
         "closeout_marker",
+        "disposition_marker",
         "integration_target",
         "applies_to",
         "next_step_suffix",
@@ -218,6 +221,19 @@ def load_actionability_policy() -> dict[str, Any]:
     closeout_marker = str(payload["closeout_marker"])
     if closeout_marker not in appendix:
         raise SystemExit("Actionability appendix must include its operational closeout marker")
+
+    disposition_marker = str(payload["disposition_marker"]).strip()
+    if disposition_marker not in appendix:
+        raise SystemExit("Actionability appendix must include its disposition precedence marker")
+    if disposition_marker not in str(payload["next_step_suffix"]):
+        raise SystemExit("Actionability next-step suffix must include disposition precedence")
+    disposition = payload.get("disposition_precedence")
+    if not isinstance(disposition, dict):
+        raise SystemExit("Actionability policy must define disposition_precedence")
+    for field in ("rule", "p02_rule", "closeout_rule"):
+        value = disposition.get(field)
+        if not isinstance(value, str) or not value.strip():
+            raise SystemExit(f"Actionability disposition field must be non-empty: {field}")
 
     boundary_marker = str(payload["boundary_sprint_marker"]).strip()
     boundary_suffix = str(payload["boundary_sprint_suffix"]).strip()
@@ -344,9 +360,16 @@ def apply_actionability_policy(
     has_current_freshness = not freshness_marker or freshness_marker in copy_content
     closeout_marker = str(policy.get("closeout_marker", "")).strip()
     has_current_closeout = not closeout_marker or closeout_marker in copy_content
+    disposition_marker = str(policy.get("disposition_marker", "")).strip()
+    has_current_disposition = not disposition_marker or disposition_marker in copy_content
     if marker not in copy_content:
         strengthened["copyContent"] = f"{copy_content}\n\n{appendix}"
-    elif not has_current_integration or not has_current_freshness or not has_current_closeout:
+    elif (
+        not has_current_integration
+        or not has_current_freshness
+        or not has_current_closeout
+        or not has_current_disposition
+    ):
         legacy_prefix = f"{marker}\n- Do not leave NEXT COMMAND"
         legacy_start = copy_content.rfind(legacy_prefix)
         if legacy_start >= 0:
