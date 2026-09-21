@@ -399,6 +399,47 @@ class ActionablePromptRegistryTests(unittest.TestCase):
             once["nextStep"].count(self.policy["next_step_suffix"]), 1
         )
 
+    def test_stale_appendix_refresh_ignores_mutated_first_bullet(self) -> None:
+        marker = self.policy["marker"]
+        sample = {
+            "id": "PX",
+            "nextStep": "Run the owning validator.",
+            "copyContent": (
+                "Perform the bounded work.\n\n"
+                f"{marker}\n"
+                "- STALE MUTATED FIRST BULLET\n"
+                "- Unconditional stale implementation text."
+            ),
+        }
+        refreshed = build_prompt_kit_registry.apply_actionability_policy(
+            sample, self.policy
+        )
+        content = refreshed["copyContent"]
+        self.assertEqual(content.count(marker), 1)
+        self.assertNotIn("STALE MUTATED FIRST BULLET", content)
+        self.assertNotIn("Unconditional stale implementation text.", content)
+        self.assertIn(self.policy["disposition_marker"], content)
+
+    def test_disposition_tail_guard_is_idempotent_and_terminal(self) -> None:
+        sample = {
+            "id": "PX",
+            "nextStep": "Run the owning validator.",
+            "copyContent": "Perform the bounded work.",
+        }
+        sample = build_prompt_kit_registry.apply_actionability_policy(sample, self.policy)
+        sample = build_prompt_kit_registry.apply_boundary_sprint_policy(sample, self.policy)
+        once = build_prompt_kit_registry.apply_disposition_tail_guard(sample, self.policy)
+        twice = build_prompt_kit_registry.apply_disposition_tail_guard(once, self.policy)
+        self.assertEqual(once, twice)
+        self.assertEqual(
+            once["copyContent"].count(self.policy["disposition_tail_marker"]), 1
+        )
+        self.assertTrue(
+            once["copyContent"].rstrip().endswith(
+                self.policy["disposition_tail_guard"].strip()
+            )
+        )
+
     def test_forbidden_solo_actions_cover_lazy_completion_patterns(self) -> None:
         joined = "\n".join(self.policy["forbidden_solo_actions"]).lower()
         for phrase in (
@@ -418,7 +459,9 @@ class ActionablePromptRegistryTests(unittest.TestCase):
 
     def test_explicit_disposition_precedence_limits_global_continuation(self) -> None:
         marker = "DISPOSITION / MODE PRECEDENCE CONTRACT"
+        tail_marker = "FINAL DISPOSITION AUTHORIZATION GUARD"
         self.assertEqual(self.policy["disposition_marker"], marker)
+        self.assertEqual(self.policy["disposition_tail_marker"], tail_marker)
         contract = self.policy["disposition_precedence"]
         self.assertIn("authorization boundary", contract["rule"])
         self.assertIn("P02 specifically", contract["p02_rule"])
@@ -438,7 +481,26 @@ class ActionablePromptRegistryTests(unittest.TestCase):
 
         for prompt in self.prompts:
             with self.subTest(prompt=prompt["id"]):
-                self.assertEqual(prompt["copyContent"].count(marker), 1)
+                content = prompt["copyContent"]
+                self.assertEqual(content.count(marker), 1)
+                self.assertEqual(content.count(tail_marker), 1)
+                self.assertTrue(
+                    content.rstrip().endswith(
+                        self.policy["disposition_tail_guard"].strip()
+                    )
+                )
+
+        p02 = {prompt["id"]: prompt for prompt in self.prompts}["P02"]["copyContent"]
+        tail_index = p02.rfind(tail_marker)
+        self.assertGreater(tail_index, p02.index("MODE: AUTO | ORIENT | SUMMARIZE | CLOSEOUT | CONTINUE"))
+        for shared_heading in (
+            "GREEN BRANCH INTEGRATION CONTRACT",
+            "EXHAUSTIVE AVAILABLE COMPUTE RULE",
+            "EXECUTION BOUNDARY ACCOUNTABILITY CONTRACT",
+            "BOUNDARY-TO-SPRINT CONTINUATION",
+        ):
+            self.assertGreaterEqual(p02.rfind(shared_heading), 0)
+            self.assertLess(p02.rfind(shared_heading), tail_index)
 
     def test_execution_brief_contract_is_global_for_operational_prompts(self) -> None:
         marker = "EXECUTION BRIEF / SOURCE / DONE / SELF-CHECK CONTRACT"

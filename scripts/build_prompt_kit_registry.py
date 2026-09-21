@@ -87,6 +87,8 @@ REQUIRED_ACTIONABILITY_POLICY_FIELDS = {
     "closeout_marker",
     "disposition_marker",
     "disposition_precedence",
+    "disposition_tail_marker",
+    "disposition_tail_guard",
     "integration_target",
     "applies_to",
     "next_step_suffix",
@@ -156,6 +158,8 @@ def load_actionability_policy() -> dict[str, Any]:
         "freshness_marker",
         "closeout_marker",
         "disposition_marker",
+        "disposition_tail_marker",
+        "disposition_tail_guard",
         "integration_target",
         "applies_to",
         "next_step_suffix",
@@ -234,6 +238,19 @@ def load_actionability_policy() -> dict[str, Any]:
         value = disposition.get(field)
         if not isinstance(value, str) or not value.strip():
             raise SystemExit(f"Actionability disposition field must be non-empty: {field}")
+
+    tail_marker = str(payload["disposition_tail_marker"]).strip()
+    tail_guard = str(payload["disposition_tail_guard"]).strip()
+    if tail_marker not in tail_guard:
+        raise SystemExit("Disposition tail guard must include its declared marker")
+    for phrase in (
+        "FINAL AUTHORIZATION",
+        "conditional on that authorization boundary",
+        "A non-execution disposition MUST NOT start a new implementation",
+        "For P02, resolve AUTO before executing",
+    ):
+        if phrase not in tail_guard:
+            raise SystemExit(f"Disposition tail guard is missing required semantic: {phrase}")
 
     boundary_marker = str(payload["boundary_sprint_marker"]).strip()
     boundary_suffix = str(payload["boundary_sprint_suffix"]).strip()
@@ -334,6 +351,21 @@ def apply_prompt_overrides(prompts: list[dict[str, Any]]) -> list[dict[str, Any]
     return result
 
 
+def _policy_section_start(text: str, marker: str) -> int:
+    """Return a real section start for marker, avoiding incidental inline mentions."""
+    if text == marker or text.startswith(f"{marker}\n"):
+        return 0
+    needle = f"\n\n{marker}"
+    start = text.rfind(needle)
+    if start < 0:
+        return -1
+    section_start = start + 2
+    marker_end = section_start + len(marker)
+    if marker_end == len(text) or text[marker_end] == "\n":
+        return section_start
+    return -1
+
+
 def apply_actionability_policy(
     prompt: dict[str, Any], policy: dict[str, Any]
 ) -> dict[str, Any]:
@@ -370,15 +402,15 @@ def apply_actionability_policy(
         or not has_current_closeout
         or not has_current_disposition
     ):
-        legacy_prefix = f"{marker}\n- Do not leave NEXT COMMAND"
-        legacy_start = copy_content.rfind(legacy_prefix)
-        if legacy_start >= 0:
-            base_content = copy_content[:legacy_start].rstrip()
-            strengthened["copyContent"] = (
-                f"{base_content}\n\n{appendix}" if base_content else appendix
+        legacy_start = _policy_section_start(copy_content, marker)
+        if legacy_start < 0:
+            raise SystemExit(
+                f"Prompt {prompt_id} contains the actionability marker outside a section boundary"
             )
-        else:
-            strengthened["copyContent"] = f"{copy_content}\n\n{appendix}"
+        base_content = copy_content[:legacy_start].rstrip()
+        strengthened["copyContent"] = (
+            f"{base_content}\n\n{appendix}" if base_content else appendix
+        )
     strengthened["actionabilityPolicy"] = str(policy["policy_id"])
     return strengthened
 
@@ -401,6 +433,29 @@ def apply_boundary_sprint_policy(
     strengthened["boundaryContinuationPolicy"] = str(
         policy["boundary_sprint_policy_id"]
     )
+    return strengthened
+
+
+def apply_disposition_tail_guard(
+    prompt: dict[str, Any], policy: dict[str, Any]
+) -> dict[str, Any]:
+    """Make explicit mode/disposition authority the terminal composed instruction."""
+    prompt_id = str(prompt.get("id", "unknown"))
+    copy_content = str(prompt.get("copyContent", "")).rstrip()
+    if not copy_content:
+        raise SystemExit(f"Prompt {prompt_id} has empty copyContent")
+
+    marker = str(policy["disposition_tail_marker"]).strip()
+    guard = str(policy["disposition_tail_guard"]).strip()
+    existing_start = _policy_section_start(copy_content, marker)
+    if existing_start >= 0:
+        copy_content = copy_content[:existing_start].rstrip()
+
+    strengthened = dict(prompt)
+    strengthened["copyContent"] = (
+        f"{copy_content}\n\n{guard}" if copy_content else guard
+    )
+    strengthened["dispositionAuthorizationPolicy"] = str(policy["policy_id"])
     return strengthened
 
 
@@ -477,6 +532,10 @@ def load_prompt_registry() -> list[dict[str, Any]]:
     ]
     strengthened_prompts = [
         apply_boundary_sprint_policy(prompt, actionability_policy)
+        for prompt in strengthened_prompts
+    ]
+    strengthened_prompts = [
+        apply_disposition_tail_guard(prompt, actionability_policy)
         for prompt in strengthened_prompts
     ]
     annotated_prompts = apply_display_order(

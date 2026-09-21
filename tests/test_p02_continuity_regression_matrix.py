@@ -113,7 +113,12 @@ class P02ContinuityRegressionMatrixTests(unittest.TestCase):
     def test_global_policy_cannot_promote_non_execution_dispositions(self) -> None:
         content = self.effective["copyContent"]
         marker = "DISPOSITION / MODE PRECEDENCE CONTRACT"
-        self.assertGreater(content.index(marker), content.index("MODE: AUTO | ORIENT | SUMMARIZE | CLOSEOUT | CONTINUE"))
+        tail_marker = "FINAL DISPOSITION AUTHORIZATION GUARD"
+        mode_router = content.index("MODE: AUTO | ORIENT | SUMMARIZE | CLOSEOUT | CONTINUE")
+        self.assertGreater(content.index(marker), mode_router)
+        tail_index = content.rfind(tail_marker)
+        self.assertGreater(tail_index, content.index(marker))
+        self.assertEqual(content.count(tail_marker), 1)
         for phrase in (
             "do not turn a request to orient, summarize, or close out into implementation.",
             marker,
@@ -121,8 +126,23 @@ class P02ContinuityRegressionMatrixTests(unittest.TestCase):
             "CLOSEOUT may persist the mode-authorized checkpoint/handoff but must not start a new implementation slice",
             "CONTINUE is the execution-bearing disposition",
             "A later shared suffix does not override an earlier explicit disposition boundary",
+            tail_marker,
+            "For P02, resolve AUTO before executing",
         ):
             self.assertIn(phrase, content)
+        for shared_heading in (
+            "GREEN BRANCH INTEGRATION CONTRACT",
+            "EXHAUSTIVE AVAILABLE COMPUTE RULE",
+            "EXECUTION BOUNDARY ACCOUNTABILITY CONTRACT",
+            "BOUNDARY-TO-SPRINT CONTINUATION",
+        ):
+            self.assertGreaterEqual(content.rfind(shared_heading), 0)
+            self.assertLess(content.rfind(shared_heading), tail_index)
+        self.assertTrue(
+            content.rstrip().endswith(
+                "CONTINUE activates Sections 6-8 and the shared execution contracts."
+            )
+        )
 
     def test_matrix_regression_runs_in_deterministic_floor(self) -> None:
         floor = json.loads(TEST_FLOOR.read_text(encoding="utf-8"))
