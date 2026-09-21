@@ -57,10 +57,11 @@ SEMANTIC_PROFILE_FIELDS = {
     "distinct_residual",
     "transfer_targets",
 }
-EDITABLE_PROMPT_FIELDS = {
-    "name", "class", "sprintRole", "useWhen", "inspectFirst",
-    "expectedOutput", "proofGate", "copyContent", "keywords",
+SEMANTIC_EDITABLE_PROMPT_FIELDS = {"name", "copyContent", "sprintRole", "useWhen"}
+METADATA_EDITABLE_PROMPT_FIELDS = {
+    "class", "inspectFirst", "expectedOutput", "proofGate", "keywords",
 }
+EDITABLE_PROMPT_FIELDS = SEMANTIC_EDITABLE_PROMPT_FIELDS | METADATA_EDITABLE_PROMPT_FIELDS
 
 
 def _read_json(path_value: str) -> dict[str, Any]:
@@ -1431,10 +1432,19 @@ def edit_prompt(
     if unknown:
         raise SystemExit("Prompt edit contains unsupported fields: " + ", ".join(unknown))
     changed_fields = sorted(set(patch).intersection(EDITABLE_PROMPT_FIELDS))
+    semantic_changed_fields = sorted(
+        set(patch).intersection(SEMANTIC_EDITABLE_PROMPT_FIELDS)
+    )
     if not changed_fields:
         raise SystemExit(
-            "Prompt edit must change at least one canonical semantic field: "
+            "Prompt edit must change at least one supported field: "
             + ", ".join(sorted(EDITABLE_PROMPT_FIELDS))
+        )
+    if not semantic_changed_fields:
+        raise SystemExit(
+            "Prompt edit metadata may accompany a semantic edit but cannot independently "
+            "advance the semantic lifecycle; change at least one of: "
+            + ", ".join(sorted(SEMANTIC_EDITABLE_PROMPT_FIELDS))
         )
 
     source_path, payload, is_base, record, index = _find_canonical_prompt(prompt_id)
@@ -1448,9 +1458,9 @@ def edit_prompt(
         if field == "keywords":
             if not isinstance(value, list) or not value:
                 raise SystemExit("Prompt edit keywords must be a non-empty list")
-            normalized = [str(item).strip() for item in value]
-            if any(not item for item in normalized):
+            if any(not isinstance(item, str) or not item.strip() for item in value):
                 raise SystemExit("Prompt edit keywords must contain only non-empty strings")
+            normalized = [item.strip() for item in value]
             if len(normalized) != len({_normalize_text(item) for item in normalized}):
                 raise SystemExit("Prompt edit keywords must not contain duplicates")
             new_record[field] = normalized
