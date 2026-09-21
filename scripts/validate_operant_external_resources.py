@@ -67,8 +67,6 @@ def active_workflow_text(workflow: str) -> str:
         lines.append(line)
     return "\n".join(lines)
 
-
-
 def validate_capability_watch_contract(
     contract: dict[str, Any],
     impact_edges: dict[str, Any],
@@ -198,6 +196,25 @@ def validate_capability_watch_contract(
         raise ValidationError("capability_watch missing-edge status must remain NO_IMPACT_EDGE")
     if impact_edges.get("schema_version") != "upstream-capability-impact-edges/v1":
         raise ValidationError("unsupported capability-watch impact-edge registry schema")
+    if impact_edges.get("contract") != "harness/contracts/operant-external-resource-intake.v1.json#capability_watch":
+        raise ValidationError("capability-watch impact-edge registry contract pointer is incorrect")
+    edge_schema = impact_edges.get("edge_schema")
+    if not isinstance(edge_schema, dict):
+        raise ValidationError("capability-watch impact-edge schema is missing")
+    required_edge_fields = edge_schema.get("required_fields")
+    expected_edge_fields = {
+        "edge_id",
+        "source_id",
+        "resource_id",
+        "local_owner_kind",
+        "local_owner_id",
+        "rationale",
+    }
+    if set(required_edge_fields or []) != expected_edge_fields:
+        raise ValidationError("capability-watch impact-edge required fields are incomplete")
+    allowed_owner_kinds = set(edge_schema.get("local_owner_kinds", []))
+    if allowed_owner_kinds != {"prompt", "skill", "contract", "capability"}:
+        raise ValidationError("capability-watch local owner kinds are incomplete")
     policy = impact_edges.get("policy")
     if not isinstance(policy, dict) or policy.get("zero_edge_is_valid") is not True:
         raise ValidationError("capability-watch impact-edge registry must permit zero-edge events")
@@ -206,11 +223,8 @@ def validate_capability_watch_contract(
     if policy.get("donor_change_never_grants_local_mutation_authority") is not True:
         raise ValidationError("donor changes must never grant local mutation authority")
     unique_fields = policy.get("unique_key_fields")
-    required_edge_fields = impact_edges.get("edge_schema", {}).get("required_fields")
     if not isinstance(unique_fields, list) or not unique_fields:
         raise ValidationError("capability-watch impact-edge unique key is missing")
-    if not isinstance(required_edge_fields, list) or not required_edge_fields:
-        raise ValidationError("capability-watch impact-edge required fields are missing")
     seen_ids: set[str] = set()
     seen_keys: set[tuple[str, ...]] = set()
     for edge in impact_edges.get("edges", []):
@@ -219,6 +233,8 @@ def validate_capability_watch_contract(
         missing_fields = [field for field in required_edge_fields if not str(edge.get(field, "")).strip()]
         if missing_fields:
             raise ValidationError("capability-watch impact edge missing field(s): " + ", ".join(missing_fields))
+        if edge["local_owner_kind"] not in allowed_owner_kinds:
+            raise ValidationError(f"unsupported capability-watch local owner kind: {edge['local_owner_kind']}")
         edge_id = str(edge["edge_id"])
         if edge_id in seen_ids:
             raise ValidationError(f"duplicate capability-watch impact edge id: {edge_id}")

@@ -48,6 +48,21 @@ class UpstreamCapabilityWatchContractTests(unittest.TestCase):
         with self.assertRaisesRegex(validator.ValidationError, "UNSEEN -> CURRENT"):
             validator.validate_capability_watch_contract(broken, self.edges, self.workflow)
 
+    def test_validator_rejects_unknown_impact_owner_kind(self) -> None:
+        broken_edges = copy.deepcopy(self.edges)
+        broken_edges["edges"] = [
+            {
+                "edge_id": "fixture-invalid-kind",
+                "source_id": "mattpocock-skills",
+                "resource_id": "mattpocock-skills:productivity/teach",
+                "local_owner_kind": "mystery",
+                "local_owner_id": "P96",
+                "rationale": "negative fixture",
+            }
+        ]
+        with self.assertRaisesRegex(validator.ValidationError, "local owner kind"):
+            validator.validate_capability_watch_contract(self.root_contract, broken_edges, self.workflow)
+
     def test_identity_separates_repository_revision_from_capability_identity(self) -> None:
         identity = self.contract["identity"]
         self.assertEqual(identity["repository_revision_field"], "source_sha")
