@@ -117,7 +117,7 @@ class UpstreamCapabilityWatchContractTests(unittest.TestCase):
         failed = watch.record_routing_result(
             changed,
             event,
-            event_persisted="truthy-but-not-boolean",  # type: ignore[arg-type]
+            event_persisted=True,
             impact_resolution_persisted=False,
             routing_checkpoint_persisted=False,
         )
@@ -133,6 +133,25 @@ class UpstreamCapabilityWatchContractTests(unittest.TestCase):
         )
         self.assertEqual(replay["last_processed_identity"], "A")
         self.assertEqual(replay_event["event_id"], event["event_id"])
+
+    def test_non_boolean_checkpoint_value_does_not_advance_processed_identity(self) -> None:
+        state = self.baseline()
+        changed, event = watch.observe_capability(
+            state,
+            source_id="mattpocock-skills",
+            resource_id="mattpocock-skills:productivity/teach",
+            observed_identity="B",
+            repository_revision="repo-b",
+        )
+        deferred = watch.record_routing_result(
+            changed,
+            event,
+            event_persisted="truthy-but-not-boolean",  # type: ignore[arg-type]
+            impact_resolution_persisted=True,
+            routing_checkpoint_persisted=True,
+        )
+        self.assertEqual(deferred["last_processed_identity"], "A")
+        self.assertEqual(deferred["status"], "UPSTREAM_CHANGED")
 
     def test_successful_route_advances_processed_identity_and_b_to_c_is_new_event(self) -> None:
         state = self.baseline()

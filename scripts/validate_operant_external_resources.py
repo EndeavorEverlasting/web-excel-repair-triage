@@ -140,6 +140,8 @@ def validate_capability_watch_contract(
         raise ValidationError("capability_watch receipts must be append-only")
     if receipts.get("raw_donor_body_allowed") is not False:
         raise ValidationError("capability_watch receipts must not persist raw donor bodies")
+    if receipts.get("receipt_id_algorithm") != "sha256(canonical source_id/resource_id/repository_revision/observed_identity/outcome)":
+        raise ValidationError("capability_watch receipt identity algorithm is unsupported")
     required_receipt_fields = {
         "receipt_id",
         "source_id",
