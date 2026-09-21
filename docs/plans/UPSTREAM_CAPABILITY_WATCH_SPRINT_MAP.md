@@ -199,7 +199,7 @@ A observed/processed → B observed → durable change event → impact resoluti
 
 ### Current executable graph
 
-After U0A and U0B integration, the active executable graph contains only U1. Current graph width is **1**, so parallel execution is **NOT_APPLICABLE** for the active wave. The machine-readable manifest is `Outputs/prompt-parallel-dispatch/manifest.json`, run id `upstream-capability-watch-20260920-u1`, and it is pinned to existing writer PR #619 / branch `feat/upstream-capability-watch-contract-floor-20260920`.
+After U0A and U0B integration, the active executable graph contains only U1. Current graph width is **1**, so parallel execution is **NOT_APPLICABLE** for the active wave. The machine-readable manifest is `Outputs/prompt-parallel-dispatch/manifest.json`, run id `upstream-capability-watch-20260920-u1-blocked`, and it is pinned to existing writer PR #619 / branch `feat/upstream-capability-watch-contract-floor-20260920`.
 
 ### Historical wave
 
@@ -211,7 +211,7 @@ The prior U0B/U1 successor wave had graph width 2 and ran under DEGRADED coordin
 |---|---|---|---|
 | forensic classification | U0A | PROVEN | closed by `harness/reports/UPSTREAM_CAPABILITY_WATCH_FORENSICS.md` + `harness/reports/upstream-capability-watch-forensics.v1.json` |
 | design-source authority research | U0B | PROVEN | `harness/reports/UPSTREAM_DESIGN_AUTHORING_SOURCE_RESEARCH.md` integrated by PR #618 |
-| watch data/event contract | U1 | REQUIRED SUCCESSOR WORK | implement schema + fixtures |
+| watch data/event contract | U1 | BLOCKED | implementation/contract/workflow proof VALIDATED on PR #619 head `ab35d72f7149e79fcd15cabd5f65ec8081a3470c`; register `tests/test_upstream_capability_watch.py` in PR #606-owned deterministic test floor, then integrate U1 |
 | runtime detection/routing | U2A | REQUIRED SUCCESSOR WORK | emit durable capability events + P115 routing |
 | teach reconciliation | U2B | REQUIRED SUCCESSOR WORK | add impact mapping and semantic disposition |
 | design/authoring intake | U3 | REQUIRED SUCCESSOR WORK | register/adapt only authoritative donors |
@@ -222,7 +222,7 @@ The prior U0B/U1 successor wave had graph width 2 and ran under DEGRADED coordin
 ## First executable continuation
 
 Owner: PR #606 / current `harness/test-floor.v1.json` writer.
-Dependency: U1 implementation is VALIDATED on PR #619 head `ab35d72f7149e79fcd15cabd5f65ec8081a3470c`; external-resource refresh, App Harness, Pages, Artifact Engine, Operational Harness, and CodeRabbit are green at that head. The focused suite is already executed by the external-resource refresh workflow.
+Dependency: U1 implementation is VALIDATED on PR #619 head `ab35d72f7149e79fcd15cabd5f65ec8081a3470c`; external-resource refresh run `35547575957`, App Harness, Pages, Artifact Engine, Operational Harness, the generic deterministic floor, and CodeRabbit are green at that head. The focused suite is executed by the PR #619 version of the external-resource refresh workflow; current main does not contain that wiring until U1 integrates.
 Action: reconcile PR #606 against current main and add `tests/test_upstream_capability_watch.py` to `harness/test-floor.v1.json` -> `self_tests`; run the canonical deterministic test floor and integrate/release that shared surface. PR #619 must not race this file.
 Expected proof: current-main `harness/test-floor.v1.json` contains the focused suite and the deterministic repository test-floor run is green.
 Completion gate: after that proof, refresh PR #619 against current main, resolve the two remaining test-floor review threads, rerun proof-relevant exact-head checks, and merge U1.
