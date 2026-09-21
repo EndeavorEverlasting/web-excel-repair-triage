@@ -32,6 +32,7 @@
     "tests/test_job_search_prompt_registry.py",
     "tests/test_management_operations_prompt_registry.py",
     "tests/test_p02_continuity_regression_matrix.py",
+    "tests/test_p55_repository_bootstrap.py",
     "tests/test_p07_effective_prompt_identity.py",
     "tests/test_p100_closeout_replay_prompt.py",
     "tests/test_p123_source_coverage_eval_prompt.py",
