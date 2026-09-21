@@ -1,6 +1,6 @@
 {
   "schema_version": "prompt-parallel-dispatch/v1",
-  "run_id": "upstream-capability-watch-20260920-u1",
+  "run_id": "upstream-capability-watch-20260920-u1-blocked",
   "graph_width": 1,
   "parallel_disposition": "NOT_APPLICABLE",
   "autonomy_gap": null,
@@ -37,8 +37,12 @@
           "plan": "docs/plans/UPSTREAM_CAPABILITY_WATCH_SPRINT_MAP.md",
           "pr_number": 619,
           "branch": "feat/upstream-capability-watch-contract-floor-20260920",
-          "expected_head_sha": "d2e0274de04b8a39f8183cf3ebda29387793ce84",
-          "continuation_rule": "reuse_existing_pr_writer_and_refresh_before_mutation"
+          "expected_head_sha": "ab35d72f7149e79fcd15cabd5f65ec8081a3470c",
+          "continuation_rule": "reuse_existing_pr_writer_and_refresh_before_mutation",
+          "blocker_pr_number": 606,
+          "blocker_surface": "harness/test-floor.v1.json",
+          "blocker_required_change": "add tests/test_upstream_capability_watch.py to self_tests",
+          "resume_gate": "PR #606 integrates or releases harness/test-floor.v1.json, then refresh PR #619 and validate the deterministic floor on the exact reconciled head"
         }
       },
       "expected_artifacts": [
@@ -47,13 +51,13 @@
         "impact-edge registry shape",
         "A/B/C identity fixtures",
         "routing-failure lost-event negative fixture",
-        "focused suite wired into the external-resource refresh workflow; deterministic test-floor registration remains a foreign-owner convergence gate while PR #606 is open",
+        "PR #619 head ab35d72f7149e79fcd15cabd5f65ec8081a3470c wires and proves the focused suite in its external-resource refresh workflow; mainline adoption remains blocked with U1 integration",
         "if canonical contracts are insufficient: an evidence-backed manifest amendment that explicitly owns the new contract path before creation"
       ],
       "validation": [
         "existing canonical contracts are inspected and extended where sufficient; no new contract path is created by assumption",
         "canonical external-resource validator validates capability-watch/impact-edge invariants",
-        "external-resource refresh workflow runs the focused capability-watch suite on relevant PRs; deterministic-floor registration is not claimed while PR #606 owns harness/test-floor.v1.json",
+        "PR #619 head ab35d72f7149e79fcd15cabd5f65ec8081a3470c external-resource refresh run 35547575957 is green and executes the focused capability-watch suite; current main does not gain that wiring until U1 integrates; deterministic-floor registration remains BLOCKED on PR #606",
         "UNSEEN first observation establishes CURRENT baseline",
         "last_observed_identity and last_processed_identity are distinct after A→B until durable routing succeeds",
         "transition dedupe is enforced",
@@ -62,7 +66,7 @@
         "promotion cannot jump changed to integrated"
       ],
       "convergence_owner": "P102 / harness contract owner",
-      "status": "PLANNED"
+      "status": "BLOCKED"
     }
   ]
 }
