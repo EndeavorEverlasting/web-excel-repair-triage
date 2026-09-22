@@ -28,6 +28,7 @@ REQUIRED_IDS = {
     "favorites_first",
     "favorite_accessibility",
     "guided_questionnaire",
+    "guided_staged_actor_routing",
     "guided_uses_shared_search",
     "metadata_recommendations",
     "guided_next_step_journey",
@@ -250,6 +251,26 @@ def audit() -> dict[str, object]:
         or "Conversational fallback" not in tutorial
     ):
         missing.append("registry_prompt_fallback")
+
+    p65_content = by_id.get("P65", {}).get("copyContent", "")
+    p65_expected_output = by_id.get("P65", {}).get("expectedOutput", "")
+    p65_proof_gate = by_id.get("P65", {}).get("proofGate", "")
+    staged_markers = (
+        "STAGED ROUTING / ACTOR BOUNDARY",
+        "Current-agent disposition:",
+        "Requested output:",
+        "Downstream disposition:",
+        "Actor/disposition boundaries are facts when the user has already specified them.",
+        "Do not force a false binary whose alternatives omit the user's stated desired state.",
+        "Known repository + inaccessible/interrupted local residue + inspect provider evidence + form a preservation/convergence plan + hand off to the local executor → P04 primary, P12 follow-on.",
+    )
+    if (
+        any(marker not in p65_content for marker in staged_markers)
+        or "current-agent disposition" not in p65_expected_output
+        or "downstream-agent disposition" not in p65_expected_output
+        or "false binaries" not in p65_proof_gate
+    ):
+        missing.append("guided_staged_actor_routing")
 
     distribution_markers = (
         PUBLIC_PROMPT_URL,

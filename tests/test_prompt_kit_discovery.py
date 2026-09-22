@@ -47,6 +47,7 @@ class PromptKitDiscoveryTests(unittest.TestCase):
                 "favorites_first",
                 "favorite_accessibility",
                 "guided_questionnaire",
+                "guided_staged_actor_routing",
                 "guided_uses_shared_search",
                 "metadata_recommendations",
                 "guided_next_step_journey",
@@ -65,6 +66,10 @@ class PromptKitDiscoveryTests(unittest.TestCase):
         expected = {item["id"]: item["expected"] for item in payload["requirements"]}
         self.assertIn("explicit local filter", expected["favorites_first"])
         self.assertIn("canonical library defaults to ascending numeric sequence", expected["stable_identity_resequence"])
+        self.assertIn("current agent", expected["guided_staged_actor_routing"].lower())
+        self.assertIn("requested output", expected["guided_staged_actor_routing"].lower())
+        self.assertIn("downstream", expected["guided_staged_actor_routing"].lower())
+        self.assertIn("execute-versus-report", expected["guided_staged_actor_routing"].lower())
         self.assertIn("formatCopyConfirmationPreview", expected["clipboard_confirmation"])
         self.assertIn("hideCompactFilters", expected["snap_hides_filters"])
         self.assertIn("sole scroll ownership", expected["snap_prioritizes_prompt_header"])
@@ -373,7 +378,10 @@ process.stdout.write(JSON.stringify(groups.map(function(g){return {name:g.name,i
             "ADAPTIVE ROUTING INTERVIEW",
             "QUESTION POOL — ASK ONLY UNRESOLVED BRANCHES",
             "User outcome:",
-            "Desired prompt behavior:",
+            "Current-agent disposition:",
+            "Requested output:",
+            "Downstream disposition:",
+            "STAGED ROUTING / ACTOR BOUNDARY",
             "GRANULAR GRILLING DISCIPLINE",
             "If a fact can be recovered from the current conversation, repository, runtime, Prompt Kit registry, or tools",
             "Facts are agent-owned; decisions are user-owned",
@@ -383,7 +391,8 @@ process.stdout.write(JSON.stringify(groups.map(function(g){return {name:g.name,i
             "Default to 2-4 questions",
             "continue up to six only when materially different primary routes are still plausible",
             "ROUTE CONFIDENCE GATE",
-            "starting state | user outcome | desired prompt behavior | work shape | proof need | material constraints",
+            "starting state | user outcome | current-agent disposition | requested output | downstream disposition if any | work shape | proof need | material constraints",
+            "Do not force a false binary whose alternatives omit the user's stated desired state.",
         ):
             self.assertIn(marker, content)
         question_pool = content.split("QUESTION POOL — ASK ONLY UNRESOLVED BRANCHES", 1)[1].split(
@@ -397,7 +406,10 @@ process.stdout.write(JSON.stringify(groups.map(function(g){return {name:g.name,i
         )[0]
 
         self.assertIn("2. User outcome:", question_pool)
-        self.assertIn("3. Desired prompt behavior:", question_pool)
+        self.assertIn("3. Current-agent disposition:", question_pool)
+        self.assertIn("4. Requested output:", question_pool)
+        self.assertIn("5. Downstream disposition:", question_pool)
+        self.assertIn("Actor/disposition boundaries are facts when the user has already specified them.", question_pool)
         self.assertIn("For each question, state your current read and recommended answer", grilling)
         self.assertIn("After each answer, recompute the unresolved frontier", grilling)
         self.assertIn("stop early as soon as one primary route", grilling)
@@ -410,7 +422,10 @@ process.stdout.write(JSON.stringify(groups.map(function(g){return {name:g.name,i
         self.assertIn("recomputes only the unresolved routing frontier after each response", p65["proofGate"])
         self.assertIn("2-4 questions", p65["proofGate"])
         self.assertIn("up to six", p65["proofGate"])
-        self.assertIn("desired prompt behavior", p65["proofGate"].lower())
+        self.assertIn("current-agent disposition", p65["proofGate"].lower())
+        self.assertIn("requested output", p65["proofGate"].lower())
+        self.assertIn("downstream-agent disposition", p65["proofGate"].lower())
+        self.assertIn("false binaries", p65["proofGate"].lower())
         self.assertIn("grill me", p65["keywords"])
 
     def test_guided_finder_routes_context_artifacts_to_p56(self) -> None:
