@@ -1,10 +1,10 @@
 # Upstream Capability Watch + Prompt Impact Sprint Map
 
 **Canonical repository:** `EndeavorEverlasting/web-excel-repair-triage`
-**Planning floor:** `main@70178017ffa5c27f4428d6aae733a61113a6f4ad`
-**Planning branch:** `plan/upstream-capability-watch-20260920`
+**Planning floor:** `main@c97718247e7b14544d198035dd3cdc07725545a8`
+**Planning branch:** `plan/upstream-source-freshness-recovery-20260922`
 **Owner:** Prompt Kit upstream capability watch / P102 + P115 integration
-**Status:** TRACKED PLAN — U0A/U0B PROVEN and integrated; U1 implementation/contract/workflow proof is VALIDATED on PR #619 head `ab35d72f7149e79fcd15cabd5f65ec8081a3470c`, but U1 integration is BLOCKED on PR #606 ownership of `harness/test-floor.v1.json`; U2+ runtime/visibility remain unproven.
+**Status:** TRACKED PLAN — U0A/U0B PROVEN and integrated; U1 implementation/contract/workflow proof exists on PR #619 head `ab35d72f7149e79fcd15cabd5f65ec8081a3470c`; 2026-09-22 source-floor freshness incident is PROVEN and adds an explicit observed → processed → accepted/public recovery program below. U2+ runtime/promotion/visibility remain unproven until the source-level floor path is closed.
 
 ## Mission
 
@@ -38,6 +38,213 @@ Canonical evidence: `harness/reports/UPSTREAM_CAPABILITY_WATCH_FORENSICS.md` and
 | `VISIBILITY_GAP` | CONFIRMED DEFECT — earliest proven post-detection break. | Run `35332457839` detected drift and uploaded evidence but emitted no P115/user signal. |
 
 Incident correction: the inspected September upstream delta did **not** modify `skills/productivity/teach/SKILL.md`; it added and then refined `skills/in-progress/pr/SKILL.md`. The local teaching lane may still be semantically behind broader upstream practice, but that is U2B work and is not promoted to fact by U0A.
+
+## 2026-09-22 source-floor freshness incident — PROVEN
+
+This incident expands the original capability-watch problem from **capability change detection** into **source-floor freshness and promotion**.
+
+### Live provider snapshot
+
+| Source | Published floor in `web/prompt-kit/resources.v1.json` | Live default-branch head | Drift |
+|---|---|---|---|
+| `deepseek-harness` | `ddefc45fbc7f8e46dd73185e68295696d1297887` | `00102833dfaee1da9f48a3a8eae9d34005a75218` | **+1,461 commits** |
+| `prompts-chat` | `f78a1c5136fa080155d928e0d7e2b4a41ddef03e` | same | current |
+| `mattpocock-skills` | `c55ee46073ed923f86ce59a5eb3b6d895095d1b7` | same | current |
+| `michaelshimeles-skills` | `4b72f46b045e6fef52e6a98d4c162dd309826aed` | same | current |
+
+Provider compare proves the DeepSeek published floor is an ancestor of current upstream and **1,461 commits behind**. The other three matching today is a snapshot fact, not evidence that the AFK mechanism is healthy.
+
+A second drift signal exists in the repository itself: `.ai/skills/operant-external-resource-intake/SKILL.md` copies a three-donor list while the canonical contract currently registers four sources. The donor inventory therefore already demonstrates why manually copied reference prose must not be freshness authority.
+
+### Corrected source-level model
+
+The existing U1/PR #619 capability-watch model correctly separates per-resource `last_observed_identity` from `last_processed_identity`. Source-floor freshness needs one additional state machine above it:
+
+```
+registered source
+      ↓ poll
+last_observed_repository_revision
+      ↓ enumerate + classify
+last_processed_repository_revision
+      ↓ promotion policy
+accepted_reference_floor
+      ↓ project
+web/prompt-kit/resources.v1.json
+```
+
+These identities MUST NOT be collapsed.
+
+- `last_observed_repository_revision`: newest provider revision actually seen.
+- `last_processed_repository_revision`: newest provider revision whose registered donor surface has been enumerated and classified durably.
+- `accepted_reference_floor`: immutable repository revision currently accepted for Prompt Kit publication and pinned links.
+- `last_observed_identity` / `last_processed_identity`: existing capability-level identities from U1, independent of source-revision movement.
+- `pending_source_event`: durable source-level event explaining why observed, processed, and accepted state differ.
+
+The accepted floor may intentionally lag live upstream when relevant changes require review. **Silent unexplained lag is the defect.**
+
+## Source-Floor Freshness Recovery Program
+
+This program strengthens the existing U1→U5 map. It does not create a second donor registry, second scheduler, or second AFK coordinator.
+
+### F0 — Reproduce and retain source-floor drift
+
+**Owner:** validation/runtime evidence.  
+**Depends:** current external-resource intake only.  
+**Owned scope:** source-state fixture/receipt design and the live DeepSeek incident evidence.  
+**Forbidden:** updating Prompt Kit floors merely to make the incident disappear.
+
+Required evidence:
+- current registered source definitions;
+- published accepted floor for every source;
+- live default-branch revision for every source;
+- ahead/behind comparison when accepted != observed;
+- registered-resource identity comparison for the drift interval;
+- exact classification: `NO_RELEVANT_CHANGE`, `RELEVANT_RESOURCE_CHANGE`, `UNKNOWN`, or `BLOCKED`.
+
+Acceptance: the DeepSeek 1,461-commit case is reproducible as a negative fixture and no source can be called CURRENT solely because its scheduled workflow exists.
+
+### F1 — Source freshness contract + state kernel
+
+**Owner:** harness spine, serialized with PR #619/U1.  
+**Hard dependency:** integrate/reconcile PR #619 first; do not build a competing watch kernel.
+
+Extend the capability-watch contract or a narrowly nested source-state contract with:
+- `last_observed_repository_revision`;
+- `last_processed_repository_revision`;
+- `accepted_reference_floor`;
+- observed/processed/accepted timestamps;
+- source status: `CURRENT`, `OBSERVED_UNPROCESSED`, `PROCESSED_PENDING_PROMOTION`, `REVIEW_REQUIRED`, `BLOCKED`;
+- durable event identity keyed by source + processed revision + observed revision;
+- last error/blocker without raw donor bodies or secrets.
+
+Required transition tests:
+1. A/A/A baseline;
+2. observed A→B, processing not durable: B/A/A;
+3. processing B proves no relevant resource change: B/B/A then promotion B/B/B;
+4. processing B finds relevant resource change: B/B/A + REVIEW_REQUIRED;
+5. routing/promotion failure leaves accepted=A;
+6. replay B emits no duplicate event;
+7. B→C after unresolved B remains diagnosable and cannot silently consume B;
+8. provider/auth/network UNKNOWN is not interpreted as “current”.
+
+### F2 — Relevant-change classifier + metadata-only fast path
+
+**Owner:** external-resource sync/watch integration.
+
+Replace raw `cmp candidate tracked` as the only drift interpretation with an explicit classifier.
+
+Classification inputs:
+- source revision changed?;
+- enumerated resource set changed?;
+- per-resource immutable identity changed?;
+- catalog blob identity/count changed?;
+- coverage/gap disposition changed?;
+- public metadata/provenance only changed?
+
+Disposition:
+- **NO_RELEVANT_CHANGE:** repository revision moved but registered donor resource identities/coverage did not materially change. Eligible for metadata-only accepted-floor promotion.
+- **RELEVANT_RESOURCE_CHANGE:** one or more registered resource identities, catalog identities, coverage, or impact edges changed. Requires durable event + owner review.
+- **UNKNOWN/BLOCKED:** fail closed; no processed/accepted advancement.
+
+The classifier must produce a machine-readable receipt consumed by workflow routing and tests.
+
+### F3 — AFK promotion path
+
+**Owner:** P115 AFK coordination + repository promotion/integration owner; provider workflow is execution adapter.
+
+The scheduled refresh MUST progress beyond “upload evidence and fail cmp”.
+
+Required behavior:
+1. observe live source revision;
+2. generate candidate projection;
+3. classify source/resource delta;
+4. persist source event/receipt;
+5. route the event to the canonical owner;
+6. for `NO_RELEVANT_CHANGE`, create or update one bounded metadata-only refresh branch/PR;
+7. run canonical external-resource + generated-site checks;
+8. merge automatically only when repository promotion policy/authority explicitly permits a metadata-only green slice;
+9. for `RELEVANT_RESOURCE_CHANGE`, route review to P79/current impact owners and do not auto-author prompts;
+10. advance `accepted_reference_floor` only after successful integration;
+11. verify refreshed default contains the accepted floor and projected resource links.
+
+Direct scheduled mutation of default remains forbidden. The AFK path should use a bounded provider branch/PR or repository-native promotion mechanism with dedupe and expected-head protection.
+
+### F4 — Prompt Kit freshness visibility
+
+**Owner:** Prompt Kit external-resource UI consuming canonical state only.
+
+Expose, per source:
+- accepted revision;
+- last observed revision;
+- last processed revision;
+- freshness status;
+- observed/accepted timestamps or age;
+- pending event/blocker when lag exists.
+
+Do not make the browser a state owner. It renders canonical receipts/projection.
+
+An agent/user must not be able to read a SHA labeled merely as the “source floor” and mistake it for live upstream truth when a newer observed revision is known.
+
+### F5 — DeepSeek catch-up replay
+
+Use the real DeepSeek incident as the first end-to-end acceptance case.
+
+Starting evidence:
+- accepted: `ddefc45fbc7f8e46dd73185e68295696d1297887`
+- observed: `00102833dfaee1da9f48a3a8eae9d34005a75218`
+- provider distance: 1,461 commits
+
+Required replay:
+1. classify the registered `.agents/skills` donor surface across the interval;
+2. produce exactly one source event for the accepted→observed transition;
+3. produce capability events only for relevant changed resource identities;
+4. route relevant impact edges;
+5. if no relevant changes exist, prove metadata-only promotion path;
+6. if relevant changes exist, prove review-required path;
+7. integrate the accepted candidate;
+8. verify default branch projection and URLs use the new accepted floor;
+9. re-poll the same upstream revision and prove zero duplicate work.
+
+This is the acceptance case that closes the operator-reported stale-SHA defect.
+
+### F6 — Freshness SLO + quiescence
+
+After F5, make “silent stale” mechanically impossible.
+
+Contract:
+- every registered source is polled on schedule;
+- every observed revision is durably classified;
+- every source more than one successful polling cycle behind accepted state has a visible `PENDING` or `BLOCKED` event;
+- a no-impact revision advances processed and is eligible for bounded metadata-only promotion without human rediscovery;
+- relevant changes remain review-gated;
+- unchanged revisions create no work;
+- an unchanged capability blob under a moved repository head does not create a capability-change event;
+- failed provider access never advances freshness state.
+
+The steady-state objective is **quiescence with proof**, not perpetual PR churn.
+
+## Source-floor promotion policy
+
+| Condition | Processed may advance? | Accepted floor may advance? | Review |
+|---|---:|---:|---|
+| source head unchanged | yes/no-op | yes/no-op | none |
+| source moved, registered resources unchanged | yes | yes through metadata-only green promotion | deterministic checks |
+| registered resource changed, no local impact edge | yes after durable event | not until disposition is persisted | review/triage |
+| registered resource changed with impact edge | yes after durable routing | not until owner review/integration | P79/domain owner |
+| provider/auth/network failure | no | no | blocker |
+| candidate generation/validation failure | no | no | repair required |
+| promotion PR/check/merge failure | processed may already be yes | no | integration repair |
+
+## Freshness proof ceiling
+
+- Provider HEAD lookup proves observed source revision only.
+- Enumeration/blob comparison proves registered-resource change/no-change for the tested revisions.
+- A durable classified event proves processing state, not acceptance.
+- A green refresh PR proves candidate correctness, not default-branch integration.
+- Default-branch containment + canonical projection validation proves accepted publication.
+- Browser display proves visibility only; it does not own or advance freshness state.
+- One DeepSeek replay proves the concrete incident path, not long-term scheduled reliability.
+- Scheduled reliability becomes OBSERVED only after later cycles demonstrate the state machine continuing without manual intervention.
 
 ## Non-negotiable data invariants
 
