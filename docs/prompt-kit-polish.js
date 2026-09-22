@@ -391,8 +391,6 @@ var PROMPT_KIT_SHORTCUTS=[
 ];
 
 function hotkeyScrollBehavior(requested){try{if(window.matchMedia&&window.matchMedia('(prefers-reduced-motion: reduce)').matches)return 'auto'}catch(e){}return requested||'instant'}
-  try{return window.matchMedia&&window.matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth'}catch(e){return 'auto'}
-}
 
 function scrollPromptKitTo(edge){
   var behavior=hotkeyScrollBehavior();
