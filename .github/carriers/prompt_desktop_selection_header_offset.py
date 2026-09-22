@@ -240,6 +240,11 @@ function promptSnapViewportOffset(){
     )
     replace_once(
         "tests/test_prompt_kit_discovery.py",
+        '        center = polish[\n            polish.index("function promptSnapViewportOffset") : polish.index("function revealPromptShortcutTarget")\n        ]\n',
+        '        center = polish[\n            polish.index("function promptHasViewportOccludingHeader") : polish.index("function revealPromptShortcutTarget")\n        ]\n',
+    )
+    replace_once(
+        "tests/test_prompt_kit_discovery.py",
         '            "hideCompactFilters();",\n            "function promptSnapViewportOffset()",',
         '            "hideCompactFilters();",\n            "function promptHasViewportOccludingHeader()",\n            "function promptSnapViewportOffset()",',
     )
