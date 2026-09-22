@@ -47,6 +47,7 @@ class PromptKitDiscoveryTests(unittest.TestCase):
                 "favorites_first",
                 "favorite_accessibility",
                 "guided_questionnaire",
+                "guided_staged_actor_routing",
                 "guided_uses_shared_search",
                 "metadata_recommendations",
                 "guided_next_step_journey",
@@ -65,6 +66,10 @@ class PromptKitDiscoveryTests(unittest.TestCase):
         expected = {item["id"]: item["expected"] for item in payload["requirements"]}
         self.assertIn("explicit local filter", expected["favorites_first"])
         self.assertIn("canonical library defaults to ascending numeric sequence", expected["stable_identity_resequence"])
+        self.assertIn("current agent", expected["guided_staged_actor_routing"].lower())
+        self.assertIn("requested output", expected["guided_staged_actor_routing"].lower())
+        self.assertIn("downstream", expected["guided_staged_actor_routing"].lower())
+        self.assertIn("execute-versus-report", expected["guided_staged_actor_routing"].lower())
         self.assertIn("formatCopyConfirmationPreview", expected["clipboard_confirmation"])
         self.assertIn("hideCompactFilters", expected["snap_hides_filters"])
         self.assertIn("sole scroll ownership", expected["snap_prioritizes_prompt_header"])
