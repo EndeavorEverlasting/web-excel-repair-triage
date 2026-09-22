@@ -1,6 +1,7 @@
 # P55 Repository Bootstrap Recovery Sprint Map
 
 **Canonical work owner:** PR #623 — `feat(prompt-kit): strengthen P55 repository bootstrap`  
+**Remote sprint pack:** `docs/plans/P55_REPOSITORY_BOOTSTRAP_RECOVERY_SPRINT_PACK.md`  
 **Plan status:** TRACKED recovery plan; implementation remains unmerged.  
 **Planning floor:** `main@bd5136561466b31f8623ca3f9a61020cb9ced5f7`  
 **Current PR head at planning:** `373019f33b0ef577443f7e56bdd441c06c203814`  
@@ -39,7 +40,7 @@ Historical exact-head proof on `373019f3...` was 23 successful provider workflow
 |---|---|---|---|
 | PR #623 is 32 commits behind current main and non-mergeable | provider compare / PR metadata | P55 recovery convergence lane | reconcile current main before any new proof or merge |
 | `REMOTE_ONLY` P55 mode conflicts with unconditional `nextStep` requiring a local root | unresolved Codex review thread on `docs/prompts.json` | P55 canonical prompt record | make `nextStep` mode-aware and add regression |
-| P55 declares manifest statuses exactly `RESOLVED | INFERRED | USER_ONLY` but self-check also permits `UNKNOWN` | unresolved Codex review thread on `docs/prompts.json` | P55 canonical prompt record | use one manifest-status vocabulary and add regression |
+| P55 declares exactly one manifest status: `RESOLVED`, `INFERRED`, or `USER_ONLY`, but self-check also permits `UNKNOWN` | unresolved Codex review thread on `docs/prompts.json` | P55 canonical prompt record | use one manifest-status vocabulary and add regression |
 | Current main added P65 semantic migration and test-floor state after #623 proof | `main@bd513656...` and current canonical files | prompt lifecycle + test-floor owners | preserve current main records; never replace them with stale branch copies |
 | Generated Prompt Kit changed after #623 proof | current main contains newer Prompt Kit generated/site work | canonical Prompt Kit builder | regenerate from current sources after reconciliation |
 | Stale review thread questions metadata-only lifecycle semantics | outdated Codex thread on `scripts/prompt_registry_ops.py` | prompt lifecycle helper | preserve explicit semantic-vs-metadata boundary, prove it, then resolve thread |
