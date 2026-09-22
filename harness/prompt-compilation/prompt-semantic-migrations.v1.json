@@ -80,7 +80,7 @@
       "migration_id": "2026-09-22-p65-staged-actor-disposition-routing",
       "path": "registry/prompts/tutorial-discovery-prompts.v1.json",
       "from_git_blob_sha1": "272921ae2706f6329f29b7865137915ca0b69cfe",
-      "to_git_blob_sha1": "e3ba7995900199e4f04df7c8b3ea36fabb1a81db",
+      "to_git_blob_sha1": "f91521d78f0ec2a1a6dfc70e9401f5fcf29de538",
       "affected_prompt_ids": [
         "P65"
       ],
