@@ -280,7 +280,7 @@ process.stdout.write(JSON.stringify(groups.map(function(g){return {name:g.name,i
             "window.getComputedStyle(header).position",
             "window.scrollTo({top:top,behavior:scrollBehavior})",
             "root.style.scrollBehavior='auto'",
-            "return snapRenderedPromptCardHeader(card,behavior||hotkeyScrollBehavior())",
+            "return snapRenderedPromptCardHeader(card,opts.behavior||hotkeyScrollBehavior())",
         ):
             self.assertIn(marker, center)
         self.assertNotIn("block:'center'", center)
