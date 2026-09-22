@@ -92,6 +92,22 @@
         "tests/test_prompt_kit_discovery.py",
         "tests/test_prompt_quality_history.py"
       ]
+    },
+    {
+      "migration_id": "p79-strengthen-p111-006",
+      "path": "registry/prompts/repository-work-ledger-prompts.v1.json",
+      "from_git_blob_sha1": "583edc4fdd2c973eef8aa89b55dc053889e2e156",
+      "to_git_blob_sha1": "6a5b324c52814abab944cd106360d6ab55ea3d93",
+      "affected_prompt_ids": [
+        "P111"
+      ],
+      "change_kind": "strengthening",
+      "effective_identity_change": "preserve_canonical",
+      "rationale": "Close P111's deferred-evidence gap: material referenced private/specialized artifacts remain in the dependency graph and must be persisted/read back through their canonical owner or retained as an exact BLOCKED dependency.",
+      "focused_tests": [
+        "tests/test_prompt_semantic_coverage.py",
+        "tests/test_prompt_quality_history.py"
+      ]
     }
   ]
 }
