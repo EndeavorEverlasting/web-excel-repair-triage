@@ -249,7 +249,7 @@ Canonical terminal action: none; no safe actionable work remains
 - **References:** `harness/prompt-compilation/PROMPT_COMPILATION_SPRINT_MAP.md`, `scripts/prompt_improvement_compiler.py`, `harness/prompt-compilation/improvement-hypothesis-catalog.v1.json`, `harness/prompt-compilation/fixtures/TC07-mainline-convergence-proof/`, `tests/test_prompt_improvement_compiler.py`
 - **Acceptance gate:** catalog covers >=8 identities including TC07; journey emits P115 handoff with absorbs_p115_ownership=false; optional Outputs retention stays under Outputs/; focused compilation + improvement tests green; exact validated head integrates to current default branch
 - **Gate:** none
-- **Last proof:** commit:97dc0b62cc915ffcbbe40c166912e2f00a0578d0; merge:5f55e2a922534e7cae5087309fc2da296892af3d integrated PR #522; local:python -m unittest tests.test_prompt_improvement_compiler (12 OK) on refreshed default; local:validate-fixtures cases=2; workflow required checks green on PR head `2e844f44`; artifact:TC07 + P115 handoff present on refreshed default branch
+- **Last proof:** commit:97dc0b62cc915ffcbbe40c166912e2f00a0578d0; merge:5f55e2a922534e7cae5087309fc2da296892af3d integrated PR #522; local:python -m unittest tests.test_prompt_improvement_compiler (12 OK) on refreshed default; local:validate-fixtures cases=2; workflow required checks green on PR head `2e844f44`; artifact:harness/prompt-compilation/fixtures/TC07-mainline-convergence-proof/ + P115 handoff present on refreshed default branch
 - **Next action:** none; no safe actionable work remains
 - **Updated:** 2026-09-16T23:20:00-04:00
 
