@@ -556,7 +556,9 @@ def _append_accepted_profile(
     profiles_data: dict[str, Any], accepted: dict[str, Any]
 ) -> dict[str, Any]:
     """Append one accepted profile while keeping count metadata exact."""
-    updated = _append_accepted_profile(profiles_data, accepted)
+    updated = _clone_json(profiles_data)
+    updated.setdefault("profiles", []).append(accepted)
+    updated["profile_count"] = len(updated["profiles"])
     return updated
 
 
