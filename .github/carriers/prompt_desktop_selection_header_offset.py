@@ -364,11 +364,9 @@ function promptSnapViewportOffset(){
     replace_once("tests/prompt_kit_favorite_browser_proof.py", browser_anchor, browser_replacement)
 
     observations_anchor = """            observations = [
-                {"id": "search_escape_recovery",
 """
     observations_replacement = """            observations = [
                 {"id": "desktop_pointer_selected_header_first", "event": "Desktop mouse selection repositions a selected prompt title below visible sticky chrome instead of accepting layout-visible overlap", "occurred": True, "passed": bool(pointer_header_first), "before": pointer_before, "after": pointer_after},
-                {"id": "search_escape_recovery",
 """
     replace_once("tests/prompt_kit_favorite_browser_proof.py", observations_anchor, observations_replacement)
 
