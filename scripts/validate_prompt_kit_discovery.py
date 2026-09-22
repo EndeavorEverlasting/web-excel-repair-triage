@@ -194,7 +194,7 @@ def audit() -> dict[str, object]:
             "window.scrollTo({top:top,behavior:scrollBehavior})",
             "root.style.scrollBehavior='auto'",
             "selectPrompt(promptId,{source:'keyboard',scroll:false})",
-            "return snapRenderedPromptCardHeader(card,behavior||hotkeyScrollBehavior())",
+            "return snapRenderedPromptCardHeader(card,opts.behavior||hotkeyScrollBehavior())",
         ),
     }
     for requirement_id, markers in polish_markers.items():
