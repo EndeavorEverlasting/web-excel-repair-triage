@@ -176,14 +176,18 @@ def audit() -> dict[str, object]:
             "prefers-reduced-motion:reduce",
         ),
         "snap_hides_filters": (
-            "function centerRenderedPromptCard(promptId,behavior)",
+            "function focusSelectedPromptContent(card,options)",
             "hideCompactFilters();",
+            "PromptKitInteractionLanguage.focusSelectedContent=focusSelectedPromptContent",
+            "function centerRenderedPromptCard(promptId,behavior)",
+            "return PromptKitInteractionLanguage.focusSelectedContent(card,{behavior:behavior||hotkeyScrollBehavior(),source:'snap'})",
             "function revealPromptShortcutTarget(promptId,behavior)",
             "return centerRenderedPromptCard(promptId,behavior||hotkeyScrollBehavior())",
         ),
         "snap_prioritizes_prompt_header": (
             "function promptHasViewportOccludingHeader()",
             "function promptSnapViewportOffset()",
+            "PromptKitInteractionLanguage.focusSelectedContent=focusSelectedPromptContent",
             "window.positionSelectedPromptBelowChrome=positionSelectedPromptBelowChrome",
             "function snapRenderedPromptCardHeader(card,behavior)",
             "window.getComputedStyle(header).position",
@@ -202,7 +206,7 @@ def audit() -> dict[str, object]:
     if any(
         marker not in selection_source
         for marker in (
-            "window.positionSelectedPromptBelowChrome(el,'smooth')",
+            "window.PromptKitInteractionLanguage.focusSelectedContent(el,{behavior:'smooth',source:source})",
             "scrollIntoView({behavior:'smooth',block:'nearest'})",
         )
     ) and "snap_prioritizes_prompt_header" not in missing:
