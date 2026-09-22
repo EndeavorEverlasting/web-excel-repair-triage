@@ -54,13 +54,180 @@ on:
       - '.github/workflows/prompt-kit-web.yml'
 
 permissions:
-  contents: read
+  contents: write
 
 concurrency:
   group: prompt-kit-web-${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: true
 
 jobs:
+  p111-specialized-artifact-closure:
+    if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository && github.event.pull_request.head.ref == 'fix/p111-specialized-artifact-closure-20260922'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout owned P111 branch
+        uses: actions/checkout@v7
+        with:
+          ref: fix/p111-specialized-artifact-closure-20260922
+          fetch-depth: 0
+      - uses: actions/setup-python@v7
+        with:
+          python-version: '3.11'
+      - name: Adopt P111 profile and strengthen through protected lifecycle
+        shell: bash
+        run: |
+          set -euo pipefail
+          export PYTHONPATH="$PWD${PYTHONPATH:+:$PYTHONPATH}"
+          mkdir -p Outputs/p111-specialized-artifact-closure
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git fetch origin main fix/p111-specialized-artifact-closure-20260922 --prune
+          test "$(git rev-parse HEAD)" = "$(git rev-parse origin/fix/p111-specialized-artifact-closure-20260922)"
+
+          python - <<'PY'
+          import json
+          from pathlib import Path
+
+          refs = [
+              "registry/prompts/repository-work-ledger-prompts.v1.json",
+              "registry/prompts/management-operations-prompts.v1.json",
+              "tests/test_repository_drive_artifact_synchronizer_prompt.py",
+              "tests/test_google_drive_workspace_organizer_prompt.py",
+          ]
+          caps = [
+              "strength.fresh_evidence_floor",
+              "strength.scope_ownership",
+              "strength.fixed_point_continuation",
+              "strength.evidence_state_integrity",
+              "strength.proof_relevance_freshness",
+              "strength.actionable_continuation",
+          ]
+          profile = {
+              "direct_assignments": [
+                  {
+                      "capability_id": cap,
+                      "presence": "SUPPORT",
+                      "ownership": "SECONDARY",
+                      "capability_relation": "IMPLEMENTS",
+                      "delivery_source": "CANONICAL_BODY",
+                      "evidence_refs": refs,
+                      "rationale": "P111 applies this shared execution-quality behavior inside repository-to-Drive artifact synchronization without claiming global primary ownership.",
+                  }
+                  for cap in caps
+              ],
+              "evidence_refs": refs,
+          }
+          Path("/tmp/p111-profile.json").write_text(
+              json.dumps(profile, indent=2) + "\n",
+              encoding="utf-8",
+          )
+          PY
+
+          python scripts/prompt_registry_ops.py adopt-profile             --prompt-id P111             --input /tmp/p111-profile.json             --evidence-ref tests/test_repository_drive_artifact_synchronizer_prompt.py             --evidence-ref registry/prompts/repository-work-ledger-prompts.v1.json             --rationale "Adopt existing P111 into accepted semantic coverage before protected strengthening; no canonical body mutation occurs in this predecessor transition."             | tee Outputs/p111-specialized-artifact-closure/adopt-profile-receipt.json
+
+          python - <<'PY'
+          import json
+          from pathlib import Path
+
+          registry_path = Path("registry/prompts/repository-work-ledger-prompts.v1.json")
+          profile_path = Path("harness/prompt-topology/prompt-capability-profiles.v1.json")
+          payload = json.loads(registry_path.read_text(encoding="utf-8"))
+          prompt = next(row for row in payload["prompts"] if row["id"] == "P111")
+          profiles = json.loads(profile_path.read_text(encoding="utf-8"))["profiles"]
+          accepted = next(
+              row for row in profiles
+              if row.get("prompt_id") == "P111" and row.get("profile_status") == "ACCEPTED"
+          )
+
+          content = prompt["copyContent"]
+          old_build = (
+              "2. BUILD THE RELEVANT ARTIFACT SET\n"
+              "Do not sync every tracked file. Use the current use case plus canonical repo evidence to select only durable plans/specs, decisions, reports, client-safe docs, spreadsheets, presentations, evidence packs, exports, manifests, handoffs, or intentional Drive-facing references that materially support the work. Exclude implementation source unless explicitly published, plus secrets, credentials, private/protected data, ignored local state, vendor/dependency trees, caches, build debris, and temporary logs."
+          )
+          new_build = (
+              "2. BUILD THE RELEVANT ARTIFACT SET\n"
+              "Do not sync every tracked file. Use the current use case plus canonical repo evidence to select only durable plans/specs, decisions, reports, client-safe docs, spreadsheets, presentations, evidence packs, exports, manifests, handoffs, or intentional Drive-facing references that materially support the work. Exclude implementation source unless explicitly published, plus secrets, credentials, ignored local state, vendor/dependency trees, caches, build debris, and temporary logs. Private/protected evidence is excluded from inappropriate generic/repository publication, not automatically excluded from the artifact dependency graph.\n"
+              "Current-conversation attachments count as candidate artifacts whenever the synchronized artifact cites, describes, depends on, or derives a factual claim from them. Do not omit an attachment from the artifact set merely because its bytes should stay out of Git."
+          )
+          if old_build not in content:
+              raise SystemExit("P111 artifact-set anchor drifted")
+          content = content.replace(old_build, new_build, 1)
+
+          old_private = "- PRIVATE / DO-NOT-SYNC — intentionally excluded."
+          new_private = "- PRIVATE / DO-NOT-SYNC — excluded from generic/repository publication; may still require persistence through an approved specialized/private evidence owner."
+          if old_private not in content:
+              raise SystemExit("P111 private authority anchor drifted")
+          content = content.replace(old_private, new_private, 1)
+
+          boundary = (
+              "BOUNDARIES WITH SPECIALIZED WORKFLOWS\n"
+              "This generic owner does not absorb project-specific management, billing, roster, taxonomy, evidence-language, or reporting semantics merely because a project uses Drive. Pure Drive organization, cleanup, rename, archive, or dedupe without a repository sync mission routes to P142 Google Drive Workspace Organizer rather than expanding this synchronizer. Preserve any stronger specialized synchronizer's domain authority; apply this prompt only to generic mapping/sync mechanics."
+          )
+          closure = boundary + (
+              "\n\nSPECIALIZED ARTIFACT CLOSURE / NO DEFERRED EVIDENCE\n"
+              "When an in-scope artifact materially references or depends on a photo, screenshot, attachment, evidence row, workbook, generated artifact, or other surface governed by a stronger specialized workflow, P111 MUST invoke or route through that canonical owner whenever it is safely executable. P111 MUST NOT classify the dependency as SKIP or PRIVATE merely because the generic synchronizer does not own its bytes.\n"
+              "PRIVATE / DO-NOT-SYNC forbids inappropriate generic/repository publication; it does not mean “do not persist through the approved private evidence owner.” Do not place private photo/screenshot/workbook bytes in the repository unless the specialized owner explicitly permits it. Prefer the approved private evidence owner or workspace for protected bytes and retain only the safe durable identity/reference in repository state when policy permits.\n"
+              "Synchronization is incomplete while a material supporting reference lacks its required durable identity/readback proof. A placeholder or prose reference such as “hardware photo,” “screenshot,” or “supporting evidence” is not closure when that evidence materially supports the synchronized artifact.\n"
+              "If the specialized workflow cannot execute, preserve the dependency as BLOCKED with its exact owner, target, dependency, and next action; do not convert that dependency into SKIP, and do not claim the overall synchronization complete."
+          )
+          if boundary not in content:
+              raise SystemExit("P111 specialized-workflow boundary anchor drifted")
+          content = content.replace(boundary, closure, 1)
+
+          patch = {
+              "sprintRole": (
+                  "Synchronize the active repository's use-case-relevant durable artifacts with the user's Google Drive workspace while preserving explicit source-of-truth direction, privacy boundaries, idempotent mappings, conflict-safe proof, and closure of material referenced evidence through its canonical specialized/private artifact owner"
+              ),
+              "useWhen": (
+                  "The current project or use case spans a repository and Google Drive and the relevant plans, reports, handoff documents, spreadsheets, presentations, evidence packs, exports, or other durable artifacts need to be brought into a deliberate synchronized state without mirroring the whole repository or relying on one project-specific workflow. Use it also when a synchronized artifact cites or materially depends on current-conversation photos, screenshots, workbooks, attachments, evidence rows, generated artifacts, or other protected evidence that should stay out of Git but still requires durable persistence and readback through a stronger specialized owner."
+              ),
+              "copyContent": content,
+              "semantic_profile": {
+                  "direct_assignments": accepted["direct_assignments"],
+                  "inherited_sources": accepted["inherited_sources"],
+                  "evidence_refs": sorted(set(
+                      accepted.get("evidence_refs", [])
+                      + [
+                          "registry/prompts/repository-work-ledger-prompts.v1.json",
+                          "registry/prompts/management-operations-prompts.v1.json",
+                          "tests/test_repository_drive_artifact_synchronizer_prompt.py",
+                          "tests/test_google_drive_workspace_organizer_prompt.py",
+                      ]
+                  )),
+              },
+          }
+          Path("/tmp/p111-strengthen-patch.json").write_text(
+              json.dumps(patch, indent=2, ensure_ascii=False) + "\n",
+              encoding="utf-8",
+          )
+          PY
+
+          python scripts/prompt_registry_ops.py edit             --prompt-id P111             --input /tmp/p111-strengthen-patch.json             --disposition STRENGTHEN             --evidence-ref tests/test_repository_drive_artifact_synchronizer_prompt.py             --evidence-ref registry/prompts/management-operations-prompts.v1.json             --rationale "Close P111's deferred-evidence gap: material referenced private/specialized artifacts remain in the dependency graph and must be persisted/read back through their canonical owner or retained as an exact BLOCKED dependency."             | tee Outputs/p111-specialized-artifact-closure/strengthen-receipt.json
+
+          python -m unittest             tests.test_repository_drive_artifact_synchronizer_prompt             tests.test_prompt_semantic_coverage             tests.test_prompt_semantic_validator_1b             tests.test_prompt_regression_safety_prompt             tests.test_prompt_quality_history             tests.test_google_drive_workspace_organizer_prompt -v
+          python scripts/validate_prompt_semantic_coverage.py
+          python scripts/validate_prompt_regression_safety.py --summary
+          python scripts/prompt_registry_ops.py validate
+          python scripts/evaluate_prompt_language.py --output Outputs/prompt-language-audit.json --summary
+          python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html --check
+          git diff --check
+
+          git checkout origin/main -- .github/workflows/prompt-kit-web.yml
+          git add             scripts/prompt_registry_ops.py             harness/contracts/prompt-semantic-coverage.v1.json             .ai/skills/prompt-semantic-coverage/SKILL.md             tests/test_prompt_semantic_coverage.py             tests/test_prompt_regression_safety_prompt.py             tests/test_repository_drive_artifact_synchronizer_prompt.py             harness/test-floor.v1.json             registry/prompts/repository-work-ledger-prompts.v1.json             harness/prompt-topology/prompt-capability-profiles.v1.json             harness/prompt-topology/prompt-capability-migrations.v1.json             harness/prompt-compilation/prompt-semantic-migrations.v1.json             web/prompt-kit/index.html             .github/workflows/prompt-kit-web.yml
+          git diff --cached --check
+          git commit -m "fix(prompt-kit): close P111 specialized evidence dependencies"
+          git push origin HEAD:fix/p111-specialized-artifact-closure-20260922
+      - name: Publish P111 lifecycle receipts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: p111-specialized-artifact-closure-receipts
+          path: |
+            Outputs/p111-specialized-artifact-closure/
+            Outputs/prompt-language-audit.json
+          if-no-files-found: warn
+          retention-days: 30
+
   validate:
     runs-on: ubuntu-latest
     steps:
