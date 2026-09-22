@@ -10,6 +10,7 @@ BASE = ROOT / "docs" / "prompt-kit.js"
 POLISH = ROOT / "docs" / "prompt-kit-polish.js"
 BUILDER = ROOT / "build_prompt_kit.py"
 DEPLOYED = ROOT / "web" / "prompt-kit" / "index.html"
+UX_LANGUAGE = ROOT / "harness" / "contracts" / "ux-interaction-language.v1.json"
 
 
 class PromptKitSelectedPromptContractTests(unittest.TestCase):
@@ -81,21 +82,31 @@ class PromptKitSelectedPromptContractTests(unittest.TestCase):
         self.assertIn("classList.add('is-selected')", base)
         self.assertIn("classList.remove('is-selected')", base)
 
-    def test_pointer_selection_avoids_sticky_header_occlusion(self) -> None:
+    def test_prompt_focus_uses_shared_interaction_language(self) -> None:
         base = BASE.read_text(encoding="utf-8")
         polish = POLISH.read_text(encoding="utf-8")
+        contract = json.loads(UX_LANGUAGE.read_text(encoding="utf-8"))
+        self.assertEqual(contract["owner"], "P109")
+        pattern = contract["patterns"]["focus_selected_content"]
+        self.assertEqual(pattern["state_transition"], "DISCOVERY -> FOCUS")
+        self.assertIn("collapse nonessential discovery chrome", " ".join(pattern["ordered_effects"]))
+        self.assertIn("first activation succeeds", " ".join(pattern["acceptance"]))
+
         selection = base[base.index("function selectPrompt(id,opts)") : base.index("function clearSelectionState()")]
-        self.assertIn("window.positionSelectedPromptBelowChrome(el,'smooth')", selection)
+        self.assertIn("window.PromptKitInteractionLanguage.focusSelectedContent(el,{behavior:'smooth',source:source})", selection)
         self.assertIn("scrollIntoView({behavior:'smooth',block:'nearest'})", selection)
-        self.assertLess(selection.index("positionSelectedPromptBelowChrome"), selection.index("scrollIntoView"))
+        self.assertLess(selection.index("focusSelectedContent"), selection.index("scrollIntoView"))
+
         helper = polish[
-            polish.index("function promptHasViewportOccludingHeader()") :
-            polish.index("function centerRenderedPromptCard(promptId,behavior)")
+            polish.index("function focusSelectedPromptContent(card,options)") :
+            polish.index("function revealPromptShortcutTarget(promptId,behavior)")
         ]
-        self.assertIn("return position==='sticky'||position==='fixed'", helper)
-        self.assertIn("if(!header||!promptHasViewportOccludingHeader())return gap", helper)
-        self.assertIn("card.getBoundingClientRect().top>=promptSnapViewportOffset()", helper)
-        self.assertIn("window.positionSelectedPromptBelowChrome=positionSelectedPromptBelowChrome", helper)
+        self.assertIn("hideCompactFilters();", helper)
+        self.assertIn("header.getBoundingClientRect()", helper)
+        self.assertIn("snapRenderedPromptCardHeader", helper)
+        self.assertIn("PromptKitInteractionLanguage.focusSelectedContent=focusSelectedPromptContent", helper)
+        self.assertIn("PromptKitInteractionLanguage.revealDiscovery=function(){showCompactFilters();return true}", helper)
+        self.assertIn("return PromptKitInteractionLanguage.focusSelectedContent(card,{behavior:behavior||hotkeyScrollBehavior(),source:'snap'})", helper)
 
     def test_enter_to_open_and_copy_hotkey(self) -> None:
         base = BASE.read_text(encoding="utf-8")
