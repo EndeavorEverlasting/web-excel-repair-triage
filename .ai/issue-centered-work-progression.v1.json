@@ -110,6 +110,7 @@
   "proof_ceiling": "Static repository coordination semantics only. This contract proves issue/ticket-versus-execution-evidence separation, AFK state meaning, gate-state consistency, and durable proof-shape requirements. It does not prove that Acceptance gate prose is semantically satisfied, a live scheduler exists, GitHub Projects is configured, autonomous dispatch occurred, or external runtime behavior succeeded.",
   "ready_gate": {
     "gate_must_equal": "none",
-    "unresolved_dependency_rule": "Any unresolved dependency or operator-only prerequisite must be represented by a non-none Gate and a BLOCKED or OPERATOR state rather than READY."
+    "unresolved_dependency_rule": "Any unresolved dependency or operator-only prerequisite must be represented by a non-none Dependencies or Gate field and a BLOCKED or OPERATOR state rather than READY. Resolved dependency evidence belongs in References or Last proof before the work item returns to READY.",
+    "dependencies_must_equal": "none"
   }
 }
