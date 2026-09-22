@@ -390,7 +390,7 @@ var PROMPT_KIT_SHORTCUTS=[
   {key:'Esc',label:'Close / clear active surface'}
 ];
 
-function hotkeyScrollBehavior(requested){try{if(window.matchMedia&&window.matchMedia('(prefers-reduced-motion: reduce)').matches)return 'auto'}catch(e){}return requested||'instant'}
+function hotkeyScrollBehavior(requested){try{if(window.matchMedia&&window.matchMedia('(prefers-reduced-motion: reduce)').matches)return 'instant'}catch(e){return 'instant'}return requested||'instant'}
 
 function scrollPromptKitTo(edge){
   var behavior=hotkeyScrollBehavior();

@@ -264,6 +264,16 @@ process.stdout.write(JSON.stringify(groups.map(function(g){return {name:g.name,i
         self.assertIn("copyContent", confirmation)
         self.assertIn("data-prompt-id", confirmation)
 
+    def test_reduced_motion_forces_immediate_snap_instead_of_css_auto(self) -> None:
+        polish = POLISH_JS.read_text(encoding="utf-8")
+        helper = polish[
+            polish.index("function hotkeyScrollBehavior") :
+            polish.index("function scrollPromptKitTo")
+        ]
+        self.assertIn("prefers-reduced-motion: reduce", helper)
+        self.assertIn("matches)return 'instant'", helper)
+        self.assertNotIn("matches)return 'auto'", helper)
+
     def test_snap_to_prompt_hides_filters_and_prioritizes_prompt_header(self) -> None:
         base = JS.read_text(encoding="utf-8")
         polish = POLISH_JS.read_text(encoding="utf-8")
