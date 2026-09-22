@@ -89,13 +89,17 @@ class PromptKitSelectedPromptContractTests(unittest.TestCase):
         self.assertEqual(contract["owner"], "P109")
         pattern = contract["patterns"]["focus_selected_content"]
         self.assertEqual(pattern["state_transition"], "DISCOVERY -> FOCUS")
+        self.assertIn("consume canonical selection state committed by the product selection owner", " ".join(pattern["ordered_effects"]))
         self.assertIn("collapse nonessential discovery chrome", " ".join(pattern["ordered_effects"]))
         self.assertIn("first activation succeeds", " ".join(pattern["acceptance"]))
+        self.assertIn("gesture disambiguation preserves double-click/open", " ".join(pattern["acceptance"]))
 
         selection = base[base.index("function selectPrompt(id,opts)") : base.index("function clearSelectionState()")]
-        self.assertIn("window.PromptKitInteractionLanguage.focusSelectedContent(el,{behavior:'smooth',source:source})", selection)
-        self.assertIn("scrollIntoView({behavior:'smooth',block:'nearest'})", selection)
-        self.assertLess(selection.index("focusSelectedContent"), selection.index("scrollIntoView"))
+        self.assertIn("focusPromptSelectionElement(el,source)", selection)
+        self.assertNotIn("behavior:'smooth'", selection)
+        focus_helper = base[base.index("function focusPromptSelectionElement") : base.index("function selectPrompt(id,opts)")]
+        self.assertIn("PromptKitInteractionLanguage.focusSelectedContent", focus_helper)
+        self.assertIn("promptMotionScrollBehavior()", focus_helper)
 
         helper = polish[
             polish.index("function focusSelectedPromptContent(card,options)") :
@@ -107,6 +111,27 @@ class PromptKitSelectedPromptContractTests(unittest.TestCase):
         self.assertIn("PromptKitInteractionLanguage.focusSelectedContent=focusSelectedPromptContent", helper)
         self.assertIn("PromptKitInteractionLanguage.revealDiscovery=function(){showCompactFilters();return true}", helper)
         self.assertIn("return PromptKitInteractionLanguage.focusSelectedContent(card,{behavior:behavior||hotkeyScrollBehavior(),source:'snap'})", helper)
+
+    def test_pointer_gesture_and_detail_open_have_one_scroll_owner(self) -> None:
+        base = BASE.read_text(encoding="utf-8")
+        polish = POLISH.read_text(encoding="utf-8")
+        self.assertIn("PROMPT_CARD_SINGLE_CLICK_DELAY_MS=350", base)
+        self.assertIn("schedulePromptCardSingleClick(card,p.id)", base)
+        self.assertIn("selectPrompt(id,{source:'pointer',scroll:false})", base)
+        self.assertIn("selectPrompt(p.id,{source:'pointer',scroll:true})", base)
+        wrapper = polish[
+            polish.index("var baseShowPromptDetailWithFavorite=window.showPromptDetail") :
+            polish.index("window.appendPromptCard=function")
+        ]
+        self.assertNotIn("centerRenderedPromptCard", wrapper)
+        self.assertIn("selectPrompt(id,{source:'detail',scroll:true})", wrapper)
+        self.assertIn("schedulePromptCardSingleClick(card,p.id)", polish)
+
+    def test_slash_reveals_discovery_before_search_focus(self) -> None:
+        base = BASE.read_text(encoding="utf-8")
+        slash = base[base.index("case'/':") : base.index("case'Escape':")]
+        self.assertIn("PromptKitInteractionLanguage.revealDiscovery", slash)
+        self.assertLess(slash.index("revealDiscovery"), slash.index("getElementById('search').focus()"))
 
     def test_enter_to_open_and_copy_hotkey(self) -> None:
         base = BASE.read_text(encoding="utf-8")

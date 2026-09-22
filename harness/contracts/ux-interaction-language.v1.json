@@ -21,13 +21,41 @@
     ]
   },
   "semantic_tokens": {
-    "surface.discovery_chrome": {"kind": "surface", "themeable": true, "meaning": "controls used to discover/filter content before focus"},
-    "surface.focus_content": {"kind": "surface", "themeable": true, "meaning": "selected content that owns attention after activation"},
-    "action.focus_selected_content": {"kind": "action", "themeable": false, "meaning": "commit selection, suppress nonessential discovery chrome, and reveal content identity"},
-    "action.reveal_discovery": {"kind": "action", "themeable": false, "meaning": "restore search/filter chrome when discovery is the active task"},
-    "space.focus_clearance": {"kind": "spacing", "themeable": true, "meaning": "clearance between persistent chrome and focused content identity"},
-    "motion.focus_reveal": {"kind": "motion", "themeable": true, "meaning": "product-selected reduced-motion-safe focus transition"},
-    "feedback.selection_state": {"kind": "feedback", "themeable": true, "meaning": "visible and accessible confirmation of selected content"}
+    "surface.discovery_chrome": {
+      "kind": "surface",
+      "themeable": true,
+      "meaning": "controls used to discover/filter content before focus"
+    },
+    "surface.focus_content": {
+      "kind": "surface",
+      "themeable": true,
+      "meaning": "selected content that owns attention after activation"
+    },
+    "action.focus_selected_content": {
+      "kind": "action",
+      "themeable": false,
+      "meaning": "after canonical product selection is committed, suppress nonessential discovery chrome and reveal content identity"
+    },
+    "action.reveal_discovery": {
+      "kind": "action",
+      "themeable": false,
+      "meaning": "restore search/filter chrome when discovery is the active task"
+    },
+    "space.focus_clearance": {
+      "kind": "spacing",
+      "themeable": true,
+      "meaning": "clearance between persistent chrome and focused content identity"
+    },
+    "motion.focus_reveal": {
+      "kind": "motion",
+      "themeable": true,
+      "meaning": "product-selected reduced-motion-safe focus transition"
+    },
+    "feedback.selection_state": {
+      "kind": "feedback",
+      "themeable": true,
+      "meaning": "visible and accessible confirmation of selected content"
+    }
   },
   "patterns": {
     "focus_selected_content": {
@@ -35,7 +63,7 @@
       "semantic_action": "focusSelectedContent",
       "state_transition": "DISCOVERY -> FOCUS",
       "ordered_effects": [
-        "commit canonical selection state",
+        "consume canonical selection state committed by the product selection owner",
         "collapse nonessential discovery chrome",
         "force layout measurement after chrome state change",
         "position selected content identity below persistent chrome",
@@ -51,7 +79,8 @@
         "repeated activation remains idempotent",
         "reveal-discovery can restore filters/search without clearing selection",
         "focused identity is not obscured by persistent sticky/fixed chrome",
-        "reduced-motion preference remains respected"
+        "reduced-motion preference remains respected",
+        "gesture disambiguation preserves double-click/open before any single-click viewport movement"
       ]
     }
   },
@@ -59,10 +88,24 @@
     "global_invariant": [
       "capability -> semantic action -> mode adapter -> feedback/state",
       "focus ordering and accessibility state",
-      "explicit recovery from focus to discovery"
+      "explicit recovery from focus to discovery",
+      "product selection state is committed by the product owner before the shared focus action consumes it"
     ],
-    "themeable": ["colors", "typography", "radius", "elevation", "spacing values", "motion duration/easing"],
-    "product_specific": ["DOM selectors", "filter taxonomy", "brand chrome", "content card composition", "copy/open semantics"],
+    "themeable": [
+      "colors",
+      "typography",
+      "radius",
+      "elevation",
+      "spacing values",
+      "motion duration/easing"
+    ],
+    "product_specific": [
+      "DOM selectors",
+      "filter taxonomy",
+      "brand chrome",
+      "content card composition",
+      "copy/open semantics"
+    ],
     "forbidden": [
       "forcing identical control shapes across mouse keyboard and phone",
       "duplicating product state machines inside the shared pattern",

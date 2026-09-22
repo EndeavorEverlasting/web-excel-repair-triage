@@ -390,7 +390,7 @@ var PROMPT_KIT_SHORTCUTS=[
   {key:'Esc',label:'Close / clear active surface'}
 ];
 
-function hotkeyScrollBehavior(){
+function hotkeyScrollBehavior(requested){try{if(window.matchMedia&&window.matchMedia('(prefers-reduced-motion: reduce)').matches)return 'auto'}catch(e){}return requested||'instant'}
   try{return window.matchMedia&&window.matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth'}catch(e){return 'auto'}
 }
 
@@ -780,7 +780,7 @@ function focusSelectedPromptContent(card,options){
   hideCompactFilters();
   var header=document.querySelector('.header');
   try{if(header)header.getBoundingClientRect()}catch(e){}
-  return snapRenderedPromptCardHeader(card,opts.behavior||hotkeyScrollBehavior())
+  return snapRenderedPromptCardHeader(card,hotkeyScrollBehavior(opts.behavior))
 }
 
 var PromptKitInteractionLanguage=window.PromptKitInteractionLanguage||{};
@@ -1081,7 +1081,11 @@ function decoratePromptDetailFavorite(promptId){
 var baseShowPromptDetailWithFavorite=window.showPromptDetail;
 if(typeof baseShowPromptDetailWithFavorite==='function'){
   window.showPromptDetail=function(id,origin){
-    centerRenderedPromptCard(id,'instant');
+    try{
+      if(typeof selectPrompt==='function'&&(!selectedPromptId||String(selectedPromptId).toUpperCase()!==String(id).toUpperCase())){
+        selectPrompt(id,{source:'detail',scroll:true})
+      }
+    }catch(err){}
     baseShowPromptDetailWithFavorite(id,origin);
     decoratePromptDetailFavorite(id)
   }
@@ -1111,8 +1115,8 @@ window.appendPromptCard=function(grid,p){
   card.setAttribute('aria-selected',String(isSelected));
   card.setAttribute('aria-label',p.id+' '+p.name+'. Click or tap to select. Single-click selects and copies. Double-click or press Enter to inspect. Press Y to copy selected prompt. Touch users may use Open.');
   card.innerHTML='<div class="glow-bar" style="background:'+hex+'"></div><div class="prompt-header"><span class="prompt-id">'+safeId+'</span>'+(isGnhf?'<span class="gnhf-badge">☾ GNHF</span>':'')+'<span class="prompt-name">'+safeName+'</span></div><div class="prompt-type">'+safeType+' · '+safeColor+'</div><div class="prompt-desc">'+safeUseWhen+'</div><div class="prompt-meta"><span class="prompt-badge">'+safeSprintRole+'</span><span class="prompt-badge">'+safeProofGate+'</span></div>';
-  card.onclick=function(e){if(e.target.closest&&e.target.closest('button'))return;try{if(typeof selectPrompt==='function')selectPrompt(p.id,'pointer')}catch(err){}cancelPromptCardCopy(card);card._copyTimer=setTimeout(function(){copyPrompt(p.id);card._copyTimer=null},160)};
-  card.ondblclick=function(e){cancelPromptCardCopy(card);e.preventDefault();try{if(typeof selectPrompt==='function')selectPrompt(p.id,'pointer')}catch(err){}showPromptDetail(p.id,card)};
+  card.onclick=function(e){if(e.target.closest&&e.target.closest('button'))return;try{if(typeof schedulePromptCardSingleClick==='function'){schedulePromptCardSingleClick(card,p.id);return}}catch(err){}try{if(typeof selectPrompt==='function')selectPrompt(p.id,{source:'pointer',scroll:false})}catch(ignore){}cancelPromptCardCopy(card);card._copyTimer=setTimeout(function(){try{if(typeof focusPromptSelectionElement==='function')focusPromptSelectionElement(card,'pointer')}catch(ignoreFocus){}copyPrompt(p.id);card._copyTimer=null},PROMPT_CARD_SINGLE_CLICK_DELAY_MS)};
+  card.ondblclick=function(e){cancelPromptCardCopy(card);e.preventDefault();try{if(typeof selectPrompt==='function')selectPrompt(p.id,{source:'pointer',scroll:true})}catch(err){}showPromptDetail(p.id,card)};
   card.onkeydown=function(e){if(e.target!==card)return;if(e.key==='Enter'){cancelPromptCardCopy(card);e.preventDefault();e.stopPropagation();try{if(typeof selectPrompt==='function'&&(!selId||String(selId).toUpperCase()!==String(p.id).toUpperCase()))selectPrompt(p.id,'keyboard')}catch(err){}showPromptDetail(p.id,card)}else if(e.key===' '){cancelPromptCardCopy(card);e.preventDefault();e.stopPropagation();try{if(typeof selectPrompt==='function')selectPrompt(p.id,'keyboard')}catch(err){}copyPrompt(p.id)}else if(e.key==='ArrowDown'){e.preventDefault();e.stopPropagation();try{if(typeof navigatePromptSelection==='function')navigatePromptSelection(1)}catch(err){}}else if(e.key==='ArrowUp'){e.preventDefault();e.stopPropagation();try{if(typeof navigatePromptSelection==='function')navigatePromptSelection(-1)}catch(err){}}else if(e.key==='Home'){e.preventDefault();e.stopPropagation();try{if(typeof navigatePromptSelection==='function')navigatePromptSelection('home')}catch(err){}}else if(e.key==='End'){e.preventDefault();e.stopPropagation();try{if(typeof navigatePromptSelection==='function')navigatePromptSelection('end')}catch(err){}}};
 
   var actions=document.createElement('div');

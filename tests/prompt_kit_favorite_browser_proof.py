@@ -113,13 +113,54 @@ def observe(port: int, screenshot: Path):
             discovery_revealed_after_focus = page.evaluate(
                 """() => {
                   const header=document.querySelector('.header');
+                  const toggle=document.getElementById('filterPanelToggle');
                   const search=document.querySelector('.search-container');
+                  const controls=document.querySelector('.header-controls');
                   const selected=document.querySelector('[data-selected="true"]');
                   return !!header && !header.classList.contains('filters-collapsed')
+                    && !!toggle && toggle.getAttribute('aria-expanded')==='true'
                     && !!search && getComputedStyle(search).display!=='none'
+                    && !!controls && getComputedStyle(controls).display!=='none'
                     && !!selected;
                 }"""
             )
+            # Double-click must resolve before focus movement so the second click cannot lose its target.
+            double_card = page.locator('[data-prompt-id="P07"]')
+            double_card.scroll_into_view_if_needed()
+            page.wait_for_timeout(100)
+            double_card.locator(".prompt-desc").dblclick()
+            page.wait_for_timeout(250)
+            double_click_detail_open = page.evaluate("""() => {
+              const overlay=document.getElementById('promptDetailOverlay');
+              const card=document.querySelector('[data-prompt-id="P07"]');
+              return !!overlay && overlay.classList.contains('open')
+                && !!card && card.getAttribute('data-selected')==='true';
+            }""")
+            if double_click_detail_open:
+                page.locator(".prompt-detail-close").click()
+                page.wait_for_timeout(100)
+
+            # Slash is a discovery action: it restores hidden chrome before focusing search.
+            focus_card = page.locator('[data-prompt-id="P109"]')
+            focus_card.locator(".prompt-desc").click()
+            page.wait_for_timeout(500)
+            page.keyboard.press("/")
+            page.wait_for_timeout(100)
+            slash_revealed_search = page.evaluate("""() => {
+              const header=document.querySelector('.header');
+              const toggle=document.getElementById('filterPanelToggle');
+              const search=document.getElementById('search');
+              const controls=document.querySelector('.header-controls');
+              const container=search && search.closest('.search-container');
+              return !!header && !header.classList.contains('filters-collapsed')
+                && !!toggle && toggle.getAttribute('aria-expanded')==='true'
+                && !!search && document.activeElement===search
+                && !!container && getComputedStyle(container).display!=='none'
+                && !!controls && getComputedStyle(controls).display!=='none';
+            }""")
+            page.keyboard.press("Escape")
+            page.wait_for_timeout(100)
+
             page.reload(wait_until="domcontentloaded")
             page.wait_for_timeout(100)
 
@@ -279,6 +320,8 @@ def observe(port: int, screenshot: Path):
             observations = [
                 {"id": "desktop_pointer_focus_first_click", "event": "Desktop mouse selection enters shared focus mode on the first click, hides discovery chrome, and positions prompt identity below persistent chrome", "occurred": True, "passed": bool(pointer_focus_first), "cycles": pointer_cycles},
                 {"id": "desktop_pointer_focus_recovery", "event": "Explicit Show filters restores discovery chrome after focus without clearing selection", "occurred": True, "passed": bool(discovery_revealed_after_focus)},
+                {"id": "desktop_double_click_open_stable", "event": "Double-click resolves before focus movement and opens the intended prompt detail", "occurred": True, "passed": bool(double_click_detail_open)},
+                {"id": "slash_reveals_discovery_before_search_focus", "event": "Slash restores discovery chrome before focusing the search input", "occurred": True, "passed": bool(slash_revealed_search)},
                 {"id": "search_escape_recovery", "event": "Slash focuses search; Escape clears and releases populated or empty search and restores global hotkeys", "occurred": True, "passed": bool(all((search_escape["slash_focused"], search_escape["typed_value"] == "P79", search_escape["clear_visible_before"], search_escape["cleared"], search_escape["focus_released"], search_escape["clear_hidden_after"], search_escape["empty_refocused"], search_escape["empty_focus_released"], search_escape["global_hotkey_restored"]))), **search_escape},
                 {"id": "profile_header_hotkeys_a_to_e", "event": "A-E header hotkeys activate their matching profile slots", "occurred": True, "passed": bool(set(profile_hotkeys) == set("ABCDE") and all(profile_hotkeys.values())), "slots": profile_hotkeys},
                 {"id": "hotkey_click_exposes_numeric_route", "event": "Hotkeys button opens the panel, focuses its close control, and exposes the natural numeric route", "occurred": True, "passed": bool(click_focus and click_visible and natural_help_visible), "focused": bool(click_focus), "visible": bool(click_visible)},
