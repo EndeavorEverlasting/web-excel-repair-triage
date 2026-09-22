@@ -194,21 +194,25 @@ def audit() -> dict[str, object]:
             "window.scrollTo({top:top,behavior:scrollBehavior})",
             "root.style.scrollBehavior='auto'",
             "selectPrompt(promptId,{source:'keyboard',scroll:false})",
-            "return snapRenderedPromptCardHeader(card,opts.behavior||hotkeyScrollBehavior())",
+            "return snapRenderedPromptCardHeader(card,hotkeyScrollBehavior(opts.behavior))",
         ),
     }
     for requirement_id, markers in polish_markers.items():
         if any(marker not in polish_js for marker in markers):
             missing.append(requirement_id)
+    focus_start = js.find("function focusPromptSelectionElement(el,source)")
+    focus_end = js.find("function selectPrompt(id,opts)", focus_start)
+    focus_source = js[focus_start:focus_end] if focus_start >= 0 and focus_end > focus_start else ""
     selection_start = js.find("function selectPrompt(id,opts)")
     selection_end = js.find("function clearSelectionState()", selection_start)
     selection_source = js[selection_start:selection_end] if selection_start >= 0 and selection_end > selection_start else ""
-    if any(
-        marker not in selection_source
-        for marker in (
-            "window.PromptKitInteractionLanguage.focusSelectedContent(el,{behavior:'smooth',source:source})",
-            "scrollIntoView({behavior:'smooth',block:'nearest'})",
-        )
+    focus_markers = (
+        "window.PromptKitInteractionLanguage.focusSelectedContent",
+        "scrollIntoView({behavior:promptMotionScrollBehavior(),block:'nearest'})",
+    )
+    if (
+        any(marker not in focus_source for marker in focus_markers)
+        or "focusPromptSelectionElement(el,source)" not in selection_source
     ) and "snap_prioritizes_prompt_header" not in missing:
         missing.append("snap_prioritizes_prompt_header")
     if "card.querySelector('.prompt-header').appendChild(favBtn)" in polish_js:
