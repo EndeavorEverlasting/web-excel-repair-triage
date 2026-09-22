@@ -37,6 +37,7 @@
     "tests/test_p123_source_coverage_eval_prompt.py",
     "tests/test_p123_source_document_quality_prompt.py",
     "tests/test_p123_youtube_ingestion_behavior_eval_prompt.py",
+    "tests/test_p65_staged_routing_prompt.py",
     "tests/test_p67_source_faithfulness_eval_prompt.py",
     "tests/test_permissioned_repository_polling_prompt.py",
     "tests/test_privacy_preserving_failure_observatory_prompt.py",
