@@ -537,6 +537,21 @@ class Sprint1ABaselineAcceptanceTests(unittest.TestCase):
 
 
 class Sprint2LifecycleGateTests(unittest.TestCase):
+    def test_profile_append_keeps_count_metadata_exact(self) -> None:
+        original = {
+            "profiles": [{"prompt_id": "P01", "profile_status": "ACCEPTED"}],
+            "profile_count": 1,
+        }
+        accepted = {"prompt_id": "P02", "profile_status": "ACCEPTED"}
+
+        updated = prompt_registry_ops._append_accepted_profile(original, accepted)
+
+        self.assertEqual(original["profile_count"], 1)
+        self.assertEqual(len(original["profiles"]), 1)
+        self.assertEqual(updated["profile_count"], 2)
+        self.assertEqual(updated["profile_count"], len(updated["profiles"]))
+        self.assertEqual(updated["profiles"][-1]["prompt_id"], "P02")
+
     @staticmethod
     def candidate_profile(*, reviewed: bool) -> dict:
         profile = {

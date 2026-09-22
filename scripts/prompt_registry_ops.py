@@ -432,8 +432,7 @@ def add_prompt(
     if any(p.get("prompt_id") == record["id"] for p in profiles_data.get("profiles", [])):
         raise SystemExit(f"Semantic profile history already contains allocated identity: {record['id']}")
     prospective_profiles = [*profiles_data.get("profiles", []), candidate_profile]
-    new_profiles_data = _clone_json(profiles_data)
-    new_profiles_data["profiles"] = prospective_profiles
+    new_profiles_data = _append_accepted_profile(profiles_data, candidate_profile)
 
     quality_data = _load_quality_migrations()
     quality_migration = _build_quality_history_migration(
@@ -551,6 +550,16 @@ def _git_blob_sha1(data: bytes) -> str:
 
 def _load_semantic_profiles() -> dict[str, Any]:
     return json.loads(SEMANTIC_PROFILES_PATH.read_text(encoding="utf-8"))
+
+
+def _append_accepted_profile(
+    profiles_data: dict[str, Any], accepted: dict[str, Any]
+) -> dict[str, Any]:
+    """Append one accepted profile while keeping count metadata exact."""
+    updated = _clone_json(profiles_data)
+    updated.setdefault("profiles", []).append(accepted)
+    updated["profile_count"] = len(updated["profiles"])
+    return updated
 
 
 def _load_semantic_catalog() -> dict[str, Any]:

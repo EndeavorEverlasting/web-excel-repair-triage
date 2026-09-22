@@ -124,6 +124,38 @@
         "tests/test_prompt_semantic_coverage.py",
         "tests/test_prompt_quality_history.py"
       ]
+    },
+    {
+      "migration_id": "p79-add-p143-008",
+      "path": "registry/prompts/ai-engineering-level-up-prompts.v1.json",
+      "from_git_blob_sha1": "f25d7fd9bb09b42d022283aa33a24b6d43af67c7",
+      "to_git_blob_sha1": "383d43e6aae32d76d524f0acecd9650c952f7f69",
+      "affected_prompt_ids": [
+        "P143"
+      ],
+      "change_kind": "strengthening",
+      "effective_identity_change": "preserve_canonical",
+      "rationale": "Repository SSH transport authentication plus a tailored post-setup usage guide is a bounded transport residual distinct from general implementation execution and repository creation/clone bootstrap.",
+      "focused_tests": [
+        "tests/test_prompt_semantic_coverage.py",
+        "tests/test_prompt_quality_history.py"
+      ]
+    },
+    {
+      "migration_id": "p79-add-p144-009",
+      "path": "registry/prompts/spec-architecture-prompts.v1.json",
+      "from_git_blob_sha1": "a3fdb112ffd593a0d6545bafe8e01ee823dad2b8",
+      "to_git_blob_sha1": "b60ae3748a142ba1b9055a6861b79ab7f595030e",
+      "affected_prompt_ids": [
+        "P144"
+      ],
+      "change_kind": "strengthening",
+      "effective_identity_change": "preserve_canonical",
+      "rationale": "Existing repository owners cover source readability, harness/spec factoring, documentation diet, program architecture, broad intake/first-sprint execution, strategy, and Drive organization, but none owns a whole-repository artifact topology/lifecycle/placement audit that is read-only by default and can later graduate into bounded organization with reachability and in-flight-work preservation.",
+      "focused_tests": [
+        "tests/test_prompt_semantic_coverage.py",
+        "tests/test_prompt_quality_history.py"
+      ]
     }
   ]
 }
