@@ -774,19 +774,31 @@ function snapRenderedPromptCardHeader(card,behavior){
   return true
 }
 
+function focusSelectedPromptContent(card,options){
+  if(!card)return false;
+  var opts=options||{};
+  hideCompactFilters();
+  var header=document.querySelector('.header');
+  try{if(header)header.getBoundingClientRect()}catch(e){}
+  return snapRenderedPromptCardHeader(card,opts.behavior||hotkeyScrollBehavior())
+}
+
+var PromptKitInteractionLanguage=window.PromptKitInteractionLanguage||{};
+PromptKitInteractionLanguage.focusSelectedContent=focusSelectedPromptContent;
+PromptKitInteractionLanguage.revealDiscovery=function(){showCompactFilters();return true};
+window.PromptKitInteractionLanguage=PromptKitInteractionLanguage;
+
 function positionSelectedPromptBelowChrome(card,behavior){
   if(!card||!promptHasViewportOccludingHeader())return false;
-  try{if(card.getBoundingClientRect().top>=promptSnapViewportOffset())return false}catch(e){return false}
-  return snapRenderedPromptCardHeader(card,behavior||hotkeyScrollBehavior())
+  return focusSelectedPromptContent(card,{behavior:behavior||hotkeyScrollBehavior(),source:'legacy-selection'})
 }
 window.positionSelectedPromptBelowChrome=positionSelectedPromptBelowChrome;
 
 function centerRenderedPromptCard(promptId,behavior){
-  hideCompactFilters();
   var selector='[data-prompt-id="'+String(promptId||'').replace(/"/g,'')+'"]';
   var card=document.querySelector(selector);
   if(!card)return false;
-  return snapRenderedPromptCardHeader(card,behavior||hotkeyScrollBehavior())
+  return PromptKitInteractionLanguage.focusSelectedContent(card,{behavior:behavior||hotkeyScrollBehavior(),source:'snap'})
 }
 
 function revealPromptShortcutTarget(promptId,behavior){
