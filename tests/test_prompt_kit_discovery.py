@@ -271,7 +271,9 @@ process.stdout.write(JSON.stringify(groups.map(function(g){return {name:g.name,i
             polish.index("function promptHasViewportOccludingHeader") : polish.index("function revealPromptShortcutTarget")
         ]
         for marker in (
+            "function focusSelectedPromptContent(card,options)",
             "hideCompactFilters();",
+            "PromptKitInteractionLanguage.focusSelectedContent=focusSelectedPromptContent",
             "function promptHasViewportOccludingHeader()",
             "function promptSnapViewportOffset()",
             "function snapRenderedPromptCardHeader(card,behavior)",
@@ -284,9 +286,10 @@ process.stdout.write(JSON.stringify(groups.map(function(g){return {name:g.name,i
         self.assertNotIn("block:'center'", center)
         self.assertIn("var shouldScroll=!(opts&&typeof opts==='object'&&opts.scroll===false)", base)
         selection = base[base.index("function selectPrompt(id,opts)") : base.index("function clearSelectionState()")]
-        self.assertIn("window.positionSelectedPromptBelowChrome(el,'smooth')", selection)
+        self.assertIn("window.PromptKitInteractionLanguage.focusSelectedContent(el,{behavior:'smooth',source:source})", selection)
         self.assertIn("scrollIntoView({behavior:'smooth',block:'nearest'})", selection)
-        self.assertLess(selection.index("positionSelectedPromptBelowChrome"), selection.index("scrollIntoView"))
+        self.assertLess(selection.index("focusSelectedContent"), selection.index("scrollIntoView"))
+        self.assertIn("PromptKitInteractionLanguage.focusSelectedContent=focusSelectedPromptContent", center)
         self.assertIn("window.positionSelectedPromptBelowChrome=positionSelectedPromptBelowChrome", center)
         reveal = polish[
             polish.index("function revealPromptShortcutTarget") : polish.index("function activatePromptShortcutTarget")
