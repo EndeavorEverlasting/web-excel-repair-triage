@@ -4,7 +4,15 @@
   "purpose": "Append-only ledger of semantic capability transitions across prompt ADD, STRENGTHEN, CHANGE, TRANSFER, and RETIRE lifecycle operations.",
   "established_at": "2026-09-19",
   "status": "sprint0_floor",
-  "migration_kinds": ["ADD", "STRENGTHEN", "NO_CAPABILITY_CHANGE", "INTENTIONAL_CHANGE", "TRANSFER", "RETIRE", "RESTORE"],
+  "migration_kinds": [
+    "ADD",
+    "STRENGTHEN",
+    "NO_CAPABILITY_CHANGE",
+    "INTENTIONAL_CHANGE",
+    "TRANSFER",
+    "RETIRE",
+    "RESTORE"
+  ],
   "migrations": [
     {
       "migration_id": "2026-09-19-agent-transport-panels-p02",
@@ -49,6 +57,419 @@
       "rationale": "Strengthen P59 to make explicit that copyable panels are machine-readable transport that agents must ingest and dispatch",
       "semantic_diff": "No capability changes",
       "effective_identity_change": "preserve_canonical"
+    },
+    {
+      "migration_id": "STRENGTHEN_P111_005",
+      "migration_kind": "STRENGTHEN",
+      "prompt_id": "P111",
+      "old_canonical_prompt_hash": "0a60e8721bef5ef20891068cbdef0695bb9e6da4dc84b52aeb087c51cc955f9d",
+      "new_canonical_prompt_hash": "18213ea37928708561d25b89434636c9bc3c36aeb88ed8d33ae739024b6fed3f",
+      "from_profile_version": 1,
+      "to_profile_version": 2,
+      "from_profile_sha256": "f599093ce6e5689cacdb240cc77b656e1f80b4cae5cf1a5696aef595e3b6129a",
+      "to_profile_sha256": "14de21d511042fe2d414bf399b65c18230f121a081e249fb4ffb3d502a4ace46",
+      "capability_deltas": [
+        {
+          "capability_id": "strength.actionable_continuation",
+          "before": {
+            "presence": "SUPPORT",
+            "ownership": "SECONDARY"
+          },
+          "after": {
+            "presence": "SUPPORT",
+            "ownership": "SECONDARY"
+          }
+        },
+        {
+          "capability_id": "strength.evidence_state_integrity",
+          "before": {
+            "presence": "SUPPORT",
+            "ownership": "SECONDARY"
+          },
+          "after": {
+            "presence": "SUPPORT",
+            "ownership": "SECONDARY"
+          }
+        },
+        {
+          "capability_id": "strength.fixed_point_continuation",
+          "before": {
+            "presence": "SUPPORT",
+            "ownership": "SECONDARY"
+          },
+          "after": {
+            "presence": "SUPPORT",
+            "ownership": "SECONDARY"
+          }
+        },
+        {
+          "capability_id": "strength.fresh_evidence_floor",
+          "before": {
+            "presence": "SUPPORT",
+            "ownership": "SECONDARY"
+          },
+          "after": {
+            "presence": "SUPPORT",
+            "ownership": "SECONDARY"
+          }
+        },
+        {
+          "capability_id": "strength.proof_relevance_freshness",
+          "before": {
+            "presence": "SUPPORT",
+            "ownership": "SECONDARY"
+          },
+          "after": {
+            "presence": "SUPPORT",
+            "ownership": "SECONDARY"
+          }
+        },
+        {
+          "capability_id": "strength.scope_ownership",
+          "before": {
+            "presence": "SUPPORT",
+            "ownership": "SECONDARY"
+          },
+          "after": {
+            "presence": "SUPPORT",
+            "ownership": "SECONDARY"
+          }
+        }
+      ],
+      "rationale": "Close P111's deferred-evidence gap: material referenced private/specialized artifacts remain in the dependency graph and must be persisted/read back through their canonical owner or retained as an exact BLOCKED dependency.",
+      "evidence_refs": [
+        "registry/prompts/management-operations-prompts.v1.json",
+        "registry/prompts/repository-work-ledger-prompts.v1.json",
+        "tests/test_google_drive_workspace_organizer_prompt.py",
+        "tests/test_repository_drive_artifact_synchronizer_prompt.py"
+      ],
+      "focused_tests": [
+        "tests/test_prompt_semantic_coverage.py",
+        "tests/test_prompt_semantic_validator_1b.py"
+      ],
+      "source_history_migration_id": "p79-strengthen-p111-006",
+      "source_history_from_git_blob_sha1": "583edc4fdd2c973eef8aa89b55dc053889e2e156",
+      "source_history_to_git_blob_sha1": "6a5b324c52814abab944cd106360d6ab55ea3d93",
+      "coverage_before_fingerprint": "a73eb32987243e2e9697c6d04f6321a449453d2c8224a3160d7fd42a8fd8cbec",
+      "coverage_after_fingerprint": "a73eb32987243e2e9697c6d04f6321a449453d2c8224a3160d7fd42a8fd8cbec",
+      "acceptance_state": "ACCEPTED",
+      "prior_profile_snapshot": {
+        "prompt_id": "P111",
+        "profile_version": 1,
+        "canonical_prompt_hash": "0a60e8721bef5ef20891068cbdef0695bb9e6da4dc84b52aeb087c51cc955f9d",
+        "acceptance_commit": "91ec4beac93b000f63482f480ae7e4efa519a517",
+        "direct_assignments": [
+          {
+            "capability_id": "strength.fresh_evidence_floor",
+            "presence": "SUPPORT",
+            "ownership": "SECONDARY",
+            "capability_relation": "IMPLEMENTS",
+            "delivery_source": "CANONICAL_BODY",
+            "evidence_refs": [
+              "registry/prompts/repository-work-ledger-prompts.v1.json",
+              "registry/prompts/management-operations-prompts.v1.json",
+              "tests/test_repository_drive_artifact_synchronizer_prompt.py",
+              "tests/test_google_drive_workspace_organizer_prompt.py"
+            ],
+            "rationale": "P111 applies this shared execution-quality behavior inside repository-to-Drive artifact synchronization without claiming global primary ownership."
+          },
+          {
+            "capability_id": "strength.scope_ownership",
+            "presence": "SUPPORT",
+            "ownership": "SECONDARY",
+            "capability_relation": "IMPLEMENTS",
+            "delivery_source": "CANONICAL_BODY",
+            "evidence_refs": [
+              "registry/prompts/repository-work-ledger-prompts.v1.json",
+              "registry/prompts/management-operations-prompts.v1.json",
+              "tests/test_repository_drive_artifact_synchronizer_prompt.py",
+              "tests/test_google_drive_workspace_organizer_prompt.py"
+            ],
+            "rationale": "P111 applies this shared execution-quality behavior inside repository-to-Drive artifact synchronization without claiming global primary ownership."
+          },
+          {
+            "capability_id": "strength.fixed_point_continuation",
+            "presence": "SUPPORT",
+            "ownership": "SECONDARY",
+            "capability_relation": "IMPLEMENTS",
+            "delivery_source": "CANONICAL_BODY",
+            "evidence_refs": [
+              "registry/prompts/repository-work-ledger-prompts.v1.json",
+              "registry/prompts/management-operations-prompts.v1.json",
+              "tests/test_repository_drive_artifact_synchronizer_prompt.py",
+              "tests/test_google_drive_workspace_organizer_prompt.py"
+            ],
+            "rationale": "P111 applies this shared execution-quality behavior inside repository-to-Drive artifact synchronization without claiming global primary ownership."
+          },
+          {
+            "capability_id": "strength.evidence_state_integrity",
+            "presence": "SUPPORT",
+            "ownership": "SECONDARY",
+            "capability_relation": "IMPLEMENTS",
+            "delivery_source": "CANONICAL_BODY",
+            "evidence_refs": [
+              "registry/prompts/repository-work-ledger-prompts.v1.json",
+              "registry/prompts/management-operations-prompts.v1.json",
+              "tests/test_repository_drive_artifact_synchronizer_prompt.py",
+              "tests/test_google_drive_workspace_organizer_prompt.py"
+            ],
+            "rationale": "P111 applies this shared execution-quality behavior inside repository-to-Drive artifact synchronization without claiming global primary ownership."
+          },
+          {
+            "capability_id": "strength.proof_relevance_freshness",
+            "presence": "SUPPORT",
+            "ownership": "SECONDARY",
+            "capability_relation": "IMPLEMENTS",
+            "delivery_source": "CANONICAL_BODY",
+            "evidence_refs": [
+              "registry/prompts/repository-work-ledger-prompts.v1.json",
+              "registry/prompts/management-operations-prompts.v1.json",
+              "tests/test_repository_drive_artifact_synchronizer_prompt.py",
+              "tests/test_google_drive_workspace_organizer_prompt.py"
+            ],
+            "rationale": "P111 applies this shared execution-quality behavior inside repository-to-Drive artifact synchronization without claiming global primary ownership."
+          },
+          {
+            "capability_id": "strength.actionable_continuation",
+            "presence": "SUPPORT",
+            "ownership": "SECONDARY",
+            "capability_relation": "IMPLEMENTS",
+            "delivery_source": "CANONICAL_BODY",
+            "evidence_refs": [
+              "registry/prompts/repository-work-ledger-prompts.v1.json",
+              "registry/prompts/management-operations-prompts.v1.json",
+              "tests/test_repository_drive_artifact_synchronizer_prompt.py",
+              "tests/test_google_drive_workspace_organizer_prompt.py"
+            ],
+            "rationale": "P111 applies this shared execution-quality behavior inside repository-to-Drive artifact synchronization without claiming global primary ownership."
+          }
+        ],
+        "inherited_sources": [
+          {
+            "source_id": "prompt-strength-shared-policy",
+            "source_version": "v1",
+            "source_hash": "e249da6706d86733cd03a046ef9e16552a3ae87dc8cc644281c5c1fd9c08c796"
+          }
+        ],
+        "semantic_dependency_fingerprint": "1fe2e2cb1af21b8edcf37e2c36184aca4d3396196b349b9c2d0c3259dc5f8538",
+        "evidence_refs": [
+          "registry/prompts/management-operations-prompts.v1.json",
+          "registry/prompts/repository-work-ledger-prompts.v1.json",
+          "tests/test_google_drive_workspace_organizer_prompt.py",
+          "tests/test_repository_drive_artifact_synchronizer_prompt.py"
+        ],
+        "profile_status": "ACCEPTED",
+        "profile_sha256": "f599093ce6e5689cacdb240cc77b656e1f80b4cae5cf1a5696aef595e3b6129a"
+      }
+    },
+    {
+      "migration_id": "NO_CAPABILITY_CHANGE_P111_006",
+      "migration_kind": "NO_CAPABILITY_CHANGE",
+      "prompt_id": "P111",
+      "old_canonical_prompt_hash": "18213ea37928708561d25b89434636c9bc3c36aeb88ed8d33ae739024b6fed3f",
+      "new_canonical_prompt_hash": "6e3147f29b8e52395393a1cd34a95b85d2ac55de1fb34eec6a8e6e082c62184e",
+      "from_profile_version": 2,
+      "to_profile_version": 3,
+      "from_profile_sha256": "14de21d511042fe2d414bf399b65c18230f121a081e249fb4ffb3d502a4ace46",
+      "to_profile_sha256": "ea1c3a78fa3511ca5dc951dd7b0d53dfa49a5a86927103f9a734b7e07c7cf8b1",
+      "capability_deltas": [
+        {
+          "capability_id": "strength.actionable_continuation",
+          "before": {
+            "presence": "SUPPORT",
+            "ownership": "SECONDARY"
+          },
+          "after": {
+            "presence": "SUPPORT",
+            "ownership": "SECONDARY"
+          }
+        },
+        {
+          "capability_id": "strength.evidence_state_integrity",
+          "before": {
+            "presence": "SUPPORT",
+            "ownership": "SECONDARY"
+          },
+          "after": {
+            "presence": "SUPPORT",
+            "ownership": "SECONDARY"
+          }
+        },
+        {
+          "capability_id": "strength.fixed_point_continuation",
+          "before": {
+            "presence": "SUPPORT",
+            "ownership": "SECONDARY"
+          },
+          "after": {
+            "presence": "SUPPORT",
+            "ownership": "SECONDARY"
+          }
+        },
+        {
+          "capability_id": "strength.fresh_evidence_floor",
+          "before": {
+            "presence": "SUPPORT",
+            "ownership": "SECONDARY"
+          },
+          "after": {
+            "presence": "SUPPORT",
+            "ownership": "SECONDARY"
+          }
+        },
+        {
+          "capability_id": "strength.proof_relevance_freshness",
+          "before": {
+            "presence": "SUPPORT",
+            "ownership": "SECONDARY"
+          },
+          "after": {
+            "presence": "SUPPORT",
+            "ownership": "SECONDARY"
+          }
+        },
+        {
+          "capability_id": "strength.scope_ownership",
+          "before": {
+            "presence": "SUPPORT",
+            "ownership": "SECONDARY"
+          },
+          "after": {
+            "presence": "SUPPORT",
+            "ownership": "SECONDARY"
+          }
+        }
+      ],
+      "rationale": "Compact the strengthened P111 canonical body below its existing 8000-character bounded-copy contract without changing capability ownership or specialized evidence-closure semantics.",
+      "evidence_refs": [
+        "registry/prompts/management-operations-prompts.v1.json",
+        "registry/prompts/repository-work-ledger-prompts.v1.json",
+        "tests/test_google_drive_workspace_organizer_prompt.py",
+        "tests/test_repository_drive_artifact_synchronizer_prompt.py",
+        "tests/test_repository_work_ledger_prompt.py"
+      ],
+      "focused_tests": [
+        "tests/test_prompt_semantic_coverage.py",
+        "tests/test_prompt_semantic_validator_1b.py"
+      ],
+      "source_history_migration_id": "p79-no-capability-change-p111-007",
+      "source_history_from_git_blob_sha1": "6a5b324c52814abab944cd106360d6ab55ea3d93",
+      "source_history_to_git_blob_sha1": "1c2efa7a40fec62ca8eb00327e2ea318fc81ef15",
+      "coverage_before_fingerprint": "a73eb32987243e2e9697c6d04f6321a449453d2c8224a3160d7fd42a8fd8cbec",
+      "coverage_after_fingerprint": "a73eb32987243e2e9697c6d04f6321a449453d2c8224a3160d7fd42a8fd8cbec",
+      "acceptance_state": "ACCEPTED",
+      "prior_profile_snapshot": {
+        "prompt_id": "P111",
+        "profile_version": 2,
+        "canonical_prompt_hash": "18213ea37928708561d25b89434636c9bc3c36aeb88ed8d33ae739024b6fed3f",
+        "acceptance_commit": "91ec4beac93b000f63482f480ae7e4efa519a517",
+        "direct_assignments": [
+          {
+            "capability_id": "strength.fresh_evidence_floor",
+            "presence": "SUPPORT",
+            "ownership": "SECONDARY",
+            "capability_relation": "IMPLEMENTS",
+            "delivery_source": "CANONICAL_BODY",
+            "evidence_refs": [
+              "registry/prompts/repository-work-ledger-prompts.v1.json",
+              "registry/prompts/management-operations-prompts.v1.json",
+              "tests/test_repository_drive_artifact_synchronizer_prompt.py",
+              "tests/test_google_drive_workspace_organizer_prompt.py"
+            ],
+            "rationale": "P111 applies this shared execution-quality behavior inside repository-to-Drive artifact synchronization without claiming global primary ownership."
+          },
+          {
+            "capability_id": "strength.scope_ownership",
+            "presence": "SUPPORT",
+            "ownership": "SECONDARY",
+            "capability_relation": "IMPLEMENTS",
+            "delivery_source": "CANONICAL_BODY",
+            "evidence_refs": [
+              "registry/prompts/repository-work-ledger-prompts.v1.json",
+              "registry/prompts/management-operations-prompts.v1.json",
+              "tests/test_repository_drive_artifact_synchronizer_prompt.py",
+              "tests/test_google_drive_workspace_organizer_prompt.py"
+            ],
+            "rationale": "P111 applies this shared execution-quality behavior inside repository-to-Drive artifact synchronization without claiming global primary ownership."
+          },
+          {
+            "capability_id": "strength.fixed_point_continuation",
+            "presence": "SUPPORT",
+            "ownership": "SECONDARY",
+            "capability_relation": "IMPLEMENTS",
+            "delivery_source": "CANONICAL_BODY",
+            "evidence_refs": [
+              "registry/prompts/repository-work-ledger-prompts.v1.json",
+              "registry/prompts/management-operations-prompts.v1.json",
+              "tests/test_repository_drive_artifact_synchronizer_prompt.py",
+              "tests/test_google_drive_workspace_organizer_prompt.py"
+            ],
+            "rationale": "P111 applies this shared execution-quality behavior inside repository-to-Drive artifact synchronization without claiming global primary ownership."
+          },
+          {
+            "capability_id": "strength.evidence_state_integrity",
+            "presence": "SUPPORT",
+            "ownership": "SECONDARY",
+            "capability_relation": "IMPLEMENTS",
+            "delivery_source": "CANONICAL_BODY",
+            "evidence_refs": [
+              "registry/prompts/repository-work-ledger-prompts.v1.json",
+              "registry/prompts/management-operations-prompts.v1.json",
+              "tests/test_repository_drive_artifact_synchronizer_prompt.py",
+              "tests/test_google_drive_workspace_organizer_prompt.py"
+            ],
+            "rationale": "P111 applies this shared execution-quality behavior inside repository-to-Drive artifact synchronization without claiming global primary ownership."
+          },
+          {
+            "capability_id": "strength.proof_relevance_freshness",
+            "presence": "SUPPORT",
+            "ownership": "SECONDARY",
+            "capability_relation": "IMPLEMENTS",
+            "delivery_source": "CANONICAL_BODY",
+            "evidence_refs": [
+              "registry/prompts/repository-work-ledger-prompts.v1.json",
+              "registry/prompts/management-operations-prompts.v1.json",
+              "tests/test_repository_drive_artifact_synchronizer_prompt.py",
+              "tests/test_google_drive_workspace_organizer_prompt.py"
+            ],
+            "rationale": "P111 applies this shared execution-quality behavior inside repository-to-Drive artifact synchronization without claiming global primary ownership."
+          },
+          {
+            "capability_id": "strength.actionable_continuation",
+            "presence": "SUPPORT",
+            "ownership": "SECONDARY",
+            "capability_relation": "IMPLEMENTS",
+            "delivery_source": "CANONICAL_BODY",
+            "evidence_refs": [
+              "registry/prompts/repository-work-ledger-prompts.v1.json",
+              "registry/prompts/management-operations-prompts.v1.json",
+              "tests/test_repository_drive_artifact_synchronizer_prompt.py",
+              "tests/test_google_drive_workspace_organizer_prompt.py"
+            ],
+            "rationale": "P111 applies this shared execution-quality behavior inside repository-to-Drive artifact synchronization without claiming global primary ownership."
+          }
+        ],
+        "inherited_sources": [
+          {
+            "source_id": "prompt-strength-shared-policy",
+            "source_version": "v1",
+            "source_hash": "e249da6706d86733cd03a046ef9e16552a3ae87dc8cc644281c5c1fd9c08c796"
+          }
+        ],
+        "semantic_dependency_fingerprint": "1fe2e2cb1af21b8edcf37e2c36184aca4d3396196b349b9c2d0c3259dc5f8538",
+        "evidence_refs": [
+          "registry/prompts/management-operations-prompts.v1.json",
+          "registry/prompts/repository-work-ledger-prompts.v1.json",
+          "tests/test_google_drive_workspace_organizer_prompt.py",
+          "tests/test_repository_drive_artifact_synchronizer_prompt.py"
+        ],
+        "profile_status": "ACCEPTED",
+        "prior_profile_ref": {
+          "profile_version": 1,
+          "profile_sha256": "f599093ce6e5689cacdb240cc77b656e1f80b4cae5cf1a5696aef595e3b6129a"
+        },
+        "profile_sha256": "14de21d511042fe2d414bf399b65c18230f121a081e249fb4ffb3d502a4ace46"
+      }
     }
   ],
   "note": "Migrations recorded after Sprint 1A baseline. Every lifecycle transition after baseline acceptance must be explicit and recorded here."

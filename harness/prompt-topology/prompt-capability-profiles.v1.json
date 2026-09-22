@@ -2062,7 +2062,120 @@
       ],
       "profile_status": "ACCEPTED",
       "profile_sha256": "9204d9bdadd534400ad14f201f82abed57e8ea87f93e1fecfd189474b7a413a5"
+    },
+    {
+      "prompt_id": "P111",
+      "profile_version": 3,
+      "canonical_prompt_hash": "6e3147f29b8e52395393a1cd34a95b85d2ac55de1fb34eec6a8e6e082c62184e",
+      "acceptance_commit": "232110054242dcd503ed85b2302af3ba275ecafe",
+      "direct_assignments": [
+        {
+          "capability_id": "strength.fresh_evidence_floor",
+          "presence": "SUPPORT",
+          "ownership": "SECONDARY",
+          "capability_relation": "IMPLEMENTS",
+          "delivery_source": "CANONICAL_BODY",
+          "evidence_refs": [
+            "registry/prompts/repository-work-ledger-prompts.v1.json",
+            "registry/prompts/management-operations-prompts.v1.json",
+            "tests/test_repository_drive_artifact_synchronizer_prompt.py",
+            "tests/test_google_drive_workspace_organizer_prompt.py"
+          ],
+          "rationale": "P111 applies this shared execution-quality behavior inside repository-to-Drive artifact synchronization without claiming global primary ownership."
+        },
+        {
+          "capability_id": "strength.scope_ownership",
+          "presence": "SUPPORT",
+          "ownership": "SECONDARY",
+          "capability_relation": "IMPLEMENTS",
+          "delivery_source": "CANONICAL_BODY",
+          "evidence_refs": [
+            "registry/prompts/repository-work-ledger-prompts.v1.json",
+            "registry/prompts/management-operations-prompts.v1.json",
+            "tests/test_repository_drive_artifact_synchronizer_prompt.py",
+            "tests/test_google_drive_workspace_organizer_prompt.py"
+          ],
+          "rationale": "P111 applies this shared execution-quality behavior inside repository-to-Drive artifact synchronization without claiming global primary ownership."
+        },
+        {
+          "capability_id": "strength.fixed_point_continuation",
+          "presence": "SUPPORT",
+          "ownership": "SECONDARY",
+          "capability_relation": "IMPLEMENTS",
+          "delivery_source": "CANONICAL_BODY",
+          "evidence_refs": [
+            "registry/prompts/repository-work-ledger-prompts.v1.json",
+            "registry/prompts/management-operations-prompts.v1.json",
+            "tests/test_repository_drive_artifact_synchronizer_prompt.py",
+            "tests/test_google_drive_workspace_organizer_prompt.py"
+          ],
+          "rationale": "P111 applies this shared execution-quality behavior inside repository-to-Drive artifact synchronization without claiming global primary ownership."
+        },
+        {
+          "capability_id": "strength.evidence_state_integrity",
+          "presence": "SUPPORT",
+          "ownership": "SECONDARY",
+          "capability_relation": "IMPLEMENTS",
+          "delivery_source": "CANONICAL_BODY",
+          "evidence_refs": [
+            "registry/prompts/repository-work-ledger-prompts.v1.json",
+            "registry/prompts/management-operations-prompts.v1.json",
+            "tests/test_repository_drive_artifact_synchronizer_prompt.py",
+            "tests/test_google_drive_workspace_organizer_prompt.py"
+          ],
+          "rationale": "P111 applies this shared execution-quality behavior inside repository-to-Drive artifact synchronization without claiming global primary ownership."
+        },
+        {
+          "capability_id": "strength.proof_relevance_freshness",
+          "presence": "SUPPORT",
+          "ownership": "SECONDARY",
+          "capability_relation": "IMPLEMENTS",
+          "delivery_source": "CANONICAL_BODY",
+          "evidence_refs": [
+            "registry/prompts/repository-work-ledger-prompts.v1.json",
+            "registry/prompts/management-operations-prompts.v1.json",
+            "tests/test_repository_drive_artifact_synchronizer_prompt.py",
+            "tests/test_google_drive_workspace_organizer_prompt.py"
+          ],
+          "rationale": "P111 applies this shared execution-quality behavior inside repository-to-Drive artifact synchronization without claiming global primary ownership."
+        },
+        {
+          "capability_id": "strength.actionable_continuation",
+          "presence": "SUPPORT",
+          "ownership": "SECONDARY",
+          "capability_relation": "IMPLEMENTS",
+          "delivery_source": "CANONICAL_BODY",
+          "evidence_refs": [
+            "registry/prompts/repository-work-ledger-prompts.v1.json",
+            "registry/prompts/management-operations-prompts.v1.json",
+            "tests/test_repository_drive_artifact_synchronizer_prompt.py",
+            "tests/test_google_drive_workspace_organizer_prompt.py"
+          ],
+          "rationale": "P111 applies this shared execution-quality behavior inside repository-to-Drive artifact synchronization without claiming global primary ownership."
+        }
+      ],
+      "inherited_sources": [
+        {
+          "source_id": "prompt-strength-shared-policy",
+          "source_version": "v1",
+          "source_hash": "e249da6706d86733cd03a046ef9e16552a3ae87dc8cc644281c5c1fd9c08c796"
+        }
+      ],
+      "semantic_dependency_fingerprint": "1fe2e2cb1af21b8edcf37e2c36184aca4d3396196b349b9c2d0c3259dc5f8538",
+      "evidence_refs": [
+        "registry/prompts/management-operations-prompts.v1.json",
+        "registry/prompts/repository-work-ledger-prompts.v1.json",
+        "tests/test_google_drive_workspace_organizer_prompt.py",
+        "tests/test_repository_drive_artifact_synchronizer_prompt.py",
+        "tests/test_repository_work_ledger_prompt.py"
+      ],
+      "profile_status": "ACCEPTED",
+      "prior_profile_ref": {
+        "profile_version": 2,
+        "profile_sha256": "14de21d511042fe2d414bf399b65c18230f121a081e249fb4ffb3d502a4ace46"
+      },
+      "profile_sha256": "ea1c3a78fa3511ca5dc951dd7b0d53dfa49a5a86927103f9a734b7e07c7cf8b1"
     }
   ],
-  "profile_count": 62
+  "profile_count": 63
 }
