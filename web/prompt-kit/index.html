@@ -2224,7 +2224,7 @@ var PROMPT_KIT_SHORTCUTS=[
   {key:'Esc',label:'Close / clear active surface'}
 ];
 
-function hotkeyScrollBehavior(requested){try{if(window.matchMedia&&window.matchMedia('(prefers-reduced-motion: reduce)').matches)return 'auto'}catch(e){}return requested||'instant'}
+function hotkeyScrollBehavior(requested){try{if(window.matchMedia&&window.matchMedia('(prefers-reduced-motion: reduce)').matches)return 'instant'}catch(e){return 'instant'}return requested||'instant'}
 
 function scrollPromptKitTo(edge){
   var behavior=hotkeyScrollBehavior();
@@ -2627,6 +2627,7 @@ function positionSelectedPromptBelowChrome(card,behavior){
 window.positionSelectedPromptBelowChrome=positionSelectedPromptBelowChrome;
 
 function centerRenderedPromptCard(promptId,behavior){
+  hideCompactFilters();
   var selector='[data-prompt-id="'+String(promptId||'').replace(/"/g,'')+'"]';
   var card=document.querySelector(selector);
   if(!card)return false;
