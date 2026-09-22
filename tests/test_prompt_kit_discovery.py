@@ -378,7 +378,10 @@ process.stdout.write(JSON.stringify(groups.map(function(g){return {name:g.name,i
             "ADAPTIVE ROUTING INTERVIEW",
             "QUESTION POOL — ASK ONLY UNRESOLVED BRANCHES",
             "User outcome:",
-            "Desired prompt behavior:",
+            "Current-agent disposition:",
+            "Requested output:",
+            "Downstream disposition:",
+            "STAGED ROUTING / ACTOR BOUNDARY",
             "GRANULAR GRILLING DISCIPLINE",
             "If a fact can be recovered from the current conversation, repository, runtime, Prompt Kit registry, or tools",
             "Facts are agent-owned; decisions are user-owned",
@@ -388,7 +391,8 @@ process.stdout.write(JSON.stringify(groups.map(function(g){return {name:g.name,i
             "Default to 2-4 questions",
             "continue up to six only when materially different primary routes are still plausible",
             "ROUTE CONFIDENCE GATE",
-            "starting state | user outcome | desired prompt behavior | work shape | proof need | material constraints",
+            "starting state | user outcome | current-agent disposition | requested output | downstream disposition if any | work shape | proof need | material constraints",
+            "Do not force a false binary whose alternatives omit the user's stated desired state.",
         ):
             self.assertIn(marker, content)
         question_pool = content.split("QUESTION POOL — ASK ONLY UNRESOLVED BRANCHES", 1)[1].split(
@@ -402,7 +406,10 @@ process.stdout.write(JSON.stringify(groups.map(function(g){return {name:g.name,i
         )[0]
 
         self.assertIn("2. User outcome:", question_pool)
-        self.assertIn("3. Desired prompt behavior:", question_pool)
+        self.assertIn("3. Current-agent disposition:", question_pool)
+        self.assertIn("4. Requested output:", question_pool)
+        self.assertIn("5. Downstream disposition:", question_pool)
+        self.assertIn("Actor/disposition boundaries are facts when the user has already specified them.", question_pool)
         self.assertIn("For each question, state your current read and recommended answer", grilling)
         self.assertIn("After each answer, recompute the unresolved frontier", grilling)
         self.assertIn("stop early as soon as one primary route", grilling)
