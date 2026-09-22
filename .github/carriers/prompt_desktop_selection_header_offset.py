@@ -199,6 +199,11 @@ function promptSnapViewportOffset(){
 }
 """
     replace_once("docs/prompt-kit-polish.js", old_offset, new_offset)
+    replace_once(
+        "docs/prompt-kit-polish.js",
+        "  return true\n}\n\nfunction centerRenderedPromptCard(promptId,behavior){",
+        "  return true\n}\n\nfunction positionSelectedPromptBelowChrome(card,behavior){\n  if(!card||!promptHasViewportOccludingHeader())return false;\n  try{if(card.getBoundingClientRect().top>=promptSnapViewportOffset())return false}catch(e){return false}\n  return snapRenderedPromptCardHeader(card,behavior||hotkeyScrollBehavior())\n}\nwindow.positionSelectedPromptBelowChrome=positionSelectedPromptBelowChrome;\n\nfunction centerRenderedPromptCard(promptId,behavior){",
+    )
 
     old_contract = '"expected": "Every snap-to-prompt path gives snap navigation sole scroll ownership, makes requested instant snaps independent of page-level smooth-scroll CSS, suppresses selection\'s ordinary smooth-scroll side effect for that composed journey, and places the target prompt header immediately below visible fixed/sticky page chrome or near the viewport top when that chrome is not occupying the viewport; tall prompt cards must not clip prompt identity above the viewport."'
     new_contract = '"expected": "Every snap-to-prompt path gives snap navigation sole scroll ownership, makes requested instant snaps independent of page-level smooth-scroll CSS, suppresses selection\'s ordinary smooth-scroll side effect for that composed journey, and places the target prompt header immediately below visible fixed/sticky page chrome or near the viewport top when that chrome is not occupying the viewport. Ordinary sticky-header selection, including desktop mouse selection, must reuse the same header-aware positioning instead of relying only on layout visibility from scrollIntoView; static-header mobile selection retains nearest-scroll behavior. Tall prompt cards must not clip prompt identity above the viewport."'
@@ -207,7 +212,7 @@ function promptSnapViewportOffset(){
     replace_once(
         "scripts/validate_prompt_kit_discovery.py",
         '        "snap_prioritizes_prompt_header": (\n            "function promptSnapViewportOffset()",',
-        '        "snap_prioritizes_prompt_header": (\n            "function promptHasViewportOccludingHeader()",\n            "function promptSnapViewportOffset()",',
+        '        "snap_prioritizes_prompt_header": (\n            "function promptHasViewportOccludingHeader()",\n            "function promptSnapViewportOffset()",\n            "window.positionSelectedPromptBelowChrome=positionSelectedPromptBelowChrome",',
     )
     validator_anchor = """    for requirement_id, markers in polish_markers.items():
         if any(marker not in polish_js for marker in markers):
@@ -223,8 +228,7 @@ function promptSnapViewportOffset(){
     if any(
         marker not in selection_source
         for marker in (
-            "promptHasViewportOccludingHeader()",
-            "snapRenderedPromptCardHeader(el,'smooth')",
+            "window.positionSelectedPromptBelowChrome(el,'smooth')",
             "scrollIntoView({behavior:'smooth',block:'nearest'})",
         )
     ) and "snap_prioritizes_prompt_header" not in missing:
@@ -255,10 +259,10 @@ function promptSnapViewportOffset(){
     discovery_replacement = """        self.assertNotIn("block:'center'", center)
         self.assertIn("var shouldScroll=!(opts&&typeof opts==='object'&&opts.scroll===false)", base)
         selection = base[base.index("function selectPrompt(id,opts)") : base.index("function clearSelectionState()")]
-        self.assertIn("promptHasViewportOccludingHeader()", selection)
-        self.assertIn("snapRenderedPromptCardHeader(el,'smooth')", selection)
+        self.assertIn("window.positionSelectedPromptBelowChrome(el,'smooth')", selection)
         self.assertIn("scrollIntoView({behavior:'smooth',block:'nearest'})", selection)
-        self.assertLess(selection.index("snapRenderedPromptCardHeader"), selection.index("scrollIntoView"))
+        self.assertLess(selection.index("positionSelectedPromptBelowChrome"), selection.index("scrollIntoView"))
+        self.assertIn("window.positionSelectedPromptBelowChrome=positionSelectedPromptBelowChrome", center)
         reveal = polish[
 """
     replace_once("tests/test_prompt_kit_discovery.py", discovery_anchor, discovery_replacement)
@@ -275,16 +279,17 @@ function promptSnapViewportOffset(){
         base = BASE.read_text(encoding="utf-8")
         polish = POLISH.read_text(encoding="utf-8")
         selection = base[base.index("function selectPrompt(id,opts)") : base.index("function clearSelectionState()")]
-        self.assertIn("promptHasViewportOccludingHeader()", selection)
-        self.assertIn("snapRenderedPromptCardHeader(el,'smooth')", selection)
+        self.assertIn("window.positionSelectedPromptBelowChrome(el,'smooth')", selection)
         self.assertIn("scrollIntoView({behavior:'smooth',block:'nearest'})", selection)
-        self.assertLess(selection.index("snapRenderedPromptCardHeader"), selection.index("scrollIntoView"))
+        self.assertLess(selection.index("positionSelectedPromptBelowChrome"), selection.index("scrollIntoView"))
         helper = polish[
             polish.index("function promptHasViewportOccludingHeader()") :
-            polish.index("function snapRenderedPromptCardHeader(card,behavior)")
+            polish.index("function centerRenderedPromptCard(promptId,behavior)")
         ]
         self.assertIn("return position==='sticky'||position==='fixed'", helper)
         self.assertIn("if(!header||!promptHasViewportOccludingHeader())return gap", helper)
+        self.assertIn("card.getBoundingClientRect().top>=promptSnapViewportOffset()", helper)
+        self.assertIn("window.positionSelectedPromptBelowChrome=positionSelectedPromptBelowChrome", helper)
 
     def test_enter_to_open_and_copy_hotkey(self) -> None:
 """
