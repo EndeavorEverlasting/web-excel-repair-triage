@@ -83,11 +83,11 @@
     },
     {
       "id": "snap_hides_filters",
-      "expected": "Any prompt-focus path, including ordinary desktop/mouse selection and centerRenderedPromptCard reveal/shortcut/detail journeys, must enter the shared focus-selected-content semantic action: collapse nonessential filter/search chrome before positioning the prompt, preserve explicit Show Filters/search recovery, and never require a second click for the focus state to take effect."
+      "expected": "Any prompt-focus path, including ordinary desktop/mouse selection and centerRenderedPromptCard reveal/shortcut/detail journeys, must enter the shared focus-selected-content semantic action whose canonical adapter calls hideCompactFilters before positioning the prompt, preserve explicit Show Filters/search recovery, and never require a second click for the focus state to take effect."
     },
     {
       "id": "snap_prioritizes_prompt_header",
-      "expected": "Every focus/snap path gives one shared semantic action sole ownership of chrome collapse plus viewport positioning, measures after the collapsed layout is applied, and places the target prompt header immediately below persistent fixed/sticky chrome. First-click and repeated-click behavior must be deterministic; composed shortcut paths suppress duplicate selection scrolling; static discovery/search actions may explicitly reveal chrome."
+      "expected": "Every focus/snap path gives one shared semantic action sole scroll ownership of chrome collapse plus viewport positioning, measures after the collapsed layout is applied, and places the target prompt header immediately below persistent fixed/sticky chrome. Ordinary sticky-header selection must use this shared action. First-click and repeated-click behavior must be deterministic; composed shortcut paths suppress duplicate selection scrolling; static discovery/search actions may explicitly reveal chrome."
     },
     {
       "id": "stable_identity_resequence",
