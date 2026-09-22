@@ -470,6 +470,103 @@
         },
         "profile_sha256": "14de21d511042fe2d414bf399b65c18230f121a081e249fb4ffb3d502a4ace46"
       }
+    },
+    {
+      "migration_id": "ADD_P143_007",
+      "migration_kind": "ADD",
+      "prompt_id": "P143",
+      "old_canonical_prompt_hash": null,
+      "new_canonical_prompt_hash": "5fb288a2973a45040fba7da40707a1767996193e18d96cb87243c70900b83d36",
+      "from_profile_version": null,
+      "to_profile_version": 1,
+      "from_profile_sha256": null,
+      "to_profile_sha256": "1e8c52eeb72727eb53ad9d7933f34d09294915c6611b2a58abd009e7824e3cd4",
+      "capability_deltas": [
+        {
+          "capability_id": "execution.implementation",
+          "before": null,
+          "after": {
+            "presence": "SUPPORT",
+            "ownership": "SECONDARY"
+          }
+        }
+      ],
+      "rationale": "Repository SSH transport authentication plus a tailored post-setup usage guide is a bounded transport residual distinct from general implementation execution and repository creation/clone bootstrap.",
+      "evidence_refs": [
+        "registry/prompts/ai-engineering-level-up-prompts.v1.json",
+        "tests/test_repository_ssh_setup_prompt.py"
+      ],
+      "focused_tests": [
+        "tests/test_prompt_semantic_coverage.py",
+        "tests/test_prompt_semantic_validator_1b.py"
+      ],
+      "source_history_migration_id": "p79-add-p143-008",
+      "source_history_from_git_blob_sha1": "f25d7fd9bb09b42d022283aa33a24b6d43af67c7",
+      "source_history_to_git_blob_sha1": "383d43e6aae32d76d524f0acecd9650c952f7f69",
+      "coverage_before_fingerprint": "a73eb32987243e2e9697c6d04f6321a449453d2c8224a3160d7fd42a8fd8cbec",
+      "coverage_after_fingerprint": "a73eb32987243e2e9697c6d04f6321a449453d2c8224a3160d7fd42a8fd8cbec",
+      "acceptance_state": "ACCEPTED"
+    },
+    {
+      "migration_id": "ADD_P144_008",
+      "migration_kind": "ADD",
+      "prompt_id": "P144",
+      "old_canonical_prompt_hash": null,
+      "new_canonical_prompt_hash": "f672976e4293863f39a18115b10a60be5b28c88c0be65eb873c1a4eeb5779665",
+      "from_profile_version": null,
+      "to_profile_version": 1,
+      "from_profile_sha256": null,
+      "to_profile_sha256": "757ef3dab7f3b7cbec26180fedeb665927bc744283671a606d41e5b90dfef975",
+      "capability_deltas": [
+        {
+          "capability_id": "execution.implementation",
+          "before": null,
+          "after": {
+            "presence": "SUPPORT",
+            "ownership": "SECONDARY"
+          }
+        },
+        {
+          "capability_id": "strength.before_state_evidence",
+          "before": null,
+          "after": {
+            "presence": "REQUIRED",
+            "ownership": "PRIMARY"
+          }
+        },
+        {
+          "capability_id": "strength.fresh_evidence_floor",
+          "before": null,
+          "after": {
+            "presence": "SUPPORT",
+            "ownership": "SECONDARY"
+          }
+        },
+        {
+          "capability_id": "strength.scope_ownership",
+          "before": null,
+          "after": {
+            "presence": "SUPPORT",
+            "ownership": "SECONDARY"
+          }
+        }
+      ],
+      "rationale": "Existing repository owners cover source readability, harness/spec factoring, documentation diet, program architecture, broad intake/first-sprint execution, strategy, and Drive organization, but none owns a whole-repository artifact topology/lifecycle/placement audit that is read-only by default and can later graduate into bounded organization with reachability and in-flight-work preservation.",
+      "evidence_refs": [
+        "docs/prompts.json",
+        "registry/prompts/spec-architecture-prompts.v1.json",
+        "tests/test_repository_organization_prompt.py"
+      ],
+      "focused_tests": [
+        "tests/test_prompt_semantic_coverage.py",
+        "tests/test_prompt_semantic_validator_1b.py"
+      ],
+      "source_history_migration_id": "p79-add-p144-009",
+      "source_history_from_git_blob_sha1": "a3fdb112ffd593a0d6545bafe8e01ee823dad2b8",
+      "source_history_to_git_blob_sha1": "b60ae3748a142ba1b9055a6861b79ab7f595030e",
+      "coverage_before_fingerprint": "a73eb32987243e2e9697c6d04f6321a449453d2c8224a3160d7fd42a8fd8cbec",
+      "coverage_after_fingerprint": "5d58c311a611354f84c2829f3f8808b8b12e04be940c14d792309f223e0a2224",
+      "acceptance_state": "ACCEPTED"
     }
   ],
   "note": "Migrations recorded after Sprint 1A baseline. Every lifecycle transition after baseline acceptance must be explicit and recorded here."

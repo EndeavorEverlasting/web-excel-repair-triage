@@ -2175,7 +2175,109 @@
         "profile_sha256": "14de21d511042fe2d414bf399b65c18230f121a081e249fb4ffb3d502a4ace46"
       },
       "profile_sha256": "ea1c3a78fa3511ca5dc951dd7b0d53dfa49a5a86927103f9a734b7e07c7cf8b1"
+    },
+    {
+      "prompt_id": "P143",
+      "profile_version": 1,
+      "canonical_prompt_hash": "5fb288a2973a45040fba7da40707a1767996193e18d96cb87243c70900b83d36",
+      "acceptance_commit": "2841361e630f69ec91f0fb24044d4ecdcf5ffb12",
+      "direct_assignments": [
+        {
+          "capability_id": "execution.implementation",
+          "presence": "SUPPORT",
+          "ownership": "SECONDARY",
+          "capability_relation": "IMPLEMENTS",
+          "delivery_source": "CANONICAL_BODY",
+          "evidence_refs": [
+            "registry/prompts/ai-engineering-level-up-prompts.v1.json",
+            "tests/test_repository_ssh_setup_prompt.py"
+          ],
+          "rationale": "Implements repository SSH transport setup/repair, remote conversion, host-trust verification, bounded repository read proof, and safe write dry-run without taking over general repository execution."
+        }
+      ],
+      "inherited_sources": [
+        {
+          "source_id": "prompt-strength-shared-policy",
+          "source_version": "v1",
+          "source_hash": "e249da6706d86733cd03a046ef9e16552a3ae87dc8cc644281c5c1fd9c08c796"
+        }
+      ],
+      "semantic_dependency_fingerprint": "2ba703d286eea4855b15f5a43733879124e698e4a77156d6919f6f7b217e07e2",
+      "evidence_refs": [
+        "registry/prompts/ai-engineering-level-up-prompts.v1.json",
+        "tests/test_repository_ssh_setup_prompt.py"
+      ],
+      "profile_status": "ACCEPTED",
+      "profile_sha256": "1e8c52eeb72727eb53ad9d7933f34d09294915c6611b2a58abd009e7824e3cd4"
+    },
+    {
+      "prompt_id": "P144",
+      "profile_version": 1,
+      "canonical_prompt_hash": "f672976e4293863f39a18115b10a60be5b28c88c0be65eb873c1a4eeb5779665",
+      "acceptance_commit": "2841361e630f69ec91f0fb24044d4ecdcf5ffb12",
+      "direct_assignments": [
+        {
+          "capability_id": "strength.before_state_evidence",
+          "presence": "REQUIRED",
+          "ownership": "PRIMARY",
+          "capability_relation": "IMPLEMENTS",
+          "delivery_source": "CANONICAL_BODY",
+          "evidence_refs": [
+            "registry/prompts/spec-architecture-prompts.v1.json",
+            "tests/test_repository_organization_prompt.py"
+          ],
+          "rationale": "The defining contract is a protected read-only organization audit before any repository structural mutation; the audit ledger is the required before-state evidence for later organization."
+        },
+        {
+          "capability_id": "strength.scope_ownership",
+          "presence": "SUPPORT",
+          "ownership": "SECONDARY",
+          "capability_relation": "IMPLEMENTS",
+          "delivery_source": "CANONICAL_BODY",
+          "evidence_refs": [
+            "tests/test_repository_organization_prompt.py"
+          ],
+          "rationale": "Classifies canonical owners, generated surfaces, active in-flight work, and specialist boundaries before changing placement."
+        },
+        {
+          "capability_id": "strength.fresh_evidence_floor",
+          "presence": "SUPPORT",
+          "ownership": "SECONDARY",
+          "capability_relation": "IMPLEMENTS",
+          "delivery_source": "CANONICAL_BODY",
+          "evidence_refs": [
+            "tests/test_repository_organization_prompt.py"
+          ],
+          "rationale": "Requires refreshed default/provider and open-work truth before both audit conclusions and organization execution."
+        },
+        {
+          "capability_id": "execution.implementation",
+          "presence": "SUPPORT",
+          "ownership": "SECONDARY",
+          "capability_relation": "IMPLEMENTS",
+          "delivery_source": "CANONICAL_BODY",
+          "evidence_refs": [
+            "tests/test_repository_organization_prompt.py"
+          ],
+          "rationale": "ORGANIZE mode executes bounded structural changes after the separate audit authorization gate without replacing P07's general implementation ownership."
+        }
+      ],
+      "inherited_sources": [
+        {
+          "source_id": "prompt-strength-shared-policy",
+          "source_version": "v1",
+          "source_hash": "e249da6706d86733cd03a046ef9e16552a3ae87dc8cc644281c5c1fd9c08c796"
+        }
+      ],
+      "semantic_dependency_fingerprint": "c7720597272f6502097e8fd90957de484d85820b11deaec06a5ada49d0ea056e",
+      "evidence_refs": [
+        "docs/prompts.json",
+        "registry/prompts/spec-architecture-prompts.v1.json",
+        "tests/test_repository_organization_prompt.py"
+      ],
+      "profile_status": "ACCEPTED",
+      "profile_sha256": "757ef3dab7f3b7cbec26180fedeb665927bc744283671a606d41e5b90dfef975"
     }
   ],
-  "profile_count": 63
+  "profile_count": 65
 }
