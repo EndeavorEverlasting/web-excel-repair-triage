@@ -78,6 +78,16 @@ def durable_proof(value):
     ))
 
 
+def _repository_proof_path(candidate):
+    normalized = candidate.rstrip(').')
+    candidate_path = (ROOT / normalized).resolve()
+    try:
+        candidate_path.relative_to(ROOT.resolve())
+    except ValueError:
+        return None
+    return candidate_path
+
+
 def non_merge_acceptance_proof(value, references):
     if re.search(r'\b(?:workflow|run):#?\d+\b', value, re.I):
         return True
@@ -86,7 +96,8 @@ def non_merge_acceptance_proof(value, references):
     candidates.extend(re.findall(r'\boperator-proof:([^\s;,]+)', value, re.I))
     for candidate in candidates:
         normalized = candidate.rstrip(').')
-        if normalized in references and (ROOT / normalized).exists():
+        proof_path = _repository_proof_path(normalized)
+        if normalized in references and proof_path is not None and proof_path.exists():
             return True
     return False
 
@@ -124,6 +135,8 @@ def validate_issue_progression_contract(path):
     ready_gate = payload.get('ready_gate', {})
     if ready_gate.get('gate_must_equal') != 'none':
         errors.append('READY gate must remain none')
+    if ready_gate.get('dependencies_must_equal') != 'none':
+        errors.append('READY dependencies must remain none')
     if 'BLOCKED or OPERATOR' not in str(ready_gate.get('unresolved_dependency_rule', '')):
         errors.append('READY unresolved dependency routing rule drifted')
     evidence = payload.get('execution_evidence', {})
@@ -254,6 +267,7 @@ def validate(ledger_path, adoption_path=ADOPTION):
         owner = fields.get('Owner', '')
         work_item = fields.get('Work item', '')
         gate = fields.get('Gate', '')
+        dependencies = fields.get('Dependencies', '')
         acceptance = fields.get('Acceptance gate', '')
         references = fields.get('References', '')
         proof = fields.get('Last proof', '')
@@ -270,8 +284,11 @@ def validate(ledger_path, adoption_path=ADOPTION):
                 errors.append(f'{task_id}: invalid Work item anchor')
             elif work_item.startswith('ledger:') and work_item != f'ledger:{task_id}':
                 errors.append(f'{task_id}: ledger Work item anchor must match its task id')
-        if status == 'READY' and gate != 'none':
-            errors.append(f'{task_id}: READY is AFK-dispatchable only with Gate: none; use BLOCKED or OPERATOR for unresolved prerequisites')
+        if status == 'READY':
+            if gate != 'none':
+                errors.append(f'{task_id}: READY is AFK-dispatchable only with Gate: none; use BLOCKED or OPERATOR for unresolved prerequisites')
+            if dependencies != 'none':
+                errors.append(f'{task_id}: READY is AFK-dispatchable only with Dependencies: none; move resolved dependency evidence to References/Last proof and use BLOCKED or OPERATOR for unresolved dependencies')
         if status == 'CLAIMED' and (not owner or owner.strip().lower() in UNASSIGNED_OWNERS):
             errors.append(f'{task_id}: CLAIMED requires a concrete owner')
         if status in CONTINUATION:
