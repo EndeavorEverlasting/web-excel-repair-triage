@@ -793,6 +793,7 @@ function positionSelectedPromptBelowChrome(card,behavior){
 window.positionSelectedPromptBelowChrome=positionSelectedPromptBelowChrome;
 
 function centerRenderedPromptCard(promptId,behavior){
+  hideCompactFilters();
   var selector='[data-prompt-id="'+String(promptId||'').replace(/"/g,'')+'"]';
   var card=document.querySelector(selector);
   if(!card)return false;

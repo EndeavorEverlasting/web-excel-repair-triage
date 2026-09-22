@@ -133,6 +133,17 @@ class PromptKitSelectedPromptContractTests(unittest.TestCase):
         self.assertIn("PromptKitInteractionLanguage.revealDiscovery", slash)
         self.assertLess(slash.index("revealDiscovery"), slash.index("getElementById('search').focus()"))
 
+    def test_center_resolves_card_after_discovery_collapse(self) -> None:
+        polish = POLISH.read_text(encoding="utf-8")
+        center = polish[
+            polish.index("function centerRenderedPromptCard") :
+            polish.index("function revealPromptShortcutTarget")
+        ]
+        self.assertIn("hideCompactFilters();", center)
+        self.assertIn("document.querySelector(selector)", center)
+        self.assertIn("PromptKitInteractionLanguage.focusSelectedContent", center)
+        self.assertLess(center.index("hideCompactFilters();"), center.index("document.querySelector(selector)"))
+
     def test_enter_to_open_and_copy_hotkey(self) -> None:
         base = BASE.read_text(encoding="utf-8")
         polish = POLISH.read_text(encoding="utf-8")
