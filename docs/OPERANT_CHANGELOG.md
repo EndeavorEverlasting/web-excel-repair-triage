@@ -23,6 +23,7 @@ Human-facing Operant releases. Git commit/artifact identity remains the forensic
 - fix(prompt-kit): model staged P65 routing (`badd41f6`)
 - fix(prompt-kit): align P65 downstream disposition contract (`2407a740`)
 - fix(prompt-kit): avoid accidental P65 review ownership (`e07e721d`)
+- fix(prompt-kit): close P111 specialized evidence dependencies (`c9771824`)
 
 ## 0.10.1 - 2026-09-19
 
