@@ -1343,7 +1343,7 @@
     "class": "STANDARD AI / GITHUB CLI REPOSITORY CREATION",
     "sprintRole": "Safely create and verify a new GitHub repository and local checkout through Git and GitHub CLI",
     "progress": "YES",
-    "useWhen": "The operator wants to create a new GitHub repository and clone it locally or publish one explicitly selected existing local repository.",
+    "useWhen": "The operator wants to create a new GitHub repository and clone it locally or publish one explicitly selected existing local repository. This prompt owns single-repository creation and publish only. Multi-repository convergence planning that combines donor sources into a destination repository routes to P143 first; P143 produces the typed bootstrap manifest and then hands repository creation and publish execution to this prompt. Ordinary cross-repository integration without repository creation does not route here.",
     "inspectFirst": "Requested owner/name, explicit visibility, description, verified parent or source directory, Git and gh availability, active account, remote policy, bootstrap choices, collision checks, and mutation authority.",
     "expectedOutput": "Verified GitHub repository, verified local root and origin, optional initial files or pushed history exactly as requested, command evidence, repository URL, branch state, and next command.",
     "nextStep": "Enter the verified new root and use P03 or P07 for the first bounded repository sprint.",

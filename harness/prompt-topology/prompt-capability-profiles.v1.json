@@ -1834,9 +1834,9 @@
     },
     {
       "prompt_id": "P55",
-      "profile_version": 1,
-      "canonical_prompt_hash": "d904065dcd12ba1c556e3441049d980d1677385740a78c56a00db2fde8a03fe8",
-      "acceptance_commit": "55148914364e2988bc6096b7c8d142eca3f62c28",
+      "profile_version": 2,
+      "canonical_prompt_hash": "415ee24adf535a4ea915c1bd3cda21eca5d3b04c4e45a21714f6633795b291c0",
+      "acceptance_commit": "c97718247e7b14544d198035dd3cdc07725545a8",
       "direct_assignments": [
         {
           "capability_id": "execution.implementation",
@@ -1860,10 +1860,16 @@
       "semantic_dependency_fingerprint": "c61fe644e2c4c8d6be4601c5be31e5ee1250c7dfa0dcf4284e000cb1f6c7de20",
       "evidence_refs": [
         "docs/prompts.json:P55",
-        "harness/contracts/prompt-strength.v1.json"
+        "harness/contracts/prompt-strength.v1.json",
+        "harness/prompt-topology/prompt-capability-migrations.v1.json#ADD_P143_007",
+        "registry/prompts/repository-work-ledger-prompts.v1.json#P143"
       ],
       "profile_status": "ACCEPTED",
-      "profile_sha256": "c2433cff44ed6cf27510cb584a56f8b25e4a7a0aadd9ac571f7d8c69293ac29e"
+      "prior_profile_ref": {
+        "profile_version": 1,
+        "profile_sha256": "c2433cff44ed6cf27510cb584a56f8b25e4a7a0aadd9ac571f7d8c69293ac29e"
+      },
+      "profile_sha256": "7d415e3b4e4fbcaa39828a75ca5a14c192468bcd1bf798f8c150974aade67402"
     },
     {
       "prompt_id": "P56",
@@ -2175,7 +2181,125 @@
         "profile_sha256": "14de21d511042fe2d414bf399b65c18230f121a081e249fb4ffb3d502a4ace46"
       },
       "profile_sha256": "ea1c3a78fa3511ca5dc951dd7b0d53dfa49a5a86927103f9a734b7e07c7cf8b1"
+    },
+    {
+      "prompt_id": "P143",
+      "profile_version": 1,
+      "canonical_prompt_hash": "ceb5bdaaf22a53a745b20090072b88aeda2f6501760d3986b0fdc30bfb60f945",
+      "acceptance_commit": "c97718247e7b14544d198035dd3cdc07725545a8",
+      "direct_assignments": [
+        {
+          "capability_id": "strength.mainline_convergence",
+          "presence": "REQUIRED",
+          "ownership": "PRIMARY",
+          "capability_relation": "IMPLEMENTS",
+          "delivery_source": "CANONICAL_BODY",
+          "evidence_refs": [
+            "registry/prompts/repository-work-ledger-prompts.v1.json",
+            "harness/contracts/prompt-strength.v1.json",
+            "harness/prompt-topology/semantic-capability-catalog.v1.json"
+          ],
+          "rationale": "P143 is the canonical owner of planning multi-source A+B→C repository convergence: donor floors, capability dispositions, dependency/collision/phase maps, and the typed handoff that lets mainline convergence execute later under P07 without creating the destination here."
+        },
+        {
+          "capability_id": "strength.plan_durability",
+          "presence": "REQUIRED",
+          "ownership": "PRIMARY",
+          "capability_relation": "IMPLEMENTS",
+          "delivery_source": "CANONICAL_BODY",
+          "evidence_refs": [
+            "registry/prompts/repository-work-ledger-prompts.v1.json",
+            "harness/prompt-topology/semantic-capability-catalog.v1.json"
+          ],
+          "rationale": "P143 must persist a durable convergence plan artifact with dispositions, evidence states, and successor handoff so later sessions resume without reconstruction; plan durability is load-bearing for the P55/P07 sequence."
+        },
+        {
+          "capability_id": "strength.upstream_provenance",
+          "presence": "SUPPORT",
+          "ownership": "SECONDARY",
+          "capability_relation": "IMPLEMENTS",
+          "delivery_source": "CANONICAL_BODY",
+          "evidence_refs": [
+            "registry/prompts/repository-work-ledger-prompts.v1.json"
+          ],
+          "rationale": "P143 records donor floors and pinned donor identity as provenance inputs to C without claiming global primary ownership of provenance."
+        },
+        {
+          "capability_id": "strength.lane_isolation",
+          "presence": "SUPPORT",
+          "ownership": "SECONDARY",
+          "capability_relation": "IMPLEMENTS",
+          "delivery_source": "CANONICAL_BODY",
+          "evidence_refs": [
+            "registry/prompts/repository-work-ledger-prompts.v1.json"
+          ],
+          "rationale": "P143 plans phases and the first vertical slice in isolation from donor mutation and from P55 creation, keeping planning a non-mutating lane."
+        },
+        {
+          "capability_id": "strength.evidence_state_integrity",
+          "presence": "REQUIRED",
+          "ownership": "SECONDARY",
+          "capability_relation": "GUARDS",
+          "delivery_source": "CANONICAL_BODY",
+          "evidence_refs": [
+            "harness/prompt-topology/prompt-capability-profiles.v1.json",
+            "registry/prompts/repository-work-ledger-prompts.v1.json"
+          ],
+          "rationale": "P143 guards the operator_proposed→provider_verified→operator_approved→execution_authorization ladder and destination visibility as separate evidence states; P111 remains an overlapping owner reviewed for residual."
+        },
+        {
+          "capability_id": "prompt.identity",
+          "presence": "SUPPORT",
+          "ownership": "SECONDARY",
+          "capability_relation": "ROUTES_TO",
+          "delivery_source": "CANONICAL_BODY",
+          "evidence_refs": [
+            "harness/prompt-topology/semantic-capability-catalog.v1.json",
+            "build_prompt_kit.py"
+          ],
+          "rationale": "P143 advertises a distinct prompt identity and routes convergence terms to itself while routing simple bootstrap to P55 without absorbing those identities."
+        },
+        {
+          "capability_id": "execution.implementation",
+          "presence": "AWARE",
+          "ownership": "NONE",
+          "capability_relation": "ROUTES_TO",
+          "delivery_source": "ROUTED_OWNER",
+          "evidence_refs": [
+            "harness/prompt-topology/prompt-capability-profiles.v1.json"
+          ],
+          "rationale": "P143 does not execute implementation; it is aware of and routes creation to P55 and post-create convergence to P07."
+        },
+        {
+          "capability_id": "process.recurring",
+          "presence": "AWARE",
+          "ownership": "NONE",
+          "capability_relation": "ROUTES_TO",
+          "delivery_source": "ROUTED_OWNER",
+          "evidence_refs": [
+            "harness/prompt-topology/prompt-capability-profiles.v1.json"
+          ],
+          "rationale": "Recurring process hardening remains owned elsewhere; P143 only surfaces recurrence risks discovered during dispositioning."
+        }
+      ],
+      "inherited_sources": [
+        {
+          "source_id": "prompt-strength-shared-policy",
+          "source_version": "v1",
+          "source_hash": "e249da6706d86733cd03a046ef9e16552a3ae87dc8cc644281c5c1fd9c08c796"
+        }
+      ],
+      "semantic_dependency_fingerprint": "9a323e31a079a12acf94a97fe3d8883eb3f502658b0aed08c354d4841175ac51",
+      "evidence_refs": [
+        "build_prompt_kit.py",
+        "harness/contracts/prompt-strength.v1.json",
+        "harness/prompt-topology/prompt-capability-profiles.v1.json",
+        "harness/prompt-topology/semantic-capability-catalog.v1.json",
+        "registry/prompts/repository-work-ledger-prompts.v1.json"
+      ],
+      "profile_status": "ACCEPTED",
+      "profile_sha256": "cd3bc4031c94093af9830c9dad0b4daf10980551ab236accd179e359140ee27e"
     }
   ],
-  "profile_count": 63
+  "profile_count": 64
 }

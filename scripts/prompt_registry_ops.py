@@ -434,6 +434,7 @@ def add_prompt(
     prospective_profiles = [*profiles_data.get("profiles", []), candidate_profile]
     new_profiles_data = _clone_json(profiles_data)
     new_profiles_data["profiles"] = prospective_profiles
+    new_profiles_data["profile_count"] = len(prospective_profiles)
 
     quality_data = _load_quality_migrations()
     quality_migration = _build_quality_history_migration(
@@ -1190,6 +1191,7 @@ def _replace_current_profile(
             f"ACCEPTED profile disappeared for {before_profile.get('prompt_id')}"
         )
     updated["profiles"] = rows
+    updated["profile_count"] = len(rows)
     return updated
 
 
