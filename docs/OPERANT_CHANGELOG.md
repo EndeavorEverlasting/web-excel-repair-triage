@@ -2,7 +2,7 @@
 
 Human-facing Operant releases. Git commit/artifact identity remains the forensic freshness proof.
 
-## 0.11.0 - 2026-09-21
+## 0.11.0 - 2026-09-22
 
 ### Features / breaking pre-1.0 changes
 
@@ -19,6 +19,7 @@ Human-facing Operant releases. Git commit/artifact identity remains the forensic
 - fix(prompt-kit): preserve explicit mode precedence (`6a9bade2`)
 - fix(prompt-kit): validate disposition guard phrase (`7c6ad15f`)
 - fix(prompt-kit): make mode authorization terminal (`4a54437f`)
+- fix(prompt-kit): keep desktop selections below sticky header (`7fac2056`)
 
 ## 0.10.1 - 2026-09-19
 
