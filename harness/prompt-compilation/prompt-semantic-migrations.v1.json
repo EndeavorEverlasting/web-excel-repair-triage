@@ -75,6 +75,23 @@
         "tests/test_p02_p07_autonomous_iteration.py",
         "harness/evals/prompt-strength/p02-continuity-regression-matrix.v1.json"
       ]
+    },
+    {
+      "migration_id": "2026-09-22-p65-staged-actor-disposition-routing",
+      "path": "registry/prompts/tutorial-discovery-prompts.v1.json",
+      "from_git_blob_sha1": "272921ae2706f6329f29b7865137915ca0b69cfe",
+      "to_git_blob_sha1": "b1f9ba6eff3aa5ff969c7047567e20a57c179bd0",
+      "affected_prompt_ids": [
+        "P65"
+      ],
+      "change_kind": "strengthening",
+      "effective_identity_change": "preserve_canonical",
+      "rationale": "P65's scalar desired-prompt-behavior axis could collapse the current agent's planning/analysis disposition, its requested plan or handoff output, and a later recipient's execution disposition into a false execute-versus-report choice. This strengthening adds a staged actor/disposition model, preserves composite P04-to-P12 routing, and retains P56 only when artifact creation/update is itself the primary job without changing P65 identity.",
+      "focused_tests": [
+        "tests/test_p65_staged_routing_prompt.py",
+        "tests/test_prompt_kit_discovery.py",
+        "tests/test_prompt_quality_history.py"
+      ]
     }
   ]
 }
