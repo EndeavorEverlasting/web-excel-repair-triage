@@ -182,7 +182,9 @@ def audit() -> dict[str, object]:
             "return centerRenderedPromptCard(promptId,behavior||hotkeyScrollBehavior())",
         ),
         "snap_prioritizes_prompt_header": (
+            "function promptHasViewportOccludingHeader()",
             "function promptSnapViewportOffset()",
+            "window.positionSelectedPromptBelowChrome=positionSelectedPromptBelowChrome",
             "function snapRenderedPromptCardHeader(card,behavior)",
             "window.getComputedStyle(header).position",
             "window.scrollTo({top:top,behavior:scrollBehavior})",
@@ -194,6 +196,17 @@ def audit() -> dict[str, object]:
     for requirement_id, markers in polish_markers.items():
         if any(marker not in polish_js for marker in markers):
             missing.append(requirement_id)
+    selection_start = js.find("function selectPrompt(id,opts)")
+    selection_end = js.find("function clearSelectionState()", selection_start)
+    selection_source = js[selection_start:selection_end] if selection_start >= 0 and selection_end > selection_start else ""
+    if any(
+        marker not in selection_source
+        for marker in (
+            "window.positionSelectedPromptBelowChrome(el,'smooth')",
+            "scrollIntoView({behavior:'smooth',block:'nearest'})",
+        )
+    ) and "snap_prioritizes_prompt_header" not in missing:
+        missing.append("snap_prioritizes_prompt_header")
     if "card.querySelector('.prompt-header').appendChild(favBtn)" in polish_js:
         missing.append("card_action_rail")
 

@@ -68,6 +68,7 @@ class PromptKitDiscoveryTests(unittest.TestCase):
         self.assertIn("formatCopyConfirmationPreview", expected["clipboard_confirmation"])
         self.assertIn("hideCompactFilters", expected["snap_hides_filters"])
         self.assertIn("sole scroll ownership", expected["snap_prioritizes_prompt_header"])
+        self.assertIn("Ordinary sticky-header selection", expected["snap_prioritizes_prompt_header"])
 
     def test_section_button_has_explicit_dark_surface_contrast(self) -> None:
         js = JS.read_text(encoding="utf-8")
@@ -267,10 +268,11 @@ process.stdout.write(JSON.stringify(groups.map(function(g){return {name:g.name,i
         base = JS.read_text(encoding="utf-8")
         polish = POLISH_JS.read_text(encoding="utf-8")
         center = polish[
-            polish.index("function promptSnapViewportOffset") : polish.index("function revealPromptShortcutTarget")
+            polish.index("function promptHasViewportOccludingHeader") : polish.index("function revealPromptShortcutTarget")
         ]
         for marker in (
             "hideCompactFilters();",
+            "function promptHasViewportOccludingHeader()",
             "function promptSnapViewportOffset()",
             "function snapRenderedPromptCardHeader(card,behavior)",
             "window.getComputedStyle(header).position",
@@ -281,6 +283,11 @@ process.stdout.write(JSON.stringify(groups.map(function(g){return {name:g.name,i
             self.assertIn(marker, center)
         self.assertNotIn("block:'center'", center)
         self.assertIn("var shouldScroll=!(opts&&typeof opts==='object'&&opts.scroll===false)", base)
+        selection = base[base.index("function selectPrompt(id,opts)") : base.index("function clearSelectionState()")]
+        self.assertIn("window.positionSelectedPromptBelowChrome(el,'smooth')", selection)
+        self.assertIn("scrollIntoView({behavior:'smooth',block:'nearest'})", selection)
+        self.assertLess(selection.index("positionSelectedPromptBelowChrome"), selection.index("scrollIntoView"))
+        self.assertIn("window.positionSelectedPromptBelowChrome=positionSelectedPromptBelowChrome", center)
         reveal = polish[
             polish.index("function revealPromptShortcutTarget") : polish.index("function activatePromptShortcutTarget")
         ]

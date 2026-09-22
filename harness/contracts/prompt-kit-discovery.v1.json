@@ -87,7 +87,7 @@
     },
     {
       "id": "snap_prioritizes_prompt_header",
-      "expected": "Every snap-to-prompt path gives snap navigation sole scroll ownership, makes requested instant snaps independent of page-level smooth-scroll CSS, suppresses selection's ordinary smooth-scroll side effect for that composed journey, and places the target prompt header immediately below visible fixed/sticky page chrome or near the viewport top when that chrome is not occupying the viewport; tall prompt cards must not clip prompt identity above the viewport."
+      "expected": "Every snap-to-prompt path gives snap navigation sole scroll ownership, makes requested instant snaps independent of page-level smooth-scroll CSS, suppresses selection's ordinary smooth-scroll side effect for that composed journey, and places the target prompt header immediately below visible fixed/sticky page chrome or near the viewport top when that chrome is not occupying the viewport. Ordinary sticky-header selection, including desktop mouse selection, must reuse the same header-aware positioning instead of relying only on layout visibility from scrollIntoView; static-header mobile selection retains nearest-scroll behavior. Tall prompt cards must not clip prompt identity above the viewport."
     },
     {
       "id": "stable_identity_resequence",
