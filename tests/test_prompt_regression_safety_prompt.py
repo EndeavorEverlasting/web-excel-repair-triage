@@ -179,6 +179,11 @@ class PromptRegressionSafetyTests(unittest.TestCase):
                 "copyContent": "Synthetic coverage probe body.",
             }
         )
+        accepted_before = sum(
+            1 for row in profiles["profiles"]
+            if row.get("profile_status") == "ACCEPTED"
+        )
+        unprofiled_before = len(operational) - accepted_before
         profiles["profiles"].append(
             {"prompt_id": "P9999", "profile_status": "ACCEPTED"}
         )
@@ -190,9 +195,9 @@ class PromptRegressionSafetyTests(unittest.TestCase):
             override_payload=overrides,
             override_bytes=regression.OVERRIDE_REGISTRY_PATH.read_bytes(),
         )
-        self.assertEqual(coverage["operational_prompts"], 142)
-        self.assertEqual(coverage["accepted_profiles"], 63)
-        self.assertEqual(coverage["unprofiled_prompts"], 79)
+        self.assertEqual(coverage["operational_prompts"], len(operational) + 1)
+        self.assertEqual(coverage["accepted_profiles"], accepted_before + 1)
+        self.assertEqual(coverage["unprofiled_prompts"], unprofiled_before)
 
     def test_prompt_coverage_ratchet_rejects_override_marker_loss_even_after_blob_review(self) -> None:
         baseline = copy.deepcopy(self.coverage_baseline)
