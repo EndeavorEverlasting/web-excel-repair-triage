@@ -54,6 +54,10 @@
       "expected": "A separate visible Tutorial / Find My Prompt control preserves the existing Add Prompt action, asks no more than five bounded questions, and returns one primary recommendation with no more than two follow-on options."
     },
     {
+      "id": "guided_staged_actor_routing",
+      "expected": "Conversational P65 routing distinguishes the current agent's disposition, the requested output, and any conditional downstream recipient disposition. Explicit actor/stage boundaries already stated by the user are recovered as facts, and composite plan-to-handoff requests are not forced into an execute-versus-report binary."
+    },
+    {
       "id": "guided_uses_shared_search",
       "expected": "Questionnaire answers are translated into normal search phrases and routed through filterPromptsForQuery against current PROMPTS; no hard-coded prompt-ID recommendation table is allowed."
     },
