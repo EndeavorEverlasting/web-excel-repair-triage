@@ -124,6 +124,15 @@ The website questionnaire is the fastest general path. When the generated websit
 
 P65 asks one concise question at a time, recommends one primary prompt and no more than two follow-ons, and refuses to fabricate prompt IDs that are not present in its supplied/current routing vocabulary.
 
+
+### Composite requests and staged agents
+
+P65 treats **what the current agent should do**, **what that agent should produce**, and **what a later recipient should do** as separate routing dimensions when the request spans stages. This prevents a plan or handoff request from being mistaken for immediate execution merely because the handoff recipient may later mutate the repository.
+
+For example, when the current agent can inspect provider-side evidence but local interrupted work is only accessible to a later local agent, a request to **analyze → form a preservation/convergence plan → hand off to the local executor** routes to **P04 — Sprint Factorer** first and **P12 — Closeout and Handoff** second. P06/P07 remain downstream execution candidates only after local evidence establishes their conditions. By contrast, a dirty repository that the current agent should reconcile now routes to P06, already-proven work that only needs packaging routes to P12, and creating/updating the canonical durable artifact itself routes to P56.
+
+When the user has already stated that actor split, P65 treats it as recovered fact. It must not ask a false binary such as whether the current agent should execute immediately or merely report findings when the requested state is explicitly plan-now and execute-later.
+
 When you already know the exact specialist, such as P83 for verifying another agent's claimed completion, open that prompt directly rather than using P65 merely for ceremony.
 
 ## Interaction notes
