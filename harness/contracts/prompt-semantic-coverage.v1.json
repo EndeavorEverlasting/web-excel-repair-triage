@@ -76,16 +76,55 @@
     {
       "id": "PSC016",
       "rule": "INHERITED_SOURCE_INTEGRITY — shared policy/compiler capability inheritance is versioned by source identity/revision; dependent matrix cells cannot remain accepted against a changed inherited source without revalidation."
+    },
+    {
+      "id": "PSC017",
+      "rule": "EXISTING_PROMPT_PROFILE_ADOPTION — an existing unprofiled prompt may enter ACCEPTED coverage without a body mutation only through the semantic-coverage lifecycle owner, with exact canonical binding, reviewed evidence, no pre-existing profile history, atomic validation, and no fabricated Prompt Quality History migration."
     }
   ],
   "capability_cell_model": {
-    "presence": ["NONE", "AWARE", "SUPPORT", "REQUIRED"],
-    "ownership": ["NONE", "SECONDARY", "PRIMARY"],
-    "capability_relation": ["IMPLEMENTS", "ROUTES_TO", "TESTS", "GUARDS", "FORBIDDEN"],
-    "delivery_source": ["CANONICAL_BODY", "SHARED_POLICY", "COMPILER_OVERLAY", "ROUTED_OWNER", "TEST_GUARD"]
+    "presence": [
+      "NONE",
+      "AWARE",
+      "SUPPORT",
+      "REQUIRED"
+    ],
+    "ownership": [
+      "NONE",
+      "SECONDARY",
+      "PRIMARY"
+    ],
+    "capability_relation": [
+      "IMPLEMENTS",
+      "ROUTES_TO",
+      "TESTS",
+      "GUARDS",
+      "FORBIDDEN"
+    ],
+    "delivery_source": [
+      "CANONICAL_BODY",
+      "SHARED_POLICY",
+      "COMPILER_OVERLAY",
+      "ROUTED_OWNER",
+      "TEST_GUARD"
+    ]
   },
-  "lifecycle_operations": ["ADD", "STRENGTHEN", "NO_CAPABILITY_CHANGE", "INTENTIONAL_CHANGE", "TRANSFER", "RETIRE", "RESTORE"],
-  "profile_statuses": ["PROVISIONAL", "REVIEW_READY", "ACCEPTED", "RETIRED"],
+  "lifecycle_operations": [
+    "ADD",
+    "ADOPT_PROFILE",
+    "STRENGTHEN",
+    "NO_CAPABILITY_CHANGE",
+    "INTENTIONAL_CHANGE",
+    "TRANSFER",
+    "RETIRE",
+    "RESTORE"
+  ],
+  "profile_statuses": [
+    "PROVISIONAL",
+    "REVIEW_READY",
+    "ACCEPTED",
+    "RETIRED"
+  ],
   "authority_boundaries": {
     "prompt_identity_admission": "P79 Prompt Topology",
     "text_history": "Prompt Quality History",

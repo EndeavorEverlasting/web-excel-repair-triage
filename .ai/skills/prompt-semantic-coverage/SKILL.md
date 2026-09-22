@@ -34,7 +34,7 @@ DO NOT activate when:
 
 - Semantic diff report
 - Coverage/overlap analysis
-- Migration disposition (ADD/STRENGTHEN/NO_CAPABILITY_CHANGE/INTENTIONAL_CHANGE/TRANSFER/RETIRE)
+- Migration/profile disposition (ADD/ADOPT_PROFILE/STRENGTHEN/NO_CAPABILITY_CHANGE/INTENTIONAL_CHANGE/TRANSFER/RETIRE)
 - PSC rule PASS/FAIL receipt
 - Exact proof ceiling
 
@@ -48,6 +48,16 @@ Before allocating new prompt ID:
 3. Check internal topology/profile overlap; an overlapping candidate supplies reviewed `distinct_residual.summary`, `evidence_refs`, and `reviewed_against` prompt IDs.
 4. Verify distinct residual proof (PSC008) before identity allocation.
 5. Run `scripts/prompt_registry_ops.py add`; successful ADD persists the canonical record, ACCEPTED profile, capability migration, Prompt Quality History migration, and generated site as one rollback-safe lifecycle operation.
+
+### ADOPT PROFILE Operation
+
+Use this only for an existing canonical prompt that predates semantic-profile coverage or lives in a later extension registry and has no semantic profile history yet.
+
+1. Inspect the exact canonical prompt plus current catalog/coverage.
+2. Build a reviewed semantic profile from the prompt's existing behavior; do not infer a new prompt body or allocate a new identity.
+3. Run `python3 scripts/prompt_registry_ops.py adopt-profile --prompt-id P## --input profile.json --evidence-ref <proof> --rationale "reason"`.
+4. The helper must refuse any existing ACCEPTED/PROVISIONAL/RETIRED history for that prompt, bind the exact canonical record hash, validate PSC002/003/011/016, update the accepted-profile count, rebuild parity, and roll back atomically on failure.
+5. Profile adoption does not change the canonical prompt body and therefore must not fabricate a Prompt Quality History migration. Subsequent body mutation uses the normal EDIT/STRENGTHEN lifecycle against the newly accepted immutable prior.
 
 ### EDIT / STRENGTHEN Operation
 
@@ -133,6 +143,7 @@ python3 scripts/prompt_registry_ops.py retire --prompt-id P42 --rationale "reaso
 - **PSC014**: Lifecycle transition atomic
 - **PSC015**: Source and capability migration link
 - **PSC016**: Inherited source integrity
+- **PSC017**: Existing prompt profile adoption
 
 ## Related Skills
 
