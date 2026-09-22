@@ -8,7 +8,8 @@
     "polish_source": "docs/prompt-kit-polish.js",
     "phone_guide": "OPEN_PROMPT_KIT_ON_PHONE.md",
     "mobile_contract": "harness/contracts/prompt-kit-mobile.v1.json",
-    "interaction_contract": "harness/contracts/prompt-kit-interactions.v1.json"
+    "interaction_contract": "harness/contracts/prompt-kit-interactions.v1.json",
+    "shared_interaction_language_contract": "harness/contracts/ux-interaction-language.v1.json"
   },
   "routing_boundary": {
     "owner": "P129",
@@ -104,6 +105,16 @@
       "proof": "hotkey completion + interaction contract + mobile card-tap browser proof"
     },
     {
+      "id": "focus_selected_content",
+      "capability": "Focus selected prompt content and suppress nonessential discovery chrome",
+      "mouse": "Direct prompt selection enters focus mode on the first click; explicit Show filters restores discovery chrome",
+      "keyboard": "Arrow/selection and composed shortcut reveal converge on the same focus semantic action without synthesizing clicks",
+      "phone": "Touch prompt selection and Go to P# reveal converge on the same focus semantic action while keeping touch-native controls",
+      "semantic_action": "PromptKitInteractionLanguage.focusSelectedContent",
+      "state_owner": "selectedPromptId + compact filter visibility + prompt viewport position",
+      "proof": "shared UX interaction-language contract + selected-prompt regression + observed browser proof"
+    },
+    {
       "id": "filters",
       "capability": "Show/hide and apply filters",
       "mouse": "Hide/Show filters control + rails",
@@ -170,12 +181,13 @@
     "Hover and double-click may enrich mouse grammar but must not be the only route to essential actions",
     "Gestures accelerate only when a labeled More/button fallback exists",
     "supported_exclusion is allowed when documented; missing phone route is not equivalent to use the desktop control",
-    "Known-ID locator grammars are mode-separated, but terminal copy converges on copyPrompt: phone Go to P# snaps to the card then card tap copies; keyboard digits copy+reveal; mouse locates then card click/Copy. Go to P# must not auto-open detail."
+    "Known-ID locator grammars are mode-separated, but terminal copy converges on copyPrompt: phone Go to P# snaps to the card then card tap copies; keyboard digits copy+reveal; mouse locates then card click/Copy. Go to P# must not auto-open detail.",
+    "Selecting prompt content is a DISCOVERY -> FOCUS transition: collapse nonessential filter/search chrome before positioning the selected prompt; search/reveal-discovery remains an explicit reverse transition and must not clear selection."
   ],
   "validation": [
     "node --check docs/prompt-kit-polish.js",
     "python -m unittest tests.test_prompt_kit_cross_input_modality tests.test_prompt_kit_mobile_quick_controls -v",
     "python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html --check"
   ],
-  "proof_ceiling": "Static contract and source-marker tests prove mode routes and semantic convergence markers. Chromium 390x844 journeys prove browser geometry/input for tracked paths. Physical Android thumb reach, real software-keyboard feel, OS/browser gesture conflict, and device clipboard UX remain field acceptance gates and are not claimed by this contract."
+  "proof_ceiling": "Shared interaction-language contract plus static/source tests prove semantic convergence, while Chromium desktop and 390x844 journeys prove tracked first-activation geometry/input. Physical device ergonomics and adoption by a second independent product remain separate acceptance/adoption gates."
 }
