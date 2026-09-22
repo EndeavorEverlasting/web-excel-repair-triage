@@ -33,7 +33,7 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: read
+  contents: write
 
 env:
   PYTHONHASHSEED: '0'
@@ -49,7 +49,7 @@ jobs:
         with:
           ref: ${{ github.event.pull_request.head.sha || github.sha }}
           fetch-depth: 0
-          persist-credentials: false
+          persist-credentials: true
 
       - name: Prove exact candidate and refreshed main floor
         shell: bash
@@ -65,6 +65,51 @@ jobs:
       - uses: actions/setup-python@v7
         with:
           python-version: '3.11'
+
+      - name: P79 lifecycle bridge for repository organization owner
+        if: github.event_name == 'pull_request' && github.head_ref == 'feat/p144-repository-organization-auditor-20260922'
+        shell: bash
+        env:
+          HEAD_REF: ${{ github.head_ref }}
+        run: |
+          set -euo pipefail
+          mkdir -p Outputs/p79-repo-organizer
+          python -m pip install --disable-pip-version-check -r requirements-test-floor.txt -r requirements-prompt-topology.txt
+
+          if grep -Fq '"id": "P144"' registry/prompts/spec-architecture-prompts.v1.json; then
+            echo "P144 already lifecycle-added; validating only."
+            python scripts/prompt_registry_ops.py validate > Outputs/p79-repo-organizer/validate.json
+            python -m unittest               tests.test_repository_ssh_setup_prompt               tests.test_repository_organization_prompt               tests.test_prompt_semantic_coverage               tests.test_prompt_semantic_validator_1b -v
+            python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html --check
+            git diff --check
+          else
+            python scripts/prompt_registry_ops.py prior-art               --query "repository SSH transport setup authentication provider-neutral key host trust git remote usage"               > Outputs/p79-repo-organizer/prior-art-p143.json
+            python scripts/prompt_registry_ops.py add               --input .github/p79-staging/p143-repository-ssh.json               --registry ai-engineering-level-up-prompts               > Outputs/p79-repo-organizer/add-p143.json
+
+            python scripts/prompt_registry_ops.py prior-art               --query "repository organization audit topology canonical ownership placement naming lifecycle reachability in-flight hygiene navigation read-only before mutation"               > Outputs/p79-repo-organizer/prior-art-p144.json
+            python scripts/prompt_registry_ops.py add               --input .github/p79-staging/p144-repository-organization.json               --registry spec-architecture-prompts               > Outputs/p79-repo-organizer/add-p144.json
+
+            python scripts/prompt_registry_ops.py validate > Outputs/p79-repo-organizer/validate.json
+            python -m unittest               tests.test_repository_ssh_setup_prompt               tests.test_repository_organization_prompt               tests.test_prompt_semantic_coverage               tests.test_prompt_semantic_validator_1b -v
+            python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html --check
+            python scripts/evaluate_prompt_language.py --summary
+            git diff --check
+
+            git config user.name "github-actions[bot]"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git add               registry/prompts/ai-engineering-level-up-prompts.v1.json               registry/prompts/spec-architecture-prompts.v1.json               harness/prompt-topology/prompt-capability-profiles.v1.json               harness/prompt-topology/prompt-capability-migrations.v1.json               harness/prompt-compilation/prompt-semantic-migrations.v1.json               web/prompt-kit/index.html
+            git commit -m "feat(prompt-kit): add repository organization auditor"
+            git push origin "HEAD:${HEAD_REF}"
+          fi
+
+      - name: Upload P79 lifecycle receipts
+        if: always() && github.event_name == 'pull_request' && github.head_ref == 'feat/p144-repository-organization-auditor-20260922'
+        uses: actions/upload-artifact@v7
+        with:
+          name: p79-repository-organization-${{ github.event.pull_request.head.sha }}
+          path: Outputs/p79-repo-organizer/
+          if-no-files-found: ignore
+          retention-days: 14
 
       - name: Install scoped topology runtime
         shell: bash
