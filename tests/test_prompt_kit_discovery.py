@@ -280,15 +280,17 @@ process.stdout.write(JSON.stringify(groups.map(function(g){return {name:g.name,i
             "window.getComputedStyle(header).position",
             "window.scrollTo({top:top,behavior:scrollBehavior})",
             "root.style.scrollBehavior='auto'",
-            "return snapRenderedPromptCardHeader(card,opts.behavior||hotkeyScrollBehavior())",
+            "return snapRenderedPromptCardHeader(card,hotkeyScrollBehavior(opts.behavior))",
         ):
             self.assertIn(marker, center)
         self.assertNotIn("block:'center'", center)
         self.assertIn("var shouldScroll=!(opts&&typeof opts==='object'&&opts.scroll===false)", base)
+        focus = base[base.index("function focusPromptSelectionElement(el,source)") : base.index("function selectPrompt(id,opts)")]
         selection = base[base.index("function selectPrompt(id,opts)") : base.index("function clearSelectionState()")]
-        self.assertIn("window.PromptKitInteractionLanguage.focusSelectedContent(el,{behavior:'smooth',source:source})", selection)
-        self.assertIn("scrollIntoView({behavior:'smooth',block:'nearest'})", selection)
-        self.assertLess(selection.index("focusSelectedContent"), selection.index("scrollIntoView"))
+        self.assertIn("window.PromptKitInteractionLanguage.focusSelectedContent", focus)
+        self.assertIn("scrollIntoView({behavior:promptMotionScrollBehavior(),block:'nearest'})", focus)
+        self.assertIn("focusPromptSelectionElement(el,source)", selection)
+        self.assertNotIn("behavior:'smooth'", selection)
         self.assertIn("PromptKitInteractionLanguage.focusSelectedContent=focusSelectedPromptContent", center)
         self.assertIn("window.positionSelectedPromptBelowChrome=positionSelectedPromptBelowChrome", center)
         reveal = polish[

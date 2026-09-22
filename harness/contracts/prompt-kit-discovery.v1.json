@@ -83,7 +83,7 @@
     },
     {
       "id": "snap_hides_filters",
-      "expected": "Any prompt-focus path, including ordinary desktop/mouse selection and centerRenderedPromptCard reveal/shortcut journeys, must enter the shared focus-selected-content semantic action after the product selection owner commits selection. Single-click pointer gestures may defer viewport movement until the click is disambiguated from double-click; once resolved, focus must take effect without a retry click. Explicit Show Filters/search recovery must restore discovery chrome without clearing selection."
+      "expected": "Any prompt-focus path, including ordinary desktop/mouse selection and centerRenderedPromptCard reveal/shortcut journeys, must enter the shared focus-selected-content semantic action after the product selection owner commits selection; its canonical Prompt Kit adapter calls hideCompactFilters before measuring and positioning. Single-click pointer gestures may defer viewport movement until the click is disambiguated from double-click; once resolved, focus must take effect without a retry click. Explicit Show Filters/search recovery must restore discovery chrome without clearing selection."
     },
     {
       "id": "snap_prioritizes_prompt_header",

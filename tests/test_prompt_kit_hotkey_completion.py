@@ -148,7 +148,7 @@ class PromptKitHotkeyCompletionTests(unittest.TestCase):
             "prompt-detail-favorite-btn",
             "type '+promptId.slice(1)+' anytime",
             "shortcut '+promptId.slice(1)+' still available",
-            "centerRenderedPromptCard(id,'instant');",
+            "selectPrompt(id,{source:'detail',scroll:true})",
             "toggleFavoritePromptAndRefreshShortcut(p.id)",
         ):
             self.assertIn(marker, source)
