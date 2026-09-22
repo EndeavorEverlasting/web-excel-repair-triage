@@ -48,6 +48,74 @@ def observe(port: int, screenshot: Path):
             page.goto(f"http://127.0.0.1:{port}/web/prompt-kit/index.html", wait_until="domcontentloaded")
             expected = page.evaluate("PROMPTS.find(p => p.id === 'P126').copyContent")
 
+            # Regression: a desktop mouse click on a layout-visible card whose title is
+            # underneath sticky chrome must reposition the title below that chrome.
+            page.evaluate("() => { if(typeof hideCompactFilters==='function')hideCompactFilters(); }")
+            page.wait_for_timeout(100)
+            pointer_positioned = page.evaluate(
+                """() => {
+                  const header=document.querySelector('.header');
+                  const card=document.querySelector('[data-prompt-id="P07"]');
+                  if(!header||!card)return false;
+                  const position=getComputedStyle(header).position;
+                  if(position!=='sticky'&&position!=='fixed')return false;
+                  const hr=header.getBoundingClientRect();
+                  const chromeBottom=Math.max(0,Math.min(innerHeight,hr.bottom));
+                  const cr=card.getBoundingClientRect();
+                  const absoluteTop=(scrollY||pageYOffset||0)+cr.top;
+                  const root=document.documentElement;
+                  const previous=root&&root.style?root.style.scrollBehavior:'';
+                  if(root&&root.style)root.style.scrollBehavior='auto';
+                  try{scrollTo(0,Math.max(0,absoluteTop-Math.max(8,chromeBottom-24)))}
+                  finally{if(root&&root.style)root.style.scrollBehavior=previous}
+                  return true;
+                }"""
+            )
+            page.wait_for_timeout(100)
+            pointer_before = page.evaluate(
+                """() => {
+                  const header=document.querySelector('.header');
+                  const card=document.querySelector('[data-prompt-id="P07"]');
+                  const title=card && card.querySelector('.prompt-header');
+                  const hr=header.getBoundingClientRect(),cr=card.getBoundingClientRect(),tr=title.getBoundingClientRect();
+                  const position=getComputedStyle(header).position;
+                  const chromeBottom=(position==='sticky'||position==='fixed')?Math.max(0,Math.min(innerHeight,hr.bottom)):0;
+                  return {headerPosition:position,chromeBottom:chromeBottom,cardTop:cr.top,cardBottom:cr.bottom,titleTop:tr.top,titleBottom:tr.bottom,viewportHeight:innerHeight};
+                }"""
+            ) if pointer_positioned else {}
+            pointer_target = page.locator('[data-prompt-id="P07"] .prompt-desc')
+            pointer_box = pointer_target.bounding_box() or {}
+            if pointer_box:
+                page.mouse.click(
+                    pointer_box['x'] + min(16, pointer_box['width'] / 2),
+                    pointer_box['y'] + min(12, pointer_box['height'] / 2),
+                )
+                page.wait_for_timeout(900)
+            pointer_after = page.evaluate(
+                """() => {
+                  const header=document.querySelector('.header');
+                  const card=document.querySelector('[data-prompt-id="P07"]');
+                  const title=card && card.querySelector('.prompt-header');
+                  const hr=header.getBoundingClientRect(),cr=card.getBoundingClientRect(),tr=title.getBoundingClientRect();
+                  const position=getComputedStyle(header).position;
+                  const chromeBottom=(position==='sticky'||position==='fixed')?Math.max(0,Math.min(innerHeight,hr.bottom)):0;
+                  return {headerPosition:position,chromeBottom:chromeBottom,cardTop:cr.top,titleTop:tr.top,titleBottom:tr.bottom,viewportHeight:innerHeight,selected:card.getAttribute('data-selected')==='true'};
+                }"""
+            ) if pointer_box else {}
+            pointer_header_first = bool(
+                pointer_before
+                and pointer_after
+                and pointer_before['titleTop'] < pointer_before['chromeBottom']
+                and pointer_before['cardBottom'] < pointer_before['viewportHeight']
+                and pointer_after['selected']
+                and pointer_after['cardTop'] >= pointer_after['chromeBottom'] + 6
+                and pointer_after['cardTop'] <= pointer_after['chromeBottom'] + 24
+                and pointer_after['titleTop'] >= pointer_after['chromeBottom'] + 6
+                and pointer_after['titleBottom'] <= pointer_after['viewportHeight']
+            )
+            page.reload(wait_until="domcontentloaded")
+            page.wait_for_timeout(100)
+
             # Exercise search mode exactly as a keyboard user does: slash, type, Escape.
             page.keyboard.press("/")
             page.wait_for_timeout(50)
@@ -202,6 +270,7 @@ def observe(port: int, screenshot: Path):
             screenshot.parent.mkdir(parents=True, exist_ok=True)
             page.screenshot(path=str(screenshot), full_page=False)
             observations = [
+                {"id": "desktop_pointer_selected_header_first", "event": "Desktop mouse selection repositions a selected prompt title below visible sticky chrome instead of accepting layout-visible overlap", "occurred": True, "passed": bool(pointer_header_first), "before": pointer_before, "after": pointer_after},
                 {"id": "search_escape_recovery", "event": "Slash focuses search; Escape clears and releases populated or empty search and restores global hotkeys", "occurred": True, "passed": bool(all((search_escape["slash_focused"], search_escape["typed_value"] == "P79", search_escape["clear_visible_before"], search_escape["cleared"], search_escape["focus_released"], search_escape["clear_hidden_after"], search_escape["empty_refocused"], search_escape["empty_focus_released"], search_escape["global_hotkey_restored"]))), **search_escape},
                 {"id": "profile_header_hotkeys_a_to_e", "event": "A-E header hotkeys activate their matching profile slots", "occurred": True, "passed": bool(set(profile_hotkeys) == set("ABCDE") and all(profile_hotkeys.values())), "slots": profile_hotkeys},
                 {"id": "hotkey_click_exposes_numeric_route", "event": "Hotkeys button opens the panel, focuses its close control, and exposes the natural numeric route", "occurred": True, "passed": bool(click_focus and click_visible and natural_help_visible), "focused": bool(click_focus), "visible": bool(click_visible)},

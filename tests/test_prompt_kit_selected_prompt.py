@@ -81,6 +81,22 @@ class PromptKitSelectedPromptContractTests(unittest.TestCase):
         self.assertIn("classList.add('is-selected')", base)
         self.assertIn("classList.remove('is-selected')", base)
 
+    def test_pointer_selection_avoids_sticky_header_occlusion(self) -> None:
+        base = BASE.read_text(encoding="utf-8")
+        polish = POLISH.read_text(encoding="utf-8")
+        selection = base[base.index("function selectPrompt(id,opts)") : base.index("function clearSelectionState()")]
+        self.assertIn("window.positionSelectedPromptBelowChrome(el,'smooth')", selection)
+        self.assertIn("scrollIntoView({behavior:'smooth',block:'nearest'})", selection)
+        self.assertLess(selection.index("positionSelectedPromptBelowChrome"), selection.index("scrollIntoView"))
+        helper = polish[
+            polish.index("function promptHasViewportOccludingHeader()") :
+            polish.index("function centerRenderedPromptCard(promptId,behavior)")
+        ]
+        self.assertIn("return position==='sticky'||position==='fixed'", helper)
+        self.assertIn("if(!header||!promptHasViewportOccludingHeader())return gap", helper)
+        self.assertIn("card.getBoundingClientRect().top>=promptSnapViewportOffset()", helper)
+        self.assertIn("window.positionSelectedPromptBelowChrome=positionSelectedPromptBelowChrome", helper)
+
     def test_enter_to_open_and_copy_hotkey(self) -> None:
         base = BASE.read_text(encoding="utf-8")
         polish = POLISH.read_text(encoding="utf-8")

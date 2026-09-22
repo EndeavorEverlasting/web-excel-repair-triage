@@ -729,13 +729,20 @@ function promptShortcutHasLongerPrefix(candidate,gestures){
   return gestures.some(function(gesture){return gesture!==candidate&&gesture.indexOf(candidate)===0})
 }
 
+function promptHasViewportOccludingHeader(){
+  var header=document.querySelector('.header');
+  if(!header)return false;
+  try{
+    var position=window.getComputedStyle(header).position;
+    return position==='sticky'||position==='fixed'
+  }catch(e){return false}
+}
+
 function promptSnapViewportOffset(){
   var gap=12;
   var header=document.querySelector('.header');
-  if(!header)return gap;
+  if(!header||!promptHasViewportOccludingHeader())return gap;
   try{
-    var position=window.getComputedStyle(header).position;
-    if(position!=='sticky'&&position!=='fixed')return gap;
     var rect=header.getBoundingClientRect();
     var viewportHeight=window.innerHeight||document.documentElement.clientHeight||0;
     var bottom=Number(rect&&rect.bottom)||0;
@@ -766,6 +773,13 @@ function snapRenderedPromptCardHeader(card,behavior){
   }
   return true
 }
+
+function positionSelectedPromptBelowChrome(card,behavior){
+  if(!card||!promptHasViewportOccludingHeader())return false;
+  try{if(card.getBoundingClientRect().top>=promptSnapViewportOffset())return false}catch(e){return false}
+  return snapRenderedPromptCardHeader(card,behavior||hotkeyScrollBehavior())
+}
+window.positionSelectedPromptBelowChrome=positionSelectedPromptBelowChrome;
 
 function centerRenderedPromptCard(promptId,behavior){
   hideCompactFilters();
