@@ -54,72 +54,13 @@ on:
       - '.github/workflows/prompt-kit-web.yml'
 
 permissions:
-  contents: write
+  contents: read
 
 concurrency:
   group: prompt-kit-web-${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: true
 
 jobs:
-  p111-bounded-copy-compaction:
-    if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository && github.event.pull_request.head.ref == 'fix/p111-specialized-artifact-closure-20260922'
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout owned P111 branch
-        uses: actions/checkout@v7
-        with:
-          ref: fix/p111-specialized-artifact-closure-20260922
-          fetch-depth: 0
-      - uses: actions/setup-python@v7
-        with:
-          python-version: '3.11'
-      - name: Compact P111 through protected lifecycle
-        shell: bash
-        run: |
-          set -euo pipefail
-          export PYTHONPATH="$PWD${PYTHONPATH:+:$PYTHONPATH}"
-          mkdir -p Outputs/p111-specialized-artifact-closure
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git fetch origin main fix/p111-specialized-artifact-closure-20260922 --prune
-          test "$(git rev-parse HEAD)" = "$(git rev-parse origin/fix/p111-specialized-artifact-closure-20260922)"
-          python - <<'PY'
-          import json
-          from pathlib import Path
-          compact = "SYNCHRONIZE THE ACTIVE REPOSITORY'S RELEVANT ARTIFACTS WITH GOOGLE DRIVE. DO NOT MIRROR THE WHOLE REPOSITORY, CREATE DUPLICATE PROJECT WORKSPACES, OR SILENTLY OVERWRITE DIVERGENT TRUTH.\n\nRepository: resolve the active repo from current environment/link/path/context.\nUse case: recover the request and accessible relevant context; do not make the user restate it.\nGoogle Drive workspace: use an explicit folder/file when supplied; otherwise discover and reuse the most strongly evidenced existing workspace before creating anything new.\nOwned scope: relevant durable artifacts, repo↔Drive mappings, sync actions, specialized evidence closure, and proof.\nForbidden scope: whole-repo backup, Drive-as-source-control, private bytes in Git, caches/temp trees, unrelated cleanup, destructive overwrite, unauthorized sharing, lossy round-trips, or unrelated logic.\n\nMISSION\nOwn the generic repo↔Drive sync seam. Keep authority explicit, synchronize per artifact, close material evidence dependencies through canonical owners, and keep Drive as artifact workspace while Git remains repository history.\n\n1. RESOLVE CURRENT TRUTH\nRefresh repo/provider truth; resolve default branch/head, overlapping work, canonical artifact owners, and relevant outputs. Resolve Drive from connected evidence and search before creating uploads. Reuse stable Drive identities. If access/permission is unavailable, name the gate and do not claim a sync.\n\n2. BUILD THE RELEVANT ARTIFACT SET\nSelect durable plans/specs, decisions, reports, docs, spreadsheets, presentations, evidence packs, exports, manifests, handoffs, or Drive-facing references that materially support the use case. Exclude implementation source unless explicitly published, plus secrets, credentials, ignored local state, dependencies/caches/build debris, and temporary logs. Private/protected evidence is excluded from inappropriate generic/repository publication, not automatically from the artifact dependency graph.\nCurrent-conversation attachments count as candidate artifacts whenever the synchronized artifact cites, describes, depends on, or derives a factual claim from them. Do not omit an attachment from the artifact set merely because its bytes should stay out of Git.\n\n3. CLASSIFY AUTHORITY BEFORE COPYING\nAssign each candidate exactly one authority:\n- REPO-AUTHORITATIVE — repo source may publish/update Drive; Drive edits do not silently flow back.\n- DRIVE-AUTHORITATIVE — Drive owns content; repo consumes only an approved export/reference.\n- BIDIRECTIONAL-BY-CONTRACT — both may change only under an explicit lossless conversion/merge/conflict contract.\n- DERIVED / PUBLISH-ONLY — producer publishes a generated/presentation artifact; it is not a competing editable source.\n- PRIVATE / DO-NOT-SYNC — excluded from generic/repository publication; may still require persistence through an approved specialized/private evidence owner.\nUnknown authority is UNKNOWN/CONFLICT. Do not pick a winner by recency alone.\n\n4. MAP IDENTITIES, NOT JUST FILENAMES\nMap repo identity, Drive identity/location, authority, format, last proven version/hash when available, intended action, and specialized evidence owner. Prefer stable Drive identity to name-only matching. Ambiguous same-name files require resolution, not another copy. Keep sensitive Drive IDs out of tracked repo state when policy requires private receipts.\n\n5. PRESERVE FORMAT AUTHORITY\nPreserve Google-native authority when Drive owns the document. Preserve repository-native authority for source documents/data and generated artifacts. Export/import only under an explicit conversion contract; a PDF/render is normally publication output, not editable canonical source.\n\n6. PLAN THE SYNC LEDGER\nFor every relevant artifact choose UPLOAD, UPDATE DRIVE, DOWNLOAD/IMPORT, UPDATE REPO, NO CHANGE, CONFLICT, or SKIP. Record:\nartifact | repo identity | Drive identity/location | authority | specialized owner | pre-sync evidence | action | post-sync evidence | status/gate\nEvery material candidate appears once. `Drive synced` without per-artifact accounting is not proof.\n\n7. EXECUTE SAFE, IDEMPOTENT ACTIONS\nReuse the existing project folder and mapped file. Update in place when identity/authority are clear; do not create `copy`, `(1)`, dated duplicate, or a new project folder because resolving identity is harder. Do not use Drive as source control. Drive→repo uses approved import/conversion plus normal validation/integration. Repo→Drive publishes the exact validated artifact. Do not delete, move, transfer ownership, or broaden sharing without explicit authority.\n\n8. FAIL CLOSED ON TWO-SIDED DIVERGENCE\nIf both mapped sides materially changed and no deterministic merge/precedence contract resolves them, mark CONFLICT, preserve both truths, identify competing versions, and name the smallest decision or owning merge mechanism. Timestamp-newer alone is not a safe conflict resolver. Missing comparison evidence lowers proof; it does not authorize overwrite.\n\n9. READ BACK AND VERIFY\nAfter each Drive write, read back identity, content/version/metadata, and location. After repo writes, verify the canonical artifact at exact head and run focused owner validation/build. Verify generated artifacts against their generator/input floor. A successful write call alone is not completion proof.\n\n10. SECOND PASS TO A BOUNDED FIXED POINT\nRe-scan repo artifacts and Drive from the opposite direction for moved/renamed files, stale exports, duplicates, one-sided updates, conflicts, or unclosed specialized evidence. Execute newly safe actions and read back again. Stop only when every in-scope item is current/no-change, synchronized, validly skipped, conflicted, or BLOCKED by an exact gate.\n\nBOUNDARIES WITH SPECIALIZED WORKFLOWS\nThis generic owner does not absorb project-specific management, billing, roster, taxonomy, evidence-language, or reporting semantics merely because a project uses Drive. Pure Drive organization, cleanup, rename, archive, or dedupe without a repository sync mission routes to P142 Google Drive Workspace Organizer. Preserve stronger specialized synchronizer/evidence-owner authority; P111 owns generic mapping and closure orchestration.\n\nSPECIALIZED ARTIFACT CLOSURE / NO DEFERRED EVIDENCE\nWhen an in-scope artifact materially references or depends on a photo, screenshot, attachment, evidence row, workbook, generated artifact, or other surface governed by a stronger specialized workflow, P111 MUST invoke or route through that canonical owner whenever it is safely executable. P111 MUST NOT classify the dependency as SKIP or PRIVATE merely because the generic synchronizer does not own its bytes.\nPRIVATE / DO-NOT-SYNC forbids inappropriate generic/repository publication; it does not mean “do not persist through the approved private evidence owner.” Do not place private photo/screenshot/workbook bytes in the repository unless the specialized owner explicitly permits it. Prefer the approved private evidence owner/workspace for protected bytes and retain only the safe durable identity/reference in repo state when policy permits.\nSynchronization is incomplete while a material supporting reference lacks its required durable canonical identity and readback proof. A placeholder such as “hardware photo,” “screenshot,” or “supporting evidence” is not closure when the evidence materially supports the synchronized artifact.\nIf the specialized workflow cannot execute, preserve the dependency as BLOCKED with its exact owner, target, dependency, and next action; do not convert that dependency into SKIP, and do not claim the overall synchronization complete.\n\nFINAL REPORT\nReport repo/default branch and proof level; Drive workspace; artifact/status and authority counts; reused vs created identities; sync actions; specialized evidence closures/blockers; validation/readback proof; repo integration; unresolved privacy/access gates; proof ceiling; and first executable next action. Do not expose secrets or unnecessary private Drive identifiers."
-          if len(compact) >= 8000:
-              raise SystemExit(f"compact body still exceeds bounded contract: {len(compact)}")
-          Path("/tmp/p111-compact-patch.json").write_text(
-              json.dumps({"copyContent": compact}, ensure_ascii=False, indent=2) + "\n",
-              encoding="utf-8",
-          )
-          PY
-          python scripts/prompt_registry_ops.py edit             --prompt-id P111             --input /tmp/p111-compact-patch.json             --disposition NO_CAPABILITY_CHANGE             --evidence-ref tests/test_repository_work_ledger_prompt.py             --evidence-ref tests/test_repository_drive_artifact_synchronizer_prompt.py             --rationale "Compact the strengthened P111 canonical body below its existing 8000-character bounded-copy contract without changing capability ownership or specialized evidence-closure semantics."             | tee Outputs/p111-specialized-artifact-closure/compact-receipt.json
-
-          python -m unittest             tests.test_repository_work_ledger_prompt             tests.test_repository_drive_artifact_synchronizer_prompt             tests.test_prompt_semantic_coverage             tests.test_prompt_semantic_validator_1b             tests.test_prompt_regression_safety_prompt             tests.test_prompt_quality_history             tests.test_google_drive_workspace_organizer_prompt -v
-          python scripts/validate_prompt_semantic_coverage.py
-          python scripts/validate_prompt_regression_safety.py --summary
-          python scripts/prompt_registry_ops.py validate
-          python scripts/evaluate_prompt_language.py --output Outputs/prompt-language-audit.json --summary
-          python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html --check
-          git diff --check
-
-          git checkout origin/main -- .github/workflows/prompt-kit-web.yml
-          git add             registry/prompts/repository-work-ledger-prompts.v1.json             harness/prompt-topology/prompt-capability-profiles.v1.json             harness/prompt-topology/prompt-capability-migrations.v1.json             harness/prompt-compilation/prompt-semantic-migrations.v1.json             web/prompt-kit/index.html             .github/workflows/prompt-kit-web.yml
-          git diff --cached --check
-          git commit -m "refactor(prompt-kit): keep P111 closure copy bounded"
-          git push origin HEAD:fix/p111-specialized-artifact-closure-20260922
-      - name: Publish P111 compaction receipt
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: p111-bounded-copy-compaction-receipt
-          path: |
-            Outputs/p111-specialized-artifact-closure/compact-receipt.json
-            Outputs/prompt-language-audit.json
-          if-no-files-found: warn
-          retention-days: 30
-
   validate:
     runs-on: ubuntu-latest
     steps:

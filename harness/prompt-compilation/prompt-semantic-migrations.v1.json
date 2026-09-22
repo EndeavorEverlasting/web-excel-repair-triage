@@ -108,6 +108,22 @@
         "tests/test_prompt_semantic_coverage.py",
         "tests/test_prompt_quality_history.py"
       ]
+    },
+    {
+      "migration_id": "p79-no-capability-change-p111-007",
+      "path": "registry/prompts/repository-work-ledger-prompts.v1.json",
+      "from_git_blob_sha1": "6a5b324c52814abab944cd106360d6ab55ea3d93",
+      "to_git_blob_sha1": "1c2efa7a40fec62ca8eb00327e2ea318fc81ef15",
+      "affected_prompt_ids": [
+        "P111"
+      ],
+      "change_kind": "strengthening",
+      "effective_identity_change": "preserve_canonical",
+      "rationale": "Compact the strengthened P111 canonical body below its existing 8000-character bounded-copy contract without changing capability ownership or specialized evidence-closure semantics.",
+      "focused_tests": [
+        "tests/test_prompt_semantic_coverage.py",
+        "tests/test_prompt_quality_history.py"
+      ]
     }
   ]
 }

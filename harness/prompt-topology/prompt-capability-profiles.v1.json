@@ -2065,9 +2065,9 @@
     },
     {
       "prompt_id": "P111",
-      "profile_version": 2,
-      "canonical_prompt_hash": "18213ea37928708561d25b89434636c9bc3c36aeb88ed8d33ae739024b6fed3f",
-      "acceptance_commit": "91ec4beac93b000f63482f480ae7e4efa519a517",
+      "profile_version": 3,
+      "canonical_prompt_hash": "6e3147f29b8e52395393a1cd34a95b85d2ac55de1fb34eec6a8e6e082c62184e",
+      "acceptance_commit": "232110054242dcd503ed85b2302af3ba275ecafe",
       "direct_assignments": [
         {
           "capability_id": "strength.fresh_evidence_floor",
@@ -2166,14 +2166,15 @@
         "registry/prompts/management-operations-prompts.v1.json",
         "registry/prompts/repository-work-ledger-prompts.v1.json",
         "tests/test_google_drive_workspace_organizer_prompt.py",
-        "tests/test_repository_drive_artifact_synchronizer_prompt.py"
+        "tests/test_repository_drive_artifact_synchronizer_prompt.py",
+        "tests/test_repository_work_ledger_prompt.py"
       ],
       "profile_status": "ACCEPTED",
       "prior_profile_ref": {
-        "profile_version": 1,
-        "profile_sha256": "f599093ce6e5689cacdb240cc77b656e1f80b4cae5cf1a5696aef595e3b6129a"
+        "profile_version": 2,
+        "profile_sha256": "14de21d511042fe2d414bf399b65c18230f121a081e249fb4ffb3d502a4ace46"
       },
-      "profile_sha256": "14de21d511042fe2d414bf399b65c18230f121a081e249fb4ffb3d502a4ace46"
+      "profile_sha256": "ea1c3a78fa3511ca5dc951dd7b0d53dfa49a5a86927103f9a734b7e07c7cf8b1"
     }
   ],
   "profile_count": 63
