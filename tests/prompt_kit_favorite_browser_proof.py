@@ -489,6 +489,12 @@ def observe(port: int, screenshot: Path):
                     quick = mobile_page.locator("#mobileFavoritesQuick")
                     quick.click()
                     mobile_page.wait_for_timeout(100)
+                    # Focus mode intentionally hides discovery chrome. Re-enter search
+                    # through the phone-native More -> Search adapter before filtering.
+                    mobile_page.locator("#hotkeyHelpToggle").click()
+                    mobile_page.wait_for_timeout(50)
+                    mobile_page.locator('[data-mobile-quick-action="search"]').click()
+                    mobile_page.wait_for_timeout(100)
                     mobile_page.locator("#search").fill("definitely-no-favorite-match-xyz")
                     mobile_page.wait_for_timeout(100)
                     filtered_empty = mobile_page.locator("#favoritesEmptyState")
