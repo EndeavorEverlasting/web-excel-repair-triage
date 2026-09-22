@@ -1,0 +1,82 @@
+{
+  "schema_version": "shared-ux-interaction-language/v1",
+  "contract_id": "shared-ux-interaction-language",
+  "owner": "P109",
+  "purpose": "Factor repeated UX decisions as capability semantics and themeable roles without forcing products to share identical controls or visual identity.",
+  "inventory": {
+    "representative_consumers": [
+      "AFK Agent Flow / Prompt Kit pointer selection",
+      "AFK Agent Flow / Prompt Kit keyboard selection and prompt shortcuts",
+      "AFK Agent Flow / Prompt Kit phone Go-to-P# and touch prompt selection"
+    ],
+    "observed_drift": [
+      "snap/reveal paths collapsed discovery chrome but ordinary desktop selection did not",
+      "viewport positioning and chrome collapse were owned by separate code paths",
+      "marker-only tests could pass while the live pointer journey still retained obstructive chrome"
+    ],
+    "intentional_differences": [
+      "search explicitly reveals discovery chrome because filters/search are the active task",
+      "phone keeps touch-native More and Go-to-P# controls",
+      "keyboard keeps command grammar and mouse keeps direct manipulation"
+    ]
+  },
+  "semantic_tokens": {
+    "surface.discovery_chrome": {"kind": "surface", "themeable": true, "meaning": "controls used to discover/filter content before focus"},
+    "surface.focus_content": {"kind": "surface", "themeable": true, "meaning": "selected content that owns attention after activation"},
+    "action.focus_selected_content": {"kind": "action", "themeable": false, "meaning": "commit selection, suppress nonessential discovery chrome, and reveal content identity"},
+    "action.reveal_discovery": {"kind": "action", "themeable": false, "meaning": "restore search/filter chrome when discovery is the active task"},
+    "space.focus_clearance": {"kind": "spacing", "themeable": true, "meaning": "clearance between persistent chrome and focused content identity"},
+    "motion.focus_reveal": {"kind": "motion", "themeable": true, "meaning": "product-selected reduced-motion-safe focus transition"},
+    "feedback.selection_state": {"kind": "feedback", "themeable": true, "meaning": "visible and accessible confirmation of selected content"}
+  },
+  "patterns": {
+    "focus_selected_content": {
+      "capability": "Focus selected content",
+      "semantic_action": "focusSelectedContent",
+      "state_transition": "DISCOVERY -> FOCUS",
+      "ordered_effects": [
+        "commit canonical selection state",
+        "collapse nonessential discovery chrome",
+        "force layout measurement after chrome state change",
+        "position selected content identity below persistent chrome",
+        "preserve explicit reveal-discovery recovery"
+      ],
+      "mode_adapters": {
+        "mouse": "direct card/control selection invokes the semantic action",
+        "keyboard": "selection/navigation or composed reveal invokes the semantic action without synthesizing pointer clicks",
+        "phone": "touch-native selection/jump invokes the same semantic action while retaining touch-specific controls"
+      },
+      "acceptance": [
+        "first activation succeeds from expanded discovery chrome",
+        "repeated activation remains idempotent",
+        "reveal-discovery can restore filters/search without clearing selection",
+        "focused identity is not obscured by persistent sticky/fixed chrome",
+        "reduced-motion preference remains respected"
+      ]
+    }
+  },
+  "extension_boundary": {
+    "global_invariant": [
+      "capability -> semantic action -> mode adapter -> feedback/state",
+      "focus ordering and accessibility state",
+      "explicit recovery from focus to discovery"
+    ],
+    "themeable": ["colors", "typography", "radius", "elevation", "spacing values", "motion duration/easing"],
+    "product_specific": ["DOM selectors", "filter taxonomy", "brand chrome", "content card composition", "copy/open semantics"],
+    "forbidden": [
+      "forcing identical control shapes across mouse keyboard and phone",
+      "duplicating product state machines inside the shared pattern",
+      "hard-coding product brand values into the semantic contract"
+    ]
+  },
+  "consumers": [
+    {
+      "product": "AFK Agent Flow / Prompt Kit",
+      "adapter": "PromptKitInteractionLanguage.focusSelectedContent",
+      "behavior_source": "docs/prompt-kit-polish.js",
+      "selection_source": "docs/prompt-kit.js",
+      "proof": "tests/test_prompt_kit_selected_prompt.py + tests/prompt_kit_favorite_browser_proof.py"
+    }
+  ],
+  "proof_ceiling": "The contract and Prompt Kit adoption prove one reusable interaction pattern with multiple mode adapters. No second independent product was supplied, so cross-product visual/theme adoption remains unproven and must not be inferred."
+}
