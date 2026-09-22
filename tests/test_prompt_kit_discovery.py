@@ -422,7 +422,10 @@ process.stdout.write(JSON.stringify(groups.map(function(g){return {name:g.name,i
         self.assertIn("recomputes only the unresolved routing frontier after each response", p65["proofGate"])
         self.assertIn("2-4 questions", p65["proofGate"])
         self.assertIn("up to six", p65["proofGate"])
-        self.assertIn("desired prompt behavior", p65["proofGate"].lower())
+        self.assertIn("current-agent disposition", p65["proofGate"].lower())
+        self.assertIn("requested output", p65["proofGate"].lower())
+        self.assertIn("downstream-agent disposition", p65["proofGate"].lower())
+        self.assertIn("false binaries", p65["proofGate"].lower())
         self.assertIn("grill me", p65["keywords"])
 
     def test_guided_finder_routes_context_artifacts_to_p56(self) -> None:
