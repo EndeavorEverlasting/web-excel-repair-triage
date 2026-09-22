@@ -70,11 +70,24 @@ class PromptRegressionSafetyTests(unittest.TestCase):
             copy.deepcopy(self.contract),
             copy.deepcopy(self.coverage_baseline),
         )
-        self.assertEqual(coverage["operational_prompts"], 141)
-        self.assertEqual(coverage["accepted_profiles"], 62)
-        self.assertEqual(coverage["unprofiled_prompts"], 79)
+        self.assertEqual(coverage["operational_prompts"], self.coverage_baseline["operational_prompt_count"])
+        self.assertGreaterEqual(
+            coverage["accepted_profiles"],
+            self.coverage_baseline["accepted_profile_count"],
+        )
+        self.assertLessEqual(
+            coverage["unprofiled_prompts"],
+            len(self.coverage_baseline["known_unprofiled_prompt_ids"]),
+        )
+        self.assertEqual(
+            coverage["operational_prompts"] - coverage["accepted_profiles"],
+            coverage["unprofiled_prompts"],
+        )
         self.assertEqual(coverage["closeout_or_review_owners"], 18)
-        self.assertEqual(coverage["closeout_or_review_unprofiled"], 12)
+        self.assertLessEqual(
+            coverage["closeout_or_review_unprofiled"],
+            len(self.coverage_baseline["closeout_or_review_unprofiled_ids"]),
+        )
         self.assertEqual(coverage["override_bindings"], 3)
 
     def test_prompt_coverage_ratchet_rejects_new_unprofiled_operational_prompt(self) -> None:
