@@ -65,7 +65,7 @@ class RepositoryDriveArtifactSynchronizerPromptTests(unittest.TestCase):
 
     def test_specialized_owner_blocker_prevents_false_completion(self) -> None:
         self.assert_markers(
-            "Synchronization is incomplete while a material supporting reference lacks its required durable identity/readback proof.",
+            "Synchronization is incomplete while a material supporting reference lacks its required durable canonical identity and readback proof.",
             "If the specialized workflow cannot execute",
             "do not convert that dependency into SKIP",
             "do not claim the overall synchronization complete",
