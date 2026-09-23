@@ -2190,16 +2190,16 @@
       "direct_assignments": [
         {
           "capability_id": "strength.mainline_convergence",
-          "presence": "SUPPORT",
+          "presence": "REQUIRED",
           "ownership": "SECONDARY",
-          "capability_relation": "ROUTES_TO",
+          "capability_relation": "GUARDS",
           "delivery_source": "ROUTED_OWNER",
           "evidence_refs": [
             "registry/prompts/repository-work-ledger-prompts.v1.json",
             "harness/contracts/prompt-strength.v1.json",
             "harness/prompt-topology/semantic-capability-catalog.v1.json"
           ],
-          "rationale": "P143 plans multi-source convergence and emits a typed successor handoff; P07/P16/P21 own integration/mainline execution, so P143 routes to that capability rather than implementing it."
+          "rationale": "P143 requires and guards a downstream mainline-convergence outcome in the plan, but P07 owns execution and default-branch integration. This preserves global capability coverage without giving P143 primary execution ownership."
         },
         {
           "capability_id": "strength.plan_durability",
@@ -2290,7 +2290,7 @@
           "source_hash": "e249da6706d86733cd03a046ef9e16552a3ae87dc8cc644281c5c1fd9c08c796"
         }
       ],
-      "semantic_dependency_fingerprint": "3b65ee4a7b17f86a28d71af4b90e847128767bbd7d67e41e1f4b8e5ca8ed251c",
+      "semantic_dependency_fingerprint": "2af9450d2dbe072848044df22a90e88584ad9771f39a5fb4323ac3d260f5e323",
       "evidence_refs": [
         "build_prompt_kit.py",
         "harness/contracts/p55-bootstrap-handoff.v1.json",
@@ -2307,7 +2307,7 @@
         "profile_version": 1,
         "profile_sha256": "cd3bc4031c94093af9830c9dad0b4daf10980551ab236accd179e359140ee27e"
       },
-      "profile_sha256": "9577e330a0387c1bc331af8f2f6d655dbf385c680101d2ef6ca120eef186565b"
+      "profile_sha256": "a9ae6be8f2b8e5224a5cbb4df23e9a6ae3f4db3174466c86e5ff7f69d1dc4a14"
     }
   ],
   "profile_count": 64
