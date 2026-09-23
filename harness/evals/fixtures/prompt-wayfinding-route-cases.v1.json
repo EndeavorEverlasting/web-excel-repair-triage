@@ -1,0 +1,104 @@
+{
+  "schema_version": "prompt-wayfinding-route-cases/v1",
+  "cases": [
+    {
+      "id": "donor-upstream-coverage",
+      "kind": "positive",
+      "purpose": "A registered donor/upstream coverage question must resolve from the default router to the external-resource intake skill and the P79 prior-art gate without broad repository search.",
+      "query": "Does a registered donor/upstream skill or prompt already cover this?",
+      "expected_primary_owner": "operant-external-resource-intake",
+      "expected_prompt_ids": ["P79"],
+      "router_phrases": ["donor", "prior-art", "operant-external-resource-intake"],
+      "max_route_hops_from_default": 1,
+      "max_grep_glob_search_count": 0,
+      "max_files_opened_before_resolution": 2
+    },
+    {
+      "id": "prompt-admission-after-prior-art",
+      "kind": "positive",
+      "purpose": "Adding or strengthening a prompt after prior-art search must lead with P79 as the admission owner, reached through the same one-hop donor/prior-art router row.",
+      "query": "I need to add or strengthen a prompt after prior-art search.",
+      "expected_primary_owner": "P79",
+      "expected_prompt_ids": ["P79"],
+      "router_phrases": ["prior-art", "prompt_registry_ops.py"],
+      "max_route_hops_from_default": 1,
+      "max_grep_glob_search_count": 0,
+      "max_files_opened_before_resolution": 2
+    },
+    {
+      "id": "unknown-prompt-fit",
+      "kind": "positive",
+      "purpose": "An operator who does not know which prompt fits must reach the conversational guided finder.",
+      "query": "I don't know which prompt fits this request.",
+      "expected_primary_owner": "P65",
+      "expected_prompt_ids": ["P65"],
+      "router_phrases": ["Prompt Kit"],
+      "max_route_hops_from_default": 2,
+      "max_grep_glob_search_count": 1,
+      "max_files_opened_before_resolution": 3
+    },
+    {
+      "id": "context-bloat-finding-owners",
+      "kind": "positive",
+      "purpose": "A repository that burns too much context finding owners must route to the context-architecture owner.",
+      "query": "The repository burns too much context finding owners.",
+      "expected_primary_owner": "P76",
+      "expected_prompt_ids": ["P76"],
+      "router_phrases": ["context bloat", "CODEBASE_MAP.md"],
+      "max_route_hops_from_default": 1,
+      "max_grep_glob_search_count": 0,
+      "max_files_opened_before_resolution": 2
+    },
+    {
+      "id": "agent-code-readability",
+      "kind": "positive",
+      "purpose": "A request to make code easier for agents to navigate and edit must route to the repository readability owner.",
+      "query": "Make this code easier for agents to navigate and edit.",
+      "expected_primary_owner": "P124",
+      "expected_prompt_ids": ["P124"],
+      "router_phrases": ["CODEBASE_MAP.md"],
+      "max_route_hops_from_default": 2,
+      "max_grep_glob_search_count": 1,
+      "max_files_opened_before_resolution": 3
+    },
+    {
+      "id": "pr-standards-spec-review",
+      "kind": "positive",
+      "purpose": "A PR review against repository standards and the requested behavior must route to the independent Standards/Spec review owner.",
+      "query": "Review this PR since main against repo standards and the requested behavior.",
+      "expected_primary_owner": "P14",
+      "expected_prompt_ids": ["P14"],
+      "router_phrases": ["PR integration"],
+      "max_route_hops_from_default": 2,
+      "max_grep_glob_search_count": 1,
+      "max_files_opened_before_resolution": 3
+    },
+    {
+      "id": "mimo-donor-broad-search-baseline",
+      "kind": "historical_risk",
+      "purpose": "Record the observed pre-change failure: a fresh MiMo/OpenCode session recovered the four registered sources and the P79 prior-art command only after expensive grep/glob because the default router had no donor/upstream row.",
+      "query": "Does a registered donor/upstream skill or prompt already cover this?",
+      "expected_primary_owner": "operant-external-resource-intake",
+      "expected_prompt_ids": ["P79"],
+      "observed_prechange": {
+        "broad_search_required": true,
+        "router_had_donor_row": false,
+        "notes": "Operator evidence from OpenCode/MiMo-V2.6-Flash: correct owners found only after broad search; skill body also copied a stale three-donor list."
+      },
+      "router_phrases": ["donor", "prior-art"],
+      "max_route_hops_from_default": 1,
+      "max_grep_glob_search_count": 0,
+      "max_files_opened_before_resolution": 2
+    },
+    {
+      "id": "empty-query-boundary",
+      "kind": "boundary",
+      "purpose": "An empty query must not fabricate a prompt or owner route.",
+      "query": "",
+      "expected_empty": true,
+      "max_route_hops_from_default": 0,
+      "max_grep_glob_search_count": 0,
+      "max_files_opened_before_resolution": 0
+    }
+  ]
+}

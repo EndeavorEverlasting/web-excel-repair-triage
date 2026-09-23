@@ -99,5 +99,149 @@ class ContextArchitectureTests(unittest.TestCase):
             self.assertIn("## Proof ceiling", text)
 
 
+class PromptWayfindingBaselineTests(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls) -> None:
+        cls.eval_contract = json.loads(
+            (ROOT / "harness/evals/prompt-wayfinding-baseline.v1.json").read_text(
+                encoding="utf-8"
+            )
+        )
+        cls.fixture = json.loads(
+            (
+                ROOT
+                / "harness/evals/fixtures/prompt-wayfinding-route-cases.v1.json"
+            ).read_text(encoding="utf-8")
+        )
+        cls.router = (ROOT / "harness/CONTEXT.md").read_text(encoding="utf-8")
+        cls.skill = (
+            ROOT / ".ai/skills/operant-external-resource-intake/SKILL.md"
+        ).read_text(encoding="utf-8")
+        cls.donor_contract = json.loads(
+            (
+                ROOT / "harness/contracts/operant-external-resource-intake.v1.json"
+            ).read_text(encoding="utf-8")
+        )
+
+    def test_route_corpus_schema_kinds_and_representative_owners(self) -> None:
+        self.assertEqual(
+            self.fixture["schema_version"], "prompt-wayfinding-route-cases/v1"
+        )
+        cases = self.fixture["cases"]
+        ids = [case["id"] for case in cases]
+        self.assertEqual(len(ids), len(set(ids)))
+        kinds = {case["kind"] for case in cases}
+        required = set(self.eval_contract["required_case_kinds"])
+        self.assertTrue(required.issubset(kinds))
+        by_id = {case["id"]: case for case in cases}
+        expected_owners = {
+            "donor-upstream-coverage": "operant-external-resource-intake",
+            "prompt-admission-after-prior-art": "P79",
+            "unknown-prompt-fit": "P65",
+            "context-bloat-finding-owners": "P76",
+            "agent-code-readability": "P124",
+            "pr-standards-spec-review": "P14",
+        }
+        for case_id, owner in expected_owners.items():
+            with self.subTest(case_id=case_id):
+                self.assertIn(case_id, by_id)
+                self.assertEqual(by_id[case_id]["expected_primary_owner"], owner)
+                self.assertEqual(by_id[case_id]["kind"], "positive")
+        self.assertTrue(by_id["empty-query-boundary"].get("expected_empty"))
+        self.assertFalse(
+            by_id["mimo-donor-broad-search-baseline"]["observed_prechange"][
+                "router_had_donor_row"
+            ]
+        )
+
+    def test_eval_contract_metrics_invariants_and_proof_ceiling(self) -> None:
+        self.assertEqual(
+            self.eval_contract["schema_version"],
+            "prompt-wayfinding-baseline-eval/v1",
+        )
+        self.assertEqual(
+            self.eval_contract["target"]["default_entrypoints"],
+            ["AGENTS.md", "harness/CONTEXT.md"],
+        )
+        self.assertEqual(self.eval_contract["owner"], "P76")
+        self.assertEqual(self.eval_contract["metrics"]["correct_first_owner_min"], 1.0)
+        self.assertEqual(
+            self.eval_contract["metrics"][
+                "max_route_hops_from_default_for_one_hop_cases"
+            ],
+            1,
+        )
+        self.assertEqual(
+            self.eval_contract["metrics"][
+                "max_grep_glob_search_count_for_one_hop_cases"
+            ],
+            0,
+        )
+        self.assertIn("proof_ceiling", self.eval_contract)
+        self.assertIn(
+            "does not claim model-general runtime behavior",
+            " ".join(self.eval_contract["invariants"]),
+        )
+
+    def test_donor_prior_art_route_is_one_hop_from_default_router(self) -> None:
+        router_lower = self.router.casefold()
+        for phrase in (
+            "donor",
+            "prior-art",
+            "operant-external-resource-intake",
+            "prompt_registry_ops.py",
+        ):
+            self.assertIn(phrase.casefold(), router_lower, phrase)
+        for case in self.fixture["cases"]:
+            if case["id"] in (
+                "donor-upstream-coverage",
+                "prompt-admission-after-prior-art",
+                "mimo-donor-broad-search-baseline",
+            ):
+                self.assertEqual(case["max_route_hops_from_default"], 1)
+                self.assertEqual(case["max_grep_glob_search_count"], 0)
+                for phrase in case["router_phrases"]:
+                    self.assertIn(
+                        phrase.casefold(), router_lower, f"{case['id']}:{phrase}"
+                    )
+
+    def test_default_router_stays_inside_hard_budget_after_route_addition(self) -> None:
+        router_path = "harness/CONTEXT.md"
+        contract = json.loads(
+            (ROOT / "harness/contracts/context-architecture.v1.json").read_text(
+                encoding="utf-8"
+            )
+        )
+        ceiling = contract["hard_char_budgets"][router_path]
+        chars = len((ROOT / router_path).read_text(encoding="utf-8"))
+        self.assertLessEqual(chars, ceiling, f"{router_path}={chars}>{ceiling}")
+        self.assertEqual(validate_context_architecture.main(["--summary"]), 0)
+
+    def test_intake_skill_points_to_contract_sources_instead_of_copying_donor_list(self) -> None:
+        self.assertIn(
+            "harness/contracts/operant-external-resource-intake.v1.json",
+            self.skill,
+        )
+        self.assertIn("sources[]", self.skill)
+        for stale in (
+            "deepseek-ai/deepseek-harness",
+            "f/prompts.chat",
+            "mattpocock/skills",
+            "Registered donor floor (current contract)",
+        ):
+            self.assertNotIn(stale, self.skill, stale)
+        source_ids = {source["id"] for source in self.donor_contract["sources"]}
+        self.assertEqual(
+            source_ids,
+            {
+                "deepseek-harness",
+                "prompts-chat",
+                "mattpocock-skills",
+                "michaelshimeles-skills",
+            },
+        )
+        self.assertEqual(len(self.donor_contract["sources"]), 4)
+
+
 if __name__ == "__main__":
     unittest.main()

@@ -34,11 +34,7 @@ This skill owns donor **resource discovery and coverage routing**. It does not m
 7. **Preserve progressive disclosure.** The main Operant page embeds only the small resource runtime. It must not embed donor records and must not fetch `resources.v1.json` until the user explicitly opens Resources.
 8. **Refresh regularly without bypassing review.** The scheduled workflow generates a current candidate snapshot and gap ledger as CI artifacts, compares them with tracked canonical projections, and signals drift. It never writes directly to the default branch.
 
-Registered donor floor (current contract):
-
-- `deepseek-ai/deepseek-harness` — `.agents/skills/*/SKILL.md`
-- `f/prompts.chat` — commit-pinned `prompts.csv` catalog searched on demand (CC0 prompt data / MIT source); not bulk-projected into the sidecar
-- `mattpocock/skills` — nested `skills/<category>/<slug>/SKILL.md` (excluding `deprecated/`)
+Registered donor floor lives only in `harness/contracts/operant-external-resource-intake.v1.json` → `sources[]`. Do not copy the source list into this skill or any other always-loaded document.
 
 ## Guardrails
 

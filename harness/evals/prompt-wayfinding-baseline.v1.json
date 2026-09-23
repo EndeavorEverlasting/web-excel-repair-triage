@@ -1,0 +1,42 @@
+{
+  "schema_version": "prompt-wayfinding-baseline-eval/v1",
+  "capability_id": "skill-evaluation",
+  "owner": "P76",
+  "purpose": "Deterministic static route-corpus baseline for repository prompt/owner wayfinding. Establishes measurable before-state retrieval cost without mutating product routing runtime.",
+  "target": {
+    "router": "harness/CONTEXT.md",
+    "default_entrypoints": ["AGENTS.md", "harness/CONTEXT.md"],
+    "context_contract": "harness/contracts/context-architecture.v1.json",
+    "token_estimator": "scripts.validate_context_architecture.approx_tokens",
+    "prior_art_command": "python scripts/prompt_registry_ops.py prior-art --query \"<terms>\"",
+    "donor_contract": "harness/contracts/operant-external-resource-intake.v1.json"
+  },
+  "fixtures": "harness/evals/fixtures/prompt-wayfinding-route-cases.v1.json",
+  "result_artifact": "Outputs/prompt-wayfinding-baseline.json",
+  "metrics": {
+    "correct_first_owner_min": 1.0,
+    "route_corpus_deterministic": true,
+    "max_route_hops_from_default_for_one_hop_cases": 1,
+    "max_grep_glob_search_count_for_one_hop_cases": 0,
+    "default_load_within_hard_char_budgets": true,
+    "wrong_adjacent_owner_count_max": 0
+  },
+  "required_case_kinds": ["positive", "historical_risk", "boundary"],
+  "retrieval_cost_metrics": [
+    "correct_first_owner",
+    "files_opened_before_owner_resolution",
+    "grep_glob_free_text_search_count",
+    "route_hops_from_default_load",
+    "approx_chars_and_tokens_loaded",
+    "time_or_tool_call_count_when_runtime_capture_supports_it",
+    "wrong_adjacent_owner_selected"
+  ],
+  "invariants": [
+    "every non-boundary case names exactly one expected primary owner",
+    "one-hop donor/prior-art route phrases are present in harness/CONTEXT.md",
+    "the default two-file load stays inside hard character budgets",
+    "the same repository head yields the same route corpus and metrics",
+    "static route proof does not claim model-general runtime behavior"
+  ],
+  "proof_ceiling": "Deterministic static mapping of representative wayfinding queries to expected owners, one-hop router phrase presence, context-budget fit, and recorded MiMo/OpenCode pre-change observation at one exact repository head. It does not prove live agent tool-call counts, model-general retrieval cost, human preference, or production acceptance."
+}
