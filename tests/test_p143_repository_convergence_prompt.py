@@ -25,13 +25,9 @@ P143_SYNONYMS = (
     "destination repository plan",
     "typed bootstrap manifest",
 )
-EVIDENCE_LADDER = (
-    "operator_proposed",
-    "planner_selected",
-    "provider_verified",
-    "operator_approved",
-    "execution_authorization",
-)
+PROPOSAL_STATES = ("operator_proposed", "planner_selected")
+PROVIDER_STATES = ("UNVERIFIED", "AVAILABLE", "EXISTS_OWNED", "EXISTS_CONFLICT")
+AUTHORITY_STATES = ("operator_approved", "execution_authorization")
 
 
 def _load_p143() -> dict:
@@ -69,10 +65,11 @@ class RepositoryConvergenceRoutingTests(unittest.TestCase):
         self.assertIn("A and B", p143["useWhen"])
         self.assertIn("typed P55 bootstrap manifest", p143["keywords"])
 
-    def test_case_c_already_planned_manifest_returns_to_p55(self) -> None:
+    def test_case_c_validated_manifest_routes_by_typed_destination_state(self) -> None:
         p143 = _load_p143()
-        self.assertIn("after a typed P55 manifest already exists", p143["useWhen"])
-        self.assertIn("route to P55", p143["useWhen"])
+        self.assertIn("validated p55-bootstrap-handoff/v1 manifest already exists", p143["useWhen"])
+        self.assertIn("P55_CREATE routes to P55", p143["useWhen"])
+        self.assertIn("INTEGRATE_EXISTING routes to P07/P16/P21", p143["useWhen"])
         self.assertEqual(build_prompt_kit.SYNONYMS["bootstrap"], "P55")
 
     def test_case_d_ordinary_cross_repo_integration_is_not_p143(self) -> None:
@@ -81,10 +78,12 @@ class RepositoryConvergenceRoutingTests(unittest.TestCase):
         p143 = _load_p143()
         self.assertIn("ordinary one-repo integration or PR merge (P16/P21/P07)", p143["useWhen"])
 
-    def test_case_e_uncertain_destination_stays_operator_proposed(self) -> None:
+    def test_case_e_uncertain_destination_keeps_state_dimensions_separate(self) -> None:
         p143 = _load_p143()
         self.assertIn("operator_proposed", p143["useWhen"])
-        self.assertIn("operator_proposed is never promoted to proven", p143["proofGate"])
+        self.assertIn("provider", p143["useWhen"])
+        self.assertIn("authority", p143["useWhen"])
+        self.assertIn("provider evidence never creates authorization", p143["proofGate"])
 
 
     def test_generated_search_preserves_p55_p143_precedence_without_prefix_leakage(self) -> None:
@@ -135,14 +134,10 @@ class RepositoryConvergenceRoutingTests(unittest.TestCase):
 
 
 class TokenCorridorEvidenceStateTests(unittest.TestCase):
-    def test_tokencorridor_name_remains_operator_proposed(self) -> None:
+    def test_operator_proposed_name_remains_proposal_not_provider_fact(self) -> None:
         p143 = _load_p143()
         copy_content = p143["copyContent"]
-        self.assertIn("TokenCorridor", copy_content)
-        self.assertIn(
-            "operator_proposed: named by the operator; not a provider fact",
-            copy_content,
-        )
+        self.assertIn("operator_proposed: named by the operator; not a provider fact", copy_content)
 
     def test_proposal_provider_and_authority_states_are_orthogonal(self) -> None:
         p143 = _load_p143()
@@ -160,20 +155,14 @@ class TokenCorridorEvidenceStateTests(unittest.TestCase):
             p143["copyContent"],
         )
         self.assertIn(
-            "donor public visibility does not imply destination public visibility",
+            "provider evidence never creates authorization",
             p143["proofGate"],
         )
 
-    def test_p55_fields_not_claimed_resolved_while_authorization_outstanding(self) -> None:
+    def test_p55_create_route_does_not_mint_mutation_authority(self) -> None:
         p143 = _load_p143()
-        self.assertIn(
-            "Claim all P55 fields are resolved while execution_authorization is unresolved",
-            p143["copyContent"],
-        )
-        self.assertIn(
-            "P55 fields are not reported fully resolved while authorization is outstanding",
-            p143["proofGate"],
-        )
+        self.assertIn("P55 must still enforce operator_approved and execution_authorization before mutation", p143["copyContent"])
+        self.assertIn("provider evidence never creates authorization", p143["proofGate"])
 
 
 class P55OwnershipBoundaryTests(unittest.TestCase):
