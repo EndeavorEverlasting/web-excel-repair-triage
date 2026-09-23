@@ -1,6 +1,8 @@
 from __future__ import annotations
 
 import json
+import subprocess
+import tempfile
 import unittest
 
 import build_prompt_kit
@@ -9,19 +11,19 @@ from pathlib import Path
 from scripts import build_prompt_kit_registry
 
 ROOT = Path(__file__).resolve().parents[1]
+JS = ROOT / "docs" / "prompt-kit.js"
 BASE_REGISTRY = ROOT / "docs" / "prompts.json"
 REPO_LEDGER = ROOT / "registry" / "prompts" / "repository-work-ledger-prompts.v1.json"
 P143_SYNONYMS = (
     "repository convergence",
     "repo convergence",
     "multi-repo convergence",
-    "a+b to c",
+    "combine repositories",
     "donor sources",
     "convergence plan",
     "capability disposition",
     "destination repository plan",
     "typed bootstrap manifest",
-    "operator_proposed",
 )
 EVIDENCE_LADDER = (
     "operator_proposed",
@@ -83,6 +85,53 @@ class RepositoryConvergenceRoutingTests(unittest.TestCase):
         p143 = _load_p143()
         self.assertIn("operator_proposed", p143["useWhen"])
         self.assertIn("operator_proposed is never promoted to proven", p143["proofGate"])
+
+
+    def test_generated_search_preserves_p55_p143_precedence_without_prefix_leakage(self) -> None:
+        js = JS.read_text(encoding="utf-8")
+        start = js.index("function normalizeSearchText")
+        end = js.index("function promptSequenceValue")
+        helpers = js[start:end]
+        prompts = {
+            prompt["id"]: prompt
+            for prompt in build_prompt_kit_registry.load_prompt_kit_registry()
+            if prompt["id"] in {"P55", "P143"}
+        }
+        fields = (
+            "id", "seq", "name", "type", "class", "useWhen",
+            "sprintRole", "proofGate", "copyContent", "keywords",
+        )
+        payload = [
+            {key: prompts[prompt_id].get(key) for key in fields}
+            for prompt_id in ("P55", "P143")
+        ]
+        script = (
+            "var SYNONYMS=" + json.dumps(build_prompt_kit.SYNONYMS) + ";\n"
+            "function promptSequenceValue(p){var raw=String((p&&p.seq)||((p&&p.id)||''));"
+            "var n=parseInt(raw.replace(/\\D/g,''),10);return isNaN(n)?Number.MAX_SAFE_INTEGER:n}\n"
+            + helpers
+            + "\nvar prompts=" + json.dumps(payload) + ";\n"
+            + "var queries=['repository convergence','combine repositories','bootstrap'];\n"
+            + "var out={};queries.forEach(function(q){out[q]=filterPromptsForQuery(prompts,q).map(function(p){return p.id})});\n"
+            + "var synonymOnly={};['operator','cleanup','cursor','closeout','compiler','cluster','consolidate']"
+            + ".forEach(function(q){synonymOnly[q]=synonymPromptIdsForQuery(q)});\n"
+            + "process.stdout.write(JSON.stringify({ranked:out,synonymOnly:synonymOnly}));\n"
+        )
+        with tempfile.TemporaryDirectory() as tmp:
+            script_path = Path(tmp) / "p143_search_regression.js"
+            script_path.write_text(script, encoding="utf-8")
+            completed = subprocess.run(
+                ["node", str(script_path)],
+                check=True,
+                capture_output=True,
+                text=True,
+            )
+        result = json.loads(completed.stdout)
+        self.assertEqual(result["ranked"]["repository convergence"][0], "P143")
+        self.assertEqual(result["ranked"]["combine repositories"][0], "P143")
+        self.assertEqual(result["ranked"]["bootstrap"][0], "P55")
+        for query, ids in result["synonymOnly"].items():
+            self.assertNotIn("P143", ids, f"{query!r} must not leak through a short P143 synonym")
 
 
 class TokenCorridorEvidenceStateTests(unittest.TestCase):
