@@ -26,6 +26,7 @@ Human-facing Operant releases. Git commit/artifact identity remains the forensic
 - fix(prompt-kit): avoid accidental P65 review ownership (`e07e721d`)
 - fix(prompt-kit): close P111 specialized evidence dependencies (`c9771824`)
 - fix(prompt-kit): converge P55 repository bootstrap [p55-recovery-generated] (`cf5d6ab6`)
+- fix(p143): converge reviewed repository planner contracts (`09f1d675`)
 
 ## 0.10.1 - 2026-09-19
 
