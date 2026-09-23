@@ -1,0 +1,45 @@
+name: P143 convergence canonical generator
+
+on:
+  push:
+    branches:
+      - converge/p143-review-contracts-20260923
+
+permissions:
+  contents: write
+
+jobs:
+  regenerate:
+    runs-on: ubuntu-latest
+    concurrency:
+      group: p143-convergence-generator
+      cancel-in-progress: false
+    steps:
+      - name: Checkout owned convergence branch
+        uses: actions/checkout@v7
+        with:
+          ref: converge/p143-review-contracts-20260923
+          fetch-depth: 0
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.11"
+      - name: Rebuild canonical Prompt Kit output
+        run: python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html
+      - name: Validate P143 and handoff contracts
+        run: |
+          python scripts/validate_prompt_semantic_coverage.py --summary
+          python -m unittest tests.test_p143_repository_convergence_prompt tests.test_p55_bootstrap_handoff -v
+          python scripts/prompt_registry_ops.py validate
+          python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html --check
+          git diff --check
+      - name: Commit generated parity and remove temporary generator
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git rm -- .github/workflows/p143-convergence-canonical-generator.yml
+          git add -- web/prompt-kit/index.html
+          git diff --cached --check
+          git commit -m "chore(p143): regenerate Prompt Kit parity"
+          git push origin HEAD:converge/p143-review-contracts-20260923

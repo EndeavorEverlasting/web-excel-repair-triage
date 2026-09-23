@@ -140,6 +140,38 @@
         "tests/test_prompt_semantic_coverage.py",
         "tests/test_prompt_quality_history.py"
       ]
+    },
+    {
+      "migration_id": "p79-add-p143-008",
+      "path": "registry/prompts/repository-work-ledger-prompts.v1.json",
+      "from_git_blob_sha1": "1c2efa7a40fec62ca8eb00327e2ea318fc81ef15",
+      "to_git_blob_sha1": "3bdad1e03b1ddf1ce55ad1e936e4e3775a4d26d7",
+      "affected_prompt_ids": [
+        "P143"
+      ],
+      "change_kind": "strengthening",
+      "effective_identity_change": "preserve_canonical",
+      "rationale": "P143 owns multi-repository A+B→C convergence planning and typed P55 bootstrap handoff. Existing owners cover single-repo bootstrap (P55), single-repo integration/mainline (P16/P21/P07), and artifact sync (P111)—none own donor-floor inventory with capability dispositions, collision/phase maps, destination evidence-state ladders, or the pre-create convergence plan artifact.",
+      "focused_tests": [
+        "tests/test_prompt_semantic_coverage.py",
+        "tests/test_prompt_quality_history.py"
+      ]
+    },
+    {
+      "migration_id": "p79-intentional-change-p143-010",
+      "path": "registry/prompts/repository-work-ledger-prompts.v1.json",
+      "from_git_blob_sha1": "3bdad1e03b1ddf1ce55ad1e936e4e3775a4d26d7",
+      "to_git_blob_sha1": "e1d571b5490a68292c1953dd7b1ecf6ee28fe96c",
+      "affected_prompt_ids": [
+        "P143"
+      ],
+      "change_kind": "intentional_semantic_change",
+      "effective_identity_change": "preserve_canonical",
+      "rationale": "Repair P143 review defects by separating provider state from authority, routing existing destinations away from P55 creation, binding the typed P55 handoff contract, and making durable plan ownership executable without granting donor runtime mutation.",
+      "focused_tests": [
+        "tests/test_prompt_semantic_coverage.py",
+        "tests/test_prompt_quality_history.py"
+      ]
     }
   ]
 }

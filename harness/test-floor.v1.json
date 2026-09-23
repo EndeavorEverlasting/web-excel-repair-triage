@@ -37,6 +37,7 @@
     "tests/test_p123_source_coverage_eval_prompt.py",
     "tests/test_p123_source_document_quality_prompt.py",
     "tests/test_p123_youtube_ingestion_behavior_eval_prompt.py",
+    "tests/test_p143_repository_convergence_prompt.py",
     "tests/test_p65_staged_routing_prompt.py",
     "tests/test_p67_source_faithfulness_eval_prompt.py",
     "tests/test_permissioned_repository_polling_prompt.py",
@@ -68,7 +69,8 @@
     "tests/test_test_floor_evolution_prompt.py",
     "tests/test_ux_design_prompt_suite.py",
     "tests/test_repository_drive_artifact_synchronizer_prompt.py",
-    "tests/test_p55_repository_bootstrap.py"
+    "tests/test_p55_repository_bootstrap.py",
+    "tests/test_p55_bootstrap_handoff.py"
   ],
   "prompt_semantic_test_globs": [
     "tests/test_*_prompt.py",

@@ -2181,7 +2181,134 @@
         "profile_sha256": "14de21d511042fe2d414bf399b65c18230f121a081e249fb4ffb3d502a4ace46"
       },
       "profile_sha256": "ea1c3a78fa3511ca5dc951dd7b0d53dfa49a5a86927103f9a734b7e07c7cf8b1"
+    },
+    {
+      "prompt_id": "P143",
+      "profile_version": 2,
+      "canonical_prompt_hash": "97dbd7437c9a3d44013c4b4a3b87236b1336c159b7911e1c3dc71f089bf8c1b4",
+      "acceptance_commit": "e82bdd0bd80cd118904cb9bf1ae34b11f010c163",
+      "direct_assignments": [
+        {
+          "capability_id": "strength.mainline_convergence",
+          "presence": "REQUIRED",
+          "ownership": "SECONDARY",
+          "capability_relation": "GUARDS",
+          "delivery_source": "ROUTED_OWNER",
+          "evidence_refs": [
+            "registry/prompts/repository-work-ledger-prompts.v1.json",
+            "harness/contracts/prompt-strength.v1.json",
+            "harness/prompt-topology/semantic-capability-catalog.v1.json"
+          ],
+          "rationale": "P143 requires and guards a downstream mainline-convergence outcome in the plan, but P07 owns execution and default-branch integration. This preserves global capability coverage without giving P143 primary execution ownership."
+        },
+        {
+          "capability_id": "strength.plan_durability",
+          "presence": "REQUIRED",
+          "ownership": "PRIMARY",
+          "capability_relation": "IMPLEMENTS",
+          "delivery_source": "CANONICAL_BODY",
+          "evidence_refs": [
+            "registry/prompts/repository-work-ledger-prompts.v1.json",
+            "harness/prompt-topology/semantic-capability-catalog.v1.json"
+          ],
+          "rationale": "P143 must persist a durable convergence plan artifact with dispositions, evidence states, and successor handoff so later sessions resume without reconstruction; plan durability is load-bearing for the P55/P07 sequence."
+        },
+        {
+          "capability_id": "strength.upstream_provenance",
+          "presence": "SUPPORT",
+          "ownership": "SECONDARY",
+          "capability_relation": "IMPLEMENTS",
+          "delivery_source": "CANONICAL_BODY",
+          "evidence_refs": [
+            "registry/prompts/repository-work-ledger-prompts.v1.json"
+          ],
+          "rationale": "P143 records donor floors and pinned donor identity as provenance inputs to C without claiming global primary ownership of provenance."
+        },
+        {
+          "capability_id": "strength.lane_isolation",
+          "presence": "SUPPORT",
+          "ownership": "SECONDARY",
+          "capability_relation": "IMPLEMENTS",
+          "delivery_source": "CANONICAL_BODY",
+          "evidence_refs": [
+            "registry/prompts/repository-work-ledger-prompts.v1.json"
+          ],
+          "rationale": "P143 plans phases and the first vertical slice in isolation from donor mutation and from P55 creation, keeping planning a non-mutating lane."
+        },
+        {
+          "capability_id": "strength.evidence_state_integrity",
+          "presence": "REQUIRED",
+          "ownership": "SECONDARY",
+          "capability_relation": "GUARDS",
+          "delivery_source": "CANONICAL_BODY",
+          "evidence_refs": [
+            "harness/prompt-topology/prompt-capability-profiles.v1.json",
+            "registry/prompts/repository-work-ledger-prompts.v1.json",
+            "harness/contracts/p55-bootstrap-handoff.v1.json"
+          ],
+          "rationale": "P143 guards orthogonal destination proposal, provider, and authority states. AVAILABLE, EXISTS_OWNED, and execution authorization remain mechanically distinct; provider truth cannot mint permission."
+        },
+        {
+          "capability_id": "prompt.identity",
+          "presence": "SUPPORT",
+          "ownership": "SECONDARY",
+          "capability_relation": "ROUTES_TO",
+          "delivery_source": "CANONICAL_BODY",
+          "evidence_refs": [
+            "harness/prompt-topology/semantic-capability-catalog.v1.json",
+            "build_prompt_kit.py"
+          ],
+          "rationale": "P143 advertises a distinct prompt identity and routes convergence terms to itself while routing simple bootstrap to P55 without absorbing those identities."
+        },
+        {
+          "capability_id": "execution.implementation",
+          "presence": "AWARE",
+          "ownership": "NONE",
+          "capability_relation": "ROUTES_TO",
+          "delivery_source": "ROUTED_OWNER",
+          "evidence_refs": [
+            "harness/prompt-topology/prompt-capability-profiles.v1.json"
+          ],
+          "rationale": "P143 does not execute implementation; it is aware of and routes creation to P55 and post-create convergence to P07."
+        },
+        {
+          "capability_id": "process.recurring",
+          "presence": "AWARE",
+          "ownership": "NONE",
+          "capability_relation": "ROUTES_TO",
+          "delivery_source": "ROUTED_OWNER",
+          "evidence_refs": [
+            "harness/prompt-topology/prompt-capability-profiles.v1.json"
+          ],
+          "rationale": "Recurring process hardening remains owned elsewhere; P143 only surfaces recurrence risks discovered during dispositioning."
+        }
+      ],
+      "inherited_sources": [
+        {
+          "source_id": "prompt-strength-shared-policy",
+          "source_version": "v1",
+          "source_hash": "e249da6706d86733cd03a046ef9e16552a3ae87dc8cc644281c5c1fd9c08c796"
+        }
+      ],
+      "semantic_dependency_fingerprint": "2af9450d2dbe072848044df22a90e88584ad9771f39a5fb4323ac3d260f5e323",
+      "evidence_refs": [
+        "build_prompt_kit.py",
+        "harness/contracts/p55-bootstrap-handoff.v1.json",
+        "harness/contracts/prompt-strength.v1.json",
+        "harness/prompt-topology/prompt-capability-profiles.v1.json",
+        "harness/prompt-topology/semantic-capability-catalog.v1.json",
+        "registry/prompts/repository-work-ledger-prompts.v1.json",
+        "scripts/p55_bootstrap_handoff.py",
+        "tests/test_p143_repository_convergence_prompt.py",
+        "tests/test_p55_bootstrap_handoff.py"
+      ],
+      "profile_status": "ACCEPTED",
+      "prior_profile_ref": {
+        "profile_version": 1,
+        "profile_sha256": "cd3bc4031c94093af9830c9dad0b4daf10980551ab236accd179e359140ee27e"
+      },
+      "profile_sha256": "a9ae6be8f2b8e5224a5cbb4df23e9a6ae3f4db3174466c86e5ff7f69d1dc4a14"
     }
   ],
-  "profile_count": 63
+  "profile_count": 64
 }

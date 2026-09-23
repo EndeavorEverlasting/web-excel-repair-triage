@@ -6,8 +6,8 @@
   "operational_loader": "scripts.build_prompt_kit_registry.load_prompt_registry",
   "semantic_profile_owner": "harness/prompt-topology/prompt-capability-profiles.v1.json",
   "override_registry": "registry/prompts/prompt-overrides.v1.json",
-  "operational_prompt_count": 141,
-  "accepted_profile_count": 62,
+  "operational_prompt_count": 142,
+  "accepted_profile_count": 63,
   "known_unprofiled_prompt_ids": [
     "P62",
     "P63",
