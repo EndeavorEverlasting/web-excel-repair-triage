@@ -1,10 +1,10 @@
 # AFK Factory Interface Convergence Sprint Map
 
-**Shared convergence ID:** `AFK-FACTORY-CONVERGENCE-2026-09-22`  
-**Repository:** `EndeavorEverlasting/web-excel-repair-triage`  
-**Repository role:** Prompt Kit / AFK Agent Flow — human↔AFK interface foundation  
-**Planning floor:** `main@c97718247e7b14544d198035dd3cdc07725545a8`  
-**Canonical cross-repository plan:** `EndeavorEverlasting/TokenCorridor` → `plans/active/AFK-FACTORY-CONVERGENCE.plan.json` (TokenCorridor PR #1)  
+**Shared convergence ID:** `AFK-FACTORY-CONVERGENCE-2026-09-22`
+**Repository:** `EndeavorEverlasting/web-excel-repair-triage`
+**Repository role:** Prompt Kit / AFK Agent Flow — human↔AFK interface foundation
+**Planning floor:** `main@c97718247e7b14544d198035dd3cdc07725545a8`
+**Canonical cross-repository plan:** `EndeavorEverlasting/TokenCorridor` → `plans/active/AFK-FACTORY-CONVERGENCE.plan.json` (TokenCorridor PR #1)
 **AgentSwitchboard companion plan:** `ASB-2026-09-TOKEN-CORRIDOR-COMPETITIVE-ARCHITECTURE` (AgentSwitchboard PR #346)
 
 ## 1. Product boundary
@@ -81,8 +81,8 @@ stable correlation identity
 
 ### State dimensions must remain orthogonal
 
-**Evidence:** how a fact/value is known.  
-**Authority:** whether an action is permitted and by what grant/policy.  
+**Evidence:** how a fact/value is known.
+**Authority:** whether an action is permitted and by what grant/policy.
 **Execution:** what happened when an action was attempted.
 
 No downstream requirement may silently promote one dimension into another.
@@ -138,8 +138,8 @@ Durable owners include:
 
 ### Existing visual doctrine remains binding
 
-Semantic graph/state is canonical.  
-Projection coordinates are derived.  
+Semantic graph/state is canonical.
+Projection coordinates are derived.
 The viewer is read-only presentation.
 
 Do not infer semantic relations from 3D proximity or mutate canonical state because a visual layout looks better.
