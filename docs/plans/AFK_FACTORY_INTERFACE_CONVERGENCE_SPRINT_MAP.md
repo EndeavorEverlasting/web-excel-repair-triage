@@ -285,7 +285,7 @@ The unresolved Repository Grill product behavior is:
 
 ### Identity decision gate
 
-Do **not** allocate a new prompt ID merely from this plan. After PK-C0 establishes the refreshed Prompt Kit registry floor, run prompt-identity/overlap review against P04/P14/P65/P95/P96/P98 and current external-skill routing. The result must either:
+This is a **blocking PK-C0.5 phase**, not optional follow-up. Do **not** allocate a new prompt ID merely from this plan. After PK-C0 establishes the refreshed Prompt Kit registry floor, the Prompt Kit product-identity/privacy lane must run prompt-identity/overlap review against P04/P14/P65/P95/P96/P98 and current external-skill routing before PK-C1 begins. The result must either:
 
 - strengthen an existing canonical owner without breaking its established job; or
 - register one distinct Repository Grill identity with focused routing/privacy/promotion regression tests.
@@ -297,8 +297,25 @@ For the Private Tutor requirement, the same review must decide whether private/l
 ### PK-C0 — close current Prompt Kit floor
 Reconcile the active P55/P66/P143/Evidence-Spine/findability owners and integrate one current floor.
 
+### PK-C0.5 — resolve Private Tutor + Repository Grill identity/storage contract
+
+**Owner:** Prompt Kit product-identity/privacy lane.  
+**Dependency:** PK-C0 exact integrated Prompt Kit main floor.  
+**Canonical output:** `docs/plans/PROMPT_TUTOR_GRILL_IDENTITY_DECISION.md`.
+
+Execute:
+
+1. run current prior-art/identity review for **private local Socratic tutor** against P96/P98 plus P04/P14/P95 and current upstream teaching resources;
+2. run current prior-art/identity review for **Repository Grill → repo upgrade** against P65/P96 plus P04/P14/P95 and the tracked external `grill-me` resource;
+3. decide for each requirement whether to STRENGTHEN an existing owner or ADD a distinct identity, with exact ownership rationale;
+4. for the Tutor, choose a private/local persistence owner that keeps learner state, mistakes, mastery history, and reasoning outside repository-tracked truth;
+5. for Repository Grill, bind candidate-upgrade promotion to `conversation_repository_promotion_contract` and name the smallest canonical repository targets it may update;
+6. write the decision artifact above with routing changes, owned/forbidden scope, focused privacy/promotion/search regressions, lifecycle disposition, and exact implementation successor.
+
+**Validation/exit gate:** the decision artifact is tracked on the refreshed floor; both operator intents have one unambiguous canonical owner/route and storage/promotion boundary; no unresolved overlap with P65/P96/P98 remains; any ADD/STRENGTHEN implementation is explicitly queued with focused regressions; and PK-C1 remains blocked until this decision is integrated.
+
 ### PK-C1 — freeze interface-transition contract
-On the integrated floor, define the minimal typed interface state that TokenCorridor consumes.
+**Dependency:** PK-C0.5 integrated. On that resolved prompt-identity floor, define the minimal typed interface state that TokenCorridor consumes.
 
 ### PK-C2 — machine continuation proof
 Prove a non-user-only successor can leave Prompt Kit without operator prompt/chat/payload scheduling.
@@ -313,7 +330,7 @@ Add a renderer-neutral adapter that converts the cross-repository typed artifact
 
 Prompt Kit's repository-local convergence is ready to join TokenCorridor when:
 
-- current active prompt identities are unambiguous;
+- current active prompt identities are unambiguous, including an integrated PK-C0.5 decision for Private Tutor and Repository Grill ownership/routing;
 - the deterministic floor passes at the exact integrated head;
 - interface/evidence/authority/execution dimensions are mechanically distinct;
 - successor transitions are machine-addressable;
@@ -329,4 +346,4 @@ This plan is repository-local convergence intent. It does not prove TokenCorrido
 
 Owner: Prompt Kit closeout lane.
 
-Refresh current provider/main truth, reconcile the active #623/#626/#632/#600/#630 ownership stack, and publish one integrated Prompt Kit floor. Then update this plan with that exact main SHA before PK-C1 begins.
+Refresh current provider/main truth, reconcile the active #623/#626/#632/#600/#630 ownership stack, and publish one integrated Prompt Kit floor. Then execute PK-C0.5: run prior-art/identity review for the Private Tutor and Repository Grill, write and integrate `docs/plans/PROMPT_TUTOR_GRILL_IDENTITY_DECISION.md`, and only then begin PK-C1.
