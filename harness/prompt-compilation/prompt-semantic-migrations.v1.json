@@ -124,6 +124,22 @@
         "tests/test_prompt_semantic_coverage.py",
         "tests/test_prompt_quality_history.py"
       ]
+    },
+    {
+      "migration_id": "p79-no-capability-change-p55-008",
+      "path": "docs/prompts.json",
+      "from_git_blob_sha1": "aa4dd85a41f374db82d7800bc0ecdf78f62803cd",
+      "to_git_blob_sha1": "c963a857a8dc72ab5df8c99c2b3524c737271206",
+      "affected_prompt_ids": [
+        "P55"
+      ],
+      "change_kind": "strengthening",
+      "effective_identity_change": "preserve_canonical",
+      "rationale": "Strengthen the existing P55 repository bootstrap owner for context recovery, provider-neutral execution, one manifest-status vocabulary, explicit pre-mutation writer isolation, and execution-surface-aware continuation without changing capability ownership.",
+      "focused_tests": [
+        "tests/test_prompt_semantic_coverage.py",
+        "tests/test_prompt_quality_history.py"
+      ]
     }
   ]
 }
