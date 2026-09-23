@@ -4,6 +4,9 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
+import re
+import subprocess
 from pathlib import Path
 from typing import Any
 
@@ -39,6 +42,75 @@ def _bool(value: Any, label: str) -> bool:
     return value
 
 
+def _repo_path(value: Any, label: str) -> tuple[str, Path]:
+    relative = _text(value, label).replace("\\", "/")
+    if relative.startswith("/") or relative.startswith("../") or "/../" in f"/{relative}/":
+        raise HandoffError(f"{label} must stay inside the repository")
+    full = (ROOT / relative).resolve()
+    try:
+        full.relative_to(ROOT.resolve())
+    except ValueError as exc:
+        raise HandoffError(f"{label} escapes the repository") from exc
+    return relative, full
+
+
+def _tracked(relative: str) -> bool:
+    proc = subprocess.run(
+        ["git", "ls-files", "--error-unmatch", "--", relative],
+        cwd=ROOT,
+        text=True,
+        stdout=subprocess.DEVNULL,
+        stderr=subprocess.DEVNULL,
+        check=False,
+    )
+    return proc.returncode == 0
+
+
+def _validate_plan_artifact(plan: dict[str, Any], contract: dict[str, Any]) -> None:
+    for field in ("repository", "ref", "path", "write_authority"):
+        _text(plan.get(field), f"plan_artifact.{field}")
+    if plan["write_authority"] not in contract["plan_write_authorities"]:
+        raise HandoffError(f"invalid plan_artifact.write_authority: {plan['write_authority']!r}")
+    proof = plan.get("proof")
+    if not isinstance(proof, dict):
+        raise HandoffError("plan_artifact.proof must be an object")
+    kind = _text(proof.get("kind"), "plan_artifact.proof.kind")
+    evidence_relative, evidence_full = _repo_path(
+        proof.get("evidence_path"), "plan_artifact.proof.evidence_path"
+    )
+    if not evidence_full.is_file() or not _tracked(evidence_relative):
+        raise HandoffError("plan_artifact proof evidence must exist and be tracked")
+
+    if kind == "LOCAL_TRACKED_FILE":
+        if plan["repository"] != ".":
+            raise HandoffError("LOCAL_TRACKED_FILE requires plan_artifact.repository '.'")
+        path_relative, path_full = _repo_path(plan["path"], "plan_artifact.path")
+        if evidence_relative != path_relative:
+            raise HandoffError("LOCAL_TRACKED_FILE evidence_path must equal plan_artifact.path")
+        if not path_full.is_file() or not _tracked(path_relative):
+            raise HandoffError("LOCAL_TRACKED_FILE plan artifact must exist and be tracked")
+        if not os.access(path_full, os.W_OK):
+            raise HandoffError("LOCAL_TRACKED_FILE plan artifact is not writable")
+        return
+
+    if kind == "PROVIDER_RECEIPT":
+        receipt = _load(evidence_full)
+        if receipt.get("schema_version") != contract["provider_receipt_schema"]:
+            raise HandoffError("unsupported repository write receipt schema")
+        for field in ("repository", "ref", "path", "observed_revision"):
+            _text(receipt.get(field), f"provider_receipt.{field}")
+        if not re.fullmatch(r"[0-9a-f]{40}", receipt["observed_revision"]):
+            raise HandoffError("provider_receipt.observed_revision must be a 40-hex commit")
+        if receipt.get("writable") is not True:
+            raise HandoffError("provider receipt does not prove writable=true")
+        for field in ("repository", "ref", "path"):
+            if receipt[field] != plan[field]:
+                raise HandoffError(f"provider receipt {field} does not match plan_artifact")
+        return
+
+    raise HandoffError(f"unsupported plan_artifact.proof.kind: {kind!r}")
+
+
 def validate_manifest(manifest: dict[str, Any]) -> dict[str, Any]:
     contract = _load(CONTRACT_PATH)
     if manifest.get("schema_version") != contract["manifest_schema"]:
@@ -53,10 +125,7 @@ def validate_manifest(manifest: dict[str, Any]) -> dict[str, Any]:
     plan = manifest["plan_artifact"]
     if not isinstance(plan, dict):
         raise HandoffError("plan_artifact must be an object")
-    for field in ("repository", "ref", "path", "write_authority"):
-        _text(plan.get(field), f"plan_artifact.{field}")
-    if plan["write_authority"] not in contract["plan_write_authorities"]:
-        raise HandoffError(f"invalid plan_artifact.write_authority: {plan['write_authority']!r}")
+    _validate_plan_artifact(plan, contract)
 
     donors = manifest["donors"]
     if not isinstance(donors, list) or len(donors) < 2:
@@ -66,6 +135,8 @@ def validate_manifest(manifest: dict[str, Any]) -> dict[str, Any]:
             raise HandoffError(f"donors[{index}] must be an object")
         for field in ("repository", "ref", "sha"):
             _text(donor.get(field), f"donors[{index}].{field}")
+        if not re.fullmatch(r"[0-9a-f]{40}", donor["sha"]):
+            raise HandoffError(f"donors[{index}].sha must be a pinned 40-hex commit")
 
     destination = manifest["destination"]
     if not isinstance(destination, dict):
@@ -92,11 +163,17 @@ def validate_manifest(manifest: dict[str, Any]) -> dict[str, Any]:
     dispositions = manifest["capability_dispositions"]
     if not isinstance(dispositions, list) or not dispositions:
         raise HandoffError("capability_dispositions must be a non-empty array")
+    seen_capabilities: set[str] = set()
     for index, item in enumerate(dispositions):
         if not isinstance(item, dict):
             raise HandoffError(f"capability_dispositions[{index}] must be an object")
-        _text(item.get("capability"), f"capability_dispositions[{index}].capability")
-        _text(item.get("disposition"), f"capability_dispositions[{index}].disposition")
+        capability = _text(item.get("capability"), f"capability_dispositions[{index}].capability")
+        disposition = _text(item.get("disposition"), f"capability_dispositions[{index}].disposition")
+        if disposition not in contract["capability_disposition_values"]:
+            raise HandoffError(f"invalid capability disposition: {disposition!r}")
+        if capability in seen_capabilities:
+            raise HandoffError(f"duplicate capability disposition: {capability}")
+        seen_capabilities.add(capability)
 
     route = _text(manifest["route"], "route")
     next_owner = _text(manifest["next_owner"], "next_owner")
@@ -126,7 +203,7 @@ def validate_manifest(manifest: dict[str, Any]) -> dict[str, Any]:
         "provider_state": provider_state,
         "operator_approved": approved,
         "execution_authorization": authorized,
-        "mutation_authorized": approved and authorized,
+        "mutation_authorized": route != "BLOCKED" and approved and authorized,
     }
 
 
