@@ -649,7 +649,7 @@
       "from_profile_version": 1,
       "to_profile_version": 2,
       "from_profile_sha256": "cd3bc4031c94093af9830c9dad0b4daf10980551ab236accd179e359140ee27e",
-      "to_profile_sha256": "9577e330a0387c1bc331af8f2f6d655dbf385c680101d2ef6ca120eef186565b",
+      "to_profile_sha256": "a9ae6be8f2b8e5224a5cbb4df23e9a6ae3f4db3174466c86e5ff7f69d1dc4a14",
       "capability_deltas": [
         {
           "capability_id": "execution.implementation",
@@ -713,7 +713,7 @@
             "ownership": "PRIMARY"
           },
           "after": {
-            "presence": "SUPPORT",
+            "presence": "REQUIRED",
             "ownership": "SECONDARY"
           }
         },
@@ -760,7 +760,7 @@
       "source_history_from_git_blob_sha1": "3bdad1e03b1ddf1ce55ad1e936e4e3775a4d26d7",
       "source_history_to_git_blob_sha1": "e1d571b5490a68292c1953dd7b1ecf6ee28fe96c",
       "coverage_before_fingerprint": "91d508484b91fc32fb30b0917904336557395914025b32fdb8cd3f089be773e6",
-      "coverage_after_fingerprint": "f7c443d3e32fdbfe58444bd7ff4718867f1f83b9ca2c36b4d488c13ff507c183",
+      "coverage_after_fingerprint": "91d508484b91fc32fb30b0917904336557395914025b32fdb8cd3f089be773e6",
       "acceptance_state": "ACCEPTED",
       "prior_profile_snapshot": {
         "prompt_id": "P143",
