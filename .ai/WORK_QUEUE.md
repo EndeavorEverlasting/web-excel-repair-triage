@@ -333,16 +333,16 @@ Canonical terminal action: none; no safe actionable work remains
 
 ## TRQ-021 — P55 repository bootstrap recovery and mainline convergence
 
-- **Status:** IN_PROGRESS
+- **Status:** DONE
 - **Priority:** P1
 - **Owner:** p55-repository-bootstrap-recovery-20260922
-- **Branch / PR:** `feat/p55-provider-neutral-repo-bootstrap-20260920` / #623 open
+- **Branch / PR:** `feat/p55-provider-neutral-repo-bootstrap-20260920` / #623 merged as `5e129012221f3108e03bda129084b616e8ffd50b`
 - **Scope:** reconcile the existing P55 provider-neutral repository bootstrap strengthening onto current main; repair REMOTE_ONLY continuation and identity-manifest status vocabulary; regenerate P55 lifecycle/profile/history state from current canonical authority; preserve current P65/test-floor/generated-site state; run exact-head deterministic/provider proof; integrate the exact green result; then close stale donor PR #367
 - **Forbidden:** new P55 prompt identity; overwriting current P65 migration/test-floor/site state; hand-editing generated Prompt Kit as source; weakening lifecycle/test-floor validators; overwriting TRQ-020 `Outputs/prompt-parallel-dispatch/manifest.json`; force-reset/force-push; closing #367 before replacement integration; claiming runtime GitHub/Entire field proof from repository CI
 - **Dependencies:** canonical plan `docs/plans/P55_REPOSITORY_BOOTSTRAP_RECOVERY_SPRINT_MAP.md`; planning floor `main@bd5136561466b31f8623ca3f9a61020cb9ced5f7`; PR #623 donor head `373019f33b0ef577443f7e56bdd441c06c203814` before plan synchronization; prompt-semantic lifecycle owner; deterministic test floor; current Prompt Kit builder
 - **References:** `docs/plans/P55_REPOSITORY_BOOTSTRAP_RECOVERY_SPRINT_MAP.md`, `docs/plans/P55_REPOSITORY_BOOTSTRAP_RECOVERY_SPRINT_PACK.md`, PR #623, PR #367, `docs/prompts.json:P55`, `scripts/prompt_registry_ops.py`, `tests/test_p55_repository_bootstrap.py`, `harness/prompt-compilation/prompt-semantic-migrations.v1.json`, `harness/prompt-topology/prompt-capability-migrations.v1.json`, `harness/prompt-topology/prompt-capability-profiles.v1.json`, `harness/test-floor.v1.json`, `web/prompt-kit/index.html`
 - **Acceptance gate:** current-main-based final P55 uses one manifest status vocabulary; REMOTE_ONLY/LOCAL_ONLY/local-root continuations are executable; lifecycle/profile/history records are regenerated from final current-main authority; focused P55 and deterministic-floor tests pass; generated site is exact; all actionable review threads are resolved with evidence; exact head is mergeable and provider checks green; #623 integrates to refreshed main; #367 closes only after replacement containment is proven
-- **Gate:** current-main recovery candidate is implemented and validated; converge its proven tree into PR #623, then require exact-head provider/review proof before merge
-- **Last proof:** plan:f83f0585ef31313165ad2c74f8553aa628e3db11 tracks the recovery map; sprint-pack:7a64e9ea9a7da6ce5363621f347b757ece74fb1b publishes the remote three-chat execution pack; historical PR #623 head `373019f33b0ef577443f7e56bdd441c06c203814` had 23 successful provider workflows plus 1 intentional skip, but that evidence predates current main and is not integration proof
-- **Next action:** refresh provider/local main, preserve dirty/separately owned work through an isolated writer lane, reconcile #623 onto current default, then rebuild the final P55 lifecycle transaction through `scripts/prompt_registry_ops.py` before running Sprint 1 validation
-- **Updated:** 2026-09-22T17:24:00Z
+- **Gate:** CLOSED — strengthened P55 is integrated on refreshed main; #623 is merged; exact-head review is green; superseded #367 is closed.
+- **Last proof:** provider recovery run `35812547079` SUCCESS; deterministic floor `42/42`; generated Prompt Kit parity PASS; exact reconciled head `c56ce33e63642dce844e31bc2fc83bca08213511` CodeRabbit SUCCESS with zero unresolved review threads; merge `5e129012221f3108e03bda129084b616e8ffd50b` equals refreshed main; authoritative P55 read-back PASS; donor PR #367 closed.
+- **Next action:** none; no safe actionable P55 recovery work remains. Future repository-bootstrap work uses integrated P55 from main.
+- **Updated:** 2026-09-23T03:06:00Z
