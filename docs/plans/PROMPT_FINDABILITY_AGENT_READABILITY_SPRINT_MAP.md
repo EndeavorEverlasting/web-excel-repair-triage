@@ -1,9 +1,9 @@
 # Prompt Findability + Agent Readability Sprint Map
 
-**Status:** TRACKED PLAN  
-**Repository:** EndeavorEverlasting/web-excel-repair-triage  
-**Planning branch:** `plan/prompt-findability-agent-readability-20260922`  
-**Planning floor:** `main@c97718247e7b14544d198035dd3cdc07725545a8`  
+**Status:** TRACKED PLAN
+**Repository:** EndeavorEverlasting/web-excel-repair-triage
+**Planning branch:** `plan/prompt-findability-agent-readability-20260922`
+**Planning floor:** `main@c97718247e7b14544d198035dd3cdc07725545a8`
 **Primary complaint:** fresh local agents spend too much context and too many grep/glob/search calls finding the prompt, skill, or owner they need.
 
 ## Operator evidence
