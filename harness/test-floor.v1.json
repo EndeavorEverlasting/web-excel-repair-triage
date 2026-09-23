@@ -82,7 +82,8 @@
     "tests/test_prompt_kit_compute_mode.py",
     "tests/test_prompt_runtime_compliance_*.py",
     "tests/test_p02_continuity_regression_matrix.py",
-    "tests/test_p55_repository_bootstrap.py"
+    "tests/test_p55_repository_bootstrap.py",
+    "tests/test_p55_bootstrap_handoff.py"
   ],
   "prompt_semantic_test_excludes": [
     "tests/test_skill_prompt_registry.py"

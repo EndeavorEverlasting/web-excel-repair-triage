@@ -247,9 +247,9 @@
     },
     {
       "prompt_id": "P07",
-      "profile_version": 1,
+      "profile_version": 2,
       "canonical_prompt_hash": "57bb9e948da82e27bc55d7fcc163522bbfd81c0ac352e7ec476554308b5f4f49",
-      "acceptance_commit": "55148914364e2988bc6096b7c8d142eca3f62c28",
+      "acceptance_commit": "343342f3f6526719e4e22210c800826b1af87539",
       "direct_assignments": [
         {
           "capability_id": "execution.implementation",
@@ -263,6 +263,21 @@
             "docs/prompts.json:P07"
           ],
           "rationale": "P07 is the canonical implementation execution owner per Prompt Strength contract"
+        },
+        {
+          "capability_id": "strength.mainline_convergence",
+          "presence": "REQUIRED",
+          "ownership": "PRIMARY",
+          "capability_relation": "IMPLEMENTS",
+          "delivery_source": "SHARED_POLICY",
+          "evidence_refs": [
+            "AGENTS.md",
+            "harness/contracts/prompt-strength.v1.json",
+            "harness/prompt-topology/semantic-capability-catalog.v1.json",
+            "tests/test_p07_effective_prompt_identity.py",
+            "tests/test_p143_repository_convergence_prompt.py"
+          ],
+          "rationale": "P07 owns bounded repository implementation and, under the shared Green Branch Integration/P07 override contract, carries an exact validated owned branch through merge into refreshed default when gates permit."
         }
       ],
       "inherited_sources": [
@@ -272,13 +287,20 @@
           "source_hash": "e249da6706d86733cd03a046ef9e16552a3ae87dc8cc644281c5c1fd9c08c796"
         }
       ],
-      "semantic_dependency_fingerprint": "f320f90b491e8fb9684d575d8d25676d2c625fbddc697cde0206c596a1a48279",
+      "semantic_dependency_fingerprint": "587831c5638c368a591b174094876630c78f203764a331b1c37ce29a10ffffc7",
       "evidence_refs": [
+        "AGENTS.md",
         "docs/prompts.json:P07",
-        "harness/contracts/prompt-strength.v1.json"
+        "harness/contracts/prompt-strength.v1.json",
+        "harness/prompt-topology/semantic-capability-catalog.v1.json",
+        "tests/test_p143_repository_convergence_prompt.py"
       ],
       "profile_status": "ACCEPTED",
-      "profile_sha256": "b9718c90d7634b35bb351b669f1e61413085cf66442ff00178dc804f251bc74b"
+      "prior_profile_ref": {
+        "profile_version": 1,
+        "profile_sha256": "b9718c90d7634b35bb351b669f1e61413085cf66442ff00178dc804f251bc74b"
+      },
+      "profile_sha256": "d8031112a1039a4e19dc627d056c7fada4d004e8aea45595acd5f1598d8ae774"
     },
     {
       "prompt_id": "P08",

@@ -14,6 +14,8 @@ ROOT = Path(__file__).resolve().parents[1]
 JS = ROOT / "docs" / "prompt-kit.js"
 BASE_REGISTRY = ROOT / "docs" / "prompts.json"
 REPO_LEDGER = ROOT / "registry" / "prompts" / "repository-work-ledger-prompts.v1.json"
+CAPABILITY_PROFILES = ROOT / "harness" / "prompt-topology" / "prompt-capability-profiles.v1.json"
+CAPABILITY_MIGRATIONS = ROOT / "harness" / "prompt-topology" / "prompt-capability-migrations.v1.json"
 P143_SYNONYMS = (
     "repository convergence",
     "repo convergence",
@@ -206,6 +208,52 @@ class P55OwnershipBoundaryTests(unittest.TestCase):
         self.assertEqual(mainline[0]["presence"], "REQUIRED")
         self.assertEqual(mainline[0]["ownership"], "SECONDARY")
         self.assertEqual(mainline[0]["capability_relation"], "GUARDS")
+
+
+class RepositoryConvergenceLifecycleTests(unittest.TestCase):
+    def test_mainline_execution_ownership_is_transferred_to_p07(self) -> None:
+        profiles = json.loads(CAPABILITY_PROFILES.read_text(encoding="utf-8"))
+        by_id = {
+            row["prompt_id"]: row
+            for row in profiles["profiles"]
+            if row.get("profile_status") == "ACCEPTED"
+        }
+        p07_mainline = [
+            item
+            for item in by_id["P07"]["direct_assignments"]
+            if item["capability_id"] == "strength.mainline_convergence"
+        ]
+        self.assertEqual(len(p07_mainline), 1)
+        self.assertEqual(p07_mainline[0]["presence"], "REQUIRED")
+        self.assertEqual(p07_mainline[0]["ownership"], "PRIMARY")
+        self.assertEqual(p07_mainline[0]["capability_relation"], "IMPLEMENTS")
+
+        migrations = json.loads(CAPABILITY_MIGRATIONS.read_text(encoding="utf-8"))
+        transfer = [
+            row
+            for row in migrations["migrations"]
+            if row.get("migration_id") == "TRANSFER_P143_009"
+        ]
+        self.assertEqual(len(transfer), 1)
+        self.assertEqual(transfer[0]["migration_kind"], "TRANSFER")
+        self.assertEqual(
+            transfer[0]["capability_deltas"],
+            [
+                {
+                    "capability_id": "strength.mainline_convergence",
+                    "before": {"presence": "REQUIRED", "ownership": "PRIMARY"},
+                    "after": {"presence": "REQUIRED", "ownership": "SECONDARY"},
+                    "transfer_target": "P07",
+                }
+            ],
+        )
+        self.assertTrue(
+            any(
+                row.get("migration_id") == "STRENGTHEN_P07_010"
+                and row.get("to_profile_version") == 2
+                for row in migrations["migrations"]
+            )
+        )
 
 
 if __name__ == "__main__":

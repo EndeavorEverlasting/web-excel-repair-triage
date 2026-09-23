@@ -7,6 +7,7 @@ import json
 import os
 import re
 import subprocess
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
@@ -40,6 +41,156 @@ def _bool(value: Any, label: str) -> bool:
     if not isinstance(value, bool):
         raise HandoffError(f"{label} must be boolean")
     return value
+
+
+def _instant(value: Any, label: str) -> datetime:
+    raw = _text(value, label)
+    normalized = raw[:-1] + "+00:00" if raw.endswith("Z") else raw
+    try:
+        parsed = datetime.fromisoformat(normalized)
+    except ValueError as exc:
+        raise HandoffError(f"{label} must be ISO-8601") from exc
+    if parsed.tzinfo is None:
+        raise HandoffError(f"{label} must include a timezone")
+    return parsed.astimezone(timezone.utc)
+
+
+def _git_commit(ref: str) -> str:
+    proc = subprocess.run(
+        ["git", "rev-parse", "--verify", f"{ref}^{{commit}}"],
+        cwd=ROOT,
+        text=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        check=False,
+    )
+    value = proc.stdout.strip()
+    if proc.returncode != 0 or not re.fullmatch(r"[0-9a-f]{40}", value):
+        raise HandoffError(f"plan_artifact.ref does not resolve to a commit: {ref}")
+    return value
+
+
+def _git_blob(commit: str, relative: str) -> bytes:
+    proc = subprocess.run(
+        ["git", "show", f"{commit}:{relative}"],
+        cwd=ROOT,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        check=False,
+    )
+    if proc.returncode != 0:
+        raise HandoffError(
+            f"plan_artifact.path is not recoverable from declared ref: {relative}@{commit}"
+        )
+    return proc.stdout
+
+
+def _validate_destination_binding(
+    evidence: dict[str, Any],
+    destination: dict[str, Any],
+    *,
+    label: str,
+    route: str | None = None,
+) -> None:
+    for field in ("owner", "name"):
+        if _text(evidence.get(field), f"{label}.{field}") != destination[field]:
+            raise HandoffError(f"{label}.{field} does not match destination.{field}")
+    if "visibility" in evidence:
+        if _text(evidence.get("visibility"), f"{label}.visibility") != destination["visibility"]:
+            raise HandoffError(f"{label}.visibility does not match destination.visibility")
+    if route is not None:
+        if _text(evidence.get("route"), f"{label}.route") != route:
+            raise HandoffError(f"{label}.route does not match manifest route")
+
+
+def _validate_provider_evidence(destination: dict[str, Any], contract: dict[str, Any]) -> None:
+    state = destination["provider_state"]
+    evidence = destination.get("provider_evidence")
+    actionable = set(contract["provider_evidence"]["actionable_states"])
+    if state not in actionable:
+        if evidence is not None:
+            if not isinstance(evidence, dict):
+                raise HandoffError("destination.provider_evidence must be null or an object")
+            _validate_destination_binding(
+                evidence, destination, label="destination.provider_evidence"
+            )
+            if _text(
+                evidence.get("provider_state"),
+                "destination.provider_evidence.provider_state",
+            ) != state:
+                raise HandoffError(
+                    "destination.provider_evidence.provider_state does not match destination.provider_state"
+                )
+        return
+    if not isinstance(evidence, dict):
+        raise HandoffError(f"{state} requires destination-bound provider evidence")
+    for field in contract["provider_evidence"]["required_fields"]:
+        _text(evidence.get(field), f"destination.provider_evidence.{field}")
+    _validate_destination_binding(
+        evidence, destination, label="destination.provider_evidence"
+    )
+    if evidence["provider_state"] != state:
+        raise HandoffError(
+            "destination.provider_evidence.provider_state does not match destination.provider_state"
+        )
+    observed = _instant(
+        evidence["observed_at"], "destination.provider_evidence.observed_at"
+    )
+    age = (datetime.now(timezone.utc) - observed).total_seconds()
+    maximum_age = int(contract["provider_evidence"]["maximum_age_seconds"])
+    if age < -300 or age > maximum_age:
+        raise HandoffError(
+            f"destination.provider_evidence is stale or future-dated: age_seconds={int(age)}"
+        )
+
+
+def _validate_authority_evidence(
+    authority: dict[str, Any],
+    destination: dict[str, Any],
+    route: str,
+    contract: dict[str, Any],
+) -> tuple[bool, bool]:
+    approved = _bool(
+        authority.get("operator_approved"), "authority.operator_approved"
+    )
+    authorized = _bool(
+        authority.get("execution_authorization"), "authority.execution_authorization"
+    )
+    evidence = authority.get("evidence")
+    if not isinstance(evidence, dict):
+        raise HandoffError("authority.evidence must be an object")
+    for decision, asserted in (
+        ("operator_approved", approved),
+        ("execution_authorization", authorized),
+    ):
+        record = evidence.get(decision)
+        if not asserted:
+            if record is not None:
+                raise HandoffError(
+                    f"authority.evidence.{decision} must be null when {decision}=false"
+                )
+            continue
+        if not isinstance(record, dict):
+            raise HandoffError(
+                f"{decision}=true requires authority.evidence.{decision}"
+            )
+        for field in contract["authority_evidence"]["required_fields"]:
+            _text(record.get(field), f"authority.evidence.{decision}.{field}")
+        if record["decision"] != decision:
+            raise HandoffError(
+                f"authority.evidence.{decision}.decision must equal {decision}"
+            )
+        _validate_destination_binding(
+            record,
+            destination,
+            label=f"authority.evidence.{decision}",
+            route=route,
+        )
+        _instant(
+            record["recorded_at"],
+            f"authority.evidence.{decision}.recorded_at",
+        )
+    return approved, authorized
 
 
 def _repo_path(value: Any, label: str) -> tuple[str, Path]:
@@ -91,6 +242,12 @@ def _validate_plan_artifact(plan: dict[str, Any], contract: dict[str, Any]) -> N
             raise HandoffError("LOCAL_TRACKED_FILE plan artifact must exist and be tracked")
         if not os.access(path_full, os.W_OK):
             raise HandoffError("LOCAL_TRACKED_FILE plan artifact is not writable")
+        resolved_commit = _git_commit(plan["ref"])
+        committed = _git_blob(resolved_commit, path_relative)
+        if committed != path_full.read_bytes():
+            raise HandoffError(
+                "LOCAL_TRACKED_FILE plan artifact does not match the blob at plan_artifact.ref"
+            )
         return
 
     if kind == "PROVIDER_RECEIPT":
@@ -151,16 +308,11 @@ def validate_manifest(manifest: dict[str, Any]) -> dict[str, Any]:
     if provider_state not in contract["provider_states"]:
         raise HandoffError(f"invalid destination.provider_state: {provider_state!r}")
 
+    _validate_provider_evidence(destination, contract)
+
     authority = manifest["authority"]
     if not isinstance(authority, dict):
         raise HandoffError("authority must be an object")
-    approved = _bool(authority.get("operator_approved"), "authority.operator_approved")
-    authorized = _bool(authority.get("execution_authorization"), "authority.execution_authorization")
-    provenance = authority.get("provenance")
-    if not isinstance(provenance, list) or any(not isinstance(item, str) or not item.strip() for item in provenance):
-        raise HandoffError("authority.provenance must be an array of non-empty strings")
-    if (approved or authorized) and not provenance:
-        raise HandoffError("asserted authority requires non-empty provenance")
 
     dispositions = manifest["capability_dispositions"]
     if not isinstance(dispositions, list) or not dispositions:
@@ -181,6 +333,10 @@ def validate_manifest(manifest: dict[str, Any]) -> dict[str, Any]:
     next_owner = _text(manifest["next_owner"], "next_owner")
     if route not in contract["routes"]:
         raise HandoffError(f"invalid route: {route!r}")
+
+    approved, authorized = _validate_authority_evidence(
+        authority, destination, route, contract
+    )
 
     if route == "P55_CREATE":
         if provider_state != "AVAILABLE":
@@ -205,7 +361,8 @@ def validate_manifest(manifest: dict[str, Any]) -> dict[str, Any]:
         "provider_state": provider_state,
         "operator_approved": approved,
         "execution_authorization": authorized,
-        "mutation_authorized": route != "BLOCKED" and approved and authorized,
+        "authority_evidence_complete": approved and authorized,
+        "mutation_authorized": False,
     }
 
 

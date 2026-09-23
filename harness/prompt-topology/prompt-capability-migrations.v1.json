@@ -641,8 +641,8 @@
       "acceptance_state": "ACCEPTED"
     },
     {
-      "migration_id": "INTENTIONAL_CHANGE_P143_009",
-      "migration_kind": "INTENTIONAL_CHANGE",
+      "migration_id": "TRANSFER_P143_009",
+      "migration_kind": "TRANSFER",
       "prompt_id": "P143",
       "old_canonical_prompt_hash": "ceb5bdaaf22a53a745b20090072b88aeda2f6501760d3986b0fdc30bfb60f945",
       "new_canonical_prompt_hash": "97dbd7437c9a3d44013c4b4a3b87236b1336c159b7911e1c3dc71f089bf8c1b4",
@@ -652,61 +652,6 @@
       "to_profile_sha256": "a9ae6be8f2b8e5224a5cbb4df23e9a6ae3f4db3174466c86e5ff7f69d1dc4a14",
       "capability_deltas": [
         {
-          "capability_id": "execution.implementation",
-          "before": {
-            "presence": "AWARE",
-            "ownership": "NONE"
-          },
-          "after": {
-            "presence": "AWARE",
-            "ownership": "NONE"
-          }
-        },
-        {
-          "capability_id": "process.recurring",
-          "before": {
-            "presence": "AWARE",
-            "ownership": "NONE"
-          },
-          "after": {
-            "presence": "AWARE",
-            "ownership": "NONE"
-          }
-        },
-        {
-          "capability_id": "prompt.identity",
-          "before": {
-            "presence": "SUPPORT",
-            "ownership": "SECONDARY"
-          },
-          "after": {
-            "presence": "SUPPORT",
-            "ownership": "SECONDARY"
-          }
-        },
-        {
-          "capability_id": "strength.evidence_state_integrity",
-          "before": {
-            "presence": "REQUIRED",
-            "ownership": "SECONDARY"
-          },
-          "after": {
-            "presence": "REQUIRED",
-            "ownership": "SECONDARY"
-          }
-        },
-        {
-          "capability_id": "strength.lane_isolation",
-          "before": {
-            "presence": "SUPPORT",
-            "ownership": "SECONDARY"
-          },
-          "after": {
-            "presence": "SUPPORT",
-            "ownership": "SECONDARY"
-          }
-        },
-        {
           "capability_id": "strength.mainline_convergence",
           "before": {
             "presence": "REQUIRED",
@@ -715,40 +660,22 @@
           "after": {
             "presence": "REQUIRED",
             "ownership": "SECONDARY"
-          }
-        },
-        {
-          "capability_id": "strength.plan_durability",
-          "before": {
-            "presence": "REQUIRED",
-            "ownership": "PRIMARY"
           },
-          "after": {
-            "presence": "REQUIRED",
-            "ownership": "PRIMARY"
-          }
-        },
-        {
-          "capability_id": "strength.upstream_provenance",
-          "before": {
-            "presence": "SUPPORT",
-            "ownership": "SECONDARY"
-          },
-          "after": {
-            "presence": "SUPPORT",
-            "ownership": "SECONDARY"
-          }
+          "transfer_target": "P07"
         }
       ],
-      "rationale": "Repair P143 review defects by separating provider state from authority, routing existing destinations away from P55 creation, binding the typed P55 handoff contract, and making durable plan ownership executable without granting donor runtime mutation.",
+      "rationale": "Repair P143 review defects while transferring primary ownership of actual default-branch mainline convergence to P07. P143 remains REQUIRED/SECONDARY as the planning guard; P07 is REQUIRED/PRIMARY for execution and integration.",
       "evidence_refs": [
+        "AGENTS.md",
         "build_prompt_kit.py",
+        "docs/prompts.json:P07",
         "harness/contracts/p55-bootstrap-handoff.v1.json",
         "harness/contracts/prompt-strength.v1.json",
         "harness/prompt-topology/prompt-capability-profiles.v1.json",
         "harness/prompt-topology/semantic-capability-catalog.v1.json",
         "registry/prompts/repository-work-ledger-prompts.v1.json",
         "scripts/p55_bootstrap_handoff.py",
+        "tests/test_p07_effective_prompt_identity.py",
         "tests/test_p143_repository_convergence_prompt.py",
         "tests/test_p55_bootstrap_handoff.py"
       ],
@@ -760,7 +687,7 @@
       "source_history_from_git_blob_sha1": "3bdad1e03b1ddf1ce55ad1e936e4e3775a4d26d7",
       "source_history_to_git_blob_sha1": "e1d571b5490a68292c1953dd7b1ecf6ee28fe96c",
       "coverage_before_fingerprint": "91d508484b91fc32fb30b0917904336557395914025b32fdb8cd3f089be773e6",
-      "coverage_after_fingerprint": "91d508484b91fc32fb30b0917904336557395914025b32fdb8cd3f089be773e6",
+      "coverage_after_fingerprint": "bb925aa8aa4fe6cb0961b94ee2c065dc1754b1954bffb9a3639d0c3bfaff22a1",
       "acceptance_state": "ACCEPTED",
       "prior_profile_snapshot": {
         "prompt_id": "P143",
@@ -879,6 +806,93 @@
         ],
         "profile_status": "ACCEPTED",
         "profile_sha256": "cd3bc4031c94093af9830c9dad0b4daf10980551ab236accd179e359140ee27e"
+      }
+    },
+    {
+      "migration_id": "STRENGTHEN_P07_010",
+      "migration_kind": "STRENGTHEN",
+      "prompt_id": "P07",
+      "old_canonical_prompt_hash": "57bb9e948da82e27bc55d7fcc163522bbfd81c0ac352e7ec476554308b5f4f49",
+      "new_canonical_prompt_hash": "57bb9e948da82e27bc55d7fcc163522bbfd81c0ac352e7ec476554308b5f4f49",
+      "from_profile_version": 1,
+      "to_profile_version": 2,
+      "from_profile_sha256": "b9718c90d7634b35bb351b669f1e61413085cf66442ff00178dc804f251bc74b",
+      "to_profile_sha256": "d8031112a1039a4e19dc627d056c7fada4d004e8aea45595acd5f1598d8ae774",
+      "capability_deltas": [
+        {
+          "capability_id": "execution.implementation",
+          "before": {
+            "presence": "REQUIRED",
+            "ownership": "PRIMARY"
+          },
+          "after": {
+            "presence": "REQUIRED",
+            "ownership": "PRIMARY"
+          }
+        },
+        {
+          "capability_id": "strength.mainline_convergence",
+          "before": null,
+          "after": {
+            "presence": "REQUIRED",
+            "ownership": "PRIMARY"
+          }
+        }
+      ],
+      "rationale": "Make P07 the accepted primary owner of the shared mainline-convergence capability already required by the Green Branch Integration and P07 Mainline Convergence contracts; canonical P07 prompt text is unchanged.",
+      "evidence_refs": [
+        "AGENTS.md",
+        "docs/prompts.json:P07",
+        "harness/contracts/prompt-strength.v1.json",
+        "harness/prompt-topology/semantic-capability-catalog.v1.json",
+        "tests/test_p07_effective_prompt_identity.py",
+        "tests/test_p143_repository_convergence_prompt.py"
+      ],
+      "focused_tests": [
+        "tests/test_prompt_semantic_coverage.py",
+        "tests/test_prompt_semantic_validator_1b.py",
+        "tests/test_p143_repository_convergence_prompt.py"
+      ],
+      "source_history_migration_id": "p79-strengthen-p07-011",
+      "source_history_from_git_blob_sha1": "c963a857a8dc72ab5df8c99c2b3524c737271206",
+      "source_history_to_git_blob_sha1": "c963a857a8dc72ab5df8c99c2b3524c737271206",
+      "coverage_before_fingerprint": "91d508484b91fc32fb30b0917904336557395914025b32fdb8cd3f089be773e6",
+      "coverage_after_fingerprint": "bb925aa8aa4fe6cb0961b94ee2c065dc1754b1954bffb9a3639d0c3bfaff22a1",
+      "acceptance_state": "ACCEPTED",
+      "prior_profile_snapshot": {
+        "prompt_id": "P07",
+        "profile_version": 1,
+        "canonical_prompt_hash": "57bb9e948da82e27bc55d7fcc163522bbfd81c0ac352e7ec476554308b5f4f49",
+        "acceptance_commit": "55148914364e2988bc6096b7c8d142eca3f62c28",
+        "direct_assignments": [
+          {
+            "capability_id": "execution.implementation",
+            "presence": "REQUIRED",
+            "ownership": "PRIMARY",
+            "capability_relation": "IMPLEMENTS",
+            "delivery_source": "CANONICAL_BODY",
+            "evidence_refs": [
+              "harness/contracts/prompt-strength.v1.json:supporting_owners.implementation_execution",
+              "tests/test_p07_effective_prompt_identity.py",
+              "docs/prompts.json:P07"
+            ],
+            "rationale": "P07 is the canonical implementation execution owner per Prompt Strength contract"
+          }
+        ],
+        "inherited_sources": [
+          {
+            "source_id": "prompt-strength-shared-policy",
+            "source_version": "v1",
+            "source_hash": "e249da6706d86733cd03a046ef9e16552a3ae87dc8cc644281c5c1fd9c08c796"
+          }
+        ],
+        "semantic_dependency_fingerprint": "f320f90b491e8fb9684d575d8d25676d2c625fbddc697cde0206c596a1a48279",
+        "evidence_refs": [
+          "docs/prompts.json:P07",
+          "harness/contracts/prompt-strength.v1.json"
+        ],
+        "profile_status": "ACCEPTED",
+        "profile_sha256": "b9718c90d7634b35bb351b669f1e61413085cf66442ff00178dc804f251bc74b"
       }
     }
   ],
