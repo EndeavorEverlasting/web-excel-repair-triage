@@ -160,17 +160,8 @@ jobs:
 
           anchor = '\nLOCAL DIRECTORY GATE\n'
           execution_contract = '''\nPRE-MUTATION REPOSITORY EXECUTION CONTRACT
-          Before any local or remote repository write, declare and verify:
-          - repository/provider identity and branch/worktree or remote ref when observable;
-          - lane and mission;
-          - owned scope and forbidden scope;
-          - expected artifacts;
-          - validation order;
-          - mutation authority;
-          - writer-isolation and collision posture.
-          One writer owns each branch/worktree. REMOTE_ONLY may mark local branch/worktree UNOBSERVABLE, but the remote target/ref and competing-writer posture must be resolved from provider evidence when exposed.
-          PUBLISH_EXISTING or any other repository mutation is blocked while a required execution-contract field or isolation condition remains unresolved.
-          This contract binds execution after the Repository Identity Manifest and provider capability gates; it never widens mutation authority.
+          Before any local or remote write, resolve and record: repository/provider plus branch/worktree or remote ref; lane and mission; owned scope and forbidden scope; expected artifacts; validation order; mutation authority; writer-isolation and collision posture.
+          One writer owns each branch/worktree. REMOTE_ONLY may mark local branch/worktree UNOBSERVABLE but must resolve the remote target/ref and competing-writer posture when exposed. Repository mutation is blocked while any required execution field or isolation condition remains unresolved.
           '''
           if anchor not in content:
               raise SystemExit('P55 recovery: local directory gate anchor moved')
