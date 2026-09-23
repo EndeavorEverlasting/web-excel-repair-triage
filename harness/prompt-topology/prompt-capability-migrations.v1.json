@@ -470,6 +470,80 @@
         },
         "profile_sha256": "14de21d511042fe2d414bf399b65c18230f121a081e249fb4ffb3d502a4ace46"
       }
+    },
+    {
+      "migration_id": "NO_CAPABILITY_CHANGE_P55_007",
+      "migration_kind": "NO_CAPABILITY_CHANGE",
+      "prompt_id": "P55",
+      "old_canonical_prompt_hash": "d904065dcd12ba1c556e3441049d980d1677385740a78c56a00db2fde8a03fe8",
+      "new_canonical_prompt_hash": "b357b8d400b3e29fe0748ee18a0a9f6fce77e8bf677009ff706e43786b2de2f2",
+      "from_profile_version": 1,
+      "to_profile_version": 2,
+      "from_profile_sha256": "c2433cff44ed6cf27510cb584a56f8b25e4a7a0aadd9ac571f7d8c69293ac29e",
+      "to_profile_sha256": "44948aa6b4a6d48d2efc52859fc8462332f72ff8af30eb5754f8cf4e4b67d594",
+      "capability_deltas": [
+        {
+          "capability_id": "execution.implementation",
+          "before": {
+            "presence": "AWARE",
+            "ownership": "NONE"
+          },
+          "after": {
+            "presence": "AWARE",
+            "ownership": "NONE"
+          }
+        }
+      ],
+      "rationale": "Strengthen the existing P55 repository bootstrap owner for context recovery, provider-neutral execution, one manifest-status vocabulary, explicit pre-mutation writer isolation, and execution-surface-aware continuation without changing capability ownership.",
+      "evidence_refs": [
+        "docs/plans/P55_REPOSITORY_BOOTSTRAP_RECOVERY_SPRINT_MAP.md",
+        "docs/prompts.json:P55",
+        "harness/contracts/prompt-strength.v1.json",
+        "tests/test_p55_repository_bootstrap.py"
+      ],
+      "focused_tests": [
+        "tests/test_prompt_semantic_coverage.py",
+        "tests/test_prompt_semantic_validator_1b.py"
+      ],
+      "source_history_migration_id": "p79-no-capability-change-p55-008",
+      "source_history_from_git_blob_sha1": "aa4dd85a41f374db82d7800bc0ecdf78f62803cd",
+      "source_history_to_git_blob_sha1": "c963a857a8dc72ab5df8c99c2b3524c737271206",
+      "coverage_before_fingerprint": "a73eb32987243e2e9697c6d04f6321a449453d2c8224a3160d7fd42a8fd8cbec",
+      "coverage_after_fingerprint": "a73eb32987243e2e9697c6d04f6321a449453d2c8224a3160d7fd42a8fd8cbec",
+      "acceptance_state": "ACCEPTED",
+      "prior_profile_snapshot": {
+        "prompt_id": "P55",
+        "profile_version": 1,
+        "canonical_prompt_hash": "d904065dcd12ba1c556e3441049d980d1677385740a78c56a00db2fde8a03fe8",
+        "acceptance_commit": "55148914364e2988bc6096b7c8d142eca3f62c28",
+        "direct_assignments": [
+          {
+            "capability_id": "execution.implementation",
+            "presence": "AWARE",
+            "ownership": "NONE",
+            "capability_relation": "ROUTES_TO",
+            "delivery_source": "ROUTED_OWNER",
+            "evidence_refs": [
+              "docs/prompts.json:P55"
+            ],
+            "rationale": "P55 routes to P07 for implementation execution"
+          }
+        ],
+        "inherited_sources": [
+          {
+            "source_id": "prompt-strength-shared-policy",
+            "source_version": "v1",
+            "source_hash": "e249da6706d86733cd03a046ef9e16552a3ae87dc8cc644281c5c1fd9c08c796"
+          }
+        ],
+        "semantic_dependency_fingerprint": "c61fe644e2c4c8d6be4601c5be31e5ee1250c7dfa0dcf4284e000cb1f6c7de20",
+        "evidence_refs": [
+          "docs/prompts.json:P55",
+          "harness/contracts/prompt-strength.v1.json"
+        ],
+        "profile_status": "ACCEPTED",
+        "profile_sha256": "c2433cff44ed6cf27510cb584a56f8b25e4a7a0aadd9ac571f7d8c69293ac29e"
+      }
     }
   ],
   "note": "Migrations recorded after Sprint 1A baseline. Every lifecycle transition after baseline acceptance must be explicit and recorded here."

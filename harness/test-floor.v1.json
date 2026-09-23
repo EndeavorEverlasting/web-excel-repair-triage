@@ -67,7 +67,8 @@
     "tests/test_teams_attendance_roster_prompt.py",
     "tests/test_test_floor_evolution_prompt.py",
     "tests/test_ux_design_prompt_suite.py",
-    "tests/test_repository_drive_artifact_synchronizer_prompt.py"
+    "tests/test_repository_drive_artifact_synchronizer_prompt.py",
+    "tests/test_p55_repository_bootstrap.py"
   ],
   "prompt_semantic_test_globs": [
     "tests/test_*_prompt.py",
@@ -78,7 +79,8 @@
     "tests/test_p07_effective_prompt_identity.py",
     "tests/test_prompt_kit_compute_mode.py",
     "tests/test_prompt_runtime_compliance_*.py",
-    "tests/test_p02_continuity_regression_matrix.py"
+    "tests/test_p02_continuity_regression_matrix.py",
+    "tests/test_p55_repository_bootstrap.py"
   ],
   "prompt_semantic_test_excludes": [
     "tests/test_skill_prompt_registry.py"
