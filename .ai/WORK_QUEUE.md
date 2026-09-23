@@ -346,3 +346,19 @@ Canonical terminal action: none; no safe actionable work remains
 - **Last proof:** provider recovery run `35812547079` SUCCESS; deterministic floor `42/42`; generated Prompt Kit parity PASS; exact reconciled head `c56ce33e63642dce844e31bc2fc83bca08213511` CodeRabbit SUCCESS with zero unresolved review threads; merge `5e129012221f3108e03bda129084b616e8ffd50b` equals refreshed main; authoritative P55 read-back PASS; donor PR #367 closed.
 - **Next action:** none; no safe actionable P55 recovery work remains. Future repository-bootstrap work uses integrated P55 from main.
 - **Updated:** 2026-09-23T03:06:00Z
+
+## TRQ-022 — Converge reviewed P143 repository planner contracts
+
+- **Status:** VERIFY
+- **Priority:** P1
+- **Owner:** p143-review-contract-convergence-20260923
+- **Branch / PR:** `converge/p143-review-contracts-20260923` / #640 open
+- **Scope:** converge the reviewed P143 Repository Convergence Planner onto current main; preserve integrated provider-neutral P55; close P143 search/routing, durable-plan authority, typed P55 handoff, provider-state, capability-ownership, deterministic-regression, generated-site, review, and integration gates
+- **Forbidden:** roll back or semantically weaken integrated P55; create or mutate a destination repository; execute donor convergence; modify unrelated donor-resource projections; hand-edit generated Prompt Kit HTML as canonical source; force-push/reset; weaken semantic/test-floor validators
+- **Dependencies:** `main@adb26cb5df57e5fe50b0befc72c14f18da10555c`; PR #632 and `repair/p143-review-contracts-20260922@26a0e030e36daacbe7551f54d451fbc69ca30714` as donor/review evidence only; canonical Prompt Kit builder; prompt semantic lifecycle; deterministic test floor
+- **References:** PR #640, PR #632, `registry/prompts/repository-work-ledger-prompts.v1.json:P143`, `harness/contracts/p55-bootstrap-handoff.v1.json`, `scripts/p55_bootstrap_handoff.py`, `tests/test_p143_repository_convergence_prompt.py`, `tests/test_p55_bootstrap_handoff.py`, `harness/prompt-topology/prompt-capability-profiles.v1.json`, `harness/test-floor.v1.json`, `web/prompt-kit/index.html`
+- **Acceptance gate:** current-main P55 identity remains authoritative; P143 has safe global synonyms and real generated-JS precedence regression; proposal/provider/authority states are orthogonal; durable plan authority is validated; `p55-bootstrap-handoff/v1` has a versioned contract and executable validator; P143 guards but does not primarily own mainline convergence; focused and deterministic gates pass; generated site is exact; actionable review is empty; exact green head merges into refreshed main; #632 closes only after replacement containment is proven
+- **Gate:** PR #640 exact-head CI/review and refreshed-main integration are pending
+- **Last proof:** current-main-based semantic commit `09f1d67599f94d534b222bd35306c7e7f1646610`; repository-native generator commit `c40fc9b5cf5b1b039f880f4fc7fee1ae7d9606ff` regenerated `web/prompt-kit/index.html` and removed its temporary workflow; compare against main is 2 ahead / 0 behind before this ledger update
+- **Next action:** Run the exact-head PR #640 repository validators and review gates; repair any current finding, then merge the exact green head into refreshed main and close superseded #632 after containment proof
+- **Updated:** 2026-09-23T14:36:00-04:00
