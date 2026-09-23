@@ -68,7 +68,8 @@
     "tests/test_teams_attendance_roster_prompt.py",
     "tests/test_test_floor_evolution_prompt.py",
     "tests/test_ux_design_prompt_suite.py",
-    "tests/test_repository_drive_artifact_synchronizer_prompt.py"
+    "tests/test_repository_drive_artifact_synchronizer_prompt.py",
+    "tests/test_p55_bootstrap_handoff.py"
   ],
   "prompt_semantic_test_globs": [
     "tests/test_*_prompt.py",
