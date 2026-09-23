@@ -23,6 +23,7 @@ def base_manifest() -> dict:
             "repository": "example/planning-owner",
             "ref": "plan/example",
             "path": "docs/plans/convergence.json",
+            "write_authority": "PLAN_ONLY",
         },
         "donors": [
             {"repository": "example/a", "ref": "main", "sha": "a" * 40},
@@ -105,6 +106,15 @@ class P55BootstrapHandoffTests(unittest.TestCase):
         manifest = base_manifest()
         manifest["plan_artifact"]["path"] = ""
         with self.assertRaisesRegex(MOD.HandoffError, "plan_artifact.path"):
+            MOD.validate_manifest(manifest)
+
+    def test_plan_only_write_authority_is_explicit_and_bounded(self) -> None:
+        manifest = base_manifest()
+        manifest["plan_artifact"]["write_authority"] = "PLAN_ONLY"
+        receipt = MOD.validate_manifest(manifest)
+        self.assertEqual(receipt["status"], "PASS")
+        manifest["plan_artifact"]["write_authority"] = "READ_ONLY"
+        with self.assertRaisesRegex(MOD.HandoffError, "plan_artifact.write_authority"):
             MOD.validate_manifest(manifest)
 
 
