@@ -202,9 +202,9 @@ class P55OwnershipBoundaryTests(unittest.TestCase):
             if row["capability_id"] == "strength.mainline_convergence"
         ]
         self.assertEqual(len(mainline), 1)
-        self.assertEqual(mainline[0]["presence"], "SUPPORT")
+        self.assertEqual(mainline[0]["presence"], "REQUIRED")
         self.assertEqual(mainline[0]["ownership"], "SECONDARY")
-        self.assertEqual(mainline[0]["capability_relation"], "ROUTES_TO")
+        self.assertEqual(mainline[0]["capability_relation"], "GUARDS")
 
 
 if __name__ == "__main__":
