@@ -349,16 +349,16 @@ Canonical terminal action: none; no safe actionable work remains
 
 ## TRQ-022 — Converge reviewed P143 repository planner contracts
 
-- **Status:** VERIFY
+- **Status:** DONE
 - **Priority:** P1
 - **Owner:** p143-review-contract-convergence-20260923
-- **Branch / PR:** `converge/p143-review-contracts-20260923` / #640 open
+- **Branch / PR:** `converge/p143-review-contracts-20260923` / #640 merged as `6835ed4b2d0278798323e2b0eceff0f52dd0326f`
 - **Scope:** converge the reviewed P143 Repository Convergence Planner onto current main; preserve integrated provider-neutral P55; close P143 search/routing, durable-plan authority, typed P55 handoff, provider-state, capability-ownership, deterministic-regression, generated-site, review, and integration gates
 - **Forbidden:** roll back or semantically weaken integrated P55; create or mutate a destination repository; execute donor convergence; modify unrelated donor-resource projections; hand-edit generated Prompt Kit HTML as canonical source; force-push/reset; weaken semantic/test-floor validators
 - **Dependencies:** `main@adb26cb5df57e5fe50b0befc72c14f18da10555c`; PR #632 and `repair/p143-review-contracts-20260922@26a0e030e36daacbe7551f54d451fbc69ca30714` as donor/review evidence only; canonical Prompt Kit builder; prompt semantic lifecycle; deterministic test floor
 - **References:** PR #640, PR #632, `registry/prompts/repository-work-ledger-prompts.v1.json`, `harness/contracts/p55-bootstrap-handoff.v1.json`, `scripts/p55_bootstrap_handoff.py`, `tests/test_p143_repository_convergence_prompt.py`, `tests/test_p55_bootstrap_handoff.py`, `harness/prompt-topology/prompt-capability-profiles.v1.json`, `harness/test-floor.v1.json`, `web/prompt-kit/index.html`
 - **Acceptance gate:** current-main P55 identity remains authoritative; P143 has safe global synonyms and real generated-JS precedence regression; proposal/provider/authority states are orthogonal; durable plan authority is validated; `p55-bootstrap-handoff/v1` has a versioned contract and executable validator; P143 guards but does not primarily own mainline convergence; focused and deterministic gates pass; generated site is exact; actionable review is empty; exact green head merges into refreshed main; #632 closes only after replacement containment is proven
-- **Gate:** PR #640 exact-head CI/review and refreshed-main integration are pending
-- **Last proof:** current-main-based semantic commit `09f1d67599f94d534b222bd35306c7e7f1646610`; repository-native generator commit `c40fc9b5cf5b1b039f880f4fc7fee1ae7d9606ff` regenerated `web/prompt-kit/index.html` and removed its temporary workflow; compare against main is 2 ahead / 0 behind before this ledger update
-- **Next action:** Run the exact-head PR #640 repository validators and review gates; repair any current finding, then merge the exact green head into refreshed main and close superseded #632 after containment proof
-- **Updated:** 2026-09-23T14:36:00-04:00
+- **Gate:** none
+- **Last proof:** run:#35909235297 deterministic repository floor SUCCESS on exact head `366cd23023c255008a0127c5147fa03ff4fa5abc`; Prompt topology A/B/C, Prompt Quality History, Pages parity, browser/web/harness/eval gates PASS; zero unresolved review threads; merge:6835ed4b2d0278798323e2b0eceff0f52dd0326f verified as refreshed `main` with P07 REQUIRED/PRIMARY mainline convergence, P143 REQUIRED/SECONDARY guard ownership, and hardened `p55-bootstrap-handoff/v1` read back from default.
+- **Next action:** none; no safe actionable work remains
+- **Updated:** 2026-09-23T15:32:17-04:00
