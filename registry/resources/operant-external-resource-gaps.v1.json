@@ -5,9 +5,9 @@
       "id": "deepseek-harness",
       "repository": "deepseek-ai/deepseek-harness",
       "default_branch": "master",
-      "resolved_sha": "ddefc45fbc7f8e46dd73185e68295696d1297887",
+      "resolved_sha": "00102833dfaee1da9f48a3a8eae9d34005a75218",
       "resource_root": ".agents/skills",
-      "resource_count": 12,
+      "resource_count": 13,
       "enumeration": "git_skill_tree"
     },
     {
@@ -61,8 +61,8 @@
   },
   "summary": {
     "source_count": 4,
-    "resource_count": 57,
-    "point_to_existing_prompt": 10,
+    "resource_count": 58,
+    "point_to_existing_prompt": 11,
     "point_to_existing_skill": 0,
     "point_to_external": 47,
     "review_add_prompt": 47,
@@ -88,7 +88,7 @@
       "user_disposition": "POINT_TO_EXTERNAL",
       "prompt_action": "REVIEW_ADD_PROMPT",
       "promotion_owner_prompt": "P79",
-      "best_internal_score": 0.0
+      "best_internal_score": 0
     },
     {
       "resource_id": "deepseek-harness:dsh-find-simplifications",
@@ -108,7 +108,7 @@
       "user_disposition": "POINT_TO_EXTERNAL",
       "prompt_action": "REVIEW_ADD_PROMPT",
       "promotion_owner_prompt": "P79",
-      "best_internal_score": 0.0
+      "best_internal_score": 0
     },
     {
       "resource_id": "deepseek-harness:dsh-prose-standard",
@@ -118,7 +118,7 @@
       "user_disposition": "POINT_TO_EXTERNAL",
       "prompt_action": "REVIEW_ADD_PROMPT",
       "promotion_owner_prompt": "P79",
-      "best_internal_score": 0.0
+      "best_internal_score": 0
     },
     {
       "resource_id": "deepseek-harness:dsh-speed-up-perf",
@@ -218,7 +218,7 @@
       "user_disposition": "POINT_TO_EXTERNAL",
       "prompt_action": "REVIEW_ADD_PROMPT",
       "promotion_owner_prompt": "P79",
-      "best_internal_score": 0.0
+      "best_internal_score": 0
     },
     {
       "resource_id": "mattpocock-skills:productivity/handoff",
@@ -268,7 +268,7 @@
       "user_disposition": "POINT_TO_EXTERNAL",
       "prompt_action": "REVIEW_ADD_PROMPT",
       "promotion_owner_prompt": "P79",
-      "best_internal_score": 0.0
+      "best_internal_score": 0
     },
     {
       "resource_id": "mattpocock-skills:in-progress/pr",
@@ -328,7 +328,7 @@
       "user_disposition": "POINT_TO_EXTERNAL",
       "prompt_action": "REVIEW_ADD_PROMPT",
       "promotion_owner_prompt": "P79",
-      "best_internal_score": 0.0
+      "best_internal_score": 0
     },
     {
       "resource_id": "mattpocock-skills:engineering/setup-matt-pocock-skills",
@@ -508,7 +508,7 @@
       "user_disposition": "POINT_TO_EXTERNAL",
       "prompt_action": "REVIEW_ADD_PROMPT",
       "promotion_owner_prompt": "P79",
-      "best_internal_score": 0.0
+      "best_internal_score": 0
     },
     {
       "resource_id": "michaelshimeles-skills:greploop-apps",
@@ -518,7 +518,7 @@
       "user_disposition": "POINT_TO_EXTERNAL",
       "prompt_action": "REVIEW_ADD_PROMPT",
       "promotion_owner_prompt": "P79",
-      "best_internal_score": 0.0
+      "best_internal_score": 0
     },
     {
       "resource_id": "michaelshimeles-skills:new-feature",
@@ -538,7 +538,7 @@
       "user_disposition": "POINT_TO_EXTERNAL",
       "prompt_action": "REVIEW_ADD_PROMPT",
       "promotion_owner_prompt": "P79",
-      "best_internal_score": 0.0
+      "best_internal_score": 0
     }
   ]
 }
