@@ -20,10 +20,14 @@ def base_manifest() -> dict:
         "schema_version": "p55-bootstrap-handoff/v1",
         "handoff_id": "test-convergence",
         "plan_artifact": {
-            "repository": "example/planning-owner",
-            "ref": "plan/example",
-            "path": "docs/plans/convergence.json",
+            "repository": ".",
+            "ref": "main",
+            "path": "docs/plans/AFK_FACTORY_INTERFACE_CONVERGENCE_SPRINT_MAP.md",
             "write_authority": "PLAN_ONLY",
+            "proof": {
+                "kind": "LOCAL_TRACKED_FILE",
+                "evidence_path": "docs/plans/AFK_FACTORY_INTERFACE_CONVERGENCE_SPRINT_MAP.md",
+            },
         },
         "donors": [
             {"repository": "example/a", "ref": "main", "sha": "a" * 40},
@@ -104,8 +108,9 @@ class P55BootstrapHandoffTests(unittest.TestCase):
 
     def test_plan_artifact_is_mandatory_durable_owner(self) -> None:
         manifest = base_manifest()
-        manifest["plan_artifact"]["path"] = ""
-        with self.assertRaisesRegex(MOD.HandoffError, "plan_artifact.path"):
+        manifest["plan_artifact"]["path"] = "docs/plans/DOES_NOT_EXIST.md"
+        manifest["plan_artifact"]["proof"]["evidence_path"] = "docs/plans/DOES_NOT_EXIST.md"
+        with self.assertRaisesRegex(MOD.HandoffError, "proof evidence must exist"):
             MOD.validate_manifest(manifest)
 
     def test_plan_only_write_authority_is_explicit_and_bounded(self) -> None:
@@ -116,6 +121,34 @@ class P55BootstrapHandoffTests(unittest.TestCase):
         manifest["plan_artifact"]["write_authority"] = "READ_ONLY"
         with self.assertRaisesRegex(MOD.HandoffError, "plan_artifact.write_authority"):
             MOD.validate_manifest(manifest)
+
+    def test_donor_sha_must_be_pinned_commit(self) -> None:
+        manifest = base_manifest()
+        manifest["donors"][0]["sha"] = "main"
+        with self.assertRaisesRegex(MOD.HandoffError, "40-hex commit"):
+            MOD.validate_manifest(manifest)
+
+    def test_capability_dispositions_are_closed_and_unique(self) -> None:
+        manifest = base_manifest()
+        manifest["capability_dispositions"][0]["disposition"] = "MAYBE"
+        with self.assertRaisesRegex(MOD.HandoffError, "invalid capability disposition"):
+            MOD.validate_manifest(manifest)
+        manifest = base_manifest()
+        manifest["capability_dispositions"].append(
+            {"capability": "example-capability", "disposition": "KEEP"}
+        )
+        with self.assertRaisesRegex(MOD.HandoffError, "duplicate capability disposition"):
+            MOD.validate_manifest(manifest)
+
+    def test_blocked_route_never_authorizes_mutation(self) -> None:
+        manifest = base_manifest()
+        manifest["destination"]["provider_state"] = "UNKNOWN_PROVIDER"
+        manifest["route"] = "BLOCKED"
+        manifest["next_owner"] = "BLOCKED"
+        manifest["authority"]["operator_approved"] = True
+        manifest["authority"]["execution_authorization"] = True
+        receipt = MOD.validate_manifest(manifest)
+        self.assertFalse(receipt["mutation_authorized"])
 
 
 if __name__ == "__main__":
