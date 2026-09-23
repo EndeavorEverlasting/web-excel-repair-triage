@@ -5,9 +5,9 @@
       "id": "deepseek-harness",
       "repository": "deepseek-ai/deepseek-harness",
       "default_branch": "master",
-      "resolved_sha": "ddefc45fbc7f8e46dd73185e68295696d1297887",
+      "resolved_sha": "00102833dfaee1da9f48a3a8eae9d34005a75218",
       "resource_root": ".agents/skills",
-      "resource_count": 12,
+      "resource_count": 13,
       "enumeration": "git_skill_tree"
     },
     {
@@ -48,8 +48,8 @@
   ],
   "summary": {
     "source_count": 4,
-    "resource_count": 57,
-    "point_to_existing_prompt": 10,
+    "resource_count": 58,
+    "point_to_existing_prompt": 11,
     "point_to_existing_skill": 0,
     "point_to_external": 47,
     "review_add_prompt": 47,
@@ -58,10 +58,31 @@
   },
   "resources": [
     {
+      "id": "deepseek-harness:agent-experience",
+      "source_id": "deepseek-harness",
+      "source_repo": "deepseek-ai/deepseek-harness",
+      "source_sha": "00102833dfaee1da9f48a3a8eae9d34005a75218",
+      "kind": "agent-skill",
+      "slug": "agent-experience",
+      "title": "Agent Experience",
+      "path": ".agents/skills/agent-experience/SKILL.md",
+      "url": "https://github.com/deepseek-ai/deepseek-harness/blob/00102833dfaee1da9f48a3a8eae9d34005a75218/.agents/skills/agent-experience/SKILL.md",
+      "search_terms": [
+        "experience"
+      ],
+      "coverage": {
+        "disposition": "POINT_TO_EXISTING_PROMPT",
+        "target_id": "P106",
+        "target_title": "UX Product Designer & Interaction Architect",
+        "score": 1,
+        "prompt_action": "NO_NEW_PROMPT"
+      }
+    },
+    {
       "id": "deepseek-harness:dsh-archive-agent-notes",
       "source_id": "deepseek-harness",
       "source_repo": "deepseek-ai/deepseek-harness",
-      "source_sha": "ddefc45fbc7f8e46dd73185e68295696d1297887",
+      "source_sha": "00102833dfaee1da9f48a3a8eae9d34005a75218",
       "kind": "agent-skill",
       "slug": "dsh-archive-agent-notes",
       "title": "Dsh Archive Agent Notes",
@@ -83,7 +104,7 @@
       "id": "deepseek-harness:dsh-ci-test-reliability",
       "source_id": "deepseek-harness",
       "source_repo": "deepseek-ai/deepseek-harness",
-      "source_sha": "ddefc45fbc7f8e46dd73185e68295696d1297887",
+      "source_sha": "00102833dfaee1da9f48a3a8eae9d34005a75218",
       "kind": "agent-skill",
       "slug": "dsh-ci-test-reliability",
       "title": "Dsh Ci Test Reliability",
@@ -106,7 +127,7 @@
       "id": "deepseek-harness:dsh-code-review",
       "source_id": "deepseek-harness",
       "source_repo": "deepseek-ai/deepseek-harness",
-      "source_sha": "ddefc45fbc7f8e46dd73185e68295696d1297887",
+      "source_sha": "00102833dfaee1da9f48a3a8eae9d34005a75218",
       "kind": "agent-skill",
       "slug": "dsh-code-review",
       "title": "Dsh Code Review",
@@ -120,7 +141,7 @@
         "disposition": "POINT_TO_EXISTING_PROMPT",
         "target_id": "P115",
         "target_title": "AFK Feedback-Driven Development Loop Executor",
-        "score": 1.0,
+        "score": 1,
         "prompt_action": "NO_NEW_PROMPT"
       }
     },
@@ -128,7 +149,7 @@
       "id": "deepseek-harness:dsh-doc",
       "source_id": "deepseek-harness",
       "source_repo": "deepseek-ai/deepseek-harness",
-      "source_sha": "ddefc45fbc7f8e46dd73185e68295696d1297887",
+      "source_sha": "00102833dfaee1da9f48a3a8eae9d34005a75218",
       "kind": "agent-skill",
       "slug": "dsh-doc",
       "title": "Dsh Doc",
@@ -141,7 +162,7 @@
         "disposition": "POINT_TO_EXTERNAL",
         "target_id": null,
         "target_title": null,
-        "score": 0.0,
+        "score": 0,
         "prompt_action": "REVIEW_ADD_PROMPT"
       }
     },
@@ -149,7 +170,7 @@
       "id": "deepseek-harness:dsh-find-simplifications",
       "source_id": "deepseek-harness",
       "source_repo": "deepseek-ai/deepseek-harness",
-      "source_sha": "ddefc45fbc7f8e46dd73185e68295696d1297887",
+      "source_sha": "00102833dfaee1da9f48a3a8eae9d34005a75218",
       "kind": "agent-skill",
       "slug": "dsh-find-simplifications",
       "title": "Dsh Find Simplifications",
@@ -171,7 +192,7 @@
       "id": "deepseek-harness:dsh-merging-stacked-prs",
       "source_id": "deepseek-harness",
       "source_repo": "deepseek-ai/deepseek-harness",
-      "source_sha": "ddefc45fbc7f8e46dd73185e68295696d1297887",
+      "source_sha": "00102833dfaee1da9f48a3a8eae9d34005a75218",
       "kind": "agent-skill",
       "slug": "dsh-merging-stacked-prs",
       "title": "Dsh Merging Stacked Prs",
@@ -186,7 +207,7 @@
         "disposition": "POINT_TO_EXTERNAL",
         "target_id": null,
         "target_title": null,
-        "score": 0.0,
+        "score": 0,
         "prompt_action": "REVIEW_ADD_PROMPT"
       }
     },
@@ -194,7 +215,7 @@
       "id": "deepseek-harness:dsh-pre-push-checks",
       "source_id": "deepseek-harness",
       "source_repo": "deepseek-ai/deepseek-harness",
-      "source_sha": "ddefc45fbc7f8e46dd73185e68295696d1297887",
+      "source_sha": "00102833dfaee1da9f48a3a8eae9d34005a75218",
       "kind": "agent-skill",
       "slug": "dsh-pre-push-checks",
       "title": "Dsh Pre Push Checks",
@@ -217,7 +238,7 @@
       "id": "deepseek-harness:dsh-prose-standard",
       "source_id": "deepseek-harness",
       "source_repo": "deepseek-ai/deepseek-harness",
-      "source_sha": "ddefc45fbc7f8e46dd73185e68295696d1297887",
+      "source_sha": "00102833dfaee1da9f48a3a8eae9d34005a75218",
       "kind": "agent-skill",
       "slug": "dsh-prose-standard",
       "title": "Dsh Prose Standard",
@@ -231,7 +252,7 @@
         "disposition": "POINT_TO_EXTERNAL",
         "target_id": null,
         "target_title": null,
-        "score": 0.0,
+        "score": 0,
         "prompt_action": "REVIEW_ADD_PROMPT"
       }
     },
@@ -239,7 +260,7 @@
       "id": "deepseek-harness:dsh-speed-up-perf",
       "source_id": "deepseek-harness",
       "source_repo": "deepseek-ai/deepseek-harness",
-      "source_sha": "ddefc45fbc7f8e46dd73185e68295696d1297887",
+      "source_sha": "00102833dfaee1da9f48a3a8eae9d34005a75218",
       "kind": "agent-skill",
       "slug": "dsh-speed-up-perf",
       "title": "Dsh Speed Up Perf",
@@ -262,7 +283,7 @@
       "id": "deepseek-harness:dsh-translate-docs",
       "source_id": "deepseek-harness",
       "source_repo": "deepseek-ai/deepseek-harness",
-      "source_sha": "ddefc45fbc7f8e46dd73185e68295696d1297887",
+      "source_sha": "00102833dfaee1da9f48a3a8eae9d34005a75218",
       "kind": "agent-skill",
       "slug": "dsh-translate-docs",
       "title": "Dsh Translate Docs",
@@ -284,7 +305,7 @@
       "id": "deepseek-harness:dsh-trim-cot-leakage",
       "source_id": "deepseek-harness",
       "source_repo": "deepseek-ai/deepseek-harness",
-      "source_sha": "ddefc45fbc7f8e46dd73185e68295696d1297887",
+      "source_sha": "00102833dfaee1da9f48a3a8eae9d34005a75218",
       "kind": "agent-skill",
       "slug": "dsh-trim-cot-leakage",
       "title": "Dsh Trim Cot Leakage",
@@ -307,7 +328,7 @@
       "id": "deepseek-harness:record-browser-gif",
       "source_id": "deepseek-harness",
       "source_repo": "deepseek-ai/deepseek-harness",
-      "source_sha": "ddefc45fbc7f8e46dd73185e68295696d1297887",
+      "source_sha": "00102833dfaee1da9f48a3a8eae9d34005a75218",
       "kind": "agent-skill",
       "slug": "record-browser-gif",
       "title": "Record Browser Gif",
@@ -553,7 +574,7 @@
         "disposition": "POINT_TO_EXTERNAL",
         "target_id": null,
         "target_title": null,
-        "score": 0.0,
+        "score": 0,
         "prompt_action": "REVIEW_ADD_PROMPT"
       }
     },
@@ -690,7 +711,7 @@
         "disposition": "POINT_TO_EXTERNAL",
         "target_id": null,
         "target_title": null,
-        "score": 0.0,
+        "score": 0,
         "prompt_action": "REVIEW_ADD_PROMPT"
       }
     },
@@ -825,7 +846,7 @@
         "disposition": "POINT_TO_EXTERNAL",
         "target_id": null,
         "target_title": null,
-        "score": 0.0,
+        "score": 0,
         "prompt_action": "REVIEW_ADD_PROMPT"
       }
     },
@@ -1210,7 +1231,7 @@
         "disposition": "POINT_TO_EXISTING_PROMPT",
         "target_id": "P94",
         "target_title": "Regression Test & Live Behavior Guard",
-        "score": 1.0,
+        "score": 1,
         "prompt_action": "NO_NEW_PROMPT"
       }
     },
@@ -1276,7 +1297,7 @@
         "disposition": "POINT_TO_EXTERNAL",
         "target_id": null,
         "target_title": null,
-        "score": 0.0,
+        "score": 0,
         "prompt_action": "REVIEW_ADD_PROMPT"
       }
     },
@@ -1298,7 +1319,7 @@
         "disposition": "POINT_TO_EXTERNAL",
         "target_id": null,
         "target_title": null,
-        "score": 0.0,
+        "score": 0,
         "prompt_action": "REVIEW_ADD_PROMPT"
       }
     },
@@ -1341,7 +1362,7 @@
         "disposition": "POINT_TO_EXTERNAL",
         "target_id": null,
         "target_title": null,
-        "score": 0.0,
+        "score": 0,
         "prompt_action": "REVIEW_ADD_PROMPT"
       }
     }
