@@ -22,6 +22,12 @@ jobs:
         with:
           python-version: '3.11'
 
+      - name: Install deterministic test-floor dependencies
+        shell: bash
+        run: |
+          set -euo pipefail
+          python -m pip install --disable-pip-version-check -r requirements-test-floor.txt
+
       - name: Fetch P55 donor history
         shell: bash
         run: |
