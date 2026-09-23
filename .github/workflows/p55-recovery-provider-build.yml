@@ -176,16 +176,6 @@ jobs:
               raise SystemExit('P55 recovery: execution anchor moved')
           content = content.replace(old_exec, new_exec, 1)
 
-          old_local = (
-              '4. Never delete, reset, overwrite, clean, or repurpose ambiguous work merely to satisfy repository creation.'
-          )
-          new_local = old_local + (
-              '\n5. Before PUBLISH_EXISTING or ADOPT_EXISTING, confirm the declared branch/worktree and '
-              'isolated-writer posture match the verified root.'
-          )
-          if old_local not in content:
-              raise SystemExit('P55 recovery: local gate item anchor moved')
-          content = content.replace(old_local, new_local, 1)
           donor['copyContent'] = content
 
           editable = [
