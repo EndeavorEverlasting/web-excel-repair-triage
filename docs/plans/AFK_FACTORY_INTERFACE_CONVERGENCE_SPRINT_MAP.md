@@ -299,8 +299,8 @@ Reconcile the active P55/P66/P143/Evidence-Spine/findability owners and integrat
 
 ### PK-C0.5 — resolve Private Tutor + Repository Grill identity/storage contract
 
-**Owner:** Prompt Kit product-identity/privacy lane.  
-**Dependency:** PK-C0 exact integrated Prompt Kit main floor.  
+**Owner:** Prompt Kit product-identity/privacy lane.
+**Dependency:** PK-C0 exact integrated Prompt Kit main floor.
 **Canonical output:** `docs/plans/PROMPT_TUTOR_GRILL_IDENTITY_DECISION.md`.
 
 Execute:
