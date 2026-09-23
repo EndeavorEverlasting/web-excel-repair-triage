@@ -140,19 +140,18 @@ class TokenCorridorEvidenceStateTests(unittest.TestCase):
         copy_content = p143["copyContent"]
         self.assertIn("TokenCorridor", copy_content)
         self.assertIn(
-            "TokenCorridor and any other operator-proposed destination name remain operator_proposed",
+            "operator_proposed: named by the operator; not a provider fact",
             copy_content,
         )
 
-    def test_evidence_ladder_is_ordered_and_not_silently_promoted(self) -> None:
+    def test_proposal_provider_and_authority_states_are_orthogonal(self) -> None:
         p143 = _load_p143()
         copy_content = p143["copyContent"]
-        positions = []
-        for state in EVIDENCE_LADDER:
-            self.assertIn(state, copy_content, f"missing evidence state {state}")
-            positions.append(copy_content.index(state))
-        self.assertEqual(positions, sorted(positions), "evidence ladder must stay ordered")
-        self.assertIn("Never promote an evidence state silently", copy_content)
+        for state in PROPOSAL_STATES + PROVIDER_STATES + AUTHORITY_STATES:
+            self.assertIn(state, copy_content, f"missing typed state {state}")
+        self.assertIn("AVAILABLE is not EXISTS_OWNED", copy_content)
+        self.assertIn("Provider evidence never creates authority", copy_content)
+        self.assertIn("p55-bootstrap-handoff/v1", copy_content)
 
     def test_donor_public_visibility_does_not_imply_destination_public(self) -> None:
         p143 = _load_p143()
@@ -207,8 +206,16 @@ class P55OwnershipBoundaryTests(unittest.TestCase):
             for row in profile[0]["direct_assignments"]
             if row.get("ownership") == "PRIMARY"
         }
-        self.assertIn("strength.mainline_convergence", owned)
+        self.assertNotIn("strength.mainline_convergence", owned)
         self.assertIn("strength.plan_durability", owned)
+        mainline = [
+            row for row in profile[0]["direct_assignments"]
+            if row["capability_id"] == "strength.mainline_convergence"
+        ]
+        self.assertEqual(len(mainline), 1)
+        self.assertEqual(mainline[0]["presence"], "SUPPORT")
+        self.assertEqual(mainline[0]["ownership"], "SECONDARY")
+        self.assertEqual(mainline[0]["capability_relation"], "ROUTES_TO")
 
 
 if __name__ == "__main__":
