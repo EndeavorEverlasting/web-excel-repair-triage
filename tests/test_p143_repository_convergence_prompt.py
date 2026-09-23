@@ -76,13 +76,14 @@ class RepositoryConvergenceRoutingTests(unittest.TestCase):
         self.assertEqual(build_prompt_kit.SYNONYMS["cross repo"], "P16")
         self.assertNotEqual(build_prompt_kit.SYNONYMS["cross repo"], "P143")
         p143 = _load_p143()
-        self.assertIn("ordinary one-repo integration or PR merge (P16/P21/P07)", p143["useWhen"])
+        self.assertIn("ordinary one-repo integration/PR merge (P16/P21/P07)", p143["useWhen"])
 
     def test_case_e_uncertain_destination_keeps_state_dimensions_separate(self) -> None:
         p143 = _load_p143()
-        self.assertIn("operator_proposed", p143["useWhen"])
-        self.assertIn("provider", p143["useWhen"])
-        self.assertIn("authority", p143["useWhen"])
+        self.assertIn("destination proposal", p143["useWhen"])
+        self.assertIn("provider state", p143["useWhen"])
+        self.assertIn("execution authorization", p143["useWhen"])
+        self.assertIn("operator_proposed", p143["copyContent"])
         self.assertIn("provider evidence never creates authorization", p143["proofGate"])
 
 
@@ -151,7 +152,7 @@ class TokenCorridorEvidenceStateTests(unittest.TestCase):
     def test_donor_public_visibility_does_not_imply_destination_public(self) -> None:
         p143 = _load_p143()
         self.assertIn(
-            "Public donor repositories do not imply a public destination",
+            "Public donors do not imply a public destination",
             p143["copyContent"],
         )
         self.assertIn(
