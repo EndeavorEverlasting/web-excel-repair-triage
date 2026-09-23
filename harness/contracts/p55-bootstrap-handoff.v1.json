@@ -50,5 +50,9 @@
     "BLOCKED": "used for UNVERIFIED, EXISTS_CONFLICT, UNKNOWN_AUTH, UNKNOWN_PERMISSION, UNKNOWN_NETWORK, or UNKNOWN_PROVIDER; no mutation owner may be inferred."
   },
   "authority_rule": "operator_approved and execution_authorization are independent booleans with provenance. Provider state never creates authority.",
-  "durability_rule": "plan_artifact must identify an existing writable plan owner/path. Donor application/runtime state remains read-only unless a separate mutation owner authorizes it."
+  "durability_rule": "plan_artifact must identify an existing writable plan owner/path and its PLAN_ONLY or FULL write authority. Donor application/runtime state remains read-only unless a separate mutation owner authorizes it.",
+  "plan_write_authorities": [
+    "PLAN_ONLY",
+    "FULL"
+  ]
 }
