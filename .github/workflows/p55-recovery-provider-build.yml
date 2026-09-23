@@ -259,14 +259,18 @@ jobs:
 
           # 5) Register the focused regression in the current deterministic floor without replacing newer state.
           floor_path = root / 'harness' / 'test-floor.v1.json'
-          floor = floor_path.read_text(encoding='utf-8')
-          entry = '    "tests/test_p55_repository_bootstrap.py",\n'
-          if entry not in floor:
-              anchor = '    "tests/test_p02_continuity_regression_matrix.py",\n'
-              if floor.count(anchor) != 2:
-                  raise SystemExit('P55 recovery: deterministic-floor anchors moved')
-              floor = floor.replace(anchor, anchor + entry)
-              floor_path.write_text(floor, encoding='utf-8')
+          floor_data = json.loads(floor_path.read_text(encoding='utf-8'))
+          p55_test = 'tests/test_p55_repository_bootstrap.py'
+          for key in ('self_tests', 'prompt_semantic_test_globs'):
+              values = floor_data.get(key)
+              if not isinstance(values, list):
+                  raise SystemExit(f'P55 recovery: deterministic-floor list missing: {key}')
+              if p55_test not in values:
+                  values.append(p55_test)
+          floor_path.write_text(
+              json.dumps(floor_data, indent=2, ensure_ascii=False) + '\n',
+              encoding='utf-8',
+          )
 
           # 6) Preserve the durable P55 recovery plan/pack and current-main work queue.
           for path in (
