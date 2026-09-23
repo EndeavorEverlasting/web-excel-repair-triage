@@ -53,8 +53,10 @@ def validate_manifest(manifest: dict[str, Any]) -> dict[str, Any]:
     plan = manifest["plan_artifact"]
     if not isinstance(plan, dict):
         raise HandoffError("plan_artifact must be an object")
-    for field in ("repository", "ref", "path"):
+    for field in ("repository", "ref", "path", "write_authority"):
         _text(plan.get(field), f"plan_artifact.{field}")
+    if plan["write_authority"] not in contract["plan_write_authorities"]:
+        raise HandoffError(f"invalid plan_artifact.write_authority: {plan['write_authority']!r}")
 
     donors = manifest["donors"]
     if not isinstance(donors, list) or len(donors) < 2:
