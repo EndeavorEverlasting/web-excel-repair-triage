@@ -243,6 +243,55 @@ This plan does not:
 - force NodeWeaver into the visualizer;
 - require paid Jev, Not Diamond, LangSmith, Vercel, Factory, Cursor Cloud Agents, or another managed product.
 
+## 9A. Unresolved prompt-product continuity — Private Tutor and Repository Grill
+
+These two operator intents are material Prompt Kit successor work and must survive PK-C0 floor clearing. They are **not** satisfied merely because adjacent grilling or teaching behavior exists.
+
+### Private Tutor continuity
+
+Current registry truth:
+
+- **P96 — Stateful Socratic Technical Tutor Workspace** exists and owns stateful Socratic technical teaching, active retrieval, practical exercises, verified mastery, and a repository data-structure learning grill.
+- **P98 — Teach Workspace Protocol Bootstrapper** establishes repository-local `.teach/` state and explicitly permits version-controlled learning state when repository policy/data sensitivity permit.
+- The current P96/P98 persistence model therefore does **not** by itself satisfy a private/local tutor requirement where learner state, mistakes, uncertainty, reasoning history, mastery records, and learning progress must remain non-public and non-repository-tracked.
+
+Required boundary:
+
+- preserve P96's useful teaching mechanics and evidence-grounded instruction;
+- do not silently promote private learner state into Git/GitHub or shared project truth;
+- resolve the canonical private/local persistence owner before changing P96/P98 identity or storage behavior;
+- keep repository facts/resources separable from learner-specific state so a technical lesson can be grounded in repo truth without turning the repo into the learner diary.
+
+The existing `conversation_repository_promotion_contract` in `harness/contracts/prompt-kit-cross-device-access.v1.json` is the mandatory graduation gate for any conversation-derived repository change. It forbids raw learning state from becoming repository truth, but it is **not** proof that the current `.teach/` storage model is private/local.
+
+### Repository Grill continuity
+
+The intended Repository Grill is distinct from all of these existing surfaces:
+
+- **P65** grilling selects the right Prompt Kit route.
+- **P96** Grill-Me-style mode teaches repository data structures to the learner.
+- the tracked external **Matt Pocock `grill-me`** resource supplies a one-question-at-a-time interrogation discipline.
+
+The unresolved Repository Grill product behavior is:
+
+1. inspect current repository/provider evidence before asking the operator factual questions;
+2. interrogate one unresolved feature/architecture/product decision at a time;
+3. use the external Grill-Me discipline when available, without making that external skill the canonical Prompt Kit identity;
+4. derive candidate repository upgrades from the interview;
+5. keep operator knowledge state, uncertainty, misconceptions, reasoning history, preferences unrelated to the repository, and raw dialogue private;
+6. promote only repo-specific, impersonal requirements/decisions/invariants/acceptance gates through the existing conversation→repository promotion contract;
+7. write accepted upgrades into the smallest canonical repository owner rather than a parallel diary/report;
+8. leave rejected, unresolved, or user-only decisions explicitly typed instead of manufacturing repository truth.
+
+### Identity decision gate
+
+Do **not** allocate a new prompt ID merely from this plan. After PK-C0 establishes the refreshed Prompt Kit registry floor, run prompt-identity/overlap review against P04/P14/P65/P95/P96/P98 and current external-skill routing. The result must either:
+
+- strengthen an existing canonical owner without breaking its established job; or
+- register one distinct Repository Grill identity with focused routing/privacy/promotion regression tests.
+
+For the Private Tutor requirement, the same review must decide whether private/local persistence is a mode of P96/P98 or requires a separate identity. The decision must be driven by ownership and storage semantics, not prompt-count convenience.
+
 ## 10. Local execution phases
 
 ### PK-C0 — close current Prompt Kit floor
