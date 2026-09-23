@@ -1,0 +1,54 @@
+{
+  "schema_version": "p55-bootstrap-handoff-contract/v1",
+  "manifest_schema": "p55-bootstrap-handoff/v1",
+  "purpose": "Define the machine-readable P143 -> P55 or integration handoff without conflating namespace availability, existing-repository state, operator approval, or execution authorization.",
+  "provider_states": [
+    "UNVERIFIED",
+    "AVAILABLE",
+    "EXISTS_OWNED",
+    "EXISTS_CONFLICT",
+    "UNKNOWN_AUTH",
+    "UNKNOWN_PERMISSION",
+    "UNKNOWN_NETWORK",
+    "UNKNOWN_PROVIDER"
+  ],
+  "proposal_states": [
+    "operator_proposed",
+    "planner_selected"
+  ],
+  "routes": [
+    "P55_CREATE",
+    "INTEGRATE_EXISTING",
+    "BLOCKED"
+  ],
+  "integration_owners": [
+    "P07",
+    "P16",
+    "P21"
+  ],
+  "visibility_states": [
+    "PRIVATE",
+    "PUBLIC",
+    "INTERNAL",
+    "UNKNOWN"
+  ],
+  "required_manifest_fields": [
+    "schema_version",
+    "handoff_id",
+    "plan_artifact",
+    "donors",
+    "destination",
+    "authority",
+    "capability_dispositions",
+    "route",
+    "next_owner",
+    "proof_ceiling"
+  ],
+  "routing_rules": {
+    "P55_CREATE": "destination.provider_state must be AVAILABLE and next_owner must be P55; authorization is preserved as typed evidence and P55 must still gate mutation.",
+    "INTEGRATE_EXISTING": "destination.provider_state must be EXISTS_OWNED and next_owner must be one of P07/P16/P21; existing destinations do not route through repository creation.",
+    "BLOCKED": "used for UNVERIFIED, EXISTS_CONFLICT, UNKNOWN_AUTH, UNKNOWN_PERMISSION, UNKNOWN_NETWORK, or UNKNOWN_PROVIDER; no mutation owner may be inferred."
+  },
+  "authority_rule": "operator_approved and execution_authorization are independent booleans with provenance. Provider state never creates authority.",
+  "durability_rule": "plan_artifact must identify an existing writable plan owner/path. Donor application/runtime state remains read-only unless a separate mutation owner authorizes it."
+}
