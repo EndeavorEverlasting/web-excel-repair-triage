@@ -265,6 +265,7 @@ jobs:
               'docs/plans/P55_REPOSITORY_BOOTSTRAP_RECOVERY_SPRINT_PACK.md',
           ):
               data = subprocess.check_output(['git', 'show', f'origin/p55-donor:{path}'], text=True)
+              data = '\n'.join(line.rstrip() for line in data.splitlines()).rstrip() + '\n'
               target = root / path
               target.parent.mkdir(parents=True, exist_ok=True)
               target.write_text(data, encoding='utf-8')
