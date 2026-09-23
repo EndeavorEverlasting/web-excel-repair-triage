@@ -1,0 +1,49 @@
+name: P143 repair canonical generator
+
+on:
+  pull_request:
+    branches:
+      - feat/repository-convergence-planner-p143-20260922
+
+permissions:
+  contents: write
+
+jobs:
+  regenerate:
+    if: github.event.pull_request.head.ref == 'repair/p143-review-contracts-20260922'
+    runs-on: ubuntu-latest
+    concurrency:
+      group: p143-repair-generator-${{ github.event.pull_request.number }}
+      cancel-in-progress: false
+    steps:
+      - name: Checkout owned repair branch
+        uses: actions/checkout@v7
+        with:
+          ref: repair/p143-review-contracts-20260922
+          fetch-depth: 0
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.11"
+      - name: Rebuild canonical Prompt Kit output
+        run: python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html
+      - name: Validate semantic and focused contracts before writeback
+        run: |
+          python scripts/validate_prompt_semantic_coverage.py --summary
+          python -m unittest tests.test_p143_repository_convergence_prompt tests.test_p55_bootstrap_handoff -v
+          python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html --check
+          git diff --check
+      - name: Commit generated parity only when changed
+        shell: bash
+        run: |
+          set -euo pipefail
+          if git diff --quiet -- web/prompt-kit/index.html; then
+            echo "canonical generated output already exact"
+            exit 0
+          fi
+          test -z "$(git status --short | grep -v '^ M web/prompt-kit/index.html$' || true)"
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -- web/prompt-kit/index.html
+          git diff --cached --check
+          git commit -m "chore(p143): regenerate Prompt Kit parity"
+          git push origin HEAD:repair/p143-review-contracts-20260922
