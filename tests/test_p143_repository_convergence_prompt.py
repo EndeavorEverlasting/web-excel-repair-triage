@@ -18,7 +18,6 @@ P143_SYNONYMS = (
     "repository convergence",
     "repo convergence",
     "multi-repo convergence",
-    "combine repositories",
     "donor sources",
     "convergence plan",
     "capability disposition",
@@ -113,7 +112,7 @@ class RepositoryConvergenceRoutingTests(unittest.TestCase):
             + "\nvar prompts=" + json.dumps(payload) + ";\n"
             + "var queries=['repository convergence','combine repositories','bootstrap'];\n"
             + "var out={};queries.forEach(function(q){out[q]=filterPromptsForQuery(prompts,q).map(function(p){return p.id})});\n"
-            + "var synonymOnly={};['operator','cleanup','cursor','closeout','compiler','cluster','consolidate']"
+            + "var synonymOnly={};['operator','cleanup','cursor','closeout','compiler','cluster','consolidate','combine repository']"
             + ".forEach(function(q){synonymOnly[q]=synonymPromptIdsForQuery(q)});\n"
             + "process.stdout.write(JSON.stringify({ranked:out,synonymOnly:synonymOnly}));\n"
         )
@@ -128,7 +127,7 @@ class RepositoryConvergenceRoutingTests(unittest.TestCase):
             )
         result = json.loads(completed.stdout)
         self.assertEqual(result["ranked"]["repository convergence"][0], "P143")
-        self.assertEqual(result["ranked"]["combine repositories"][0], "P143")
+        self.assertNotIn("P143", result["synonymOnly"].get("combine repository", []))
         self.assertEqual(result["ranked"]["bootstrap"][0], "P55")
         for query, ids in result["synonymOnly"].items():
             self.assertNotIn("P143", ids, f"{query!r} must not leak through a short P143 synonym")
