@@ -1,0 +1,367 @@
+name: P55 Provider Recovery Build
+
+on:
+  push:
+    branches:
+      - recovery/p55-provider-convergence-20260922
+
+permissions:
+  contents: write
+
+jobs:
+  converge-p55:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout recovery lane
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v7
+        with:
+          python-version: '3.12'
+
+      - name: Fetch P55 donor history
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch --no-tags origin feat/p55-provider-neutral-repo-bootstrap-20260920:refs/remotes/origin/p55-donor
+
+      - name: Reconstruct current-main P55 lifecycle inputs
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import json
+          import subprocess
+          from pathlib import Path
+
+          root = Path('.')
+
+          # 1) Strengthen the canonical lifecycle helper without importing stale donor copies.
+          ops_path = root / 'scripts' / 'prompt_registry_ops.py'
+          ops = ops_path.read_text(encoding='utf-8')
+
+          old = 'EDITABLE_PROMPT_FIELDS = {"name", "copyContent", "sprintRole", "useWhen"}'
+          new = '''SEMANTIC_EDITABLE_PROMPT_FIELDS = {"name", "copyContent", "sprintRole", "useWhen"}
+          METADATA_EDITABLE_PROMPT_FIELDS = {
+              "class", "inspectFirst", "expectedOutput", "nextStep", "proofGate", "keywords",
+          }
+          EDITABLE_PROMPT_FIELDS = SEMANTIC_EDITABLE_PROMPT_FIELDS | METADATA_EDITABLE_PROMPT_FIELDS'''
+          if old not in ops:
+              raise SystemExit('P55 recovery: editable-field anchor moved')
+          ops = ops.replace(old, new, 1)
+
+          old = '''    changed_fields = sorted(set(patch).intersection(EDITABLE_PROMPT_FIELDS))
+              if not changed_fields:
+                  raise SystemExit(
+                      "Prompt edit must change at least one canonical semantic field: "
+                      + ", ".join(sorted(EDITABLE_PROMPT_FIELDS))
+                  )
+          '''
+          new = '''    changed_fields = sorted(set(patch).intersection(EDITABLE_PROMPT_FIELDS))
+              semantic_changed_fields = sorted(
+                  set(patch).intersection(SEMANTIC_EDITABLE_PROMPT_FIELDS)
+              )
+              if not changed_fields:
+                  raise SystemExit(
+                      "Prompt edit must change at least one supported field: "
+                      + ", ".join(sorted(EDITABLE_PROMPT_FIELDS))
+                  )
+              if not semantic_changed_fields:
+                  raise SystemExit(
+                      "Prompt edit metadata may accompany a semantic edit but cannot independently "
+                      "advance the semantic lifecycle; change at least one of: "
+                      + ", ".join(sorted(SEMANTIC_EDITABLE_PROMPT_FIELDS))
+                  )
+          '''
+          if old not in ops:
+              raise SystemExit('P55 recovery: semantic edit guard anchor moved')
+          ops = ops.replace(old, new, 1)
+
+          old = '''    for field in changed_fields:
+                  value = patch[field]
+                  if not isinstance(value, str) or not value.strip():
+                      raise SystemExit(f"Prompt edit field must be a non-empty string: {field}")
+                  new_record[field] = value.rstrip() if field == "copyContent" else value.strip()
+          '''
+          new = '''    for field in changed_fields:
+                  value = patch[field]
+                  if field == "keywords":
+                      if not isinstance(value, list) or not value:
+                          raise SystemExit("Prompt edit keywords must be a non-empty list")
+                      if any(not isinstance(item, str) or not item.strip() for item in value):
+                          raise SystemExit("Prompt edit keywords must contain only non-empty strings")
+                      normalized = [item.strip() for item in value]
+                      if len(normalized) != len({_normalize_text(item) for item in normalized}):
+                          raise SystemExit("Prompt edit keywords must not contain duplicates")
+                      new_record[field] = normalized
+                      continue
+                  if not isinstance(value, str) or not value.strip():
+                      raise SystemExit(f"Prompt edit field must be a non-empty string: {field}")
+                  new_record[field] = value.rstrip() if field == "copyContent" else value.strip()
+          '''
+          if old not in ops:
+              raise SystemExit('P55 recovery: metadata normalization anchor moved')
+          ops = ops.replace(old, new, 1)
+          ops_path.write_text(ops, encoding='utf-8')
+
+          # 2) Preserve current main and add only P55 discovery synonyms.
+          build_path = root / 'build_prompt_kit.py'
+          build = build_path.read_text(encoding='utf-8')
+          if '"create repository": "P55"' not in build:
+              anchor = '    "local validation": "P54", "bootstrap": "P55", "github cli": "P55",\n'
+              addition = (
+                  anchor
+                  + '    "create repository": "P55", "create repo": "P55", "new repository": "P55",\n'
+                  + '    "repository bootstrap": "P55", "name repository": "P55", "repository namespace": "P55",\n'
+                  + '    "git provider": "P55", "publish repository": "P55",\n'
+              )
+              if anchor not in build:
+                  raise SystemExit('P55 recovery: discovery synonym anchor moved')
+              build = build.replace(anchor, addition, 1)
+              build_path.write_text(build, encoding='utf-8')
+
+          # 3) Recover donor P55 intent, then close current review findings.
+          donor_prompts = json.loads(subprocess.check_output(
+              ['git', 'show', 'origin/p55-donor:docs/prompts.json'], text=True
+          ))
+          donor = next(row for row in donor_prompts if row.get('id') == 'P55')
+          donor['nextStep'] = (
+              'If a verified local root is available, enter it and use P03 or P07 for the first '
+              'bounded repository sprint. If execution is REMOTE_ONLY, first clone or adopt the '
+              'verified remote into an approved local parent, then use P03 or P07. If execution '
+              'is LOCAL_ONLY, advance the remote-provider/auth gate and do not claim remote completion.'
+          )
+          donor['proofGate'] = (
+              'Context and existing-owner evidence are recovered before naming; every required creation '
+              'parameter is supplied, inferred under the selected ASK/INFER/HYBRID policy, or explicitly '
+              'USER_ONLY; exact/root/adjacent namespace collisions are dispositioned without treating '
+              'screening as legal clearance; visibility never silently defaults to public; provider '
+              'syntax/capability is evidenced rather than invented; the pre-mutation repository execution '
+              'contract and isolated-writer posture are resolved for the selected execution surface; '
+              'authorized create/adopt/publish succeeds through the selected Git-compatible adapter; and '
+              'remote/local claims match authoritative read-back.'
+          )
+          content = donor['copyContent']
+          old_self = (
+              '- SELF-CHECK: Before creation and before completion, re-read the manifest, namespace ledger, '
+              'provider result, remote identity, and local Git evidence. Unsupported fields remain UNKNOWN or USER_ONLY.'
+          )
+          new_self = (
+              '- SELF-CHECK: Before creation and before completion, re-read the manifest, namespace ledger, '
+              'provider result, remote identity, and local Git evidence. Unsupported or unresolved manifest '
+              'fields use USER_ONLY. UNKNOWN_* values are reserved for separate external lookup/provider outcome evidence.'
+          )
+          if old_self not in content:
+              raise SystemExit('P55 recovery: self-check anchor moved')
+          content = content.replace(old_self, new_self, 1)
+
+          anchor = '\nLOCAL DIRECTORY GATE\n'
+          execution_contract = '''\nPRE-MUTATION REPOSITORY EXECUTION CONTRACT
+          Before any local or remote repository write, declare and verify:
+          - repository/provider identity and branch/worktree or remote ref when observable;
+          - lane and mission;
+          - owned scope and forbidden scope;
+          - expected artifacts;
+          - validation order;
+          - mutation authority;
+          - writer-isolation and collision posture.
+          One writer owns each branch/worktree. REMOTE_ONLY may mark local branch/worktree UNOBSERVABLE, but the remote target/ref and competing-writer posture must be resolved from provider evidence when exposed.
+          PUBLISH_EXISTING or any other repository mutation is blocked while a required execution-contract field or isolation condition remains unresolved.
+          This contract binds execution after the Repository Identity Manifest and provider capability gates; it never widens mutation authority.
+          '''
+          if anchor not in content:
+              raise SystemExit('P55 recovery: local directory gate anchor moved')
+          content = content.replace(anchor, execution_contract + anchor, 1)
+
+          old_exec = 'EXECUTION\nOnce the manifest contains no creation-blocking field:\n'
+          new_exec = (
+              'EXECUTION\nOnce the manifest contains no creation-blocking field and the pre-mutation '
+              'repository execution contract is complete:\n'
+          )
+          if old_exec not in content:
+              raise SystemExit('P55 recovery: execution anchor moved')
+          content = content.replace(old_exec, new_exec, 1)
+
+          old_local = (
+              '4. Never delete, reset, overwrite, clean, or repurpose ambiguous work merely to satisfy repository creation.'
+          )
+          new_local = old_local + (
+              '\n5. Before PUBLISH_EXISTING or ADOPT_EXISTING, confirm the declared branch/worktree and '
+              'isolated-writer posture match the verified root.'
+          )
+          if old_local not in content:
+              raise SystemExit('P55 recovery: local gate item anchor moved')
+          content = content.replace(old_local, new_local, 1)
+          donor['copyContent'] = content
+
+          editable = [
+              'name', 'class', 'sprintRole', 'useWhen', 'inspectFirst', 'expectedOutput',
+              'nextStep', 'proofGate', 'copyContent', 'keywords'
+          ]
+          patch = {key: donor[key] for key in editable}
+          Path('/tmp/p55-edit.json').write_text(
+              json.dumps(patch, indent=2, ensure_ascii=False) + '\n', encoding='utf-8'
+          )
+
+          # 4) Recover and strengthen the focused regression from donor evidence.
+          tests = subprocess.check_output(
+              ['git', 'show', 'origin/p55-donor:tests/test_p55_repository_bootstrap.py'], text=True
+          )
+          tests = tests.replace(
+              '            "proofGate",\n            "copyContent",',
+              '            "proofGate",\n            "nextStep",\n            "copyContent",',
+              1,
+          )
+          tests = tests.replace(
+              '{"class", "inspectFirst", "expectedOutput", "proofGate", "keywords"}.issubset(',
+              '{"class", "inspectFirst", "expectedOutput", "nextStep", "proofGate", "keywords"}.issubset(',
+              1,
+          )
+          extra = '''
+              def test_manifest_status_vocabulary_is_consistent(self) -> None:
+                  content = self.p55["copyContent"]
+                  self.assertIn("Status is exactly RESOLVED, INFERRED, or USER_ONLY.", content)
+                  self.assertIn("Unsupported or unresolved manifest fields use USER_ONLY.", content)
+                  self.assertNotIn("Unsupported fields remain UNKNOWN or USER_ONLY.", content)
+
+              def test_pre_mutation_execution_contract_is_required(self) -> None:
+                  content = self.p55["copyContent"]
+                  for phrase in (
+                      "PRE-MUTATION REPOSITORY EXECUTION CONTRACT",
+                      "lane and mission",
+                      "owned scope and forbidden scope",
+                      "expected artifacts",
+                      "validation order",
+                      "mutation authority",
+                      "writer-isolation and collision posture",
+                      "One writer owns each branch/worktree",
+                      "repository mutation is blocked",
+                  ):
+                      self.assertIn(phrase, content)
+
+              def test_continuation_is_execution_surface_aware(self) -> None:
+                  step = self.p55["nextStep"]
+                  self.assertIn("verified local root", step)
+                  self.assertIn("REMOTE_ONLY", step)
+                  self.assertIn("clone or adopt the verified remote", step)
+                  self.assertIn("LOCAL_ONLY", step)
+                  self.assertIn("remote-provider/auth gate", step)
+
+          '''
+          marker = '\n\nif __name__ == "__main__":\n'
+          if marker not in tests:
+              raise SystemExit('P55 recovery: focused test insertion anchor moved')
+          tests = tests.replace(marker, '\n' + extra + marker, 1)
+          (root / 'tests' / 'test_p55_repository_bootstrap.py').write_text(tests, encoding='utf-8')
+
+          # 5) Register the focused regression in the current deterministic floor without replacing newer state.
+          floor_path = root / 'harness' / 'test-floor.v1.json'
+          floor = floor_path.read_text(encoding='utf-8')
+          entry = '    "tests/test_p55_repository_bootstrap.py",\n'
+          if entry not in floor:
+              anchor = '    "tests/test_p02_continuity_regression_matrix.py",\n'
+              if floor.count(anchor) != 2:
+                  raise SystemExit('P55 recovery: deterministic-floor anchors moved')
+              floor = floor.replace(anchor, anchor + entry)
+              floor_path.write_text(floor, encoding='utf-8')
+
+          # 6) Preserve the durable P55 recovery plan/pack and current-main work queue.
+          for path in (
+              'docs/plans/P55_REPOSITORY_BOOTSTRAP_RECOVERY_SPRINT_MAP.md',
+              'docs/plans/P55_REPOSITORY_BOOTSTRAP_RECOVERY_SPRINT_PACK.md',
+          ):
+              data = subprocess.check_output(['git', 'show', f'origin/p55-donor:{path}'], text=True)
+              target = root / path
+              target.parent.mkdir(parents=True, exist_ok=True)
+              target.write_text(data, encoding='utf-8')
+
+          queue_path = root / '.ai' / 'WORK_QUEUE.md'
+          queue = queue_path.read_text(encoding='utf-8')
+          if '## TRQ-021 — P55 repository bootstrap recovery and mainline convergence' not in queue:
+              donor_queue = subprocess.check_output(
+                  ['git', 'show', 'origin/p55-donor:.ai/WORK_QUEUE.md'], text=True
+              )
+              start = donor_queue.index('## TRQ-021 — P55 repository bootstrap recovery and mainline convergence')
+              queue = queue.rstrip() + '\n\n' + donor_queue[start:].strip() + '\n'
+              queue_path.write_text(queue, encoding='utf-8')
+          PY
+
+      - name: Execute canonical P55 lifecycle transaction
+        shell: bash
+        run: |
+          set -euo pipefail
+          python scripts/prompt_registry_ops.py edit             --prompt-id P55             --input /tmp/p55-edit.json             --disposition NO_CAPABILITY_CHANGE             --evidence-ref tests/test_p55_repository_bootstrap.py             --evidence-ref docs/plans/P55_REPOSITORY_BOOTSTRAP_RECOVERY_SPRINT_MAP.md             --rationale "Strengthen the existing P55 repository bootstrap owner for context recovery, provider-neutral execution, one manifest-status vocabulary, explicit pre-mutation writer isolation, and execution-surface-aware continuation without changing capability ownership."
+
+      - name: Validate exact recovery candidate
+        shell: bash
+        run: |
+          set -euo pipefail
+          python -m unittest tests.test_p55_repository_bootstrap -v
+          python -m unittest tests.test_spec_architecture_prompt_registry tests.test_prompt_kit_discovery tests.test_skill_prompt_registry tests.test_actionable_prompt_registry tests.test_p02_continuity_regression_matrix -v
+          python scripts/prompt_registry_ops.py validate
+          python scripts/evaluate_prompt_language.py --summary
+          python scripts/validate_prompt_kit_discovery.py --summary
+          python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html --check
+          mkdir -p Outputs
+          python scripts/run_deterministic_test_floor.py --report Outputs/p55-recovery-deterministic-floor.json
+          git diff --check
+
+      - name: Update durable recovery state and commit proven tree
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          from pathlib import Path
+
+          plan = Path('docs/plans/P55_REPOSITORY_BOOTSTRAP_RECOVERY_SPRINT_MAP.md')
+          text = plan.read_text(encoding='utf-8')
+          text = text.replace(
+              '**Plan status:** TRACKED recovery plan; implementation remains unmerged.',
+              '**Plan status:** IMPLEMENTED and locally/provider-runner validated on the current-main recovery lane; PR integration remains pending.',
+              1,
+          )
+          text = text.replace(
+              '**Planning floor:** `main@bd5136561466b31f8623ca3f9a61020cb9ced5f7`',
+              '**Planning floor:** `main@b74e5e696272c140a292f8bec0ec27ff0bca5c88`',
+              1,
+          )
+          plan.write_text(text, encoding='utf-8')
+
+          queue = Path('.ai/WORK_QUEUE.md')
+          q = queue.read_text(encoding='utf-8')
+          q = q.replace(
+              '## TRQ-021 — P55 repository bootstrap recovery and mainline convergence\n\n- **Status:** READY',
+              '## TRQ-021 — P55 repository bootstrap recovery and mainline convergence\n\n- **Status:** IN_PROGRESS',
+              1,
+          )
+          q = q.replace(
+              '- **Gate:** PR #623 is currently diverged/non-mergeable and must be reconciled with refreshed current main before proof; two P55 semantic review findings remain until final lifecycle reconstruction',
+              '- **Gate:** current-main recovery candidate is implemented and validated; converge its proven tree into PR #623, then require exact-head provider/review proof before merge',
+              1,
+          )
+          queue.write_text(q, encoding='utf-8')
+          PY
+
+          rm -f .github/workflows/p55-recovery-provider-build.yml
+          git diff --check
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add             .ai/WORK_QUEUE.md             build_prompt_kit.py             docs/plans/P55_REPOSITORY_BOOTSTRAP_RECOVERY_SPRINT_MAP.md             docs/plans/P55_REPOSITORY_BOOTSTRAP_RECOVERY_SPRINT_PACK.md             docs/prompts.json             harness/prompt-compilation/prompt-semantic-migrations.v1.json             harness/prompt-topology/prompt-capability-migrations.v1.json             harness/prompt-topology/prompt-capability-profiles.v1.json             harness/test-floor.v1.json             scripts/prompt_registry_ops.py             tests/test_p55_repository_bootstrap.py             web/prompt-kit/index.html             .github/workflows/p55-recovery-provider-build.yml
+          git diff --cached --check
+          git commit -m "fix(prompt-kit): converge P55 repository bootstrap [p55-recovery-generated]"
+          git push origin HEAD:recovery/p55-provider-convergence-20260922
+          mkdir -p Outputs
+          git rev-parse HEAD > Outputs/p55-recovery-head.txt
+
+      - name: Upload P55 recovery proof
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: p55-recovery-proof-${{ github.run_id }}
+          path: |
+            Outputs/p55-recovery-deterministic-floor.json
+            Outputs/p55-recovery-head.txt
+          if-no-files-found: warn
