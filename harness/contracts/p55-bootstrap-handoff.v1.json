@@ -50,9 +50,20 @@
     "BLOCKED": "used for UNVERIFIED, EXISTS_CONFLICT, UNKNOWN_AUTH, UNKNOWN_PERMISSION, UNKNOWN_NETWORK, or UNKNOWN_PROVIDER; no mutation owner may be inferred."
   },
   "authority_rule": "operator_approved and execution_authorization are independent booleans with provenance. Provider state never creates authority.",
-  "durability_rule": "plan_artifact must identify an existing writable plan owner/path and its PLAN_ONLY or FULL write authority. Donor application/runtime state remains read-only unless a separate mutation owner authorizes it.",
+  "durability_rule": "plan_artifact must carry verifiable LOCAL_TRACKED_FILE or tracked PROVIDER_RECEIPT evidence plus PLAN_ONLY/FULL write authority. Arbitrary location strings are not durability proof.",
   "plan_write_authorities": [
     "PLAN_ONLY",
     "FULL"
+  ],
+  "provider_receipt_schema": "repository-write-receipt/v1",
+  "capability_disposition_values": [
+    "KEEP",
+    "MERGE",
+    "SPLIT",
+    "REFACTOR",
+    "REWIRE",
+    "SHIM",
+    "RETIRE",
+    "DONOR_ONLY"
   ]
 }
