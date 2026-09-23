@@ -11,6 +11,7 @@ Human-facing Operant releases. Git commit/artifact identity remains the forensic
 - feat(prompt-kit): add per-prompt compute variant controls (#608) (`c9bcf5b2`)
 - feat(prompt-kit): gate conversation to repository promotion (`4a216763`)
 - feat(prompt-kit): strengthen P02 continuity alignment (#613) (`3defbc21`)
+- feat(prompt-kit): strengthen P55 repository bootstrap (`112881c3`)
 
 ### Fixes / performance
 
@@ -24,6 +25,7 @@ Human-facing Operant releases. Git commit/artifact identity remains the forensic
 - fix(prompt-kit): align P65 downstream disposition contract (`2407a740`)
 - fix(prompt-kit): avoid accidental P65 review ownership (`e07e721d`)
 - fix(prompt-kit): close P111 specialized evidence dependencies (`c9771824`)
+- fix(prompt-kit): converge P55 repository bootstrap [p55-recovery-generated] (`cf5d6ab6`)
 
 ## 0.10.1 - 2026-09-19
 
