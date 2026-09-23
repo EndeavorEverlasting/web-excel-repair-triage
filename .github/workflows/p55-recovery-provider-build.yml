@@ -219,7 +219,7 @@ jobs:
                       "mutation authority",
                       "writer-isolation and collision posture",
                       "One writer owns each branch/worktree",
-                      "repository mutation is blocked",
+                      "Repository mutation is blocked",
                   ):
                       self.assertIn(phrase, content)
 
