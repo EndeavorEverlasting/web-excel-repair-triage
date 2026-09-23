@@ -333,7 +333,7 @@ Canonical terminal action: none; no safe actionable work remains
 
 ## TRQ-022 — Register P143 Repository Convergence Planner and constrain P55 boundary
 
-- **Status:** PR_OPEN
+- **Status:** REVIEW
 - **Priority:** P1
 - **Owner:** repository-convergence-planner-p143-20260922
 - **Branch / PR:** `feat/repository-convergence-planner-p143-20260922` / #632 open
