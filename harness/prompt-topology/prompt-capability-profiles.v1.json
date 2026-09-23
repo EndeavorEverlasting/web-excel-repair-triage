@@ -2184,22 +2184,22 @@
     },
     {
       "prompt_id": "P143",
-      "profile_version": 1,
-      "canonical_prompt_hash": "ceb5bdaaf22a53a745b20090072b88aeda2f6501760d3986b0fdc30bfb60f945",
-      "acceptance_commit": "c97718247e7b14544d198035dd3cdc07725545a8",
+      "profile_version": 2,
+      "canonical_prompt_hash": "97dbd7437c9a3d44013c4b4a3b87236b1336c159b7911e1c3dc71f089bf8c1b4",
+      "acceptance_commit": "e82bdd0bd80cd118904cb9bf1ae34b11f010c163",
       "direct_assignments": [
         {
           "capability_id": "strength.mainline_convergence",
-          "presence": "REQUIRED",
-          "ownership": "PRIMARY",
-          "capability_relation": "IMPLEMENTS",
-          "delivery_source": "CANONICAL_BODY",
+          "presence": "SUPPORT",
+          "ownership": "SECONDARY",
+          "capability_relation": "ROUTES_TO",
+          "delivery_source": "ROUTED_OWNER",
           "evidence_refs": [
             "registry/prompts/repository-work-ledger-prompts.v1.json",
             "harness/contracts/prompt-strength.v1.json",
             "harness/prompt-topology/semantic-capability-catalog.v1.json"
           ],
-          "rationale": "P143 is the canonical owner of planning multi-source A+B→C repository convergence: donor floors, capability dispositions, dependency/collision/phase maps, and the typed handoff that lets mainline convergence execute later under P07 without creating the destination here."
+          "rationale": "P143 plans multi-source convergence and emits a typed successor handoff; P07/P16/P21 own integration/mainline execution, so P143 routes to that capability rather than implementing it."
         },
         {
           "capability_id": "strength.plan_durability",
@@ -2243,9 +2243,10 @@
           "delivery_source": "CANONICAL_BODY",
           "evidence_refs": [
             "harness/prompt-topology/prompt-capability-profiles.v1.json",
-            "registry/prompts/repository-work-ledger-prompts.v1.json"
+            "registry/prompts/repository-work-ledger-prompts.v1.json",
+            "harness/contracts/p55-bootstrap-handoff.v1.json"
           ],
-          "rationale": "P143 guards the operator_proposed→provider_verified→operator_approved→execution_authorization ladder and destination visibility as separate evidence states; P111 remains an overlapping owner reviewed for residual."
+          "rationale": "P143 guards orthogonal destination proposal, provider, and authority states. AVAILABLE, EXISTS_OWNED, and execution authorization remain mechanically distinct; provider truth cannot mint permission."
         },
         {
           "capability_id": "prompt.identity",
@@ -2289,16 +2290,24 @@
           "source_hash": "e249da6706d86733cd03a046ef9e16552a3ae87dc8cc644281c5c1fd9c08c796"
         }
       ],
-      "semantic_dependency_fingerprint": "9a323e31a079a12acf94a97fe3d8883eb3f502658b0aed08c354d4841175ac51",
+      "semantic_dependency_fingerprint": "3b65ee4a7b17f86a28d71af4b90e847128767bbd7d67e41e1f4b8e5ca8ed251c",
       "evidence_refs": [
         "build_prompt_kit.py",
+        "harness/contracts/p55-bootstrap-handoff.v1.json",
         "harness/contracts/prompt-strength.v1.json",
         "harness/prompt-topology/prompt-capability-profiles.v1.json",
         "harness/prompt-topology/semantic-capability-catalog.v1.json",
-        "registry/prompts/repository-work-ledger-prompts.v1.json"
+        "registry/prompts/repository-work-ledger-prompts.v1.json",
+        "scripts/p55_bootstrap_handoff.py",
+        "tests/test_p143_repository_convergence_prompt.py",
+        "tests/test_p55_bootstrap_handoff.py"
       ],
       "profile_status": "ACCEPTED",
-      "profile_sha256": "cd3bc4031c94093af9830c9dad0b4daf10980551ab236accd179e359140ee27e"
+      "prior_profile_ref": {
+        "profile_version": 1,
+        "profile_sha256": "cd3bc4031c94093af9830c9dad0b4daf10980551ab236accd179e359140ee27e"
+      },
+      "profile_sha256": "9577e330a0387c1bc331af8f2f6d655dbf385c680101d2ef6ca120eef186565b"
     }
   ],
   "profile_count": 64
