@@ -159,6 +159,8 @@ def validate_manifest(manifest: dict[str, Any]) -> dict[str, Any]:
     provenance = authority.get("provenance")
     if not isinstance(provenance, list) or any(not isinstance(item, str) or not item.strip() for item in provenance):
         raise HandoffError("authority.provenance must be an array of non-empty strings")
+    if (approved or authorized) and not provenance:
+        raise HandoffError("asserted authority requires non-empty provenance")
 
     dispositions = manifest["capability_dispositions"]
     if not isinstance(dispositions, list) or not dispositions:
