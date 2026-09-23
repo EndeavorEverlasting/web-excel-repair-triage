@@ -140,6 +140,14 @@ class P55BootstrapHandoffTests(unittest.TestCase):
         with self.assertRaisesRegex(MOD.HandoffError, "duplicate capability disposition"):
             MOD.validate_manifest(manifest)
 
+    def test_asserted_authority_requires_provenance(self) -> None:
+        manifest = base_manifest()
+        manifest["authority"]["operator_approved"] = True
+        manifest["authority"]["execution_authorization"] = True
+        manifest["authority"]["provenance"] = []
+        with self.assertRaisesRegex(MOD.HandoffError, "requires non-empty provenance"):
+            MOD.validate_manifest(manifest)
+
     def test_blocked_route_never_authorizes_mutation(self) -> None:
         manifest = base_manifest()
         manifest["destination"]["provider_state"] = "UNKNOWN_PROVIDER"
