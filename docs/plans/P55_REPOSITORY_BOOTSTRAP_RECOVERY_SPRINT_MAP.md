@@ -2,7 +2,7 @@
 
 **Canonical work owner:** PR #623 — `feat(prompt-kit): strengthen P55 repository bootstrap`
 **Remote sprint pack:** `docs/plans/P55_REPOSITORY_BOOTSTRAP_RECOVERY_SPRINT_PACK.md`
-**Plan status:** IMPLEMENTED and locally/provider-runner validated on the current-main recovery lane; PR integration remains pending.
+**Plan status:** CLOSED — P55 recovery integrated and verified on `main@5e129012221f3108e03bda129084b616e8ffd50b`.
 **Planning floor:** `main@b74e5e696272c140a292f8bec0ec27ff0bca5c88`
 **Current PR head at planning:** `373019f33b0ef577443f7e56bdd441c06c203814`
 **PR divergence at planning:** 17 commits ahead / 32 behind current `main`; provider reports not mergeable.
@@ -34,7 +34,7 @@ PR #623 already established useful donor behavior:
 
 Historical exact-head proof on `373019f3...` was 23 successful provider workflows plus 1 intentional skip, but that proof is stale for integration because current `main` moved materially afterward.
 
-## Current blockers and owners
+## Recovery blockers observed at planning
 
 | Blocker | Evidence | Owner | Required transition |
 |---|---|---|---|
@@ -207,9 +207,16 @@ No conventional application-service, persistence, UI state-machine, deployment, 
 - Superseded donor: PR #367, close only after #623 integrates.
 - Shared parallel-dispatch manifest: currently owned by TRQ-020; do not overwrite for this width-1 recovery.
 
+## Closure evidence
+
+- Recovery branch candidate `cf5d6ab61e53c373fd8394545fb1348083139788` was generated from current-main authority through the canonical P55 lifecycle helper.
+- Provider recovery run `35812547079` succeeded after focused P55 proof, 104 broader tests, registry semantic/quality validation, zero-error/zero-warning language audit, discovery validation, generated Prompt Kit parity, patch hygiene, and the deterministic test floor (`42/42`).
+- Reconciled PR #623 head `c56ce33e63642dce844e31bc2fc83bca08213511` preserved refreshed main and the proven recovery ancestry; its effective diff against main was the 12-file P55 recovery surface.
+- Exact-head CodeRabbit status was SUCCESS and zero actionable review threads remained.
+- PR #623 merged as `5e129012221f3108e03bda129084b616e8ffd50b`; refreshed `main` matched that integration SHA exactly and authoritative read-back confirmed final P55 manifest, execution-contract, writer-isolation, and mode-aware continuation behavior.
+- Superseded donor PR #367 was closed only after replacement containment was proven.
+- Proof ceiling remains repository/provider integration proof. Real repository creation through GitHub CLI, Entire, or another runtime adapter is field proof performed when P55 is subsequently invoked in that environment; it is not unfinished P55 recovery work.
+
 ## Next executable action
 
-Owner: local/repository executor for PR #623.
-Dependency: refreshed current main and safe isolated writer lane.
-Action: reconcile `feat/p55-provider-neutral-repo-bootstrap-20260920` with current default branch, then reconstruct the final P55 lifecycle transaction from current-main authority before running Sprint 1 validation.
-Expected proof: one exact current-main-based branch head with focused P55 tests, semantic lifecycle validation, deterministic floor, generated-site parity, and patch hygiene green.
+none; no safe actionable P55 recovery work remains. Future P55 invocations proceed from the integrated mainline owner rather than this recovery lane.
