@@ -12,6 +12,7 @@ Human-facing Operant releases. Git commit/artifact identity remains the forensic
 - feat(prompt-kit): gate conversation to repository promotion (`4a216763`)
 - feat(prompt-kit): strengthen P02 continuity alignment (#613) (`3defbc21`)
 - feat(prompt-kit): strengthen P55 repository bootstrap (`112881c3`)
+- feat(prompt-kit): pair Canary local and cloud artifacts (`fa2ee183`)
 
 ### Fixes / performance
 
@@ -27,6 +28,8 @@ Human-facing Operant releases. Git commit/artifact identity remains the forensic
 - fix(prompt-kit): close P111 specialized evidence dependencies (`c9771824`)
 - fix(prompt-kit): converge P55 repository bootstrap [p55-recovery-generated] (`cf5d6ab6`)
 - fix(p143): converge reviewed repository planner contracts (`09f1d675`)
+- fix(prompt-kit): harden P114 review invariants (`3facb90e`)
+- fix(prompt-kit): close P114 cloud relevance gap (`c4117aeb`)
 
 ## 0.10.1 - 2026-09-19
 
