@@ -144,7 +144,7 @@ class GovernanceContractTests(unittest.TestCase):
             "current donor authority",
             "convergence/destination authority",
             "compatibility/consumer seams",
-            "cross-repo dependencies stay explicit and versioned",
+            "cross-repo dependencies remain versioned",
         ):
             self.assertIn(phrase, section)
 
