@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# Carrier retry uses requirements-test-floor.txt from the isolated base workflow.
 from __future__ import annotations
 
 import json
