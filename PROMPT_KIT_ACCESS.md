@@ -1,6 +1,6 @@
 # Get AFK Agent Flow
 
-> **Transition:** AFK Agent Flow is the current product identity. `Operant`, `Prompt Kit`, `prompt-kit`, and `PromptKit` remain compatibility and historical release identifiers until the dedicated `UnderDeskDev/AFK-Agent-Flow` cutover is proven. Legacy public compatibility URLs remain https://endeavoreverlasting.github.io/web-excel-repair-triage/operant/ and https://endeavoreverlasting.github.io/web-excel-repair-triage/prompt-kit/.
+> **Transition:** AFK Agent Flow is the current product identity. `Operant`, `Prompt Kit`, `prompt-kit`, and `PromptKit` remain compatibility and historical release identifiers until the `EndeavorEverlasting/TokenCorridor` capability cutover is proven. Legacy public compatibility URLs remain https://endeavoreverlasting.github.io/web-excel-repair-triage/operant/ and https://endeavoreverlasting.github.io/web-excel-repair-triage/prompt-kit/.
 
 <!-- PROMPT_KIT_FAST_PATH_START -->
 ## Choose the easiest path

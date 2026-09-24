@@ -20,7 +20,7 @@
   },
   "products": {
     "afk-agent-flow": {
-      "target_repository": "UnderDeskDev/AFK-Agent-Flow",
+      "target_repository": "EndeavorEverlasting/TokenCorridor",
       "ownership": "product-portable",
       "extension_registries": [
         "registry/prompts/skill-development-prompts.v1.json",
