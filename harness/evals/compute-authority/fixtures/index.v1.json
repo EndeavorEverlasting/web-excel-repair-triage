@@ -1,7 +1,0 @@
-{
-  "schema_version": "compute-authority-fixture-index/v1",
-  "cases": ["TC01", "TC02", "TC03", "TC04", "TC05", "TC06", "TC07", "TC08"],
-  "fixtures_root": "harness/evals/compute-authority/fixtures",
-  "hidden_manifest_basename": "evaluator.manifest.yaml",
-  "note": "Index file for repository-ai-evals case_source registration. Per-case ground truth remains in evaluator.manifest.yaml."
-}

@@ -2,11 +2,12 @@
 
 **Status:** TRACKED PLAN / IMPLEMENTATION NOT YET STARTED
 **Repository:** `EndeavorEverlasting/web-excel-repair-triage`
-**Planning floor:** `main@d0ff35ea4ff4be9bd23cda016e0044849d84e2cd`
+**Planning floor:** `main@c7c5a029d92c81a100abc9cde9477ae39a3379e9`
 **Planning branch:** `plan/ticket-tracker-ingestion-automation-20260924`
 **Primary Prompt Kit owner:** P125 · Health + Hospitals Ticket Discovery & Tracking Harvester
 **Artifact mutation owner:** P56 · Context-to-Artifact Generator
 **Google Drive sync owner:** P111 · Repository + Google Drive Artifact Synchronizer
+**Cloud/local delivery guard:** P114 · Conversation Context Canary & Handoff Guard (integrated on current planning floor via PR #641)
 **Prompt identity/admission owner:** P79 · Prompt Registry Prompt Adder
 **Recurring-defect / retained-regression owners:** P13 / P94
 **Implementation owner:** Triage ticket-ingestion capability under the existing repository harness; exact module path is intentionally deferred until implementation inspection resolves the narrowest existing code owner

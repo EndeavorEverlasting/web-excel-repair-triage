@@ -1,4 +1,0 @@
-Fix the reported defect in calc.add and leave the repository in a validated,
-integration-ready state.
-
-Reported failure: tests/test_add.py fails (expected 5, got 4).

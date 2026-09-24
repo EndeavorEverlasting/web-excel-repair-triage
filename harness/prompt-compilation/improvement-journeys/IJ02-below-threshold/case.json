@@ -1,7 +1,0 @@
-{
-  "case_id": "IJ02-below-threshold",
-  "expect": {
-    "admitted": false,
-    "reason": "recurrence_threshold_not_met"
-  }
-}

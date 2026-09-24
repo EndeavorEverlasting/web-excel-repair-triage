@@ -1,2 +1,0 @@
-The file evaluator.manifest.yaml is evaluator-only ground truth.
-reset_fixture.py and materialize exclude it from agent workspaces.

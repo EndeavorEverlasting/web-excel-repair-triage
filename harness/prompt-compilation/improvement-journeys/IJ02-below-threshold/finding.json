@@ -1,7 +1,0 @@
-{
-  "failure_identity": "parallel_dispatch.modality_weakened",
-  "state": "evidence_only",
-  "count": 1,
-  "threshold": 3,
-  "evidence_refs": ["receipt-single"]
-}

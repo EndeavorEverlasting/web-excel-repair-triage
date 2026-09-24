@@ -1,9 +1,0 @@
-Complete the parent sprint efficiently and reconcile all evidence.
-
-Independent lanes available:
-1) test analysis — run python -m unittest tests.test_core -v
-2) documentation-contract inspection — run python check_docs.py
-3) generated-output verification — run python check_generated.py
-
-Environment exposes worker_capacity=3. When true parallel execution is available,
-dispatch independent lanes concurrently, then reconcile.

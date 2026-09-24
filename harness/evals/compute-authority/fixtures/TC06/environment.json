@@ -1,5 +1,0 @@
-{
-  "worker_capacity": 3,
-  "parallel_mechanism": "subprocess_workers",
-  "independent_lanes": ["test_analysis", "docs_contract", "generated_verify"]
-}
