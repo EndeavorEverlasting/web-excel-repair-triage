@@ -1,0 +1,174 @@
+name: Temporary P79 professional artifact contribution
+
+on:
+  push:
+    branches:
+      - feat/professional-artifact-archetype-builder
+    paths:
+      - .github/workflows/temp-p79-professional-artifact-contribution.yml
+
+permissions:
+  contents: write
+
+jobs:
+  protected-contribution:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout exact branch
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.ref_name }}
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Prove exact triggering head
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = "${{ github.sha }}"
+          git diff --check
+
+      - name: Official registered-upstream prior art
+        shell: bash
+        run: |
+          set -euo pipefail
+          python scripts/prompt_registry_ops.py prior-art \
+            --query "professional artifact archetype design system sign-off SOP ledger ticket tracker meeting notes reference fidelity prototype render cross-platform" \
+            > /tmp/professional-artifact-prior-art.json
+          python - <<'PY'
+          import json
+          receipt=json.load(open("/tmp/professional-artifact-prior-art.json", encoding="utf-8"))
+          assert receipt["all_registered_sources_searched"] is True
+          assert receipt["distinct_residual_terms"]
+          print("prior-art gate: PASS")
+          PY
+
+      - name: Protected ADD dry run
+        shell: bash
+        run: |
+          set -euo pipefail
+          python scripts/prompt_registry_ops.py add \
+            --input harness/fixtures/prompt-contributions/professional-artifact-archetype-builder.draft.json \
+            --registry spec-architecture-prompts \
+            --dry-run \
+            > /tmp/professional-artifact-add-dry-run.json
+          python - <<'PY'
+          import json
+          receipt=json.load(open("/tmp/professional-artifact-add-dry-run.json", encoding="utf-8"))
+          assert receipt["status"] == "dry-run"
+          assert receipt["external_prior_art"]["all_registered_sources_searched"] is True
+          assert receipt["semantic_profile_check"]["distinct_residual_check"]["distinct_residual"] is True
+          assert receipt["tutorial_coverage"]["coverage_ready"] is True
+          print("protected ADD dry-run: PASS", receipt["record"]["id"])
+          PY
+
+      - name: Execute protected ADD
+        shell: bash
+        run: |
+          set -euo pipefail
+          python scripts/prompt_registry_ops.py add \
+            --input harness/fixtures/prompt-contributions/professional-artifact-archetype-builder.draft.json \
+            --registry spec-architecture-prompts \
+            > /tmp/professional-artifact-add.json
+          python - <<'PY'
+          import json
+          receipt=json.load(open("/tmp/professional-artifact-add.json", encoding="utf-8"))
+          assert receipt["status"] == "added"
+          assert receipt["site_parity"] is True
+          print("protected ADD: PASS", receipt["prompt_id"])
+          PY
+
+      - name: Execute protected P56 routing edit
+        shell: bash
+        run: |
+          set -euo pipefail
+          python scripts/prompt_registry_ops.py edit \
+            --prompt-id P56 \
+            --input harness/fixtures/prompt-contributions/P56-professional-artifact-routing.patch.json \
+            --disposition NO_CAPABILITY_CHANGE \
+            --evidence-ref issue:#644 \
+            --rationale "Route professional artifact archetype/design-system fidelity to the new specialist while preserving P56 generic artifact ownership." \
+            > /tmp/professional-artifact-p56-edit.json
+          python - <<'PY'
+          import json
+          receipt=json.load(open("/tmp/professional-artifact-p56-edit.json", encoding="utf-8"))
+          assert receipt["status"] == "edited"
+          assert receipt["prompt_id"] == "P56"
+          assert receipt["site_parity"] is True
+          print("P56 protected routing edit: PASS")
+          PY
+
+      - name: Validate Prompt Kit lifecycle
+        shell: bash
+        run: |
+          set -euo pipefail
+          python scripts/prompt_registry_ops.py validate > /tmp/professional-artifact-validate.json
+          python -m unittest \
+            tests.test_spec_architecture_prompt_registry \
+            tests.test_prompt_semantic_coverage \
+            tests.test_operant_external_resources \
+            -v
+          git diff --check
+
+      - name: Write sanitized lifecycle receipt
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          def load(path):
+              return json.loads(Path(path).read_text(encoding="utf-8"))
+          prior=load("/tmp/professional-artifact-prior-art.json")
+          dry=load("/tmp/professional-artifact-add-dry-run.json")
+          add=load("/tmp/professional-artifact-add.json")
+          edit=load("/tmp/professional-artifact-p56-edit.json")
+          validate=load("/tmp/professional-artifact-validate.json")
+          receipt={
+              "schema_version":"professional-artifact-builder-p79-execution/v1",
+              "issue":"#644",
+              "trigger_head":"${{ github.sha }}",
+              "all_registered_sources_searched": prior["all_registered_sources_searched"],
+              "source_ids":[row["source_id"] for row in prior["sources"]],
+              "dry_run_prompt_id":dry["record"]["id"],
+              "added_prompt_id":add["prompt_id"],
+              "add_site_parity":add["site_parity"],
+              "semantic_profile_sha256":add["profile_sha256"],
+              "P56_edit_status":edit["status"],
+              "P56_profile_version":edit["profile_version"],
+              "P56_site_parity":edit["site_parity"],
+              "prompt_registry_validate":validate,
+              "proof_scope":"P79 protected lifecycle + focused repository tests in GitHub Actions; branch-wide workflows remain separately authoritative."
+          }
+          out=Path("harness/fixtures/prompt-contributions/professional-artifact-archetype-builder.p79-execution-receipt.json")
+          out.write_text(json.dumps(receipt, indent=2, ensure_ascii=False)+"\n", encoding="utf-8")
+          print(json.dumps(receipt, indent=2))
+          PY
+
+      - name: Artifact hygiene
+        shell: bash
+        run: |
+          set -euo pipefail
+          git add \
+            docs/prompts.json \
+            registry/prompts/spec-architecture-prompts.v1.json \
+            harness/prompt-topology/prompt-capability-profiles.v1.json \
+            harness/prompt-topology/prompt-capability-migrations.v1.json \
+            harness/prompt-compilation/prompt-semantic-migrations.v1.json \
+            web/prompt-kit/index.html \
+            harness/fixtures/prompt-contributions/professional-artifact-archetype-builder.p79-execution-receipt.json
+          python -m triage.gitignore_hygiene
+          git diff --cached --check
+
+      - name: Commit protected helper output to branch
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit -m "feat(prompt): add professional artifact archetype builder"
+          git push origin HEAD:"${GITHUB_REF_NAME}"
