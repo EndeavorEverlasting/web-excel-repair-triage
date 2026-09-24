@@ -1,23 +1,21 @@
 name: Temporary P114 cloud pairing carrier
 
 on:
-  push:
+  pull_request:
     branches:
-      - feat/p114-cloud-artifact-pairing-20260924
-    paths:
-      - .github/workflows/tmp-p114-cloud-pairing-carrier.yml
-      - scripts/tmp_repair_p114_cloud_pairing.py
+      - exec/p114-cloud-pairing-carrier-20260924
+    types: [opened, synchronize, reopened]
 
 permissions:
   contents: write
 
 concurrency:
-  group: p114-cloud-pairing-${{ github.ref }}
+  group: p114-cloud-pairing-carrier-${{ github.event.pull_request.number }}
   cancel-in-progress: false
 
 jobs:
   reconcile-repair-prove:
-    if: github.repository == 'EndeavorEverlasting/web-excel-repair-triage'
+    if: github.event.pull_request.head.repo.full_name == github.repository && github.event.pull_request.head.ref == 'feat/p114-cloud-artifact-pairing-20260924'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -35,10 +33,15 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git fetch origin main feat/p114-cloud-artifact-pairing-20260924 --prune
+          expected_head="${{ github.event.pull_request.head.sha }}"
           remote_head="$(git rev-parse origin/feat/p114-cloud-artifact-pairing-20260924)"
-          if [ "$remote_head" != "$GITHUB_SHA" ]; then
-            echo "Feature branch moved after carrier dispatch: event=$GITHUB_SHA remote=$remote_head" >&2
+          if [ "$remote_head" != "$expected_head" ]; then
+            echo "Feature branch moved after carrier dispatch: expected=$expected_head remote=$remote_head" >&2
             exit 86
+          fi
+          if [ ! -f scripts/tmp_repair_p114_cloud_pairing.py ]; then
+            echo "P114 repair carrier already consumed; no mutation remains."
+            exit 0
           fi
           git merge --no-edit origin/main
           python scripts/tmp_repair_p114_cloud_pairing.py
