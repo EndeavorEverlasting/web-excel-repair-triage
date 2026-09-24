@@ -36,6 +36,7 @@ jobs:
 
           git fetch origin main feat/p114-cloud-artifact-pairing-20260924 --prune
           git merge --no-edit origin/main
+          python -m pip install --disable-pip-version-check jsonschema
 
           python scripts/tmp_apply_p114_cloud_artifact_pairing.py
 
