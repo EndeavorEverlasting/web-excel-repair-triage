@@ -824,3 +824,84 @@ The desired daily experience is:
 11. response gives the operator the current tracker link and concise intake receipt.
 
 No repeated explanation of the workflow should be necessary.
+
+---
+
+## 20. Prompt Kit routing now, before the deterministic engine exists
+
+There are two different questions that must not be conflated:
+
+### Which prompt owns the H&H ticket semantics?
+
+**P125 · Health + Hospitals Ticket Discovery & Tracking Harvester.**
+
+Use P125 as the canonical source for:
+
+- incident/ticket identity semantics;
+- Outlook/Teams reconciliation;
+- source coverage;
+- duplicate/non-conflation rules;
+- status/evidence boundaries;
+- normalized H&H ticket fields;
+- open/follow-up/completion/closure distinctions.
+
+### Which prompt can own the actual screenshot -> existing tracker artifact update today?
+
+**P56 · Context-to-Artifact Generator**, with P125 semantics as the domain contract and P111 for Drive synchronization.
+
+P56 already owns:
+
+- recovering the current screenshots/files/conversation corrections;
+- resolving UPDATE_EXISTING vs CREATE_NEW;
+- binding the canonical tracker artifact;
+- reusing the existing generator/schema/provider identity;
+- generating/updating the actual artifact;
+- running artifact checks;
+- routing the durable provider handoff.
+
+### Interim composition
+
+Until TTI-1..TTI-5 land:
+
+```text
+operator screenshots / pasted IDs / ticket detail
+    |
+    v
+P125 semantic rules
+(identity, status, dedupe, non-conflation, evidence discipline)
+    |
+    v
+P56 UPDATE_EXISTING
+(recover current tracker + map evidence into artifact without inventing fields)
+    |
+    v
+readback / duplicate-count / row-count / field verification
+    |
+    v
+P111
+(reuse mapped Drive identity, update/read back, return canonical link)
+```
+
+Important boundaries:
+
+- Do not claim P125 executed Outlook/Teams searches when those providers were not actually queried. Screenshot-only intake may reuse P125's ticket semantics without fabricating source coverage.
+- Do not let P56 invent ticket-specific precedence rules; use the P125 contract/current tracker evidence and preserve unknowns/conflicts.
+- Do not create a new tracker because P56 can generate files. The normal intent for the current H&H tracker is UPDATE_EXISTING.
+- Do not call a local workbook result Drive-synced until P111/provider readback proves the mapped identity.
+- When the deterministic ticket-ingestion engine lands, P56 should discover/route to that canonical owner instead of performing ad-hoc row logic.
+
+### Practical current invocation target
+
+For a screenshot batch whose purpose is **“put these incoming tickets into my existing tracker now”**, start with **P56**, explicitly binding:
+
+- target = current H&H ticket tracker;
+- intent = UPDATE_EXISTING;
+- domain semantics = P125;
+- input evidence = current screenshots/lists plus relevant prior tracker corrections;
+- acceptance = no duplicate ticket IDs, no conflation, all tracker columns dispositioned, unsupported fields not guessed, post-write readback;
+- provider handoff = P111.
+
+For a task whose purpose is **“search Outlook/Teams and tell me what H&H tickets are new/changed”**, start with **P125**.
+
+After TTI-5, P125 should be able to emit the normalized machine packet directly and trigger the same deterministic update path when the operator asks for tracker mutation.
+
