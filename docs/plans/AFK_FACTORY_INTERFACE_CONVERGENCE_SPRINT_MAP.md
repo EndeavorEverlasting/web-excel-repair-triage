@@ -3,11 +3,12 @@
 **Shared convergence ID:** `AFK-FACTORY-CONVERGENCE-2026-09-22`
 **Repository:** `EndeavorEverlasting/web-excel-repair-triage`
 **Repository role:** Prompt Kit / AFK Agent Flow — human↔AFK interface foundation
-**Planning floor:** `main@931b642a80d72e3fdeafa18698e60d958cedee84`
-**Canonical cross-repository plan:** `EndeavorEverlasting/TokenCorridor` → `plans/active/AFK-FACTORY-CONVERGENCE.md` + `plans/active/AFK-FACTORY-CONVERGENCE.plan.json` (TokenCorridor PR #1, material floor `afbc796f6292d13888975699329ad188b86d3ee5`, current `main@bce957ccd8796d4b5a42827ffb67f2ba165221ab`)
-**AgentSwitchboard companion plan:** `ASB-2026-09-TOKEN-CORRIDOR-COMPETITIVE-ARCHITECTURE` (AgentSwitchboard PR #347, `main@9992f4305021a33dd5ca9916a8f33cf45d8581ff`)
+**Planning floor:** `main@5aca914e8026702844201fb9026b28ee54fbb08d`
+**Canonical cross-repository plan:** `EndeavorEverlasting/TokenCorridor` → `plans/active/AFK-FACTORY-CONVERGENCE.md` + `plans/active/AFK-FACTORY-CONVERGENCE.plan.json` (material floor `afbc796f6292d13888975699329ad188b86d3ee5`, current observed `main@4d20a69f3f3e518ec9ccb401555ec6ee2cc2a661`)
+**AgentSwitchboard companion plan:** `ASB-2026-09-TOKEN-CORRIDOR-COMPETITIVE-ARCHITECTURE` (PR #347 integrated; current observed `main@2b2d5dfc9aa11ca8bab44137984a97fea4bd12db`)
 **Destination invariant (canonical):** **TokenCorridor is the destination product and canonical convergence repository for Prompt Kit / AFKAF and AgentSwitchboard; the current three-repository split is migration topology, not permanent product boundary.** Logical ownership survives physical consolidation. See canonical plan for M0–M5 phases, authority-transfer gates, and donor dispositions.
-**Floor freshness semantics:** pinned SHAs are material integration floors; later `main` descendants remain current when they contain the floor and governing content is present. Refresh provider truth; use ancestry/content checks.
+**Local AFK identity authority:** `harness/contracts/operant-product-identity.v1.json` on `main@5aca914e8026702844201fb9026b28ee54fbb08d` now targets `EndeavorEverlasting/TokenCorridor` with state `created-convergence-authority-cutover-unproven`; this repository remains current donor authority until per-capability cutover gates pass.
+**Floor freshness semantics:** pinned SHAs are material integration floors; later `main` descendants remain current when they contain the floor and governing content is present. This companion file cannot certify another repository's freshness: every execution must refresh TokenCorridor/AgentSwitchboard provider truth and use ancestry plus current-content checks before relying on their plans.
 
 ## 0. Destination product and repository-convergence invariant (canonical)
 
@@ -54,7 +55,7 @@ Until then: **integration by protocol is the migration mechanism; it is not the 
 
 ### Canonical plan path
 
-`EndeavorEverlasting/TokenCorridor` → `plans/active/AFK-FACTORY-CONVERGENCE.md` and `plans/active/AFK-FACTORY-CONVERGENCE.plan.json` (material floor `afbc796f6292d13888975699329ad188b86d3ee5`). This repository's plan is a companion; the TokenCorridor plan is the sole cross-repository source of truth.
+`EndeavorEverlasting/TokenCorridor` → `plans/active/AFK-FACTORY-CONVERGENCE.md` and `plans/active/AFK-FACTORY-CONVERGENCE.plan.json` (material floor `afbc796f6292d13888975699329ad188b86d3ee5`). TokenCorridor is the canonical cross-repository convergence authority. This repository's identity contract remains authoritative for current Prompt Kit/AFK Agent Flow donor status until cutover. This companion is a pointer/coordination surface and never certifies external-plan freshness without a provider refresh.
 
 ## 1. Product boundary
 
@@ -86,13 +87,18 @@ True user-only decisions remain visible, typed, durable, and resumable.
 
 Prompt Kit can close current work independently of AgentSwitchboard and TokenCorridor implementation.
 
-Current active convergence owners to refresh before mutation:
+Current integrated mainline owners:
 
-- **PR #632** — Repository Convergence Planner / P143;
-- **PR #623** — P55 repository bootstrap;
+- **P55 repository bootstrap:** PR #623 merged; PR #638 closed the recovery ledger. Treat current `main` as authority, not the historical feature branch.
+- **P143 Repository Convergence Planner:** PR #640 integrated the reviewed contracts; PR #632 is closed/superseded donor evidence.
+
+Current active convergence lanes to refresh before mutation:
+
 - **PR #626** — issue-centered AFK/P66 progression;
 - **PR #600** — routing decision / Evidence Spine continuation;
 - **PR #630** — prompt findability and agent readability.
+
+Adjacent active writers **#636** and **#641** must be collision-checked before any M2 registry/generator/test-floor mutation. They are not substitutes for the canonical integrated P55/P143 owners.
 
 Older predecessor writers are floor-clearing candidates, not parallel authorities. The closeout owner must reconcile unique behavior into one refreshed floor rather than independently fixing every historical PR forever.
 
@@ -395,4 +401,4 @@ This plan is repository-local convergence intent. It does not prove TokenCorrido
 
 Owner: Prompt Kit closeout lane.
 
-Refresh current provider/main truth, reconcile the active #623/#626/#632/#600/#630 ownership stack, and publish one integrated Prompt Kit floor. Then execute PK-C0.5: run prior-art/identity review for the Private Tutor and Repository Grill, write and integrate `docs/plans/PROMPT_TUTOR_GRILL_IDENTITY_DECISION.md`, and only then begin PK-C1.
+Refresh current provider/main truth; treat integrated P55 (#623/#638) and P143 (#640; #632 superseded) as mainline floor, reconcile the still-active #626/#600/#630 lanes plus collisions from #636/#641, and publish one integrated Prompt Kit floor. Then execute PK-C0.5: run prior-art/identity review for the Private Tutor and Repository Grill, write and integrate `docs/plans/PROMPT_TUTOR_GRILL_IDENTITY_DECISION.md`, and only then begin PK-C1.
