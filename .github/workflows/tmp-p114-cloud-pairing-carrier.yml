@@ -25,6 +25,8 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: '3.11'
+      - name: Install repository test-floor dependencies
+        run: python -m pip install -r requirements-test-floor.txt
       - name: Reconcile current main, repair P114 through lifecycle helper, prove, and push
         shell: bash
         run: |
