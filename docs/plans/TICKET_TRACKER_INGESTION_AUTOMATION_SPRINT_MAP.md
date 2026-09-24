@@ -904,4 +904,3 @@ For a screenshot batch whose purpose is **“put these incoming tickets into my 
 For a task whose purpose is **“search Outlook/Teams and tell me what H&H tickets are new/changed”**, start with **P125**.
 
 After TTI-5, P125 should be able to emit the normalized machine packet directly and trigger the same deterministic update path when the operator asks for tracker mutation.
-
