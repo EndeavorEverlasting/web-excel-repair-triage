@@ -258,6 +258,24 @@ class ConversationContextCanaryPromptTests(unittest.TestCase):
             f"{blocked}: name the exact identity, access, write, or readback gate before local fallback; never claim sync succeeded.",
             cloud,
         )
+
+        decision_map: dict[str, str] = {}
+        for line in cloud.splitlines():
+            if not line.startswith("- `") or " => " not in line:
+                continue
+            selector = line.split("`", 2)[1]
+            state, outcome = selector.split(" => ", 1)
+            decision_map[state] = outcome
+        scenarios = {
+            "MAPPED_CLOUD_VERIFIED + LOCAL_SURFACED": "PAIR_REQUIRED",
+            "LOCAL_ONLY_VERIFIED": "LOCAL_ONLY_ALLOWED",
+            "CLOUD_RELEVANCE_UNKNOWN": "CLOUD_CLOSURE_BLOCKED",
+        }
+        self.assertEqual(
+            {state: decision_map.get(state) for state in scenarios},
+            scenarios,
+        )
+        self.assertEqual(len(set(scenarios.values())), len(scenarios))
         self.assertLess(cloud.index(pair), cloud.index(local))
         self.assertLess(cloud.index(local), cloud.index(blocked))
         self.assertIn(
