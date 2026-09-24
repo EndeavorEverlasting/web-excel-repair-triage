@@ -2,13 +2,14 @@
 """Apply the compatibility-safe Operant -> AFK Agent Flow public-brand migration.
 
 This is deliberately a one-way, idempotent migration helper for the rename sprint.
-It changes public identity and public routing while preserving historical/internal
-Operant and Prompt Kit release seams. Generated HTML is rebuilt by its canonical
+It changes public identity, current destination authority, and public routing while
+preserving historical/internal Operant and Prompt Kit release seams. Generated HTML is rebuilt by its canonical
 builder; this script never hand-edits generated output.
 """
 from __future__ import annotations
 
 import argparse
+import json
 import subprocess
 import sys
 from pathlib import Path
@@ -41,6 +42,18 @@ def ensure_contains(path: str, marker: str) -> None:
     text = (ROOT / path).read_text(encoding="utf-8")
     if marker not in text:
         raise MigrationError(f"{path}: required marker missing after migration: {marker!r}")
+
+
+def update_json(path: str, mutate) -> bool:
+    target = ROOT / path
+    payload = json.loads(target.read_text(encoding="utf-8"))
+    before = json.dumps(payload, sort_keys=True)
+    mutate(payload)
+    after = json.dumps(payload, sort_keys=True)
+    if before == after:
+        return False
+    target.write_text(json.dumps(payload, indent=2) + "\n", encoding="utf-8")
+    return True
 
 
 def migrate() -> list[str]:
@@ -91,15 +104,40 @@ def migrate() -> list[str]:
     apply(
         "AGENTS.md",
         "**Operant** is the operator-approved product identity, formerly Prompt Kit; it began here as a spreadsheet. Target: `UnderDeskDev/Operant`; not yet created/proven.",
-        "**AFK Agent Flow** is the operator-approved product identity, formerly Operant / Prompt Kit. Destination/convergence repository: `EndeavorEverlasting/TokenCorridor`; repository exists, capability cutover remains unproven.",
+        "**AFK Agent Flow** is the operator-approved product identity. Destination: `EndeavorEverlasting/TokenCorridor`; cutover remains unproven.",
         expected=1,
     )
     apply(
         "AGENTS.md",
         "Until cutover, legacy `prompt-kit` paths and sources here remain authoritative compatibility surfaces and must not be silently moved. This repo may pin, mirror, package, link to, or consume Operant releases; it must not become a competing Operant authority; keep cross-repo dependencies explicit and versioned.",
-        "Until cutover, legacy `operant` / `prompt-kit` paths remain authoritative compatibility surfaces and must not be silently moved. This repo may consume AFK Agent Flow through historical Operant release seams but must not become a competing authority; keep cross-repo dependencies explicit and versioned.",
+        "Until cutover, legacy `operant` / `prompt-kit` paths remain compatibility authority and must not be silently moved. This repo is current donor authority; TokenCorridor is convergence/destination authority. After cutover, migrated surfaces are compatibility/consumer seams; dependencies remain versioned.",
         expected=1,
     )
+
+    def migrate_identity_authority(payload: dict) -> None:
+        authority = payload.setdefault("authority", {})
+        authority["target_repository"] = "EndeavorEverlasting/TokenCorridor"
+        authority["target_repository_state"] = "created-convergence-authority-cutover-unproven"
+        authority["convergence_plan_repository"] = "EndeavorEverlasting/TokenCorridor"
+        authority["convergence_plan_path"] = "plans/active/AFK-FACTORY-CONVERGENCE.plan.json"
+        authority["convergence_material_floor"] = "afbc796f6292d13888975699329ad188b86d3ee5"
+        authority["cutover_rule"] = (
+            "Current repository remains authoritative for AFK Agent Flow capabilities until "
+            "TokenCorridor passes source, build, evidence, consumer, release-identity, and "
+            "per-capability authority-transfer gates. Only then may migrated surfaces "
+            "downgrade this repository to an explicit versioned compatibility/consumer role."
+        )
+
+    if update_json("harness/contracts/operant-product-identity.v1.json", migrate_identity_authority):
+        changed.add("harness/contracts/operant-product-identity.v1.json")
+
+    def migrate_product_boundary(payload: dict) -> None:
+        payload.setdefault("products", {}).setdefault("afk-agent-flow", {})[
+            "target_repository"
+        ] = "EndeavorEverlasting/TokenCorridor"
+
+    if update_json("registry/prompts/product-boundaries.v1.json", migrate_product_boundary):
+        changed.add("registry/prompts/product-boundaries.v1.json")
 
     # Focused tests should assert the new visible identity while retaining tests
     # for historical Operant release mechanics.
@@ -142,7 +180,7 @@ def migrate() -> list[str]:
     apply(
         "tests/test_operant_product_identity.py",
         'self.assertIn("`UnderDeskDev/Operant`", governance)',
-        'self.assertIn("`UnderDeskDev/AFK-Agent-Flow`", governance)',
+        'self.assertIn("`EndeavorEverlasting/TokenCorridor`", governance)',
         expected=1,
     )
     apply(
@@ -189,7 +227,7 @@ def migrate() -> list[str]:
     apply(
         "PROMPT_KIT_ACCESS.md",
         "> **Transition:** Operant is the current product identity. Existing `Prompt Kit`, `prompt-kit`, and `PromptKit` names below are compatibility paths and launcher/storage identifiers until the dedicated `UnderDeskDev/Operant` cutover is proven.",
-        "> **Transition:** AFK Agent Flow is the current product identity. `Operant`, `Prompt Kit`, `prompt-kit`, and `PromptKit` remain compatibility and historical release identifiers until the dedicated `UnderDeskDev/AFK-Agent-Flow` cutover is proven. Legacy public compatibility URLs remain https://endeavoreverlasting.github.io/web-excel-repair-triage/operant/ and https://endeavoreverlasting.github.io/web-excel-repair-triage/prompt-kit/.",
+        "> **Transition:** AFK Agent Flow is the current product identity. `Operant`, `Prompt Kit`, `prompt-kit`, and `PromptKit` remain compatibility and historical release identifiers until the `EndeavorEverlasting/TokenCorridor` capability cutover is proven. Legacy public compatibility URLs remain https://endeavoreverlasting.github.io/web-excel-repair-triage/operant/ and https://endeavoreverlasting.github.io/web-excel-repair-triage/prompt-kit/.",
         expected=1,
     )
 
