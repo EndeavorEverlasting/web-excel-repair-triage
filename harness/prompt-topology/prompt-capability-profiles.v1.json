@@ -2333,9 +2333,9 @@
     },
     {
       "prompt_id": "P114",
-      "profile_version": 3,
-      "canonical_prompt_hash": "ee8d4673d7e57dada35e21ce06a2a33a9a9c466b7dc79eacb5a6bfa63194a9ad",
-      "acceptance_commit": "2ef2e9f3f1a5a2364025b16a6abf3adc0ec4826b",
+      "profile_version": 4,
+      "canonical_prompt_hash": "d47379d6ae44d154fc745d15317149ac8d31a7c50051d709f4fe15dcabbc5c79",
+      "acceptance_commit": "20c52c107479f2f8efc8b4dbadc01c54b06cb920",
       "direct_assignments": [
         {
           "capability_id": "strength.fresh_evidence_floor",
@@ -2420,6 +2420,7 @@
       ],
       "semantic_dependency_fingerprint": "023a8eb908ddae244516d34740902f07e778ec38a71c993515856ef19bc5d4f4",
       "evidence_refs": [
+        "docs/plans/CLOUD_PAIRED_ARTIFACT_HANDOFF_SPRINT_MAP.md",
         "harness/artifact-handoff/WORKFLOW.md",
         "harness/artifact-handoff/contracts/share-alias-download.v1.json",
         "harness/contracts/prompt-regression-safety.v1.json",
@@ -2433,10 +2434,10 @@
       ],
       "profile_status": "ACCEPTED",
       "prior_profile_ref": {
-        "profile_version": 2,
-        "profile_sha256": "f5af4567229acb4c9b5aca2af1aab45734b63d0de943e3585d374e9038ce4989"
+        "profile_version": 3,
+        "profile_sha256": "4365a2c5e5a001f2479e0bb7fa549002baed65b241f3b09be4bcbb2cda943ade"
       },
-      "profile_sha256": "4365a2c5e5a001f2479e0bb7fa549002baed65b241f3b09be4bcbb2cda943ade"
+      "profile_sha256": "c2f515883f0dc840f9a3bc6c41f7b669502f576fd926f261d28bedeb764bd547"
     }
   ],
   "profile_count": 65

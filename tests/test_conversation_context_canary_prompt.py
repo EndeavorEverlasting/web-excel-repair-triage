@@ -251,7 +251,7 @@ class ConversationContextCanaryPromptTests(unittest.TestCase):
         )
         self.assertIn("lack of an obvious connector/file is not proof of NONE", cloud)
         self.assertIn(
-            f"{local}: A verified local-only artifact remains valid when scoped evidence proves no relevant cloud mapping exists.",
+            f"{local}: require explicit local-only/private/do-not-sync authority or synchronizer proof.",
             cloud,
         )
         self.assertIn(
@@ -281,6 +281,23 @@ class ConversationContextCanaryPromptTests(unittest.TestCase):
         self.assertIn(
             "Never let local/download silently replace a healthy mapped cloud artifact",
             content,
+        )
+
+    def test_bound_cloud_workspace_requires_resolution_before_local_handoff(self) -> None:
+        content = self.target["copyContent"]
+        cloud = content.split("CLOUD ARTIFACT RELEVANCE / PAIRED HANDOFF", 1)[1].split(
+            "AUTHORITATIVE CONTEXT RULE", 1
+        )[0]
+        for phrase in (
+            "an imminent user-facing local/download artifact",
+            "A project/workspace cloud binding with unresolved mapping is `CLOUD_RELEVANCE_UNKNOWN`, not `LOCAL_ONLY_VERIFIED`",
+            "route through P111/provider owner before closeout",
+            "`LOCAL_ONLY_VERIFIED` requires explicit local-only/private/do-not-sync authority or synchronizer proof",
+        ):
+            self.assertIn(phrase, cloud)
+        self.assertNotIn(
+            "`LOCAL_ONLY_VERIFIED => LOCAL_ONLY_ALLOWED`: A verified local-only artifact remains valid when scoped evidence proves no relevant cloud mapping exists.",
+            cloud,
         )
 
     def test_p114_has_accepted_semantic_profile_after_adoption(self) -> None:

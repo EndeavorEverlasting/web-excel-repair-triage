@@ -1,13 +1,13 @@
 # Cloud-Paired Artifact Handoff Sprint Map
 
-**Status:** TRACKED PLAN / P79 DISPOSITION = STRENGTHEN EXISTING OWNER / IMPLEMENTATION PARTIALLY PRESENT IN PR #641  
-**Repository:** `EndeavorEverlasting/web-excel-repair-triage`  
-**Canonical implementation lane:** PR #641 / `feat/p114-cloud-artifact-pairing-20260924`  
-**Planning floor:** refreshed `main@d0ff35ea4ff4be9bd23cda016e0044849d84e2cd`; PR #641 pre-plan head `b187305905e4a06e5248a52e223c6be268974bbc`  
-**Primary strategic owner:** P79 Prompt Registry Prompt Adder — strengthen-before-add disposition  
-**Runtime/delivery owners:** P114 Conversation Context Canary & Handoff Guard; P111 Repository + Google Drive Artifact Synchronizer; `harness/artifact-handoff`  
-**Recurrence/prevention owners:** P13 recurring-process hardening; P94 regression design  
-**Validation owner:** P11 End-to-End Harness Validator  
+**Status:** TRACKED PLAN / P79 DISPOSITION = STRENGTHEN EXISTING OWNER / IMPLEMENTATION PARTIALLY PRESENT IN PR #641
+**Repository:** `EndeavorEverlasting/web-excel-repair-triage`
+**Canonical implementation lane:** PR #641 / `feat/p114-cloud-artifact-pairing-20260924`
+**Planning floor:** refreshed `main@d0ff35ea4ff4be9bd23cda016e0044849d84e2cd`; PR #641 pre-plan head `b187305905e4a06e5248a52e223c6be268974bbc`
+**Primary strategic owner:** P79 Prompt Registry Prompt Adder — strengthen-before-add disposition
+**Runtime/delivery owners:** P114 Conversation Context Canary & Handoff Guard; P111 Repository + Google Drive Artifact Synchronizer; `harness/artifact-handoff`
+**Recurrence/prevention owners:** P13 recurring-process hardening; P94 regression design
+**Validation owner:** P11 End-to-End Harness Validator
 **Proof ceiling:** this document is a durable execution plan. It does not itself prove downstream model compliance, local/provider runtime link delivery, Google Drive publication, or mainline integration.
 
 ---
@@ -487,10 +487,10 @@ Documentation-only edits, timestamps, or proof-SHA citation updates do not by th
 
 ## 11. First executable successor action
 
-**Owner:** PR #641 convergence agent  
-**Dependency:** authenticated checkout or provider workflow capable of reconciling current `main` with `feat/p114-cloud-artifact-pairing-20260924` without destroying the nine owned commits  
-**Action:** reconcile the branch to current main, then run the focused P114 + artifact-handoff + repository-drive tests and current required-check profile; only after that integrate #641 or record the exact remaining gate.  
-**Expected proof:** current-main-contained #641 head with P114 strengthening retained and no collision with #645.  
+**Owner:** PR #641 convergence agent
+**Dependency:** authenticated checkout or provider workflow capable of reconciling current `main` with `feat/p114-cloud-artifact-pairing-20260924` without destroying the nine owned commits
+**Action:** reconcile the branch to current main, then run the focused P114 + artifact-handoff + repository-drive tests and current required-check profile; only after that integrate #641 or record the exact remaining gate.
+**Expected proof:** current-main-contained #641 head with P114 strengthening retained and no collision with #645.
 **Completion gate:** exact reconciled head passes all proof-relevant focused checks, independent donor-refresh drift remains separately classified, and the PR is integrated or blocked by a named non-semantic gate.
 
 After #641 integration, launch Sprint 1 from refreshed main and implement the canonical artifact-delivery contract before adding more prompt prose.

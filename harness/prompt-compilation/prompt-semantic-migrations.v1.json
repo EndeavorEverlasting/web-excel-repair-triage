@@ -221,6 +221,22 @@
         "tests/test_prompt_semantic_coverage.py",
         "tests/test_prompt_quality_history.py"
       ]
+    },
+    {
+      "migration_id": "p79-no-capability-change-p114-014",
+      "path": "registry/prompts/spec-architecture-prompts.v1.json",
+      "from_git_blob_sha1": "b150cb00c26a2ac49114426082edce339ae050ca",
+      "to_git_blob_sha1": "5926a198a14567de55110ed19e922fc444b4dec7",
+      "affected_prompt_ids": [
+        "P114"
+      ],
+      "change_kind": "strengthening",
+      "effective_identity_change": "preserve_canonical",
+      "rationale": "Close the project-cloud binding ambiguity so unresolved artifact mapping cannot be treated as local-only; route through the existing provider owner while preserving P114 capability ownership.",
+      "focused_tests": [
+        "tests/test_prompt_semantic_coverage.py",
+        "tests/test_prompt_quality_history.py"
+      ]
     }
   ]
 }
