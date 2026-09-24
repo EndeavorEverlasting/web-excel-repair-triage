@@ -91,7 +91,7 @@ def migrate() -> list[str]:
     apply(
         "AGENTS.md",
         "**Operant** is the operator-approved product identity, formerly Prompt Kit; it began here as a spreadsheet. Target: `UnderDeskDev/Operant`; not yet created/proven.",
-        "**AFK Agent Flow** is the operator-approved product identity, formerly Operant / Prompt Kit. Target: `UnderDeskDev/AFK-Agent-Flow`; unproven.",
+        "**AFK Agent Flow** is the operator-approved product identity, formerly Operant / Prompt Kit. Destination/convergence repository: `EndeavorEverlasting/TokenCorridor`; repository exists, capability cutover remains unproven.",
         expected=1,
     )
     apply(
@@ -112,7 +112,7 @@ def migrate() -> list[str]:
     apply(
         "tests/test_operant_product_identity.py",
         'self.assertEqual(payload["authority"]["target_repository"], "UnderDeskDev/Operant")',
-        'self.assertEqual(payload["authority"]["target_repository"], "UnderDeskDev/AFK-Agent-Flow")',
+        'self.assertEqual(payload["authority"]["target_repository"], "EndeavorEverlasting/TokenCorridor")',
         expected=1,
     )
     apply(
