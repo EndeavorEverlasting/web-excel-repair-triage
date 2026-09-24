@@ -1,7 +1,7 @@
 # Professional Artifact Archetype + Design-System Prompt — execution plan
 
-Date: 2026-09-24  
-Issue: #644  
+Date: 2026-09-24
+Issue: #644
 Branch: `feat/professional-artifact-archetype-builder`
 
 ## Objective
@@ -10,10 +10,10 @@ Graduate the staged professional-artifact candidate into the Prompt Kit through 
 
 ## Current committed candidate surfaces
 
-- `Candidates/professional-artifact-archetype-builder.draft.json`
-- `Candidates/professional-artifact-archetype-builder.regression-cases.json`
-- `Candidates/professional-artifact-archetype-builder.authoring-proof.json`
-- `Candidates/P56-professional-artifact-routing.patch.json`
+- `harness/fixtures/prompt-contributions/professional-artifact-archetype-builder.draft.json`
+- `harness/fixtures/prompt-contributions/professional-artifact-archetype-builder.regression-cases.json`
+- `harness/fixtures/prompt-contributions/professional-artifact-archetype-builder.authoring-proof.json`
+- `harness/fixtures/prompt-contributions/P56-professional-artifact-routing.patch.json`
 - `harness/prompt-topology/PROFESSIONAL_ARTIFACT_ARCHETYPE_BUILDER_CANDIDATE.md`
 
 These are staging/evidence surfaces, not canonical Prompt Kit registration.
@@ -56,7 +56,7 @@ Gate: official prior-art receipt supports a distinct residual.
 
 ```bash
 python scripts/prompt_registry_ops.py add \
-  --input Candidates/professional-artifact-archetype-builder.draft.json \
+  --input harness/fixtures/prompt-contributions/professional-artifact-archetype-builder.draft.json \
   --registry spec-architecture-prompts \
   --dry-run
 ```
@@ -96,7 +96,7 @@ Then:
 ```bash
 python scripts/prompt_registry_ops.py edit \
   --prompt-id P56 \
-  --input Candidates/P56-professional-artifact-routing.patch.json \
+  --input harness/fixtures/prompt-contributions/P56-professional-artifact-routing.patch.json \
   --disposition NO_CAPABILITY_CHANGE \
   --evidence-ref issue:#644 \
   --rationale "Route professional artifact archetype/design-system fidelity to the new specialist while preserving P56 generic artifact ownership."
