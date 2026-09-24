@@ -1,0 +1,57 @@
+name: Temporary P114 review hardening carrier
+
+on:
+  push:
+    branches:
+      - feat/p114-cloud-artifact-pairing-20260924
+
+permissions:
+  contents: write
+
+concurrency:
+  group: p114-review-hardening
+  cancel-in-progress: false
+
+jobs:
+  execute-review-hardening:
+    if: contains(github.event.head_commit.message, 'stage P114 review hardening') || contains(github.event.head_commit.message, 'run P114 review hardening')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: feat/p114-cloud-artifact-pairing-20260924
+          fetch-depth: 0
+      - uses: actions/setup-python@v7
+        with:
+          python-version: '3.11'
+      - name: Apply protected edit, focused proof, and durable commit
+        shell: bash
+        run: |
+          set -euo pipefail
+          export PYTHONPATH="$PWD${PYTHONPATH:+:$PYTHONPATH}"
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          git fetch origin main feat/p114-cloud-artifact-pairing-20260924 --prune
+          git merge --no-edit origin/main
+          python -m pip install --disable-pip-version-check jsonschema
+
+          python scripts/tmp_p114_review_hardening.py
+
+          python -m unittest             tests.test_conversation_context_canary_prompt             tests.test_sysadminsuite_prompt_registry             tests.test_prompt_semantic_coverage             tests.test_prompt_semantic_validator_1b -v
+          python scripts/prompt_registry_ops.py validate
+          python scripts/evaluate_prompt_language.py --summary
+          python scripts/validate_prompt_kit_discovery.py --summary
+          python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html --check
+          python scripts/run_local_required_checks.py --report Outputs/local-required-checks-review-hardening.json
+          git diff --check
+
+          git rm -f             scripts/tmp_p114_review_hardening.py             .github/workflows/tmp-p114-review-hardening.yml
+          rm -f Outputs/p114-review-hardening-patch.json
+
+          git add             registry/prompts/spec-architecture-prompts.v1.json             harness/prompt-topology/prompt-capability-profiles.v1.json             harness/prompt-topology/prompt-capability-migrations.v1.json             harness/prompt-compilation/prompt-semantic-migrations.v1.json             tests/test_conversation_context_canary_prompt.py             tests/test_sysadminsuite_prompt_registry.py             web/prompt-kit/index.html
+
+          git diff --cached --check
+          git status --short
+          git commit -m "fix(prompt-kit): harden P114 review invariants"
+          git push origin HEAD:feat/p114-cloud-artifact-pairing-20260924
