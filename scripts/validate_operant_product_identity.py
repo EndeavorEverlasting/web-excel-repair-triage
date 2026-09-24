@@ -109,8 +109,7 @@ def evaluate() -> list[str]:
     for marker in (
         "**AFK Agent Flow**",
         "`EndeavorEverlasting/TokenCorridor`",
-        "Operant",
-        "Prompt Kit",
+        "legacy `operant` / `prompt-kit` paths",
         "must not be silently moved",
     ):
         if marker not in governance:
