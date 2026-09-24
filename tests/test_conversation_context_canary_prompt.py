@@ -218,6 +218,64 @@ class ConversationContextCanaryPromptTests(unittest.TestCase):
         self.assertIn(self.target["id"], html)
         self.assertIn(TARGET_NAME, html)
 
+    def test_cloud_artifact_relevance_pairs_local_and_provider_handoff(self) -> None:
+        content = self.target["copyContent"]
+        for phrase in (
+            "CLOUD ARTIFACT RELEVANCE / PAIRED HANDOFF",
+            "CLOUD=<GoogleDrive|OneDrive|SharePoint|Other|MULTIPLE|NONE|UNKNOWN>",
+            "artifact manifest, registry, mapping, sync receipt, or workspace binding",
+            "Do not sweep unrelated cloud files",
+            "surface both together",
+            "P111 Repository + Google Drive Artifact Synchronizer",
+            "harness/artifact-handoff/WORKFLOW.md",
+            "Reuse the stable provider identity",
+            "name the exact identity, access, write, or readback gate",
+            "P114 detects and routes; it does not become the sync engine",
+            "Offering a local artifact without the mapped cloud link is a Canary/closure failure",
+        ):
+            self.assertIn(phrase, content)
+
+    def test_cloud_artifact_gate_has_negative_and_positive_controls(self) -> None:
+        content = self.target["copyContent"]
+        self.assertIn(
+            "`CLOUD=NONE` is valid only when scoped current evidence establishes no relevant cloud counterpart",
+            content,
+        )
+        self.assertIn("lack of an obvious connector/file is not proof of NONE", content)
+        self.assertIn(
+            "A verified local-only artifact remains valid when scoped evidence proves no relevant cloud mapping exists",
+            content,
+        )
+        self.assertIn(
+            "Never let local/download silently replace a healthy mapped cloud artifact",
+            content,
+        )
+
+    def test_p114_has_accepted_semantic_profile_after_adoption(self) -> None:
+        profile_path = REPO_ROOT / "harness" / "prompt-topology" / "prompt-capability-profiles.v1.json"
+        profiles = json.loads(profile_path.read_text(encoding="utf-8"))["profiles"]
+        matches = [row for row in profiles if row.get("prompt_id") == self.target["id"]]
+        self.assertEqual(len(matches), 1)
+        self.assertEqual(matches[0]["profile_status"], "ACCEPTED")
+        assignments = {
+            row["capability_id"]: (row["presence"], row["ownership"], row["capability_relation"])
+            for row in matches[0]["direct_assignments"]
+        }
+        self.assertEqual(
+            assignments["strength.fresh_evidence_floor"],
+            ("REQUIRED", "SECONDARY", "GUARDS"),
+        )
+        self.assertEqual(
+            assignments["strength.proof_relevance_freshness"],
+            ("REQUIRED", "SECONDARY", "GUARDS"),
+        )
+        self.assertEqual(
+            assignments["strength.evidence_state_integrity"],
+            ("REQUIRED", "SECONDARY", "GUARDS"),
+        )
+        self.assertEqual(assignments["execution.implementation"][1], "NONE")
+        self.assertEqual(assignments["process.recurring"][1], "NONE")
+
 
 if __name__ == "__main__":
     unittest.main()

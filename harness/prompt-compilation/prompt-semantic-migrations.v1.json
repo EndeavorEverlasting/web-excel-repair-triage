@@ -189,6 +189,22 @@
         "tests/test_prompt_quality_history.py",
         "tests/test_p143_repository_convergence_prompt.py"
       ]
+    },
+    {
+      "migration_id": "p79-strengthen-p114-012",
+      "path": "registry/prompts/spec-architecture-prompts.v1.json",
+      "from_git_blob_sha1": "a3fdb112ffd593a0d6545bafe8e01ee823dad2b8",
+      "to_git_blob_sha1": "d6a9ffe14f2b9630758244068657ba542429f4c0",
+      "affected_prompt_ids": [
+        "P114"
+      ],
+      "change_kind": "strengthening",
+      "effective_identity_change": "preserve_canonical",
+      "rationale": "Repeated operator-visible artifact handoff failures show P114 must detect scoped cloud relevance and require paired canonical cloud plus local/download delivery without duplicating P111 or artifact-handoff authority.",
+      "focused_tests": [
+        "tests/test_prompt_semantic_coverage.py",
+        "tests/test_prompt_quality_history.py"
+      ]
     }
   ]
 }

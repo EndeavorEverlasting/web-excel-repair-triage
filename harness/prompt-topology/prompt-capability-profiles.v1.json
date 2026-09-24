@@ -2330,7 +2330,114 @@
         "profile_sha256": "cd3bc4031c94093af9830c9dad0b4daf10980551ab236accd179e359140ee27e"
       },
       "profile_sha256": "a9ae6be8f2b8e5224a5cbb4df23e9a6ae3f4db3174466c86e5ff7f69d1dc4a14"
+    },
+    {
+      "prompt_id": "P114",
+      "profile_version": 2,
+      "canonical_prompt_hash": "643b9fa110ffef688f7e33d439da7dbae179ec0b698157c9f66cd25b2626778a",
+      "acceptance_commit": "c1b772e56df3429de9a466344952ed9a0ef94fe4",
+      "direct_assignments": [
+        {
+          "capability_id": "strength.fresh_evidence_floor",
+          "presence": "REQUIRED",
+          "ownership": "SECONDARY",
+          "capability_relation": "GUARDS",
+          "delivery_source": "CANONICAL_BODY",
+          "evidence_refs": [
+            "registry/prompts/spec-architecture-prompts.v1.json",
+            "tests/test_conversation_context_canary_prompt.py",
+            "harness/contracts/prompt-strength.v1.json"
+          ],
+          "rationale": "P114 requires current scoped evidence before reusing freshness-bounded repository/provider context while leaving the underlying evidence owners authoritative."
+        },
+        {
+          "capability_id": "strength.proof_relevance_freshness",
+          "presence": "REQUIRED",
+          "ownership": "SECONDARY",
+          "capability_relation": "GUARDS",
+          "delivery_source": "CANONICAL_BODY",
+          "evidence_refs": [
+            "registry/prompts/spec-architecture-prompts.v1.json",
+            "tests/test_conversation_context_canary_prompt.py"
+          ],
+          "rationale": "P114 uses query-issued temporal provenance and targeted refresh to prevent stale proof from being silently promoted across later turns."
+        },
+        {
+          "capability_id": "strength.evidence_state_integrity",
+          "presence": "REQUIRED",
+          "ownership": "SECONDARY",
+          "capability_relation": "GUARDS",
+          "delivery_source": "CANONICAL_BODY",
+          "evidence_refs": [
+            "harness/artifact-handoff/WORKFLOW.md",
+            "registry/prompts/spec-architecture-prompts.v1.json",
+            "tests/test_conversation_context_canary_prompt.py"
+          ],
+          "rationale": "P114 fails closed on unknown profile, network, execution, account, and material provider state instead of inventing execution truth."
+        },
+        {
+          "capability_id": "strength.actionable_continuation",
+          "presence": "SUPPORT",
+          "ownership": "SECONDARY",
+          "capability_relation": "IMPLEMENTS",
+          "delivery_source": "CANONICAL_BODY",
+          "evidence_refs": [
+            "harness/artifact-handoff/WORKFLOW.md",
+            "registry/prompts/spec-architecture-prompts.v1.json",
+            "tests/test_conversation_context_canary_prompt.py"
+          ],
+          "rationale": "P114's repeated-drift handoff preserves the first executable next action without taking ownership of the resumed implementation."
+        },
+        {
+          "capability_id": "execution.implementation",
+          "presence": "AWARE",
+          "ownership": "NONE",
+          "capability_relation": "ROUTES_TO",
+          "delivery_source": "ROUTED_OWNER",
+          "evidence_refs": [
+            "registry/prompts/spec-architecture-prompts.v1.json"
+          ],
+          "rationale": "P114 observes context and routes resumed execution; it does not own repository implementation."
+        },
+        {
+          "capability_id": "process.recurring",
+          "presence": "AWARE",
+          "ownership": "NONE",
+          "capability_relation": "ROUTES_TO",
+          "delivery_source": "ROUTED_OWNER",
+          "evidence_refs": [
+            "harness/contracts/prompt-regression-safety.v1.json"
+          ],
+          "rationale": "Repeated Canary or artifact-handoff failures route to P13/P94; P114 does not absorb recurrence ownership."
+        }
+      ],
+      "inherited_sources": [
+        {
+          "source_id": "prompt-strength-shared-policy",
+          "source_version": "v1",
+          "source_hash": "e249da6706d86733cd03a046ef9e16552a3ae87dc8cc644281c5c1fd9c08c796"
+        }
+      ],
+      "semantic_dependency_fingerprint": "023a8eb908ddae244516d34740902f07e778ec38a71c993515856ef19bc5d4f4",
+      "evidence_refs": [
+        "harness/artifact-handoff/WORKFLOW.md",
+        "harness/artifact-handoff/contracts/share-alias-download.v1.json",
+        "harness/contracts/prompt-regression-safety.v1.json",
+        "harness/contracts/prompt-strength.v1.json",
+        "harness/prompt-topology/semantic-capability-catalog.v1.json",
+        "registry/prompts/repository-work-ledger-prompts.v1.json",
+        "registry/prompts/spec-architecture-prompts.v1.json",
+        "tests/test_conversation_context_canary_prompt.py",
+        "tests/test_google_drive_handoff_prompt_strengthening.py",
+        "tests/test_repository_drive_artifact_synchronizer_prompt.py"
+      ],
+      "profile_status": "ACCEPTED",
+      "prior_profile_ref": {
+        "profile_version": 1,
+        "profile_sha256": "3dab4dbf77340db696fa24601cb0665055846fef009a402d04393b1ca7959e06"
+      },
+      "profile_sha256": "f5af4567229acb4c9b5aca2af1aab45734b63d0de943e3585d374e9038ce4989"
     }
   ],
-  "profile_count": 64
+  "profile_count": 65
 }
