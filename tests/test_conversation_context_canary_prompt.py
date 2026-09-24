@@ -162,6 +162,7 @@ class ConversationContextCanaryPromptTests(unittest.TestCase):
             "NETWORK=<WAB|Guest|Hardwire|Local|Arbitrary/N/A>",
             "Arbitrary/N/A` means the task has no specific network requirement",
             "NETWORK=UNKNOWN",
+            "If observed live connectivity is available and differs from the required network, preserve the required NETWORK value and surface the mismatch; do not redefine the requirement to match observation.",
             "EXEC=<shell>@<kernel/runtime>",
             "EXEC=UNKNOWN",
             "P92 owns canonical path",
@@ -220,32 +221,45 @@ class ConversationContextCanaryPromptTests(unittest.TestCase):
 
     def test_cloud_artifact_relevance_pairs_local_and_provider_handoff(self) -> None:
         content = self.target["copyContent"]
+        cloud = content.split("CLOUD ARTIFACT RELEVANCE / PAIRED HANDOFF", 1)[1].split(
+            "AUTHORITATIVE CONTEXT RULE", 1
+        )[0]
         for phrase in (
-            "CLOUD ARTIFACT RELEVANCE / PAIRED HANDOFF",
-            "CLOUD=<GoogleDrive|OneDrive|SharePoint|Other|MULTIPLE|NONE|UNKNOWN>",
             "artifact manifest, registry, mapping, sync receipt, or workspace binding",
             "Do not sweep unrelated cloud files",
-            "surface both together",
+            "DELIVERY DECISION TABLE",
+            "`MAPPED_CLOUD_VERIFIED + LOCAL_SURFACED => PAIR_REQUIRED`: surface both together: usable canonical provider link plus local/download reference.",
             "P111 Repository + Google Drive Artifact Synchronizer",
             "harness/artifact-handoff/WORKFLOW.md",
             "Reuse the stable provider identity",
-            "name the exact identity, access, write, or readback gate",
             "P114 detects and routes; it does not become the sync engine",
             "Offering a local artifact without the mapped cloud link is a Canary/closure failure",
         ):
-            self.assertIn(phrase, content)
+            self.assertIn(phrase, cloud)
 
     def test_cloud_artifact_gate_has_negative_and_positive_controls(self) -> None:
         content = self.target["copyContent"]
+        cloud = content.split("CLOUD ARTIFACT RELEVANCE / PAIRED HANDOFF", 1)[1].split(
+            "AUTHORITATIVE CONTEXT RULE", 1
+        )[0]
+        pair = "`MAPPED_CLOUD_VERIFIED + LOCAL_SURFACED => PAIR_REQUIRED`"
+        local = "`LOCAL_ONLY_VERIFIED => LOCAL_ONLY_ALLOWED`"
+        blocked = "`CLOUD_RELEVANCE_UNKNOWN => CLOUD_CLOSURE_BLOCKED`"
         self.assertIn(
             "`CLOUD=NONE` is valid only when scoped current evidence establishes no relevant cloud counterpart",
-            content,
+            cloud,
         )
-        self.assertIn("lack of an obvious connector/file is not proof of NONE", content)
+        self.assertIn("lack of an obvious connector/file is not proof of NONE", cloud)
         self.assertIn(
-            "A verified local-only artifact remains valid when scoped evidence proves no relevant cloud mapping exists",
-            content,
+            f"{local}: A verified local-only artifact remains valid when scoped evidence proves no relevant cloud mapping exists.",
+            cloud,
         )
+        self.assertIn(
+            f"{blocked}: name the exact identity, access, write, or readback gate before local fallback; never claim sync succeeded.",
+            cloud,
+        )
+        self.assertLess(cloud.index(pair), cloud.index(local))
+        self.assertLess(cloud.index(local), cloud.index(blocked))
         self.assertIn(
             "Never let local/download silently replace a healthy mapped cloud artifact",
             content,

@@ -205,6 +205,22 @@
         "tests/test_prompt_semantic_coverage.py",
         "tests/test_prompt_quality_history.py"
       ]
+    },
+    {
+      "migration_id": "p79-no-capability-change-p114-013",
+      "path": "registry/prompts/spec-architecture-prompts.v1.json",
+      "from_git_blob_sha1": "d6a9ffe14f2b9630758244068657ba542429f4c0",
+      "to_git_blob_sha1": "b150cb00c26a2ac49114426082edce339ae050ca",
+      "affected_prompt_ids": [
+        "P114"
+      ],
+      "change_kind": "strengthening",
+      "effective_identity_change": "preserve_canonical",
+      "rationale": "Review hardening restores observed-network mismatch semantics and makes local/cloud delivery branches explicit without changing P114 capability ownership.",
+      "focused_tests": [
+        "tests/test_prompt_semantic_coverage.py",
+        "tests/test_prompt_quality_history.py"
+      ]
     }
   ]
 }

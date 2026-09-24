@@ -2333,9 +2333,9 @@
     },
     {
       "prompt_id": "P114",
-      "profile_version": 2,
-      "canonical_prompt_hash": "643b9fa110ffef688f7e33d439da7dbae179ec0b698157c9f66cd25b2626778a",
-      "acceptance_commit": "c1b772e56df3429de9a466344952ed9a0ef94fe4",
+      "profile_version": 3,
+      "canonical_prompt_hash": "ee8d4673d7e57dada35e21ce06a2a33a9a9c466b7dc79eacb5a6bfa63194a9ad",
+      "acceptance_commit": "2ef2e9f3f1a5a2364025b16a6abf3adc0ec4826b",
       "direct_assignments": [
         {
           "capability_id": "strength.fresh_evidence_floor",
@@ -2433,10 +2433,10 @@
       ],
       "profile_status": "ACCEPTED",
       "prior_profile_ref": {
-        "profile_version": 1,
-        "profile_sha256": "3dab4dbf77340db696fa24601cb0665055846fef009a402d04393b1ca7959e06"
+        "profile_version": 2,
+        "profile_sha256": "f5af4567229acb4c9b5aca2af1aab45734b63d0de943e3585d374e9038ce4989"
       },
-      "profile_sha256": "f5af4567229acb4c9b5aca2af1aab45734b63d0de943e3585d374e9038ce4989"
+      "profile_sha256": "4365a2c5e5a001f2479e0bb7fa549002baed65b241f3b09be4bcbb2cda943ade"
     }
   ],
   "profile_count": 65
