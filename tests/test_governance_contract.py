@@ -141,9 +141,10 @@ class GovernanceContractTests(unittest.TestCase):
             "operator-approved product identity",
             "legacy `operant` / `prompt-kit` paths remain authoritative compatibility surfaces",
             "must not be silently moved",
-            "consume AFK Agent Flow through historical Operant release seams",
-            "must not become a competing authority",
-            "cross-repo dependencies explicit and versioned",
+            "current donor authority",
+            "convergence/destination authority",
+            "compatibility/consumer seams",
+            "cross-repo dependencies stay explicit and versioned",
         ):
             self.assertIn(phrase, section)
 
