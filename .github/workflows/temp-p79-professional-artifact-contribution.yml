@@ -1,4 +1,4 @@
-# One-shot trigger revision 3 after default-branch registration; remove after protected contribution completes.
+# One-shot trigger revision 4; receipt parser aligned to prompt_registry_ops.py ADD schema.
 name: Temporary P79 professional artifact contribution
 
 on:
@@ -83,7 +83,7 @@ jobs:
           receipt=json.load(open("/tmp/professional-artifact-add.json", encoding="utf-8"))
           assert receipt["status"] == "added"
           assert receipt["site_parity"] is True
-          print("protected ADD: PASS", receipt["prompt_id"])
+          print("protected ADD: PASS", receipt["id"])
           PY
 
       - name: Execute protected P56 routing edit
@@ -232,9 +232,9 @@ jobs:
               "all_registered_sources_searched": prior["all_registered_sources_searched"],
               "source_ids":[row["source_id"] for row in prior["sources"]],
               "dry_run_prompt_id":dry["record"]["id"],
-              "added_prompt_id":add["prompt_id"],
+              "added_prompt_id":add["id"],
               "add_site_parity":add["site_parity"],
-              "semantic_profile_sha256":add["profile_sha256"],
+              "semantic_profile_sha256":add["semantic_profile_sha256"],
               "P56_edit_status":edit["status"],
               "P56_profile_version":edit["profile_version"],
               "P56_site_parity":edit["site_parity"],
