@@ -114,21 +114,52 @@ class SysAdminSuitePromptRegistryTests(unittest.TestCase):
                 encoding="utf-8",
             )
 
-            # Sprint 2: Remove semantic migrations from sandbox
+            # Sprint 2: Remove linked semantic/capability migrations from sandbox.
             # The test rebases to a historical state by removing prompts, which invalidates
             # the existing migration chain. Since this is a sandbox test without git history,
-            # clear migrations to allow fresh lifecycle operations.
+            # clear only source-history migrations for this registry and capability migrations
+            # linked to those removed source-history rows before fresh lifecycle operations.
             migrations_path = sandbox / "harness" / "prompt-compilation" / "prompt-semantic-migrations.v1.json"
+            removed_source_history_ids: set[str] = set()
             if migrations_path.exists():
                 migrations_data = json.loads(migrations_path.read_text(encoding="utf-8"))
-                # Remove migrations for the spec-architecture-prompts registry
+                source_migrations = migrations_data.get("migrations", [])
+                removed_source_history_ids = {
+                    str(m["migration_id"])
+                    for m in source_migrations
+                    if m.get("path") == source_rel and m.get("migration_id")
+                }
                 migrations_data["migrations"] = [
-                    m for m in migrations_data.get("migrations", [])
-                    if m.get("path") != source_rel
+                    m for m in source_migrations
+                    if str(m.get("migration_id", "")) not in removed_source_history_ids
                 ]
                 migrations_path.write_text(
                     json.dumps(migrations_data, indent=2, ensure_ascii=False) + "\n",
                     encoding="utf-8",
+                )
+
+            capability_migrations_path = (
+                sandbox / "harness" / "prompt-topology" / "prompt-capability-migrations.v1.json"
+            )
+            if capability_migrations_path.exists() and removed_source_history_ids:
+                capability_data = json.loads(
+                    capability_migrations_path.read_text(encoding="utf-8")
+                )
+                capability_data["migrations"] = [
+                    m for m in capability_data.get("migrations", [])
+                    if str(m.get("source_history_migration_id", ""))
+                    not in removed_source_history_ids
+                ]
+                capability_migrations_path.write_text(
+                    json.dumps(capability_data, indent=2, ensure_ascii=False) + "\n",
+                    encoding="utf-8",
+                )
+                self.assertFalse(
+                    {
+                        str(m.get("source_history_migration_id", ""))
+                        for m in capability_data.get("migrations", [])
+                    }
+                    & removed_source_history_ids
                 )
 
             inspect_proc = subprocess.run(
