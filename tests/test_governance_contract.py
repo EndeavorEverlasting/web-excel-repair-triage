@@ -136,7 +136,7 @@ class GovernanceContractTests(unittest.TestCase):
             "## 6. Repository identity and product boundary", "## 7."
         )
         for phrase in (
-            "`UnderDeskDev/AFK-Agent-Flow`",
+            "`EndeavorEverlasting/TokenCorridor`",
             "unproven",
             "operator-approved product identity",
             "legacy `operant` / `prompt-kit` paths remain authoritative compatibility surfaces",
