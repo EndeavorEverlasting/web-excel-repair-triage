@@ -18,53 +18,31 @@ if target is None:
     raise SystemExit("P114 not found in canonical registry")
 
 content = target["copyContent"]
-old_trigger = (
-    "Activate only when work creates, updates, offers, exports, syncs, or closes out a material artifact, "
-    "or scoped evidence says a cloud counterpart may matter."
-)
-new_trigger = (
-    "Activate when work creates, updates, offers, exports, syncs, or closes out a material artifact; "
-    "when the response is about to create or surface a user-facing local/download artifact; or scoped evidence says a cloud counterpart may matter.\n"
-    "A planned or imminent local/download deliverable counts as artifact-bearing work. When the current project/workspace has a scoped cloud binding, "
-    "resolve cloud relevance before final handoff; do not wait until after the local artifact is surfaced."
-)
-old_classification = (
-    "2. Classify each material artifact LOCAL_ONLY_VERIFIED, MAPPED_CLOUD_VERIFIED, CLOUD_RELEVANCE_UNKNOWN, or BLOCKED. "
-    "`CLOUD=NONE` is valid only when scoped current evidence establishes no relevant cloud counterpart; "
-    "lack of an obvious connector/file is not proof of NONE."
-)
-new_classification = (
-    "2. Classify each material artifact LOCAL_ONLY_VERIFIED, MAPPED_CLOUD_VERIFIED, CLOUD_RELEVANCE_UNKNOWN, or BLOCKED. "
-    "`CLOUD=NONE` is valid only when scoped current evidence establishes no relevant cloud counterpart; "
-    "lack of an obvious connector/file is not proof of NONE.\n"
-    "2a. A known project/workspace cloud binding with no resolved per-artifact mapping is `CLOUD_RELEVANCE_UNKNOWN`, not `LOCAL_ONLY_VERIFIED`. "
-    "Before closeout route the artifact through P111 or the applicable provider owner to resolve or reuse the cloud identity and obtain required write/readback proof. "
-    "`LOCAL_ONLY_VERIFIED` requires either explicit local-only/private/do-not-sync authority or synchronizer proof that no relevant cloud counterpart should exist."
-)
-old_local = (
-    "- `LOCAL_ONLY_VERIFIED => LOCAL_ONLY_ALLOWED`: A verified local-only artifact remains valid when scoped evidence proves no relevant cloud mapping exists."
-)
-new_local = (
-    "- `LOCAL_ONLY_VERIFIED => LOCAL_ONLY_ALLOWED`: allow local-only handoff only when explicit local-only/private/do-not-sync authority or synchronizer proof establishes that no relevant cloud counterpart should exist."
-)
-old_unknown = (
-    "- `CLOUD_RELEVANCE_UNKNOWN => CLOUD_CLOSURE_BLOCKED`: name the exact identity, access, write, or readback gate before local fallback; never claim sync succeeded."
-)
-new_unknown = (
-    "- `CLOUD_RELEVANCE_UNKNOWN => CLOUD_CLOSURE_BLOCKED`: when a project/workspace cloud binding exists, route resolution through P111 or the applicable provider owner before local fallback; if resolution is blocked, name the exact identity, access, write, or readback gate and never claim sync succeeded."
-)
+start_marker = "CLOUD ARTIFACT RELEVANCE / PAIRED HANDOFF\n"
+end_marker = "AUTHORITATIVE CONTEXT RULE"
+start = content.find(start_marker)
+end = content.find(end_marker, start)
+if start < 0 or end < 0:
+    raise SystemExit("P114 cloud-handoff section markers not found")
 
-for old, new, label in (
-    (old_trigger, new_trigger, "artifact-bearing trigger"),
-    (old_classification, new_classification, "bound-workspace classification"),
-    (old_local, new_local, "local-only decision"),
-    (old_unknown, new_unknown, "unknown-cloud decision"),
-):
-    if old not in content:
-        raise SystemExit(f"expected P114 {label} text not found")
-    content = content.replace(old, new, 1)
+new_cloud = """CLOUD ARTIFACT RELEVANCE / PAIRED HANDOFF
+Trigger for artifact work, an imminent user-facing local/download artifact, or scoped evidence a cloud counterpart may matter.
+1. Inspect the scoped artifact manifest, registry, mapping, sync receipt, or workspace binding. Do not sweep unrelated cloud files.
+2. Use LOCAL_ONLY_VERIFIED, MAPPED_CLOUD_VERIFIED, CLOUD_RELEVANCE_UNKNOWN, or BLOCKED. A project/workspace cloud binding with unresolved mapping is `CLOUD_RELEVANCE_UNKNOWN`, not `LOCAL_ONLY_VERIFIED`; route through P111/provider owner before closeout. `LOCAL_ONLY_VERIFIED` requires explicit local-only/private/do-not-sync authority or synchronizer proof of no cloud counterpart. `CLOUD=NONE` is valid only when scoped current evidence establishes no relevant cloud counterpart; lack of an obvious connector/file is not proof of NONE.
+DELIVERY DECISION TABLE
+- `MAPPED_CLOUD_VERIFIED + LOCAL_SURFACED => PAIR_REQUIRED`: surface both together: usable canonical provider link plus local/download reference.
+- `LOCAL_ONLY_VERIFIED => LOCAL_ONLY_ALLOWED`: require explicit local-only/private/do-not-sync authority or synchronizer proof.
+- `CLOUD_RELEVANCE_UNKNOWN => CLOUD_CLOSURE_BLOCKED`: resolve through P111/provider owner before local fallback; if blocked, name the exact identity/access/write/readback gate; never claim sync succeeded.
+3. Before claiming synchronized/current, require provider-owner identity/readback evidence. Reuse the stable provider identity; never create a second CURRENT artifact just to get a link.
+4. Google Drive uses `P111 Repository + Google Drive Artifact Synchronizer` and `harness/artifact-handoff/WORKFLOW.md`; other providers use their owner or remain UNKNOWN/BLOCKED.
+P114 detects and routes; it does not become the sync engine. Offering a local artifact without the mapped cloud link is a Canary/closure failure when a healthy verified cloud counterpart exists.
 
+"""
+content = content[:start] + new_cloud + content[end:]
+if len(content) > 12000:
+    raise SystemExit(f"compacted P114 still exceeds helper ceiling: {len(content)}")
 patch = {"copyContent": content}
+
 with tempfile.NamedTemporaryFile("w", encoding="utf-8", suffix=".json", delete=False, dir=ROOT) as handle:
     json.dump(patch, handle, ensure_ascii=False, indent=2)
     patch_path = Path(handle.name)
@@ -87,7 +65,7 @@ try:
             "--evidence-ref",
             "registry/prompts/repository-work-ledger-prompts.v1.json",
             "--rationale",
-            "Close the project-cloud binding ambiguity so an unresolved per-artifact mapping cannot be treated as local-only; route resolution through the existing P111/provider owner while preserving P114 capability ownership.",
+            "Close the project-cloud binding ambiguity so unresolved artifact mapping cannot be treated as local-only; route through the existing provider owner while preserving P114 capability ownership.",
         ],
         cwd=ROOT,
         check=True,
@@ -100,7 +78,7 @@ old_assertion = (
     '            f"{local}: A verified local-only artifact remains valid when scoped evidence proves no relevant cloud mapping exists.",\n'
 )
 new_assertion = (
-    '            f"{local}: allow local-only handoff only when explicit local-only/private/do-not-sync authority or synchronizer proof establishes that no relevant cloud counterpart should exist.",\n'
+    '            f"{local}: require explicit local-only/private/do-not-sync authority or synchronizer proof.",\n'
 )
 if old_assertion not in test_text:
     raise SystemExit("expected local-only assertion not found")
@@ -113,12 +91,11 @@ new_test = '''    def test_bound_cloud_workspace_requires_resolution_before_loca
             "AUTHORITATIVE CONTEXT RULE", 1
         )[0]
         for phrase in (
-            "A planned or imminent local/download deliverable counts as artifact-bearing work.",
-            "When the current project/workspace has a scoped cloud binding, resolve cloud relevance before final handoff",
-            "A known project/workspace cloud binding with no resolved per-artifact mapping is `CLOUD_RELEVANCE_UNKNOWN`, not `LOCAL_ONLY_VERIFIED`.",
-            "Before closeout route the artifact through P111 or the applicable provider owner",
-            "`LOCAL_ONLY_VERIFIED` requires either explicit local-only/private/do-not-sync authority or synchronizer proof",
-            "route resolution through P111 or the applicable provider owner before local fallback",
+            "an imminent user-facing local/download artifact",
+            "A project/workspace cloud binding with unresolved mapping is `CLOUD_RELEVANCE_UNKNOWN`, not `LOCAL_ONLY_VERIFIED`",
+            "route through P111/provider owner before closeout",
+            "`LOCAL_ONLY_VERIFIED` requires explicit local-only/private/do-not-sync authority or synchronizer proof",
+            "resolve through P111/provider owner before local fallback",
         ):
             self.assertIn(phrase, cloud)
         self.assertNotIn(
