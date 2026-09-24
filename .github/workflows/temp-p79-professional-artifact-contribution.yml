@@ -11,6 +11,9 @@ on:
 permissions:
   contents: write
 
+env:
+  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
 jobs:
   protected-contribution:
     runs-on: ubuntu-latest
