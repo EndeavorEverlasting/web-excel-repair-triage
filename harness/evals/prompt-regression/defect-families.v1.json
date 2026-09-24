@@ -1,0 +1,167 @@
+{
+  "schema_version": "prompt-regression-defect-register/v1",
+  "contract": "harness/contracts/prompt-regression-safety.v1.json",
+  "evaluation_time": "2026-09-18T17:04:50Z",
+  "families": [
+    {
+      "id": "TRAILING_WHITESPACE",
+      "status": "SYSTEMIC",
+      "classification": "PATCH_HYGIENE",
+      "recurring_across_repositories": true,
+      "matrix_capture_required": false,
+      "canonical_owner": "repository patch-hygiene validator and local required-check profile",
+      "prompt_strengthening": "GLOBAL_SHARED_POLICY",
+      "detector_commands": [
+        "git diff --check",
+        "git diff --cached --check",
+        "git diff --check {base_sha}...{head_sha}"
+      ],
+      "prevention_surfaces": [
+        ".githooks/pre-commit",
+        "harness/validators.v1.json",
+        "harness/promotion/required-checks.v1.json",
+        "registry/prompts/actionable-next-step-policy.v1.json"
+      ],
+      "regression_gate": "tests/test_prompt_regression_safety_prompt.py",
+      "local_first_requirement": "Run repository-owned patch-hygiene and affected local required-check profiles before relying on hosted CI when local Git is available.",
+      "occurrences": [
+        {
+          "repository": "EndeavorEverlasting/web-excel-repair-triage",
+          "commit": "80ea088185a36583fa5fe4c2cf62d3c73f85d6c0",
+          "summary": "Coverage-plan work required a follow-up commit solely to strip trailing whitespace so patch hygiene could pass."
+        },
+        {
+          "repository": "EndeavorEverlasting/web-excel-repair-triage",
+          "commit": "0ef17dbc589e1eb3da126f44f1eb665bc1842999",
+          "summary": "Prompt Kit UI alignment planning required a separate trailing-whitespace cleanup commit."
+        },
+        {
+          "repository": "EndeavorEverlasting/web-excel-repair-triage",
+          "commit": "5d80188986b8ad330c1bbf52a8481cb08a9a6c28",
+          "summary": "Evidence Spine architecture documentation required patch-hygiene whitespace repair."
+        },
+        {
+          "repository": "EndeavorEverlasting/AgentSwitchboard",
+          "commit": "3f25d069bc391c1d3dacd5ba97281eeaf7655875",
+          "summary": "Automated-test-floor plan whitespace caused git diff --check to reject the candidate and block unrelated hygiene gates."
+        },
+        {
+          "repository": "EndeavorEverlasting/AgentSwitchboard",
+          "commit": "d9f9ddb942437804387f80b21693fd38d77a5caf",
+          "summary": "Tutorial ranking summary required a dedicated trailing-whitespace cleanup."
+        },
+        {
+          "repository": "EndeavorEverlasting/AgentSwitchboard",
+          "commit": "ba19f7c8b6aaa0994ac8e58e148c77719684395b",
+          "summary": "ASQ-016 preservation merge explicitly records trailing-whitespace hygiene repair alongside local-floor proof."
+        }
+      ]
+    },
+    {
+      "id": "PROVIDER_QUOTA_TERMINATION",
+      "status": "SYSTEMIC",
+      "classification": "WORKFLOW_CONTROL",
+      "recurring_across_repositories": true,
+      "matrix_capture_required": false,
+      "canonical_owner": "repository-local proof continuity contract + reviewed local action registry/runner",
+      "prompt_strengthening": "GLOBAL_SHARED_POLICY",
+      "detector_commands": [
+        "python scripts/run_local_required_checks.py --summary",
+        "python scripts/run_repository_action.py --list"
+      ],
+      "prevention_surfaces": [
+        "registry/prompts/actionable-next-step-policy.v1.json",
+        "harness/contracts/repository-local-proof-continuity.v1.json",
+        "harness/repository-actions.v1.json",
+        "scripts/run_repository_action.py",
+        ".github/workflows/repository-local-action.yml"
+      ],
+      "regression_gate": "tests/test_repository_local_proof_continuity_prompt.py",
+      "local_first_requirement": "When hosted provider proof is quota-limited or otherwise non-transiently unavailable, continue through reviewed repository-local actions for every gate they can honestly prove and keep hosted-only proof separately blocked.",
+      "occurrences": [
+        {
+          "repository": "EndeavorEverlasting/nyc-hh-fieldops-lab",
+          "commit": "835e0b5604acbe495f37f41b7ff61bc11933ba71",
+          "summary": "Exact-head repository validation had to use a local evidence-integrity fallback while GitHub Actions was recorded QUOTA_EXHAUSTED; repeated agents treated hosted runner absence as a stopping condition."
+        },
+        {
+          "repository": "EndeavorEverlasting/web-excel-repair-triage",
+          "commit": "82d6d3ea55cfb408a93c60a2a229a2ab9c0f2b53",
+          "summary": "The quota-resilience repair branch itself observed all pull-request workflow runs returning action_required rather than executable proof, demonstrating that provider state cannot remain the sole proof path."
+        }
+      ]
+    },
+    {
+      "id": "LINE_ENDING_DRIFT",
+      "status": "SYSTEMIC",
+      "classification": "PATCH_HYGIENE",
+      "recurring_across_repositories": false,
+      "matrix_capture_required": false,
+      "canonical_owner": ".gitattributes plus prompt-regression-safety contract and validator",
+      "prompt_strengthening": "GLOBAL_SHARED_POLICY",
+      "detector_commands": [
+        "python scripts/validate_prompt_regression_safety.py --summary",
+        "git check-attr --all -- .gitattributes '*.py' '*.json' '*.md' '*.sh' '*.ps1' '*.cmd'"
+      ],
+      "prevention_surfaces": [
+        ".gitattributes",
+        "harness/contracts/prompt-regression-safety.v1.json",
+        "scripts/validate_prompt_regression_safety.py",
+        "registry/prompts/actionable-next-step-policy.v1.json"
+      ],
+      "regression_gate": "tests/test_prompt_regression_safety_prompt.py",
+      "local_first_requirement": "Validate the repository-owned .gitattributes contract and focused regression before relying on hosted CI when local Git is available; do not mass-renormalize unrelated tracked files.",
+      "occurrences": [
+        {
+          "repository": "EndeavorEverlasting/web-excel-repair-triage",
+          "commit": "afbfcb2bfd5b8f9849ab444eebba41f09bbc6c0b",
+          "summary": "Windows hook launcher behavior required a dedicated commit to normalize line endings."
+        },
+        {
+          "repository": "EndeavorEverlasting/web-excel-repair-triage",
+          "commit": "d3db211805f1b44dc16b78c59d63eec4eaba5d07",
+          "summary": "Prompt Kit release-identity regression had to be made independent of CRLF checkout conversion."
+        },
+        {
+          "repository": "EndeavorEverlasting/web-excel-repair-triage",
+          "commit": "dc15c1bea3160a640bfdc958202de95012de6c0d",
+          "summary": "Evaluation prompt identity hashing required explicit newline normalization so CRLF and LF environments agreed."
+        }
+      ]
+    },
+    {
+      "id": "PROMPT_REGRESSION_COVERAGE_GAP",
+      "status": "SYSTEMIC",
+      "classification": "PROMPT_SEMANTICS",
+      "recurring_across_repositories": false,
+      "matrix_capture_required": true,
+      "canonical_owner": "Prompt Regression Safety coverage ratchet composed with Prompt Semantic Coverage lifecycle",
+      "prompt_strengthening": "SCOPED_SHARED_POLICY",
+      "detector_commands": [
+        "python scripts/validate_prompt_regression_safety.py --summary",
+        "python -m unittest tests.test_prompt_regression_safety_prompt -v"
+      ],
+      "prevention_surfaces": [
+        "harness/contracts/prompt-regression-safety.v1.json",
+        "harness/evals/prompt-regression/prompt-coverage-baseline.v1.json",
+        "scripts/validate_prompt_regression_safety.py",
+        "harness/prompt-topology/prompt-capability-profiles.v1.json",
+        "harness/evals/prompt-strength/p02-continuity-regression-matrix.v1.json"
+      ],
+      "regression_gate": "tests/test_prompt_regression_safety_prompt.py",
+      "local_first_requirement": "Run the regression-safety validator and focused coverage-ratchet fixtures before accepting Prompt Kit registry or override changes; hosted CI is additional exact-head proof, not the semantic owner.",
+      "occurrences": [
+        {
+          "repository": "EndeavorEverlasting/web-excel-repair-triage",
+          "commit": "92d077ca2e5e15a5b1ac75c01fee636c3971ba8e",
+          "summary": "Sprint 1A accepted a 62-prompt semantic profile baseline while operational extension registries already existed, leaving later operational prompts outside PSC001 coverage."
+        },
+        {
+          "repository": "EndeavorEverlasting/web-excel-repair-triage",
+          "commit": "3defbc21812522f9bc454d96835ba6bb7ea1552c",
+          "summary": "P02 required a dedicated effective-override regression matrix because PSC002 binds the raw canonical record rather than the live override body, exposing a second semantic coverage seam."
+        }
+      ]
+    }
+  ]
+}

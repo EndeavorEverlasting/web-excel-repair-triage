@@ -1,0 +1,29 @@
+{
+  "schema_version": "nth-qualitative-admin-input/v1",
+  "mode": "completed_month",
+  "month_key": "2026-06",
+  "artifact_date": "2026-07-02",
+  "prior_baseline": 31.5,
+  "tracked_technicians": ["Alpha Tech", "Beta Tech"],
+  "detail_rows": [
+    {"date":"2026-06-01","technician":"Alpha Tech","paid_hours":8,"program_assignment":"Neuron Track / Program Support","qualitative_work_context":"Configuration, validation, readiness, documentation, and technical support."},
+    {"date":"2026-06-01","technician":"Beta Tech","paid_hours":8,"program_assignment":"Neuron Track / Program Support","qualitative_work_context":"Inventory reconciliation, staging, logistics, and coordination."},
+    {"date":"2026-06-02","technician":"Alpha Tech","paid_hours":8,"program_assignment":"Neuron Track / Program Support","qualitative_work_context":"Configuration, validation, documentation, and handoff support."},
+    {"date":"2026-06-02","technician":"Beta Tech","paid_hours":8.5,"program_assignment":"Neuron Track / Program Support","qualitative_work_context":"Inventory control, readiness, reporting, troubleshooting, and coordination."}
+  ],
+  "operational_themes": [
+    {"theme":"Configuration / Validation","readout":"Configuration, validation, readiness, and technical support recur across the record.","why":"Explains technical work without assigning synthetic task hours."},
+    {"theme":"Inventory / Reconciliation","readout":"Inventory, scope, device, and record reconciliation recur in the work context.","why":"Captures readiness and control work that endpoint counts do not show."},
+    {"theme":"Documentation / Coordination","readout":"Reporting, documentation, stakeholder coordination, and follow-up recur.","why":"Shows management and coordination work supporting the program."}
+  ],
+  "executive_readout": [
+    {"finding":"Service model","management_interpretation":"The work mix includes configuration, inventory, logistics, documentation, coordination, troubleshooting, readiness, and field support."},
+    {"finding":"Management context","management_interpretation":"Parallel workstreams may move at the same time; this is qualitative context rather than an hours formula."}
+  ],
+  "billing_support_context": [
+    {"control":"Service breadth","statement":"The service covers configuration, validation, inventory, staging, logistics, troubleshooting, coordination, reporting, readiness, and field support."},
+    {"control":"Parallel work","statement":"Staffing may support multiple sites and workstreams in parallel rather than serially."},
+    {"control":"Risk absorption","statement":"Capacity can absorb blockers, late requests, and site changes without making those factors a labor-hours formula."}
+  ],
+  "external_use_boundary": "Historical billing treatment is not established by this workbook alone. Confirm the applicable billing or invoice evidence before making historical claims externally."
+}

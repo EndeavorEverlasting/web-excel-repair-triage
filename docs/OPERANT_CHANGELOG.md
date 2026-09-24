@@ -1,0 +1,209 @@
+# Operant Changelog
+
+Human-facing Operant releases. Git commit/artifact identity remains the forensic freshness proof.
+
+## 0.10.1 - 2026-09-19
+
+### Fixes / performance
+
+- fix(operant): escape release summary markdown backticks (#590) (`f8570e10`)
+
+## 0.10.0 - 2026-09-19
+
+### Features / breaking pre-1.0 changes
+
+- feat(prompt-kit): strengthen P56 context artifact recovery (`ee5052af`)
+- feat(prompt-kit): project use-case routing into ontology (`eaa5f072`)
+- feat(prompt-kit): show routed use cases in ontology (`3053b7dc`)
+
+### Fixes / performance
+
+- fix(prompt-kit): route artifact creation to P56 (`8760e100`)
+- fix(harness): normalize python→python3 across validators and hooks (#584) (`25a2b6b6`)
+
+## 0.9.0 - 2026-09-18
+
+### Features / breaking pre-1.0 changes
+
+- feat(prompt-kit): add prompt detail quick actions (`e8da5377`)
+- feat(prompt-kit): require progress-bearing execution and quiescence (`45fc40de`)
+- feat(prompt-kit): add isolated writer convergence contract (`017f7836`)
+- feat(prompt-kit): enforce Drive-primary artifact handoff (`5a295e0a`)
+- feat(prompt-kit): add Drive organizer and harden P123 export titles (`9788d35f`)
+- feat(prompt-compilation): wire Compute Mode and Language Engine into Prompt Kit (`10167b30`)
+- feat(prompt-kit): register Michael Shimeles skill donor (`028ac5d8`)
+- feat(prompt-kit): add quota-resilient repository local actions (`48dc2bd0`)
+- feat(prompt-kit): compile recurring-defect safety into operational prompts (`4d40758c`)
+- feat(prompt-kit): make execution boundaries public state (`3ffd70be`)
+- feat(harness): close execution boundary delivery gaps (`dc019578`)
+- feat(prompt-kit): make conversation truth artifact-durable (#547) (`92624c15`)
+
+### Fixes / performance
+
+- fix(prompt-kit): enforce autonomous parallel dispatch (`ff824e6e`)
+- fix(prompt-kit): preserve P07 freshness and fixed-point contracts (`fe016975`)
+- fix(prompt-kit): make parallel dispatch manifest executable (`c78a47b7`)
+- fix(prompt-kit): restore P07 mainline/readability contracts with parallel dispatch (`cb934bb1`)
+- fix(prompt-kit): restore P07 closeout and phase-continuity nextStep gates (`8d7eff77`)
+- fix(prompt-kit): correct P04 OUTPUT ORDER numbering and CLI path refs (`4ccc5b9d`)
+- fix(prompt-kit): avoid nested backticks in P04 dispatch CLI examples (`17be3de9`)
+- fix(prompt-kit): route detail Home End before page hotkeys (`ebf6461a`)
+- fix(prompt-kit): make continuation explicitly progress-bearing (`1731d94b`)
+- fix(prompt-kit): scope proof freshness to relevant inputs (`5d8eb2bc`)
+- fix(prompt-kit): scope appendix head movement to proof relevance (`6e06182e`)
+- fix(prompt-kit): align Storage UI and add format-alignment ledger (`3a288914`)
+- fix(prompt-kit): keep prompt headers visible when snapping (`d660c056`)
+- fix(prompt): preserve required successor obligations (`7e93b4fa`)
+- fix(prompt): harden raw verifier successor semantics (`72f55265`)
+- fix(prompt-kit): restore canonical prompt copy identity (`2e82c646`)
+- fix(prompt-kit): bind boundary marker to shared suffix (`c94eb060`)
+- fix(prompt-kit): turn every material boundary into recovery sprint (#549) (`ce4b5a3c`)
+- fix(operant): externalize release PR head refreshes (#545) (`2ecf9136`)
+- fix(prompt-kit): propagate boundary continuation to every prompt (#551) (`84a47c14`)
+- fix(operant): repair release PR jq lookup quoting (#552) (`58a2785a`)
+
+## 0.8.1 - 2026-09-14
+
+### Fixes / performance
+
+- fix(operant): converge unpublished release candidates (`5a4582da`)
+- fix(operant): serialize all mainline release owners (`4cc7d1b0`)
+
+## 0.8.0 - 2026-09-13
+
+### Features / breaking pre-1.0 changes
+
+- feat(prompt-kit): expand compute authority and contract horizon (`a583b333`)
+- feat(prompt-kit): require exhaustive available compute globally (#458) (`2f258b09`)
+- feat(prompt-kit): harden correspondence context and exhaustive compute (#401) (`dde4091f`)
+- feat(prompt-kit): define privacy and storage boundaries (#460) (`3e371272`)
+- feat(prompt-kit): add bounded local storage lifecycle runtime (`457cbf50`)
+- feat(prompt-kit): wire storage lifecycle runtime into canonical builder (`89d20a39`)
+
+### Fixes / performance
+
+- fix(prompt-kit): enforce evidence-spine admission dependency (`e8d2de99`)
+- fix(prompt-kit): harden lifecycle review gates (`9b1a8ca6`)
+- fix(prompt-kit): follow current Phase C closeout evidence (`d4663f9d`)
+- fix(prompt-kit): retain bounded newest lifecycle writes (`54c5f7d2`)
+- fix(prompt-kit): close lifecycle review findings (`36c333cb`)
+
+## 0.7.0 - 2026-09-13
+
+### Features / breaking pre-1.0 changes
+
+- feat(prompt-kit): gate P141 to P82 experiments (`6857ffa2`)
+
+### Fixes / performance
+
+- fix(prompt-kit): persist repo plans and validate thread handoffs (`43bab5f6`)
+
+## 0.6.2 - 2026-09-13
+
+### Fixes / performance
+
+- fix(operant): externalize first release PR publication (`7f13553c`)
+
+## 0.6.1 - 2026-09-13
+
+### Fixes / performance
+
+- fix(prompt-kit): require fresh repo floor before operator commands (`ccf60d3b`)
+- fix(p07): continue across proven phase boundaries (#442) (`34a03423`)
+- fix(operant): detect release version across full push range (`1809b9f0`)
+
+## 0.6.0 - 2026-09-12
+
+### Features / breaking pre-1.0 changes
+
+- feat(prompt-kit): add complete ad campaign domain and prompt suite (`74d53816`)
+- feat(prompt-kit): add project case-study demo deck builder (`81af4168`)
+- feat(operant): add canonical upgrade recipe engine (`b3b22808`)
+- feat(prompt-kit): stabilize mobile UX across portrait and landscape (`5d6c24bd`)
+- feat(prompt-kit): add account relevance to P114 canary (#417) (`0a627a5d`)
+- feat(prompt-kit): timestamp P114 query issuance (`cae7dbb6`)
+- feat(prompt-kit): add Teams attendance roster reconstructor (`7ddcdbe7`)
+- feat(prompt-kit): gate P13 on execution posture canary (`ff8b3b12`)
+- feat(prompt-kit): add verified job application pack builder (#422) (`7beeace0`)
+- feat(afk-agent-flow): establish product identity and route contract (`eaba0189`)
+- feat(afk-agent-flow): validate renamed public identity (`851930a0`)
+- feat(afk-agent-flow): point installed app at canonical route (`dfaffae3`)
+- feat(afk-agent-flow): move offline fallback to canonical route (`6fd910ca`)
+- feat(afk-agent-flow): add Prompt Kit compatibility redirect (`ff71f005`)
+- feat(afk-agent-flow): add Operant compatibility redirect (`79764d93`)
+- feat(afk-agent-flow): rebrand mobile launcher and direct sharing (`a9ddd675`)
+- feat(afk-agent-flow): complete canonical brand migration (`095785c8`)
+- feat(prompt-kit): mine recurring judgment failures in P100 (`3a36d26e`)
+- feat(prompt-kit): add tutorial coverage policy (`6ed8a1e0`)
+- feat(prompt-kit): derive classifier-backed tutorial coverage (`a1cbe61d`)
+- feat(prompt-kit): make P124 repo-wide readability actionable (`15d518d9`)
+- feat: add connected health record sync prompt (`015cf653`)
+- feat(prompt-kit): add persistent selected-prompt state with snap+highlight, Enter-to-open, Y-to-copy (`d4d19ffe`)
+- feat(prompt-kit): add repository strategic opportunity scout (`4f9d8434`)
+- feat(prompt-kit): harden P02 conversation recovery (`3013d626`)
+- feat(prompt-kit): graduate recurring snippets into durable tooling (`02d0f3ab`)
+
+### Fixes / performance
+
+- fix(prompt-kit): protect P131 artifact outputs (`1b3c0b92`)
+- fix(prompt-kit): make P07 parallel execution binary (`e21a09bd`)
+- fix(prompt-kit): restore P07 non-parallel proof gates (`e6737d06`)
+- fix(prompt-kit): fail closed on unknown P114 issuance time (`3259c91b`)
+- fix(prompt-kit): align P13 regression with P07 dispatch (`11c021dc`)
+- fix(afk-agent-flow): validate AFK freshness route (`e0ca5c04`)
+- fix(afk-agent-flow): keep governance within context budget (`836f579f`)
+- fix(afk-agent-flow): reconcile route, governance, and release identity contracts (`77c26952`)
+- fix(afk-agent-flow): align discovery validator to canonical afk route (`968d8cac`)
+- fix(harness): refresh external resource coverage projection (`bebc8223`)
+- fix(prompt-kit): fail closed on stale tutorial anchors (`8831cc13`)
+- fix(prompt-kit): preserve interaction mode across orientation (`01b57bf3`)
+- fix(prompt-kit): exclude Prompt Finder self recommendation (`df8a0772`)
+- fix(prompt-kit): bind classifier eval provenance and output safety (`233539cf`)
+- fix(prompt-kit): make classifier routes complete tutorial wiring (`e0c1ae4d`)
+- fix(prompt-kit): treat classifier route as complete wiring (`74a42c96`)
+- fix(prompt-kit): close P02 review gaps (`da9127dc`)
+
+## 0.5.0 - 2026-09-10
+
+### Features / breaking pre-1.0 changes
+
+- feat(operant): admit bounded friction receipts to P115 (`8145f31d`)
+- feat(operant): register derived friction as AFK trigger (`f4aa247a`)
+- feat(operant): expose privacy-bounded friction AFK capability (`9252b16d`)
+- feat(operant): add repository-dispatch friction adapter (`91aebc43`)
+
+### Fixes / performance
+
+- fix(operant): preserve sanitized friction provenance (`97edee75`)
+- fix(operant): harden AFK signal admission (`cb2d3b2a`)
+
+## 0.4.0 - 2026-09-09
+
+### Features / breaking pre-1.0 changes
+
+- feat(prompt-kit): make P79 synthesize registered upstream prior art (`0f571710`)
+- feat(prompt-kit): show copied prompt in toast and hide filters on snap (`1b30d233`)
+
+### Fixes / performance
+
+- fix(prompt-kit): preserve P79 semantics while adding upstream synthesis (`b9e6b398`)
+
+## 0.3.0 - 2026-09-09
+
+### Features / breaking pre-1.0 changes
+
+- feat(prompt-kit): make P105 provider-agnostic with outage fail-closed (`a5e8f66d`)
+- feat(prompt-kit): harden P82 concurrency performance proof (`6de745e1`)
+- feat(prompt-kit): harden P19 direct deployment guidance (`0264289d`)
+
+## 0.2.0 - 2026-09-09
+
+### Features / breaking pre-1.0 changes
+
+- Establish deterministic repository-native version derivation, synchronized product-version mirrors, version PR automation, and exact release-tag identity.
+- Preserve the post-0.1 Operant capability growth as a minor pre-1.0 release rather than leaving the product indefinitely labeled 0.1.
+
+## 0.1.0 - 2026-08-30
+
+- Cutover identity established by PR #329 at merge commit `781616a1a42893fb5b521e41b217f5cef04b2701`.
+- Historical Prompt Kit `v40` remains descriptive legacy metadata, not Operant product release authority.

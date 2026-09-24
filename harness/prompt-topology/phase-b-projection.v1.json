@@ -1,0 +1,99 @@
+{
+  "schema_version": "prompt-topology-phase-b-projection/v1",
+  "contract_id": "prompt-topology-executable-phase-b",
+  "base_schema": "harness/prompt-topology/schema.v1.json",
+  "base_config": "harness/prompt-topology/config.v1.json",
+  "phase_a_input": "artifacts/prompt-topology/topology.v1.json",
+  "principle": "Phase B consumes Phase A topology truth and produces visualization-only 3D placement. Projection never feeds clustering, classification, prompt identity, or canonical registry mutation.",
+  "canonical_artifacts": {
+    "projection": {
+      "path": "artifacts/prompt-topology/projection-3d.json",
+      "schema_ref": "harness/prompt-topology/schema.v1.json#/$defs/projection_artifact"
+    },
+    "state": {
+      "path": "artifacts/prompt-topology/projection-state.v1.json",
+      "schema_version": "prompt-topology-projection-state/v1",
+      "purpose": "Deterministic epoch lineage, provenance, anchor alignment, displacement evidence, and exact Phase A topology binding."
+    }
+  },
+  "projection": {
+    "algorithm": "umap",
+    "parameters_authority": "harness/prompt-topology/config.v1.json:pipeline.projection_3d.parameters",
+    "input": "semantic_embedding",
+    "forbidden_inputs": [
+      "cluster labels",
+      "cluster ids",
+      "3D coordinates from a previous epoch"
+    ],
+    "visualization_only": true
+  },
+  "serialization": {
+    "coordinate_decimals": 6,
+    "canonical_json": "sorted keys, UTF-8, indent=2, trailing newline",
+    "epoch_id": "E- + first 12 uppercase hex chars of SHA256(canonical projection JSON)"
+  },
+  "frame": {
+    "normalization": "centered-unit-rms",
+    "initial_axis_sign_rule": "For each axis, the canonically earliest maximum-absolute-coordinate prompt must be non-negative."
+  },
+  "alignment": {
+    "method": "orthogonal-procrustes-rigid-no-scale",
+    "minimum_anchors": 3,
+    "anchor_policy": "All prompt IDs shared by current and previous projection, sorted by canonical prompt order.",
+    "reflection": "forbidden; rotation must preserve orientation",
+    "scale_change": "forbidden"
+  },
+  "spatial_stability": {
+    "units": "centered-unit-rms normalized coordinate space",
+    "rms_displacement_limit": 0.45,
+    "max_displacement_limit": 1.25,
+    "enforcement": "When a previous accepted projection exists and at least minimum_anchors survive, both limits must pass after rigid alignment. Unchanged Phase A topology requires byte-identical projection and state."
+  },
+  "epoch_lineage": {
+    "parent_epoch_id": "Previous accepted projection-state epoch when topology changes; null for the first epoch.",
+    "topology_binding": "projection-state.topology_content_hash_sha256 must exactly equal Phase A topology content_hash_sha256",
+    "projection_binding": "projection-state.projection_sha256 must exactly hash projection-3d.json"
+  },
+  "required_provenance": [
+    "algorithm",
+    "dimensions",
+    "n_neighbors",
+    "min_dist_micros",
+    "metric",
+    "random_seed",
+    "input",
+    "frame_normalization",
+    "alignment_algorithm",
+    "visualization_only"
+  ],
+  "validation": {
+    "point_parity": "Exactly one 3D point per Phase A prompt node; no missing or extra prompt IDs.",
+    "finite_coordinates": true,
+    "repeat_build_byte_identity": true,
+    "shuffled_source_byte_identity": true,
+    "phase_a_immutability": "Projection generation must not mutate Prompt Kit registry input or Phase A topology bytes.",
+    "unchanged_topology_stability": "Supplying the prior accepted projection/state for the same topology must return byte-identical artifacts.",
+    "changed_topology_stability": "Shared anchors are rigidly aligned and displacement limits fail closed."
+  },
+  "phase_boundary": {
+    "owned": [
+      "3D projection coordinates",
+      "projection epoch identity and lineage",
+      "anchor alignment against previous accepted projection",
+      "displacement limits",
+      "spatial-stability validation",
+      "projection provenance and deterministic rebuild proof"
+    ],
+    "forbidden": [
+      "WebGL/Three.js/React Three Fiber viewer",
+      "interactive camera or selection behavior",
+      "live telemetry or session/user analytics",
+      "projection-driven clustering or classification",
+      "prompt-ID or seq renumbering",
+      "cluster-envelope/shape rendering",
+      "vector-database infrastructure",
+      "NodeWeaver expansion"
+    ],
+    "next_phase": "Phase C owns the immersive viewer and may consume Phase B coordinates without redefining topology truth."
+  }
+}

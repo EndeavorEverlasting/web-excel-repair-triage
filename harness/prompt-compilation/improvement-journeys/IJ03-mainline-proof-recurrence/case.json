@@ -1,0 +1,12 @@
+{
+  "case_id": "IJ03-mainline-proof-recurrence",
+  "schema_version": "prompt-improvement-journey/v1",
+  "description": "Confirmed mainline-convergence proof omission recurrence compiles candidate, evaluates TC07, retains optional Outputs draft, and emits P115-compatible handoff without absorbing P115.",
+  "expect": {
+    "candidate_failure_identity": "mainline_convergence.proof_omitted",
+    "required_regressions": ["TC07-mainline-convergence-proof"],
+    "promotion_authority": "reviewed_pr_only",
+    "auto_merge": false,
+    "p115_handoff_schema": "evidence-spine-p115-work-request/v1"
+  }
+}

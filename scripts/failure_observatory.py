@@ -1,0 +1,475 @@
+#!/usr/bin/env python3
+"""Local, zero-content prototype for privacy-preserving prompt failure observability."""
+from __future__ import annotations
+
+import hashlib
+import hmac
+import json
+import os
+import re
+import secrets
+from pathlib import Path
+from typing import Any
+
+try:
+    from scripts.execution_boundary_engine import evaluate_boundary
+except ModuleNotFoundError:
+    from execution_boundary_engine import evaluate_boundary
+
+STATE_SCHEMA = "failure-observatory-state/v1"
+CAPSULE_SCHEMA = "failure-contribution-capsule/v1"
+HOST_FAMILY = "CURSOR"
+MARKER_RE = re.compile(r"\[\[AFK_PROMPT:(?P<prompt_id>P\d{2,3}|[A-Z][A-Z0-9_-]{1,31})@(?P<release>[A-Za-z0-9._-]{1,16})\]\]")
+SUPPORTED_CURSOR_HOOKS = {
+    "beforeSubmitPrompt",
+    "postToolUseFailure",
+    "afterFileEdit",
+    "stop",
+    "sessionEnd",
+}
+CONTENT_BEARING_HOOKS = {"afterAgentThought", "afterAgentResponse"}
+FAILURE_TYPES = {"error", "timeout", "permission_denied"}
+STOP_STATUSES = {"completed", "aborted", "error"}
+SESSION_REASONS = {"completed", "aborted", "error", "window_close", "user_close"}
+TOOL_CATEGORIES = {"Shell", "Read", "Write", "Grep", "Delete", "Task", "WebFetch", "WebSearch"}
+CAPSULE_KEYS = {
+    "schema_version",
+    "prompt_id",
+    "prompt_release",
+    "host_family",
+    "outcome",
+    "boundary_class",
+    "contract_clause",
+    "failure_type",
+    "mutation_bucket",
+    "recovery_disposition",
+    "terminal_state",
+    "receipt_present",
+}
+STATE_KEYS = {
+    "schema_version",
+    "prompt_id",
+    "prompt_release",
+    "host_family",
+    "objective_active",
+    "mutation_count_bucket",
+    "last_failure_type",
+    "explicit_interrupt",
+    "receipt",
+    "boundary",
+    "outcome",
+}
+BOUNDARY_KEYS = {
+    "classification",
+    "materiality",
+    "recovery_disposition",
+    "execution_path",
+    "checkpoint_required",
+    "journal_required",
+    "outbox_required",
+    "public_transition_required",
+    "repository_persistence_required",
+    "readback_required",
+    "redaction_required",
+    "supervisor_synthesized",
+    "taxonomy_evolution_required",
+    "primary_recovery_sprint_required",
+    "first_action_execution_required",
+    "primary_recovery_sprint",
+    "success_terminal",
+}
+BOUNDARY_SPRINT_KEYS = {
+    "trigger_event_id",
+    "parent_objective_id",
+    "preserved_outcome",
+    "bounded_owned_scope",
+    "first_executable_action",
+    "completion_gate",
+    "return_condition",
+}
+RECEIPT_PROOF_STATES = {"IMPLEMENTED", "VALIDATED", "INTEGRATED", "OBSERVED"}
+CLAUSE_BY_BOUNDARY = {
+    "EC_SEMANTIC_ABANDONMENT": "EBE.NO_SILENT_STOP",
+    "EC_PREMATURE_COMPLETION": "EBE.FINALIZATION_GATE",
+    "MT_PARTIAL_SIDE_EFFECT_POSSIBLE": "EBE.READ_AFTER_WRITE",
+    "MT_WRITE_OUTCOME_UNKNOWN": "EBE.READ_AFTER_WRITE",
+    "MT_DUPLICATE_OR_REPLAY_RISK": "EBE.READ_AFTER_WRITE",
+    "HT_HOST_FORCED_TERMINATION": "EBE.NO_SILENT_STOP",
+    "HT_PROCESS_CRASH": "EBE.NO_SILENT_STOP",
+    "HT_LOST_EXECUTION_LEASE": "EBE.NO_SILENT_STOP",
+    "UE_UNCLASSIFIED_MATERIAL_BOUNDARY": "EBE.PUBLIC_TRANSITION",
+}
+
+
+class ObservatoryError(ValueError):
+    pass
+
+
+def load_or_create_local_secret(path: Path) -> bytes:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    if not path.exists():
+        tmp = path.with_name(f"{path.name}.seed.{os.getpid()}.{secrets.token_hex(4)}")
+        try:
+            fd = os.open(tmp, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o600)
+            with os.fdopen(fd, "wb") as handle:
+                handle.write(secrets.token_bytes(32))
+                handle.flush()
+                os.fsync(handle.fileno())
+            try:
+                os.link(tmp, path)
+            except FileExistsError:
+                pass
+        finally:
+            if tmp.exists():
+                tmp.unlink()
+    secret = path.read_bytes()
+    if len(secret) != 32:
+        raise ObservatoryError("local correlation secret must be exactly 32 bytes")
+    return secret
+
+
+def derive_local_run_key(host_generation_id: Any, local_secret: bytes) -> str:
+    if not isinstance(host_generation_id, str) or not host_generation_id or len(host_generation_id) > 256:
+        raise ObservatoryError("host generation id required for local correlation")
+    if len(local_secret) != 32:
+        raise ObservatoryError("local correlation secret must be exactly 32 bytes")
+    digest = hmac.new(local_secret, host_generation_id.encode("utf-8"), hashlib.sha256).hexdigest()
+    return digest[:24]
+
+
+def state_path_for_run(state_dir: Path, run_key: str) -> Path:
+    if not re.fullmatch(r"[0-9a-f]{24}", run_key):
+        raise ObservatoryError("invalid local run key")
+    return state_dir / "runs" / f"{run_key}.json"
+
+
+def new_state() -> dict[str, Any]:
+    return {
+        "schema_version": STATE_SCHEMA,
+        "prompt_id": "UNKNOWN",
+        "prompt_release": "UNKNOWN",
+        "host_family": HOST_FAMILY,
+        "objective_active": False,
+        "mutation_count_bucket": 0,
+        "last_failure_type": "none",
+        "explicit_interrupt": False,
+        "receipt": None,
+        "boundary": None,
+        "outcome": "ACTIVE",
+    }
+
+def _validate_prompt_provenance(prompt_id: Any, prompt_release: Any) -> None:
+    if not isinstance(prompt_id, str) or not isinstance(prompt_release, str):
+        raise ObservatoryError("prompt provenance must be strings")
+    if (prompt_id == "UNKNOWN") != (prompt_release == "UNKNOWN"):
+        raise ObservatoryError("prompt provenance must be fully known or fully UNKNOWN")
+    if prompt_id != "UNKNOWN":
+        marker = f"[[AFK_PROMPT:{prompt_id}@{prompt_release}]]"
+        if not MARKER_RE.fullmatch(marker):
+            raise ObservatoryError("prompt provenance escaped bounded public marker grammar")
+
+
+def _validate_boundary(boundary: Any) -> None:
+    if boundary is None:
+        return
+    if not isinstance(boundary, dict) or set(boundary) != BOUNDARY_KEYS:
+        raise ObservatoryError("boundary state schema drift")
+    for field in ("classification", "materiality", "recovery_disposition"):
+        if not isinstance(boundary[field], str) or not boundary[field]:
+            raise ObservatoryError(f"boundary {field} must be a non-empty string")
+    path = boundary["execution_path"]
+    if not isinstance(path, list) or not path or not all(isinstance(item, str) and item for item in path):
+        raise ObservatoryError("boundary execution_path must be a non-empty string list")
+    sprint = boundary["primary_recovery_sprint"]
+    if sprint is not None:
+        if not isinstance(sprint, dict) or set(sprint) != BOUNDARY_SPRINT_KEYS:
+            raise ObservatoryError("boundary primary_recovery_sprint schema drift")
+        for field, value in sprint.items():
+            if not isinstance(value, str) or not value:
+                raise ObservatoryError(f"boundary sprint {field} must be a non-empty string")
+    for field in BOUNDARY_KEYS - {
+        "classification",
+        "materiality",
+        "recovery_disposition",
+        "execution_path",
+        "primary_recovery_sprint",
+    }:
+        if type(boundary[field]) is not bool:
+            raise ObservatoryError(f"boundary {field} must be boolean")
+    if boundary["primary_recovery_sprint_required"] != (sprint is not None):
+        raise ObservatoryError("boundary sprint requirement disagrees with sprint payload")
+    if boundary["first_action_execution_required"] != (sprint is not None):
+        raise ObservatoryError("boundary first-action requirement disagrees with sprint payload")
+
+
+def validate_state(state: Any) -> dict[str, Any]:
+    if not isinstance(state, dict) or set(state) != STATE_KEYS:
+        delta = sorted(set(state) ^ STATE_KEYS) if isinstance(state, dict) else ["not-an-object"]
+        raise ObservatoryError(f"RunState schema drift: {delta}")
+    if state["schema_version"] != STATE_SCHEMA:
+        raise ObservatoryError("malformed local observatory state")
+    _validate_prompt_provenance(state["prompt_id"], state["prompt_release"])
+    if state["host_family"] != HOST_FAMILY:
+        raise ObservatoryError("unsupported RunState host family")
+    if type(state["objective_active"]) is not bool:
+        raise ObservatoryError("RunState objective_active must be boolean")
+    bucket = state["mutation_count_bucket"]
+    if type(bucket) is not int or not 0 <= bucket <= 2:
+        raise ObservatoryError("RunState mutation_count_bucket must be integer 0..2")
+    if state["last_failure_type"] not in FAILURE_TYPES | {"other", "none"}:
+        raise ObservatoryError("RunState last_failure_type invalid")
+    if type(state["explicit_interrupt"]) is not bool:
+        raise ObservatoryError("RunState explicit_interrupt must be boolean")
+
+    receipt = state["receipt"]
+    if receipt is not None:
+        if not isinstance(receipt, dict) or set(receipt) != {"proof_state"}:
+            raise ObservatoryError("RunState receipt schema drift")
+        if receipt["proof_state"] not in RECEIPT_PROOF_STATES:
+            raise ObservatoryError("RunState receipt proof state invalid")
+        if state["prompt_id"] == "UNKNOWN":
+            raise ObservatoryError("RunState receipt requires initialized prompt provenance")
+
+    _validate_boundary(state["boundary"])
+    outcome = state["outcome"]
+    if outcome not in {"ACTIVE", "SUCCESS", "BOUNDARY"}:
+        raise ObservatoryError("RunState outcome invalid")
+    if outcome == "ACTIVE":
+        if state["boundary"] is not None:
+            raise ObservatoryError("active RunState cannot carry terminal boundary")
+        if not state["objective_active"] and receipt is not None:
+            raise ObservatoryError("inactive RunState cannot carry finalization receipt")
+    elif outcome == "SUCCESS":
+        if state["objective_active"] or state["boundary"] is not None:
+            raise ObservatoryError("SUCCESS RunState must be terminal without boundary")
+        if receipt is None:
+            raise ObservatoryError("SUCCESS RunState requires finalization receipt")
+    else:
+        if state["objective_active"] or state["boundary"] is None:
+            raise ObservatoryError("BOUNDARY RunState must be terminal with boundary")
+    return state
+
+def _public_marker(prompt: Any) -> tuple[str, str]:
+    if not isinstance(prompt, str):
+        return "UNKNOWN", "UNKNOWN"
+    match = MARKER_RE.match(prompt[:512])
+    if not match:
+        return "UNKNOWN", "UNKNOWN"
+    return match.group("prompt_id"), match.group("release")
+
+
+def adapt_cursor_hook(hook_name: str, raw_payload: dict[str, Any]) -> dict[str, Any]:
+    if hook_name in CONTENT_BEARING_HOOKS:
+        raise ObservatoryError(f"content-bearing Cursor hook forbidden: {hook_name}")
+    if hook_name not in SUPPORTED_CURSOR_HOOKS:
+        raise ObservatoryError(f"unsupported Cursor hook: {hook_name}")
+    if not isinstance(raw_payload, dict):
+        raise ObservatoryError("Cursor hook payload must be an object")
+
+    if hook_name == "beforeSubmitPrompt":
+        prompt_id, release = _public_marker(raw_payload.get("prompt"))
+        return {"kind": "RUN_STARTED", "prompt_id": prompt_id, "prompt_release": release}
+    if hook_name == "postToolUseFailure":
+        failure_type = raw_payload.get("failure_type")
+        if failure_type not in FAILURE_TYPES:
+            failure_type = "other"
+        tool_name = raw_payload.get("tool_name")
+        tool_category = tool_name if tool_name in TOOL_CATEGORIES else "Other"
+        return {
+            "kind": "TOOL_FAILURE",
+            "failure_type": failure_type,
+            "is_interrupt": bool(raw_payload.get("is_interrupt")),
+            "tool_category": tool_category,
+        }
+    if hook_name == "afterFileEdit":
+        return {"kind": "MUTATION_OBSERVED"}
+    if hook_name == "stop":
+        status = raw_payload.get("status")
+        if status not in STOP_STATUSES:
+            status = "other"
+        loop_count = raw_payload.get("loop_count")
+        return {
+            "kind": "STOP",
+            "status": status,
+            "loop_count_bucket": "ZERO" if loop_count == 0 else "NONZERO",
+        }
+
+    reason = raw_payload.get("reason")
+    if reason not in SESSION_REASONS:
+        reason = "other"
+    return {"kind": "SESSION_END", "reason": reason}
+
+
+def receipt_signal(prompt_id: str, prompt_release: str, proof_state: str) -> dict[str, Any]:
+    marker = f"[[AFK_PROMPT:{prompt_id}@{prompt_release}]]"
+    if not MARKER_RE.fullmatch(marker):
+        raise ObservatoryError("receipt provenance must match bounded public marker grammar")
+    if proof_state not in RECEIPT_PROOF_STATES:
+        raise ObservatoryError("invalid receipt proof state")
+    return {
+        "kind": "FINALIZATION_RECEIPT",
+        "prompt_id": prompt_id,
+        "prompt_release": prompt_release,
+        "proof_state": proof_state,
+    }
+
+
+def _classify_stop(state: dict[str, Any], signal: dict[str, Any]) -> tuple[str | None, bool]:
+    status = signal["status"]
+    if state.get("receipt") and status == "completed":
+        return None, True
+    if status == "aborted" or state.get("explicit_interrupt"):
+        return "UC_CANCELLED", True
+    if status == "completed":
+        return "EC_SEMANTIC_ABANDONMENT", True
+    return "UE_UNCLASSIFIED_MATERIAL_BOUNDARY", True
+
+
+def _classify_session_end(state: dict[str, Any], signal: dict[str, Any]) -> tuple[str | None, bool]:
+    reason = signal["reason"]
+    if state.get("receipt") and reason == "completed":
+        return None, True
+    if reason in {"aborted", "user_close", "window_close"}:
+        return "UC_CANCELLED", True
+    if reason == "error":
+        return "UE_UNCLASSIFIED_MATERIAL_BOUNDARY", False
+    return "EC_SEMANTIC_ABANDONMENT", True
+
+
+def apply_signal(
+    state: dict[str, Any],
+    signal: dict[str, Any],
+    architecture: dict[str, Any],
+    taxonomy: dict[str, Any],
+) -> dict[str, Any]:
+    validate_state(state)
+    state = json.loads(json.dumps(state))
+    kind = signal.get("kind")
+    if kind == "RUN_STARTED":
+        state.update(
+            prompt_id=signal["prompt_id"],
+            prompt_release=signal["prompt_release"],
+            objective_active=True,
+            mutation_count_bucket=0,
+            last_failure_type="none",
+            explicit_interrupt=False,
+            receipt=None,
+            boundary=None,
+            outcome="ACTIVE",
+        )
+        return validate_state(state)
+    if kind == "TOOL_FAILURE":
+        state["last_failure_type"] = signal["failure_type"]
+        state["explicit_interrupt"] = state["explicit_interrupt"] or bool(signal["is_interrupt"])
+        return validate_state(state)
+    if kind == "MUTATION_OBSERVED":
+        state["mutation_count_bucket"] = min(2, state["mutation_count_bucket"] + 1)
+        return validate_state(state)
+    if kind == "FINALIZATION_RECEIPT":
+        if not state["objective_active"] or state["outcome"] != "ACTIVE":
+            raise ObservatoryError("finalization receipt requires an active run")
+        if state["prompt_id"] == "UNKNOWN":
+            raise ObservatoryError("finalization receipt requires initialized prompt provenance")
+        if (
+            signal.get("prompt_id") != state["prompt_id"]
+            or signal.get("prompt_release") != state["prompt_release"]
+        ):
+            raise ObservatoryError("finalization receipt provenance does not match active run")
+        if signal.get("proof_state") not in RECEIPT_PROOF_STATES:
+            raise ObservatoryError("invalid receipt proof state")
+        state["receipt"] = {"proof_state": signal["proof_state"]}
+        return validate_state(state)
+    if kind not in {"STOP", "SESSION_END"}:
+        raise ObservatoryError(f"unsupported HostSignal kind: {kind}")
+
+    classification, process_alive = (
+        _classify_stop(state, signal)
+        if kind == "STOP"
+        else _classify_session_end(state, signal)
+    )
+    if classification is None:
+        state["objective_active"] = False
+        state["boundary"] = None
+        state["outcome"] = "SUCCESS"
+        return validate_state(state)
+
+    decision = evaluate_boundary(
+        {
+            "observed_classification": classification,
+            "process_alive": process_alive,
+            "repository_available": False,
+            "repository_relevant": False,
+            "side_effect_state": "NONE",
+            "raw_detail_sensitive": False,
+        },
+        architecture,
+        taxonomy,
+    )
+    state["objective_active"] = False
+    state["boundary"] = decision
+    state["outcome"] = "BOUNDARY"
+    return validate_state(state)
+
+
+def _mutation_bucket(value: int) -> str:
+    return "ZERO" if value <= 0 else ("ONE" if value == 1 else "MANY")
+
+
+def compile_capsule(state: dict[str, Any]) -> dict[str, Any]:
+    validate_state(state)
+    if state.get("outcome") not in {"SUCCESS", "BOUNDARY"}:
+        raise ObservatoryError("run is not terminal")
+    boundary = state.get("boundary")
+    classification = boundary["classification"] if boundary else "NONE"
+    capsule = {
+        "schema_version": CAPSULE_SCHEMA,
+        "prompt_id": state.get("prompt_id", "UNKNOWN"),
+        "prompt_release": state.get("prompt_release", "UNKNOWN"),
+        "host_family": HOST_FAMILY,
+        "outcome": state["outcome"],
+        "boundary_class": classification,
+        "contract_clause": CLAUSE_BY_BOUNDARY.get(
+            classification,
+            "EBE.PUBLIC_TRANSITION" if boundary else "NONE",
+        ),
+        "failure_type": state.get("last_failure_type", "none"),
+        "mutation_bucket": _mutation_bucket(int(state.get("mutation_count_bucket", 0))),
+        "recovery_disposition": boundary["recovery_disposition"] if boundary else "NONE",
+        "terminal_state": boundary["execution_path"][-1] if boundary else "COMPLETE",
+        "receipt_present": bool(state.get("receipt")),
+    }
+    validate_capsule(capsule)
+    return capsule
+
+
+def validate_capsule(capsule: dict[str, Any]) -> None:
+    if set(capsule) != CAPSULE_KEYS:
+        raise ObservatoryError(f"capsule schema drift: {sorted(set(capsule) ^ CAPSULE_KEYS)}")
+    if capsule["host_family"] != HOST_FAMILY:
+        raise ObservatoryError("unsupported host family")
+    if capsule["outcome"] not in {"SUCCESS", "BOUNDARY"}:
+        raise ObservatoryError("invalid capsule outcome")
+    if capsule["outcome"] == "SUCCESS" and capsule["receipt_present"] is not True:
+        raise ObservatoryError("SUCCESS capsule requires finalization receipt")
+    if capsule["prompt_id"] != "UNKNOWN":
+        marker = f"[[AFK_PROMPT:{capsule['prompt_id']}@{capsule['prompt_release']}]]"
+        if not MARKER_RE.fullmatch(marker):
+            raise ObservatoryError("capsule provenance escaped bounded public grammar")
+
+
+def load_state(path: Path) -> dict[str, Any]:
+    if not path.exists():
+        return new_state()
+    data = json.loads(path.read_text(encoding="utf-8"))
+    return validate_state(data)
+
+
+def save_state(path: Path, state: dict[str, Any]) -> None:
+    validate_state(state)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    tmp = path.with_name(f"{path.name}.tmp.{os.getpid()}.{secrets.token_hex(4)}")
+    tmp.write_text(
+        json.dumps(state, sort_keys=True, separators=(",", ":")) + "\n",
+        encoding="utf-8",
+    )
+    os.replace(tmp, path)

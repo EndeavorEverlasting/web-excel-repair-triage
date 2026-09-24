@@ -1,0 +1,190 @@
+# ── Python ────────────────────────────────────────────────────────────────────
+__pycache__/
+.pytest_cache/
+*.py[cod]
+*.pyo
+*.pyd
+.Python
+*.egg-info/
+dist/
+build/
+
+# ── Virtual environments ──────────────────────────────────────────────────────
+.venv/
+venv/
+env/
+ENV/
+
+# ── Local attachment drop (Replit / IDE uploads; never commit binaries) ───────
+attached_assets/**
+!attached_assets/
+!attached_assets/.gitkeep
+
+# ── Input folders ────────────────────────────────────────────────────────────
+# Candidates/, Active/, and Repaired/ are operator/input drop-zones. Keep the
+# folder markers tracked, but ignore private workbook contents.
+Candidates/**
+!Candidates/
+!Candidates/.gitkeep
+Active/**
+!Active/
+!Active/.gitkeep
+ArtifactIntake/**
+!ArtifactIntake/
+!ArtifactIntake/.gitkeep
+artifacts/**
+!artifacts/
+!artifacts/.gitkeep
+outputs/**
+!outputs/
+!outputs/admin-ready/
+!outputs/admin-ready/.gitkeep
+Repaired/**
+!Repaired/
+!Repaired/.gitkeep
+
+# ── Dated artifact intake ─────────────────────────────────────────────────────
+# ArtifactIntake/ tracks the folder map and README guidance only. Real admin,
+# billing, roster, dashboard, and tooling workbooks stay local unless sanitized.
+ArtifactIntake/**/*.xlsx
+ArtifactIntake/**/*.xlsm
+ArtifactIntake/**/*.xls
+ArtifactIntake/**/*.xlsb
+ArtifactIntake/**/*.csv
+ArtifactIntake/**/*.tsv
+ArtifactIntake/**/*.zip
+ArtifactIntake/**/*.pdf
+ArtifactIntake/**/*.docx
+ArtifactIntake/**/*.png
+ArtifactIntake/**/*.jpg
+ArtifactIntake/**/*.jpeg
+ArtifactIntake/**/*.webp
+!ArtifactIntake/**/README.md
+!ArtifactIntake/**/.gitkeep
+
+# ── Generated outputs from the triage tool ────────────────────────────────────
+# Outputs/ is runtime-generated. Keep only curated reference JSONs tracked.
+Outputs/**
+!Outputs/
+!Outputs/admin-ready/
+!Outputs/admin-ready/.gitkeep
+!Outputs/cf_dict_deprecated.json
+!Outputs/dv_spec_deprecated.json
+!Outputs/prompt-parallel-dispatch/
+!Outputs/prompt-parallel-dispatch/manifest.json
+
+# Legacy location (root-level patch file)
+/*_patched.xlsx
+# Root-level recipe if accidentally saved there
+/patch_recipe.json
+
+# Common local workbook artifacts (keep out of git)
+# (root-only; do NOT ignore sample corpora under Deprecated/)
+/CANDIDATE_*.xlsx
+/web_repaired_*.xlsx
+/README_CANDIDATE_*.xlsx
+
+# ── Streamlit runtime ─────────────────────────────────────────────────────────
+.streamlit/
+
+# ── Deprecated archive policy ────────────────────────────────────────────────
+# Keep curated, high-signal samples under Deprecated/ tracked,
+# but ignore bulky/reproducible runtime outputs.
+Deprecated/outputs_pre_i100/
+
+# ── OneDrive export archives (large, not needed on other machines) ────────────
+OneDrive_*.zip
+
+# ── OS noise ──────────────────────────────────────────────────────────────────
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# ── Editor / IDE ──────────────────────────────────────────────────────────────
+.vscode/settings.json
+.idea/
+*.swp
+*.swo
+
+# ── Billing pipeline runtime outputs ─────────────────────────────────────────
+billing_runs/
+
+# Generated billing report outputs
+billing_runs_tmp/
+
+# Local script env overrides (secrets; never commit)
+scripts/online_env.local.ps1
+scripts/*.local.ps1
+scripts/artifacts/*.local
+
+# Local payload drop zone and decode output — never commit raw internal workbooks
+Workbook Payload Artifacts/
+RecoveredArtifacts/
+
+# Approved reference workbooks (may contain private data)
+References/**/*.xlsx
+!References/
+!References/approved/
+!References/approved/.gitkeep
+
+# ── Local evidence, crash, save, and machine-tool hygiene ────────────────────
+# These are runtime/machine-local by default. Sanitized regression examples
+# belong under tests/fixtures/, harness/fixtures/, or docs/fixtures/.
+/logs/
+/saves/
+/crash_dumps/
+/.local-tools/
+/node_modules/
+.tox/
+.nox/
+.mypy_cache/
+.ruff_cache/
+.ipynb_checkpoints/
+.coverage
+htmlcov/
+*.log
+*.trace
+*.stackdump
+*.dmp
+*.crash
+*.core
+*.pid
+*.pid.lock
+*.tmp
+*.temp
+*.autosave
+*.save
+*.bak
+
+# Secret/credential material stays local. Commit templates only.
+/.env
+/.env.*
+!/.env.example
+*.pem
+*.key
+*.pfx
+*.p12
+*.kdbx
+credentials.json
+credential.json
+secrets.json
+secret.json
+tokens.json
+token.json
+auth.json
+
+# ── Prompt Kit private/local state ────────────────────────────────────────────
+# Personal state, raw journals, reducer buffers, encrypted portable saves, and
+# recovery/key material are device-owned runtime data, never repository inputs.
+.promptkit/
+*.pkenc
+promptkit.db
+promptkit.local.db
+promptkit-journal*
+promptkit-reducer-buffer*
+*.promptkit-key
+*.promptkit-recovery
+*.pairing-secret
+
+# Local AFK failure-observatory state — zero-content but device-owned runtime data.
+.afk-observatory/

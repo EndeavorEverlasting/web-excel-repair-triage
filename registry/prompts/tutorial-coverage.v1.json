@@ -1,0 +1,72 @@
+{
+  "schema_version": "prompt-tutorial-coverage/v1",
+  "policy_id": "afkaf-classifier-tutorial-coverage-v1",
+  "tutorial_entry": "Tutorial · Find My Prompt",
+  "tutorial_document": "docs/PROMPT_FINDER_QUESTIONNAIRE_TUTORIAL.md",
+  "fallback_anchor": "classifier-assisted-coverage-and-prompt-paths",
+  "wired_status": "CURATED_WIRED",
+  "fallback_status": "CLASSIFIER_WIRED",
+  "wiring_rule": "Every canonical prompt is fully wired into the tutorial through its deterministic classifier route: Tutorial · Find My Prompt -> lifecycle classifier section -> prompt identity. Curated tutorial anchors add deeper teaching but are optional enrichment, not a prerequisite for tutorial completeness.",
+  "wired_prompts": [
+    {
+      "prompt_id": "P03",
+      "tutorial_anchor": "common-paths",
+      "reason": "The common-paths table explicitly teaches unfamiliar-repository discovery through P03."
+    },
+    {
+      "prompt_id": "P07",
+      "tutorial_anchor": "common-paths",
+      "reason": "The common-paths table explicitly teaches bounded implementation through P07."
+    },
+    {
+      "prompt_id": "P18",
+      "tutorial_anchor": "tutorial-planning-prompts",
+      "reason": "The tutorial-planning section explicitly teaches durable tutorial creation through P18."
+    },
+    {
+      "prompt_id": "P24",
+      "tutorial_anchor": "common-paths",
+      "reason": "The common-paths table explicitly teaches app-at-hand coaching through P24."
+    },
+    {
+      "prompt_id": "P25",
+      "tutorial_anchor": "tutorial-planning-prompts",
+      "reason": "The tutorial-planning section explicitly teaches known tutorial-path planning through P25."
+    },
+    {
+      "prompt_id": "P58",
+      "tutorial_anchor": "common-paths",
+      "reason": "The common-paths table explicitly teaches active-failure diagnosis through P58."
+    },
+    {
+      "prompt_id": "P59",
+      "tutorial_anchor": "common-paths",
+      "reason": "The common-paths table explicitly teaches parallel-lane coordination through P59."
+    },
+    {
+      "prompt_id": "P60",
+      "tutorial_anchor": "common-paths",
+      "reason": "The common-paths table explicitly teaches dependency-ordered work through P60."
+    },
+    {
+      "prompt_id": "P61",
+      "tutorial_anchor": "common-paths",
+      "reason": "The common-paths table explicitly teaches repository checkout/path bootstrap through P61."
+    },
+    {
+      "prompt_id": "P64",
+      "tutorial_anchor": "tutorial-planning-prompts",
+      "reason": "The tutorial-planning section explicitly teaches tutorial portfolio ranking through P64."
+    },
+    {
+      "prompt_id": "P65",
+      "tutorial_anchor": "conversational-fallback",
+      "reason": "The conversational-fallback section explicitly teaches P65 as the chat-based finder."
+    },
+    {
+      "prompt_id": "P83",
+      "tutorial_anchor": "when-another-agent-says-the-work-is-complete",
+      "reason": "The inherited-completion section explicitly teaches P83 as the verification owner."
+    }
+  ]
+}

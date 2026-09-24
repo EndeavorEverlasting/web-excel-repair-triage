@@ -1,0 +1,104 @@
+name: FUN NTH producer contract
+
+on:
+  pull_request:
+    paths:
+      - 'contracts/upstream/fun/**'
+      - 'triage/fun_nth_artifact_export.py'
+      - 'triage/fun_nth_document_references.py'
+      - 'scripts/export_fun_nth_artifact_manifest.py'
+      - 'scripts/verify_fun_nth_document_reference.py'
+      - 'scripts/build_fun_nth_integration_fixture.py'
+      - 'tests/test_fun_nth_artifact_export.py'
+      - 'tests/test_fun_nth_document_references.py'
+      - '.ai/skills/fun-nth-artifact-export/**'
+      - 'harness/integrations/fun-nth-artifact-producer.v1.json'
+      - 'docs/FUN_NTH_PRODUCER_CONSUMER_CONTRACT_20260803.md'
+      - '.github/workflows/fun-nth-producer-contract.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'contracts/upstream/fun/**'
+      - 'triage/fun_nth_artifact_export.py'
+      - 'triage/fun_nth_document_references.py'
+      - 'scripts/export_fun_nth_artifact_manifest.py'
+      - 'scripts/verify_fun_nth_document_reference.py'
+      - 'scripts/build_fun_nth_integration_fixture.py'
+      - 'tests/test_fun_nth_artifact_export.py'
+      - 'tests/test_fun_nth_document_references.py'
+      - '.ai/skills/fun-nth-artifact-export/**'
+      - 'harness/integrations/fun-nth-artifact-producer.v1.json'
+      - 'docs/FUN_NTH_PRODUCER_CONSUMER_CONTRACT_20260803.md'
+      - '.github/workflows/fun-nth-producer-contract.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  producer-contract:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install fixture dependency
+        run: python -m pip install --disable-pip-version-check openpyxl
+      - name: Compile producer surfaces
+        run: |
+          python -m py_compile \
+            triage/fun_nth_artifact_export.py \
+            triage/fun_nth_document_references.py \
+            scripts/export_fun_nth_artifact_manifest.py \
+            scripts/verify_fun_nth_document_reference.py \
+            scripts/build_fun_nth_integration_fixture.py \
+            tests/test_fun_nth_artifact_export.py \
+            tests/test_fun_nth_document_references.py
+      - name: Run producer contract tests
+        run: |
+          python -m unittest tests.test_fun_nth_artifact_export -v
+          python -m unittest tests.test_fun_nth_document_references -v
+      - name: Verify current July Drive reference
+        run: |
+          python scripts/verify_fun_nth_document_reference.py \
+            --packet-id july-2026 \
+            --artifact-type share_ready \
+            --artifact ADMIN_SHARE_NTH_July_2026_MTD_SLEEK.xlsx \
+            --drive-file-id 1i-cMvf20h8V4vkv7K0GjnbUQC6cu5Dv9 \
+            --drive-folder-id 1UlFWQ-HD9axj9Gyrlb0589rXba_cB683
+      - name: Verify current May public Drive reference
+        run: |
+          python scripts/verify_fun_nth_document_reference.py \
+            --packet-id may-2026-05-26-29 \
+            --artifact-type share_ready \
+            --artifact ADMIN_SHARE_NTH_May_26-29_2026_SLEEK.xlsx \
+            --drive-file-id 1L-IkmhQSgktbHHyM2zpOkcJ0NbLxPchp \
+            --drive-folder-id 1vWbdRwubd-lYP5WsPNPmMdXuDR1sksAO
+      - name: Verify current May internal packet reference
+        run: |
+          python scripts/verify_fun_nth_document_reference.py \
+            --packet-id may-2026-05-26-29 \
+            --artifact-type internal \
+            --artifact May_26_29_2026_Workstream_Math_Packet_INTERNAL_CURRENT.xlsx \
+            --drive-file-id 1hxwFYBEz3Ba1cNKg0bwMrHE6ynkoVzAl \
+            --drive-folder-id 16pOC_Aa3v8Ig4WD9UQ7MXxrCQzR--Qzk
+      - name: Build sanitized producer proof bundle
+        run: |
+          python scripts/build_fun_nth_integration_fixture.py \
+            --output-dir Outputs/fun-nth-integration-fixture \
+            --producer-commit "$GITHUB_SHA"
+      - name: Validate JSON outputs
+        run: |
+          python -m json.tool Outputs/fun-nth-integration-fixture/artifact-manifest.json > /dev/null
+          python -m json.tool Outputs/fun-nth-integration-fixture/producer-receipt.json > /dev/null
+          python -m json.tool contracts/upstream/fun/nth-artifact-contract.lock.json > /dev/null
+          python -m json.tool contracts/upstream/fun/nth-document-references.lock.json > /dev/null
+          python -m json.tool harness/integrations/fun-nth-artifact-producer.v1.json > /dev/null
+      - name: Patch hygiene
+        run: git diff --check
+      - name: Upload sanitized producer proof
+        uses: actions/upload-artifact@v4
+        with:
+          name: fun-nth-producer-proof
+          path: Outputs/fun-nth-integration-fixture
+          if-no-files-found: error

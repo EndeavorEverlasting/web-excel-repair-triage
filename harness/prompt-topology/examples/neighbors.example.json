@@ -1,0 +1,12 @@
+{
+  "P105": [
+    { "prompt_id": "P117", "score": 0.9134, "semantic": 0.9281, "role": 0.8892, "metadata": 0.8611 },
+    { "prompt_id": "P091", "score": 0.8641, "semantic": 0.881, "role": 0.842, "metadata": 0.801 },
+    { "prompt_id": "P074", "score": 0.7832, "semantic": 0.791, "role": 0.762, "metadata": 0.754 }
+  ],
+  "P117": [
+    { "prompt_id": "P105", "score": 0.9134, "semantic": 0.9281, "role": 0.8892, "metadata": 0.8611 },
+    { "prompt_id": "P091", "score": 0.8512, "semantic": 0.87, "role": 0.81, "metadata": 0.79 }
+  ],
+  "_comment": "Top-K=3 excerpt. Scores computed as 0.70*semantic+0.20*role+0.10*metadata, rounded 4 decimals, sorted descending then prompt_id. Reverse-neighbor asymmetry detectable: P105 ranks P074 top-3 but P074 may rank P105 lower."
+}

@@ -1,0 +1,71 @@
+{
+  "schema_version": "ad-campaign-contract/v1",
+  "campaign_schema": "ad-campaign/v1",
+  "domain": "ad-campaign",
+  "profile": "ad-campaign",
+  "registry_id": "management-operations-prompts",
+  "registry_path": "registry/prompts/management-operations-prompts.v1.json",
+  "doctrine": "harness/ad-campaign/DOCTRINE.md",
+  "router": "harness/ad-campaign/CODEBASE_MAP.md",
+  "template": "harness/ad-campaign/templates/campaign.v1.json",
+  "validator": "scripts/ad_campaign.py",
+  "prompt_pack": "docs/ad-campaign/PROMPT_PACK.md",
+  "prompt_pack_builder": "scripts/build_ad_campaign_pack.py",
+  "prompt_names": [
+    "Ad Campaign Doctrine Builder",
+    "Ad Campaign Harness Builder",
+    "Ad Campaign Planner",
+    "Ad Campaign Creative Executor",
+    "Ad Campaign Launch Reviewer",
+    "Ad Campaign Results Analyst"
+  ],
+  "stages": [
+    "BRIEF",
+    "PLANNED",
+    "PRODUCED",
+    "REVIEWED",
+    "AUTHORIZED",
+    "LIVE",
+    "MEASURED"
+  ],
+  "snapshot_fields": [
+    "schema_version",
+    "campaign_id",
+    "revision",
+    "brief",
+    "doctrine",
+    "plan",
+    "assets"
+  ],
+  "brief_text_fields": [
+    "brand",
+    "offer",
+    "objective",
+    "audience",
+    "geography",
+    "language",
+    "currency"
+  ],
+  "review_checks": [
+    "claims",
+    "brand_offer_destination",
+    "format",
+    "rights",
+    "budget_targeting_schedule",
+    "tracking",
+    "platform_requirements"
+  ],
+  "launch_action": "publish",
+  "paid_action": "spend",
+  "metric_definitions": {
+    "ctr": "clicks / impressions",
+    "cpc": "spend / clicks",
+    "cpm": "1000 * spend / impressions",
+    "cpa": "spend / conversions",
+    "roas": "revenue / spend",
+    "click_conversion_rate": "conversions / clicks"
+  },
+  "authority": "Campaign rules are subordinate to AGENTS.md. This CLI only evaluates supplied evidence; it neither authorizes nor launches advertising.",
+  "proof_ceiling": "Deterministic packet structure, budget arithmetic, claim references, evidence completeness, version binding, and metrics. Evidence truth, model judgment, platform approval, live delivery, and effectiveness require external observation.",
+  "synthetic_fixture": "harness/ad-campaign/fixtures/synthetic-campaign.v1.json"
+}

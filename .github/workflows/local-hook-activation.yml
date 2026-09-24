@@ -1,0 +1,59 @@
+name: Local hook activation contracts
+
+on:
+  pull_request:
+    paths:
+      - .githooks/**
+      - Install-Local-Hooks.cmd
+      - scripts/install_local_hooks.py
+      - tests/test_local_hook_activation.py
+      - docs/LOCAL_HOOK_ACTIVATION.md
+      - .github/workflows/local-hook-activation.yml
+  push:
+    branches: [main]
+    paths:
+      - .githooks/**
+      - Install-Local-Hooks.cmd
+      - scripts/install_local_hooks.py
+      - tests/test_local_hook_activation.py
+      - docs/LOCAL_HOOK_ACTIVATION.md
+      - .github/workflows/local-hook-activation.yml
+
+permissions:
+  contents: read
+
+jobs:
+  local-hook-activation:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Compile installer and focused tests
+        run: python -m py_compile scripts/install_local_hooks.py tests/test_local_hook_activation.py
+      - name: Run focused activation regressions
+        run: python -m unittest tests.test_local_hook_activation -v
+      - name: Prove activation in this checkout
+        run: |
+          python scripts/install_local_hooks.py
+          python scripts/install_local_hooks.py --check
+          python -c "import subprocess; value=subprocess.check_output(['git','config','--local','--get','core.hooksPath'], text=True).strip(); assert value == '.githooks', value; print('local hooksPath proof: PASS')"
+      - name: Prove Windows entrypoint
+        if: runner.os == 'Windows'
+        shell: cmd
+        run: |
+          Install-Local-Hooks.cmd --check
+          if errorlevel 1 exit /b %errorlevel%
+      - name: Validate root harness remains healthy
+        run: python scripts/validate_harness.py --report Outputs/harness-local-hook-completeness.json
+      - name: Check patch hygiene
+        shell: bash
+        run: git diff --check origin/main...HEAD

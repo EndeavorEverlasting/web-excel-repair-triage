@@ -1,0 +1,59 @@
+[
+  {
+    "prompt_id": "P105",
+    "declared_family": "Build & Repair",
+    "declared_family_id": "build-repair",
+    "inferred_family": "Build & Repair",
+    "inferred_family_id": "build-repair",
+    "family_alignment": "MATCH",
+    "cluster_id": "C-18C5A7",
+    "cluster_membership_probability": 0.97,
+    "classification_confidence": 0.91,
+    "classification_state": "HIGH",
+    "signals": {
+      "neighbor_agreement": 0.8,
+      "family_majority_strength": 0.875,
+      "distance_from_centroid": 0.12,
+      "declared_agreement": 1
+    },
+    "centrality": 0.889
+  },
+  {
+    "prompt_id": "P074",
+    "declared_family": "Validate & Protect",
+    "declared_family_id": "validate-protect",
+    "inferred_family": "Build & Repair",
+    "inferred_family_id": "build-repair",
+    "family_alignment": "DRIFT",
+    "cluster_id": "C-18C5A7",
+    "cluster_membership_probability": 0.62,
+    "classification_confidence": 0.58,
+    "classification_state": "DRIFT",
+    "signals": {
+      "neighbor_agreement": 0.4,
+      "family_majority_strength": 0.875,
+      "distance_from_centroid": 0.45,
+      "declared_agreement": 0
+    },
+    "centrality": 0.712
+  },
+  {
+    "prompt_id": "P99",
+    "declared_family": "Autonomy & Night Shift",
+    "declared_family_id": "autonomy",
+    "inferred_family": null,
+    "inferred_family_id": null,
+    "family_alignment": "UNKNOWN",
+    "cluster_id": null,
+    "cluster_membership_probability": null,
+    "classification_confidence": 0.31,
+    "classification_state": "OUTLIER",
+    "signals": {
+      "neighbor_agreement": 0.2,
+      "family_majority_strength": 0.0,
+      "distance_from_centroid": null,
+      "declared_agreement": 0
+    },
+    "centrality": null
+  }
+]

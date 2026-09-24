@@ -1,0 +1,74 @@
+name: Prompt Kit program prototype
+
+on:
+  pull_request:
+    paths:
+      - docs/PROMPT_KIT_PROGRAM_ARCHITECTURE.md
+      - docs/prompt-kit-program-prototype.js
+      - docs/PROMPT_KIT_HOTKEY_PROGRAM_DESIGN.md
+      - docs/prompt-kit-hotkey-prototype.js
+      - tests/test_prompt_kit_program_prototype.py
+      - tests/test_prompt_kit_hotkey_completion.py
+      - .github/workflows/prompt-kit-program-prototype.yml
+  push:
+    branches: [main]
+    paths:
+      - docs/PROMPT_KIT_PROGRAM_ARCHITECTURE.md
+      - docs/prompt-kit-program-prototype.js
+      - docs/PROMPT_KIT_HOTKEY_PROGRAM_DESIGN.md
+      - docs/prompt-kit-hotkey-prototype.js
+      - tests/test_prompt_kit_program_prototype.py
+      - tests/test_prompt_kit_hotkey_completion.py
+      - .github/workflows/prompt-kit-program-prototype.yml
+
+permissions:
+  contents: read
+
+jobs:
+  program-prototype:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Verify exact candidate and current main floor
+        shell: bash
+        env:
+          EXPECTED_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = "$EXPECTED_SHA"
+          git fetch --no-tags origin +refs/heads/main:refs/remotes/origin/main
+          test -n "$(git rev-parse origin/main)"
+          echo "prototype candidate sha=$(git rev-parse HEAD)"
+          echo "prototype main floor=$(git rev-parse origin/main)"
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Verify JavaScript prototype syntax
+        run: |
+          node --check docs/prompt-kit-program-prototype.js
+          node --check docs/prompt-kit-hotkey-prototype.js
+      - name: Execute program architecture prototype
+        run: |
+          mkdir -p "$RUNNER_TEMP/prompt-kit-program"
+          node docs/prompt-kit-program-prototype.js | tee "$RUNNER_TEMP/prompt-kit-program/prototype-report.json"
+      - name: Execute existing hotkey seam prototype
+        run: node docs/prompt-kit-hotkey-prototype.js
+      - name: Run focused architecture regression
+        run: python -m unittest tests.test_prompt_kit_program_prototype -v
+      - name: Run adjacent hotkey regression
+        run: python -m unittest tests.test_prompt_kit_hotkey_completion -v
+      - name: Verify canonical Prompt Kit generated parity
+        run: python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html --check
+      - name: Verify patch hygiene
+        run: git diff --check origin/main...HEAD
+      - name: Upload executable design trace
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: prompt-kit-program-prototype-report
+          path: ${{ runner.temp }}/prompt-kit-program/prototype-report.json
+          if-no-files-found: error

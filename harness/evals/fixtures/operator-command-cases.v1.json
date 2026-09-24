@@ -1,0 +1,45 @@
+{
+  "schema_version": "operator-command-fixtures/v1",
+  "cases": [
+    {
+      "id": "safe_isolated_remote_proof",
+      "text": "$ErrorActionPreference = 'Stop'\n$Root = Join-Path $env:LOCALAPPDATA 'Proof'\nif (-not (Test-Path $Root)) { New-Item -ItemType Directory -Path $Root | Out-Null }\n$Repo = Join-Path $Root 'repo'\ngit clone --no-checkout $RepositoryUrl $Repo\nSet-Location -LiteralPath $Repo\ngit fetch origin $Branch --prune\n$Actual = (git rev-parse FETCH_HEAD).Trim()\nif ($Actual -ne $Expected) { throw 'head mismatch' }\npython scripts/validate_harness.py --report Outputs/harness-completeness-report.json\n$Registry = Get-Content harness/artifacts.v1.json -Raw | ConvertFrom-Json\nGet-Content Outputs/harness-completeness-report.json -Raw",
+      "expected_violations": []
+    },
+    {
+      "id": "hardcoded_user_path",
+      "text": "$Repo = 'C:\\Users\\Cheex\\Desktop\\dev\\Web Excel Triage'\nSet-Location -LiteralPath $Repo\ngit fetch origin main --prune",
+      "expected_violations": ["OC001", "OC005", "OC007", "OC008"]
+    },
+    {
+      "id": "markdown_wrapped_url",
+      "text": "$ErrorActionPreference = 'Stop'\n$Origin = '[http://127.0.0.1:8765/](http://127.0.0.1:8765/)'\nSet-Location $env:TEMP\nthrow 'stop'",
+      "expected_violations": ["OC002"]
+    },
+    {
+      "id": "interactive_exit",
+      "text": "$ErrorActionPreference = 'Stop'\nSet-Location $env:TEMP\nif ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }",
+      "expected_violations": ["OC003"]
+    },
+    {
+      "id": "git_before_directory_gate",
+      "text": "$ErrorActionPreference = 'Stop'\ngit fetch origin main --prune\nif ($LASTEXITCODE -ne 0) { throw 'fetch failed' }",
+      "expected_violations": ["OC004", "OC005", "OC007"]
+    },
+    {
+      "id": "remote_not_pinned",
+      "text": "$ErrorActionPreference = 'Stop'\n$Repo = Join-Path $env:TEMP 'repo'\nSet-Location -LiteralPath $Repo\ngit fetch origin main --prune\nif ($LASTEXITCODE -ne 0) { throw 'fetch failed' }\nGet-Content harness/artifacts.v1.json -Raw",
+      "expected_violations": ["OC005"]
+    },
+    {
+      "id": "artifact_guessed",
+      "text": "$ErrorActionPreference = 'Stop'\n$Repo = Join-Path $env:TEMP 'repo'\nSet-Location -LiteralPath $Repo\ngit fetch origin $Branch --prune\n$Actual = (git rev-parse FETCH_HEAD).Trim()\nif ($Actual -ne $Expected) { throw 'mismatch' }\npython scripts/validate_harness.py\nGet-Content .\\Outputs\\some-report.json -Raw",
+      "expected_violations": ["OC007"]
+    },
+    {
+      "id": "native_failure_ignored",
+      "text": "$Repo = Join-Path $env:TEMP 'repo'\nSet-Location -LiteralPath $Repo\ngit status --short",
+      "expected_violations": ["OC008"]
+    }
+  ]
+}

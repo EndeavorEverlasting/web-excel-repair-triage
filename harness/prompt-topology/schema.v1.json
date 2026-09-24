@@ -1,0 +1,718 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "prompt-topology/v1",
+  "title": "AFKAF Prompt Topology Classifier — Deterministic Pipeline Schema",
+  "description": "Single input contract and derived topology artifacts. Semantic topology is derived evidence; registry remains authoritative for identity. Deleting artifacts/prompt-topology/* and re-running with same source+config+embeddings must reproduce identical derived artifacts.",
+  "schema_version": "prompt-topology/v1",
+  "classifier_schema_version": "1.0.0",
+  "pipeline": {
+    "stages": [
+      "canonical-records",
+      "feature-views",
+      "embeddings",
+      "similarity-index",
+      "clustering",
+      "projection-3d",
+      "classification-policy",
+      "kit-ordering",
+      "validation-report"
+    ],
+    "invariants": [
+      "Every registered prompt produces exactly one canonical record or explicit failure.",
+      "Classification never embeds arbitrary repository text — only canonical records from validated parser.",
+      "3D projection never determines semantic classification.",
+      "Prompt IDs (P-numbers) and seq are immutable; ordering is derived presentation only.",
+      "Generated artifacts are disposable and reconstructable.",
+      "Same source + same config + same embedding responses => byte-identical derived artifacts."
+    ]
+  },
+  "$defs": {
+    "prompt_id": {
+      "type": "string",
+      "pattern": "^P[0-9]+$",
+      "description": "Stable prompt identity. Never renumbered by topology."
+    },
+    "sha256_hex": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$",
+      "description": "Lowercase hex SHA-256."
+    },
+    "canonical_prompt_record": {
+      "type": "object",
+      "required": [
+        "prompt_id",
+        "seq",
+        "title",
+        "prompt_class",
+        "prompt_type",
+        "sprint_path_role",
+        "family_declared",
+        "family_declared_id",
+        "use_this_when",
+        "inspect_first",
+        "expected_output",
+        "acceptance_gate",
+        "body",
+        "keywords",
+        "category",
+        "color",
+        "copy_sheet",
+        "source",
+        "canonical_sha256"
+      ],
+      "properties": {
+        "prompt_id": { "$ref": "#/$defs/prompt_id" },
+        "seq": {
+          "type": "string",
+          "pattern": "^[0-9]+$",
+          "description": "Stable numeric sequence as string (e.g. \"07\"). Matches id numeric value; used only as deterministic tie-break, never reordered."
+        },
+        "seq_int": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Integer view of seq for numeric sorting."
+        },
+        "title": { "type": "string", "minLength": 1, "description": "Registry field name." },
+        "prompt_class": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Registry field class (e.g. \"SPRINT / BUILD + MUTATE\"). Raw class string, not derived."
+        },
+        "prompt_type": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Registry field type (e.g. \"BUILD\", \"VALIDATE + CLOSE\"). This is the taxonomy that maps to lifecycle family via registry/prompts/prompt-classification.v1.json."
+        },
+        "sprint_path_role": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Registry field sprintRole free text head (first 120 chars normalized) plus lifecycle section id fallback. Normalized to lower-kebab for feature use."
+        },
+        "family_declared": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Human-stable family as resolved by prompt-classification mapping type->section name (e.g. \"Build & Repair\"). Authoritative declared family; classifier may not silently rewrite it."
+        },
+        "family_declared_id": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Corresponding section id (e Tingkat 6 values: foundation, discover-plan, build-repair, validate-protect, integrate-ship, autonomy). Suitable for ordering keys."
+        },
+        "use_this_when": { "type": "string", "description": "Registry field useWhen verbatim." },
+        "inspect_first": { "type": "string", "description": "Registry field inspectFirst verbatim." },
+        "expected_output": { "type": "string", "description": "Registry field expectedOutput verbatim." },
+        "acceptance_gate": { "type": "string", "description": "Registry field proofGate verbatim." },
+        "body": { "type": "string", "minLength": 1, "description": "Registry field copyContent verbatim — canonical prompt text. No README, comment, or generated file contamination." },
+        "keywords": { "type": "array", "items": { "type": "string" } },
+        "category": { "type": "string", "description": "Registry category (standard|doctrine etc.)" },
+        "color": { "type": "string" },
+        "copy_sheet": { "type": "string" },
+        "source": {
+          "type": "object",
+          "required": ["registry_path", "prompt_path", "sha256", "registry_sha256"],
+          "properties": {
+            "registry_path": { "type": "string", "description": "Canonical registry file that contributed this prompt (e.g. docs/prompts.json or registry/prompts/*.json)." },
+            "prompt_path": {
+              "type": "string",
+              "description": "Logical prompt path for provenance (e.g. prompts/P105). Physical prompt file when applicable."
+            },
+            "sha256": { "$ref": "#/$defs/sha256_hex", "description": "SHA-256 of canonical record JSON (excluding this field) in canonical JSON (sorted keys, UTF-8, no trailing newline)." },
+            "registry_sha256": { "$ref": "#/$defs/sha256_hex", "description": "SHA-256 of the source registry file bytes." }
+          },
+          "additionalProperties": false
+        },
+        "canonical_sha256": { "$ref": "#/$defs/sha256_hex", "description": "Alias for source.sha256 for convenience; must equal source.sha256." }
+      },
+      "additionalProperties": false
+    },
+    "feature_views": {
+      "type": "object",
+      "required": ["prompt_id", "semantic_view", "role_view", "structural_vector", "view_sha256"],
+      "properties": {
+        "prompt_id": { "$ref": "#/$defs/prompt_id" },
+        "semantic_view": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Deterministic concatenation for main embedding input. Must follow template: TITLE:\\n{title}\\n\\nUSE THIS WHEN:\\n{use_this_when}\\n\\nINSPECT FIRST:\\n{inspect_first}\\n\\nEXPECTED OUTPUT:\\n{expected_output}\\n\\nACCEPTANCE GATE:\\n{acceptance_gate}\\n\\nPROMPT BODY:\\n{body} with LF normalized, trailing whitespace stripped per line, no extra prose."
+        },
+        "role_view": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Intent/role weighted view. Template: PROMPT_CLASS={prompt_class}\\nSPRINT_PATH_ROLE={sprint_path_role}\\nDECLARED_FAMILY={family_declared}\\nDECLARED_FAMILY_ID={family_declared_id}\\nPROMPT_TYPE={prompt_type}\\nUSE_THIS_WHEN={use_this_when}\\nEXPECTED_OUTPUT={expected_output}"
+        },
+        "structural_vector": {
+          "type": "object",
+          "required": [
+            "has_acceptance_gate",
+            "has_repo_scope",
+            "has_remote_truth_requirement",
+            "has_parallel_lane",
+            "prompt_class",
+            "prompt_type",
+            "sprint_path_role",
+            "declared_family_id",
+            "declared_family",
+            "category",
+            "color"
+          ],
+          "properties": {
+            "has_acceptance_gate": { "type": "integer", "enum": [0, 1] },
+            "has_repo_scope": { "type": "integer", "enum": [0, 1], "description": "1 if inspectFirst or body mentions repo/repository." },
+            "has_remote_truth_requirement": { "type": "integer", "enum": [0, 1], "description": "1 if acceptance_gate mentions remote truth / fetch / provider." },
+            "has_parallel_lane": { "type": "integer", "enum": [0, 1], "description": "1 if body mentions parallel / lane / sub-agent." },
+            "prompt_class": { "type": "string" },
+            "prompt_type": { "type": "string" },
+            "sprint_path_role": { "type": "string" },
+            "declared_family_id": { "type": "string" },
+            "declared_family": { "type": "string" },
+            "category": { "type": "string" },
+            "color": { "type": "string" }
+          },
+          "additionalProperties": false,
+          "description": "Categorical/numeric features kept out of prose embeddings. V1 must start from metadata already owned; do not hand-invent dozens of derived flags without validator support."
+        },
+        "view_sha256": { "$ref": "#/$defs/sha256_hex", "description": "SHA-256 of {semantic_view, role_view, structural_vector} canonical JSON." }
+      },
+      "additionalProperties": false
+    },
+    "embedding_record": {
+      "type": "object",
+      "required": [
+        "prompt_id",
+        "semantic_embedding",
+        "role_embedding",
+        "structured_feature_vector",
+        "provenance",
+        "input_sha256"
+      ],
+      "properties": {
+        "prompt_id": { "$ref": "#/$defs/prompt_id" },
+        "semantic_embedding": {
+          "type": "array",
+          "items": { "type": "number" },
+          "minItems": 1,
+          "description": "L2-normalized float vector from provider adapter embed(semantic_view). Stored as 32-bit float array."
+        },
+        "role_embedding": {
+          "type": "array",
+          "items": { "type": "number" },
+          "description": "L2-normalized float vector from provider adapter embed(role_view)."
+        },
+        "structured_feature_vector": {
+          "type": "object",
+          "description": "Numeric encoding of structural_vector for metadata_similarity. Implementation: one-hot for categoricals + binary flags, L2-normalized."
+        },
+        "provenance": {
+          "type": "object",
+          "required": ["embedding_model", "embedding_dimensions", "classifier_schema_version", "generated_at", "input_sha256"],
+          "properties": {
+            "embedding_model": { "type": "string", "description": "MODEL_IDENTIFIER including provider prefix, e.g. openai/text-embedding-3-large or local/sentence-transformers/all-MiniLM-L6-v2" },
+            "embedding_model_version": { "type": "string" },
+            "embedding_dimensions": { "type": "integer", "minimum": 1 },
+            "classifier_schema_version": { "type": "string", "const": "1.0.0" },
+            "generated_at": { "type": "string", "format": "date-time" },
+            "input_sha256": { "$ref": "#/$defs/sha256_hex", "description": "Must equal feature_views.view_sha256 for this prompt." }
+          },
+          "additionalProperties": false
+        },
+        "input_sha256": { "$ref": "#/$defs/sha256_hex" }
+      },
+      "additionalProperties": false
+    },
+    "neighbor_entry": {
+      "type": "object",
+      "required": ["prompt_id", "score", "semantic", "role", "metadata"],
+      "properties": {
+        "prompt_id": { "$ref": "#/$defs/prompt_id" },
+        "score": { "type": "number", "minimum": -1, "maximum": 1, "description": "Composite: 0.70*cos(semantic) + 0.20*cos(role) + 0.10*metadata_similarity. Rounded to 4 decimals for determinism." },
+        "semantic": { "type": "number", "minimum": -1, "maximum": 1 },
+        "role": { "type": "number", "minimum": -1, "maximum": 1 },
+        "metadata": { "type": "number", "minimum": -1, "maximum": 1 }
+      },
+      "additionalProperties": false
+    },
+    "similarity_index": {
+      "type": "object",
+      "description": "artifacts/prompt-topology/neighbors.json — top-K brute-force cosine index (no vector DB for current corpus).",
+      "patternProperties": {
+        "^P[0-9]+$": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/neighbor_entry" },
+          "minItems": 1,
+          "maxItems": 20,
+          "description": "Sorted descending by score, then prompt_id ascending as tie-break. Exactly top-K (config.neighbor_top_k) except when corpus smaller."
+        }
+      },
+      "additionalProperties": false
+    },
+    "cluster_record": {
+      "type": "object",
+      "required": ["cluster_id", "member_prompt_ids", "member_count", "family_candidate", "family_confidence", "centroid_in_reduced_space", "fingerprint_sha256"],
+      "properties": {
+        "cluster_id": {
+          "type": "string",
+          "pattern": "^C-[0-9A-F]{6}$",
+          "description": "Deterministic stable ID: C- + first 6 hex chars of SHA256(sorted(member_prompt_ids) joined by ',') uppercase. Changes when membership materially changes."
+        },
+        "member_prompt_ids": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/prompt_id" },
+          "description": "Sorted ascending lexicographically (P sort by seq_int then id)."
+        },
+        "member_count": { "type": "integer", "minimum": 2 },
+        "centroid_in_reduced_space": {
+          "type": "array",
+          "items": { "type": "number" },
+          "description": "Mean of member embeddings in clustering input space (PCA 30-50D or UMAP 10-15D). For proof/debugging only."
+        },
+        "family_candidate": {
+          "type": ["string", "null"],
+          "description": "Weighted majority declared_family among members, or null if AMBIGUOUS_CLUSTER. Determined by config.family_majority_threshold."
+        },
+        "family_confidence": { "type": "number", "minimum": 0, "maximum": 1 },
+        "family_alignment_distribution": {
+          "type": "object",
+          "description": "Counts per declared family within cluster, e.g. {\"Build & Repair\":5, \"Validate & Protect\":1}",
+          "additionalProperties": { "type": "integer", "minimum": 0 }
+        },
+        "fingerprint_sha256": { "$ref": "#/$defs/sha256_hex" },
+        "outlier": { "type": "boolean", "const": false, "description": "False for real clusters; true only in synthetic OUTLIER bucket (not a cluster_record)." }
+      },
+      "additionalProperties": false
+    },
+    "clusters_artifact": {
+      "type": "object",
+      "required": ["schema_version", "algorithm", "parameters", "clusters", "outliers", "unclustered_prompt_ids"],
+      "properties": {
+        "schema_version": { "type": "string", "const": "1.0.0" },
+        "algorithm": { "type": "string", "const": "hdbscan", "description": "V1 must use HDBSCAN, not k-means. Permits UNKNOWN/outliers, variable density." },
+        "parameters": {
+          "type": "object",
+          "required": ["min_cluster_size", "min_samples", "metric", "random_seed", "reduction"],
+          "properties": {
+            "min_cluster_size": { "type": "integer", "minimum": 2 },
+            "min_samples": { "type": ["integer", "null"] },
+            "metric": { "type": "string", "const": "euclidean", "description": "Distance in reduced space; cosine already accounted for in similarity." },
+            "random_seed": { "type": "integer" },
+            "reduction": {
+              "type": "object",
+              "required": ["method", "input_dimensions", "output_dimensions"],
+              "properties": {
+                "method": { "type": "string", "enum": ["pca", "pca+umap", "none"] },
+                "input_dimensions": { "type": "integer" },
+                "output_dimensions": { "type": "integer", "minimum": 2 }
+              }
+            }
+          }
+        },
+        "clusters": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/cluster_record" }
+        },
+        "outliers": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/prompt_id" },
+          "description": "HDBSCAN label -1 members — legitimate outliers, not failures."
+        },
+        "unclustered_prompt_ids": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/prompt_id" },
+          "description": "Alias for outliers for validation consumption."
+        }
+      },
+      "additionalProperties": false
+    },
+    "projection_point": {
+      "type": "object",
+      "required": ["x", "y", "z"],
+      "properties": {
+        "x": { "type": "number" },
+        "y": { "type": "number" },
+        "z": { "type": "number" }
+      },
+      "additionalProperties": false
+    },
+    "projection_artifact": {
+      "type": "object",
+      "required": ["schema_version", "algorithm", "parameters", "points"],
+      "properties": {
+        "schema_version": { "type": "string", "const": "1.0.0" },
+        "algorithm": { "type": "string", "const": "umap", "description": "UMAP for visualization; never used for clustering or classification." },
+        "parameters": {
+          "type": "object",
+          "required": ["n_components", "n_neighbors", "min_dist", "metric", "random_seed"],
+          "properties": {
+            "n_components": { "type": "integer", "const": 3 },
+            "n_neighbors": { "type": "integer", "minimum": 2 },
+            "min_dist": { "type": "number", "minimum": 0, "maximum": 1 },
+            "metric": { "type": "string", "const": "cosine" },
+            "random_seed": { "type": "integer" }
+          }
+        },
+        "points": {
+          "type": "object",
+          "patternProperties": {
+            "^P[0-9]+$": { "$ref": "#/$defs/projection_point" }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    },
+    "classification_record": {
+      "type": "object",
+      "required": [
+        "prompt_id",
+        "declared_family",
+        "declared_family_id",
+        "inferred_family",
+        "inferred_family_id",
+        "family_alignment",
+        "cluster_id",
+        "cluster_membership_probability",
+        "classification_confidence",
+        "classification_state",
+        "signals",
+        "centrality"
+      ],
+      "properties": {
+        "prompt_id": { "$ref": "#/$defs/prompt_id" },
+        "declared_family": { "type": "string" },
+        "declared_family_id": { "type": "string" },
+        "inferred_family": { "type": ["string", "null"], "description": "Weighted majority family of containing cluster, or nearest-neighbor family for outliers, or null if UNKNOWN." },
+        "inferred_family_id": { "type": ["string", "null"] },
+        "family_alignment": {
+          "type": "string",
+          "enum": ["MATCH", "DRIFT", "AMBIGUOUS", "UNKNOWN"],
+          "description": "MATCH=declared==inferred, DRIFT=mismatch, AMBIGUOUS=cluster has no majority, UNKNOWN=outlier without confident inference."
+        },
+        "cluster_id": {
+          "type": ["string", "null"],
+          "pattern": "^(C-[0-9A-F]{6})?$",
+          "description": "Stable cluster id or null for outliers."
+        },
+        "cluster_membership_probability": { "type": ["number", "null"], "minimum": 0, "maximum": 1 },
+        "classification_confidence": { "type": "number", "minimum": 0, "maximum": 1, "description": "Composite of neighbor_agreement, membership probability, family majority strength, distance from centroid, declared agreement." },
+        "classification_state": {
+          "type": "string",
+          "enum": ["HIGH", "MEDIUM", "LOW", "UNCLASSIFIED", "AMBIGUOUS", "OUTLIER", "DRIFT"],
+          "description": "HIGH>=0.85, MEDIUM>=0.65, LOW>=0.45, else UNCLASSIFIED. AMBIGUOUS/OUTLIER/DRIFT are independent states derived from cluster/family signals."
+        },
+        "signals": {
+          "type": "object",
+          "required": ["neighbor_agreement", "family_majority_strength", "distance_from_centroid", "declared_agreement"],
+          "properties": {
+            "neighbor_agreement": { "type": "number", "minimum": 0, "maximum": 1, "description": "Fraction of top-5 neighbors sharing inferred family." },
+            "family_majority_strength": { "type": "number", "minimum": 0, "maximum": 1 },
+            "distance_from_centroid": { "type": ["number", "null"] },
+            "declared_agreement": { "type": "integer", "enum": [0, 1] }
+          },
+          "additionalProperties": false
+        },
+        "centrality": {
+          "type": ["number", "null"],
+          "minimum": -1,
+          "maximum": 1,
+          "description": "Average composite similarity to all members of containing cluster; null for outliers. Used for intra-cluster ordering (higher = more representative, appears first)."
+        }
+      },
+      "additionalProperties": false
+    },
+    "kit_order_artifact": {
+      "type": "object",
+      "required": ["schema_version", "ordering_policy_version", "family_order", "groups", "linear_order", "outliers_group"],
+      "properties": {
+        "schema_version": { "type": "string", "const": "1.0.0" },
+        "ordering_policy_version": { "type": "string", "const": "1.0.0" },
+        "family_order": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Explicit ordered list of family_declared_id values. Defines outer group sequence. Must match config.ordering.family_order."
+        },
+        "groups": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["family", "family_id", "clusters"],
+            "properties": {
+              "family": { "type": "string", "description": "Human label e.g. Build & Repair" },
+              "family_id": { "type": "string", "description": "Stable id e.g. build-repair" },
+              "clusters": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "required": ["cluster_id", "prompts"],
+                  "properties": {
+                    "cluster_id": { "type": "string", "description": "C-XXXXXX or OUTLIER sentinel" },
+                    "prompts": {
+                      "type": "array",
+                      "items": { "$ref": "#/$defs/prompt_id" },
+                      "description": "Prompts in this cluster, ordered by deterministic intra-cluster key (see ordering contract)."
+                    },
+                    "centroid": { "$ref": "#/$defs/projection_point", "description": "3D centroid for visualization; not used for ordering." },
+                    "shape": {
+                      "type": "object",
+                      "required": ["type"],
+                      "properties": {
+                        "type": { "type": "string", "enum": ["bounding-sphere", "convex-hull", "alpha-shape", "none"] },
+                        "alpha": { "type": "number" },
+                        "radius": { "type": "number" },
+                        "vertices": { "type": "array" }
+                      },
+                      "additionalProperties": true
+                    }
+                  },
+                  "additionalProperties": false
+                }
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "linear_order": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/prompt_id" },
+          "description": "Flattened total order: concatenation of groups in family_order, clusters sorted by (-member_count, cluster_id), prompts sorted by (role_rank, -centrality, seq_int, prompt_id). Every registered prompt appears exactly once."
+        },
+        "outliers_group": {
+          "type": "object",
+          "required": ["family", "family_id", "cluster_id", "prompts"],
+          "properties": {
+            "family": { "type": "string", "const": "Outliers" },
+            "family_id": { "type": "string", "const": "outliers" },
+            "cluster_id": { "type": "string", "const": "OUTLIER" },
+            "prompts": { "type": "array", "items": { "$ref": "#/$defs/prompt_id" } }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    },
+    "run_manifest": {
+      "type": "object",
+      "required": [
+        "schema_version",
+        "classifier_version",
+        "source_commit",
+        "registry_sha256",
+        "embedding_model",
+        "embedding_dimensions",
+        "cluster_algorithm",
+        "projection_algorithm",
+        "random_seed",
+        "prompt_count",
+        "embedded_count",
+        "classified_count",
+        "unclassified_count",
+        "outlier_count",
+        "ordering_policy_version",
+        "generated_at",
+        "input_config_sha256"
+      ],
+      "properties": {
+        "schema_version": { "type": "string", "const": "1.0.0" },
+        "classifier_version": { "type": "string", "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$" },
+        "source_commit": { "type": "string", "pattern": "^[0-9a-f]{40}$", "description": "Git HEAD SHA at generation time." },
+        "registry_sha256": { "$ref": "#/$defs/sha256_hex", "description": "SHA-256 of canonical Prompt Kit registry bytes (sorted registry content)." },
+        "embedding_model": { "type": "string" },
+        "embedding_model_version": { "type": "string" },
+        "embedding_dimensions": { "type": "integer", "minimum": 1 },
+        "cluster_algorithm": { "type": "string", "const": "hdbscan" },
+        "projection_algorithm": { "type": "string", "const": "umap" },
+        "random_seed": { "type": "integer" },
+        "prompt_count": { "type": "integer", "minimum": 0 },
+        "embedded_count": { "type": "integer", "minimum": 0 },
+        "classified_count": { "type": "integer", "minimum": 0 },
+        "unclassified_count": { "type": "integer", "minimum": 0 },
+        "outlier_count": { "type": "integer", "minimum": 0 },
+        "ordering_policy_version": { "type": "string", "const": "1.0.0" },
+        "generated_at": { "type": "string", "format": "date-time" },
+        "input_config_sha256": { "$ref": "#/$defs/sha256_hex", "description": "SHA-256 of harness/prompt-topology/config.v1.json canonical JSON." },
+        "artifact_hashes": {
+          "type": "object",
+          "description": "Map artifact filename -> sha256 for reproducibility check.",
+          "additionalProperties": { "$ref": "#/$defs/sha256_hex" }
+        }
+      },
+      "additionalProperties": false
+    },
+    "validation_report": {
+      "type": "object",
+      "required": ["schema_version", "status", "structural_errors", "semantic_warnings", "counts"],
+      "properties": {
+        "schema_version": { "type": "string", "const": "1.0.0" },
+        "status": { "type": "string", "enum": ["PASS", "FAIL"] },
+        "structural_errors": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["code", "message", "prompt_ids"],
+            "properties": {
+              "code": {
+                "type": "string",
+                "enum": [
+                  "PROMPT_MISSING_FROM_TOPOLOGY",
+                  "DUPLICATE_PROMPT_ID",
+                  "EMBEDDING_COUNT_MISMATCH",
+                  "INVALID_VECTOR_DIMENSION",
+                  "NONDETERMINISTIC_INPUT_HASH",
+                  "KIT_ORDER_DUPLICATE",
+                  "KIT_ORDER_MISSING_PROMPT",
+                  "UNKNOWN_CLUSTER_REFERENCE",
+                  "EMBEDDING_MODEL_MISMATCH",
+                  "PROJECTION_MISSING_PROMPT",
+                  "NEIGHBOR_COUNT_MISMATCH"
+                ]
+              },
+              "message": { "type": "string" },
+              "prompt_ids": { "type": "array", "items": { "$ref": "#/$defs/prompt_id" } }
+            },
+            "additionalProperties": false
+          },
+          "description": "Hard failures — must be zero for PASS."
+        },
+        "semantic_warnings": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["code", "message", "prompt_ids", "evidence"],
+            "properties": {
+              "code": {
+                "type": "string",
+                "enum": [
+                  "CLASSIFICATION_DRIFT",
+                  "POSSIBLE_DUPLICATE",
+                  "AMBIGUOUS_FAMILY",
+                  "OUTLIER",
+                  "LOW_CONFIDENCE",
+                  "CROSS_FAMILY_NEAREST_NEIGHBOR",
+                  "STRENGTHEN_EXISTING_CANDIDATE",
+                  "UNCLASSIFIED"
+                ]
+              },
+              "message": { "type": "string" },
+              "prompt_ids": { "type": "array", "items": { "$ref": "#/$defs/prompt_id" } },
+              "evidence": {
+                "type": "object",
+                "description": "Code-specific evidence, e.g. {nearest: P117, score: 0.961, role:0.917}",
+                "additionalProperties": true
+              }
+            },
+            "additionalProperties": false
+          },
+          "description": "Reported, not hard-failed, except POSSIBLE_DUPLICATE blocks new-prompt AFKAF gate."
+        },
+        "counts": {
+          "type": "object",
+          "required": ["prompt_count", "cluster_count", "outlier_count", "structural_error_count", "semantic_warning_count"],
+          "properties": {
+            "prompt_count": { "type": "integer" },
+            "cluster_count": { "type": "integer" },
+            "outlier_count": { "type": "integer" },
+            "structural_error_count": { "type": "integer" },
+            "semantic_warning_count": { "type": "integer" }
+          }
+        }
+      },
+      "additionalProperties": false
+    },
+    "afkaf_new_prompt_decision": {
+      "type": "object",
+      "required": ["candidate_id", "nearest_owner", "scores", "recommendation", "confidence", "likely_family", "likely_cluster", "evidence"],
+      "properties": {
+        "candidate_id": { "type": "string", "description": "Proposed prompt identifier or temp id e.g. CANDIDATE-001" },
+        "nearest_owner": { "$ref": "#/$defs/prompt_id" },
+        "scores": {
+          "type": "object",
+          "required": ["semantic", "role", "metadata", "composite"],
+          "properties": {
+            "semantic": { "type": "number" },
+            "role": { "type": "number" },
+            "metadata": { "type": "number" },
+            "composite": { "type": "number" }
+          }
+        },
+        "recommendation": { "type": "string", "enum": ["STRENGTHEN", "POSSIBLE_DUPLICATE", "CREATE_NEW", "RELATED"] },
+        "confidence": { "type": "number", "minimum": 0, "maximum": 1 },
+        "likely_family": { "type": "string" },
+        "likely_cluster": { "type": ["string", "null"] },
+        "evidence": { "type": "array", "items": { "type": "string" } }
+      },
+      "additionalProperties": false
+    }
+  },
+  "artifacts": {
+    "canonical_records": {
+      "path": "artifacts/prompt-topology/canonical-prompts.json",
+      "schema": { "$ref": "#/$defs/canonical_prompt_record" },
+      "description": "Array of canonical_prompt_record, sorted by prompt_id ascending. Source truth projection."
+    },
+    "feature_views": {
+      "path": "artifacts/prompt-topology/feature-views.json",
+      "schema": { "$ref": "#/$defs/feature_views" }
+    },
+    "embeddings": {
+      "path": "artifacts/prompt-topology/embeddings.json",
+      "schema": { "$ref": "#/$defs/embedding_record" }
+    },
+    "neighbors": {
+      "path": "artifacts/prompt-topology/neighbors.json",
+      "schema": { "$ref": "#/$defs/similarity_index" }
+    },
+    "clusters": {
+      "path": "artifacts/prompt-topology/clusters.json",
+      "schema": { "$ref": "#/$defs/clusters_artifact" }
+    },
+    "classifications": {
+      "path": "artifacts/prompt-topology/classifications.json",
+      "schema": { "$ref": "#/$defs/classification_record" }
+    },
+    "projection": {
+      "path": "artifacts/prompt-topology/projection-3d.json",
+      "schema": { "$ref": "#/$defs/projection_artifact" }
+    },
+    "kit_order": {
+      "path": "artifacts/prompt-topology/kit-order.json",
+      "schema": { "$ref": "#/$defs/kit_order_artifact" }
+    },
+    "run_manifest": {
+      "path": "artifacts/prompt-topology/run-manifest.json",
+      "schema": { "$ref": "#/$defs/run_manifest" }
+    },
+    "validation_report": {
+      "path": "artifacts/prompt-topology/validation-report.json",
+      "schema": { "$ref": "#/$defs/validation_report" }
+    }
+  },
+  "determinism_contract": {
+    "rules": [
+      "All JSON outputs use sorted keys, UTF-8, LF, 2-space indent, no trailing whitespace; hashes computed over that canonical form.",
+      "Every list that is logically a set is sorted ascending lexicographically (or by explicit rank) before hashing or persistence.",
+      "Random seeds are explicit in config and propagated to every stochastic stage (reduction, HDBSCAN if applicable, UMAP). Same seed => same output.",
+      "Floating point vectors rounded to 6 decimals before persistence; scores rounded to 4 decimals.",
+      "Cluster IDs are content-addressed from sorted member IDs, not algorithm label integers.",
+      "Kit order is a pure function of (classifications + neighbors + projection centroids + config ordering policy) — no prompt ID renumbering."
+    ],
+    "provenance_requirement": "Every derived artifact must embed its input hashes (input_sha256, registry_sha256, config_sha256, embedding_model) so topology changes are detectable."
+  },
+  "authority_boundary": {
+    "source_truth": ["registry/prompts/*.json", "docs/prompts.json", "registry/prompts/prompt-classification.v1.json", "harness/prompt-topology/config.v1.json"],
+    "derived_truth": [
+      "artifacts/prompt-topology/canonical-prompts.json",
+      "artifacts/prompt-topology/feature-views.json",
+      "artifacts/prompt-topology/embeddings.json",
+      "artifacts/prompt-topology/neighbors.json",
+      "artifacts/prompt-topology/clusters.json",
+      "artifacts/prompt-topology/classifications.json",
+      "artifacts/prompt-topology/projection-3d.json",
+      "artifacts/prompt-topology/kit-order.json",
+      "artifacts/prompt-topology/run-manifest.json",
+      "artifacts/prompt-topology/validation-report.json"
+    ],
+    "rules": [
+      "Classifier may recommend family/cluster changes or STRENGTHEN vs ADD, but must not mutate registry files, prompt IDs, or seq.",
+      "Generated kit presentation may use kit-order linear_order, but canonical library order (prompt-kit-order-navigation) remains sequence_ascending as per harness/contracts/prompt-kit-order-navigation.v1.json. Topology order is discovery/recommendation metadata, not a silent s/plit override.",
+      "Deleting artifacts/prompt-topology/* and re-running `python scripts/prompt-topology/run.py` must reproduce identical artifacts given identical inputs."
+    ]
+  }
+}

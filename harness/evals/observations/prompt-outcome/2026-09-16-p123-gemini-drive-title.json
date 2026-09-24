@@ -1,0 +1,56 @@
+{
+  "schema_version": "prompt-outcome-receipt/v1",
+  "receipt_id": "field/20260916/p123-gemini-drive-title",
+  "related_receipt_ids": [
+    "field/20260916/p142-drive-organizer"
+  ],
+  "invocation": {
+    "invocation_id": "field/20260916/p123-gemini-drive-title",
+    "prompt_id": "P123",
+    "prompt_revision": "93a8886d77e043023eeecca05f5e2e8e13b89f06",
+    "surface_id": "chatgpt-google-drive",
+    "mission_id": "field-proof/p123-gemini-drive-title",
+    "target_runtime": "gemini-to-google-drive",
+    "repository": "EndeavorEverlasting/web-excel-repair-triage"
+  },
+  "observer": {
+    "observer_id": "agent/chatgpt",
+    "kind": "agent",
+    "surface_id": "google-drive-connector"
+  },
+  "observation": {
+    "type": "provider",
+    "summary": "Provider readback located the existing Gemini-produced Drive export for source 7UyhyhxdFsQ and the same artifact identity was retained while its Drive title and first visible H1 were corrected to the source-specific document title.",
+    "expected_state": "The Gemini-produced Drive document exists and its Drive file title equals DOCUMENT_TITLE and its first visible H1.",
+    "observed_state": "Existing export contains Gemini execution/output and source analysis; Drive title and first H1 now equal 'How WhatsApp Video Sharing Works?'.",
+    "claimed_state": "OBSERVED",
+    "signal_ids": []
+  },
+  "result": "SUCCESS",
+  "classification": {
+    "primary": null,
+    "secondary": [],
+    "confidence": "HIGH",
+    "attribution": "PROVEN",
+    "actionability": "INFORMATION_ONLY",
+    "rationale": "Provider readback proves the Gemini-to-Drive artifact and the document-identity transition. This receipt does not promote the separate full-source/tail-coverage quality contract beyond the evidence present in the artifact."
+  },
+  "evidence": [
+    {
+      "kind": "provider",
+      "ref": "google-drive:artifact/p123-7UyhyhxdFsQ",
+      "supports": "Bounded provider readback proved the existing Gemini-produced export, preserved artifact identity, source-specific Drive title, and matching first visible HEADING_1 after in-place correction."
+    },
+    {
+      "kind": "repository",
+      "ref": "github:commit/93a8886d77e043023eeecca05f5e2e8e13b89f06",
+      "supports": "Merged P123 document-identity contract is the implementation floor exercised by this field proof."
+    }
+  ],
+  "state_transition": {
+    "from": "INTEGRATED",
+    "to": "OBSERVED"
+  },
+  "occurred_at": "2026-09-17T03:58:31Z",
+  "retrospective": false
+}

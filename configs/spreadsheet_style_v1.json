@@ -1,0 +1,116 @@
+{
+  "schema_version": "spreadsheet_style_v1",
+  "name": "S-class slate workbook style",
+  "intent": "Professional Web Excel-safe workbook styling for generated trackers, dashboards, review queues, and inventory artifacts.",
+  "web_excel_rules": {
+    "safe_primitives_only": true,
+    "avoid_native_pivot_cache_dependency": true,
+    "avoid_slicers": true,
+    "avoid_vba": true,
+    "avoid_drawing_dependent_layouts": true,
+    "do_not_change_formulas_when_restyling": true
+  },
+  "fonts": {
+    "body": "Aptos",
+    "title": "Aptos Display",
+    "fallback": "Calibri"
+  },
+  "colors": {
+    "ink": "FF111827",
+    "muted_ink": "FF374151",
+    "white": "FFFFFFFF",
+    "canvas": "FFF8FAFC",
+    "panel": "FFE8EEF5",
+    "grid": "FFD0D7DE",
+    "header_primary": "FF1F2937",
+    "header_secondary": "FF334155",
+    "table_header": "FF475569",
+    "source_green": "FF2F6F5E",
+    "action_red": "FF7F1D1D",
+    "snapshot_gray": "FF6B7280",
+    "deprecated_gray": "FF9CA3AF",
+    "resolved_green_fill": "FFDCFCE7",
+    "resolved_green_font": "FF166534",
+    "review_amber_fill": "FFFFF4D6",
+    "review_amber_font": "FF92400E",
+    "duplicate_red_fill": "FFFDE2E2",
+    "duplicate_red_font": "FF991B1B",
+    "guardrail_purple_fill": "FFF3F0FA",
+    "roster_blue_fill": "FFD9EAF7",
+    "quiet_gray_fill": "FFF8FAFC"
+  },
+  "tab_colors": {
+    "README Integration": "FF1F2937",
+    "Start Here": "FF1F2937",
+    "Part Numbers": "FF2F6F5E",
+    "1M Recon Pivot Module": "FF334155",
+    "Dashboard_Tool_v6_x": "FF334155",
+    "Duplicate Key Review": "FF7F1D1D",
+    "Active_Admin_Targets": "FF7F1D1D",
+    "Partial_Hours_Active": "FF92400E",
+    "Review_Guardrails": "FF475569",
+    "CF Dictionary": "FF475569",
+    "CF_Dictionary": "FF475569",
+    "Definitions_Current": "FF475569",
+    "Dropdown_Values": "FF475569",
+    "Visual_System_v6_x": "FF475569",
+    "Repo Automation Notes": "FF475569",
+    "Repo_Automation_Notes": "FF475569",
+    "Deployed Devices Snapshot": "FF6B7280",
+    "Resolved_Archive": "FF6B7280",
+    "Quiet_Queues": "FF9CA3AF",
+    "Josh Deprecated Pivot Snap": "FF9CA3AF",
+    "Deprecated Recon Snapshot": "FF9CA3AF"
+  },
+  "role_defaults": {
+    "title_fill": "header_primary",
+    "section_fill": "header_secondary",
+    "table_header_fill": "table_header",
+    "table_header_font": "white",
+    "body_font": "ink",
+    "note_font": "muted_ink",
+    "body_fill": "white",
+    "panel_fill": "panel",
+    "source_sheet_tab": "source_green",
+    "executive_sheet_tab": "header_secondary",
+    "review_sheet_tab": "action_red",
+    "reference_sheet_tab": "table_header",
+    "snapshot_sheet_tab": "snapshot_gray",
+    "deprecated_sheet_tab": "deprecated_gray"
+  },
+  "conditional_fills": {
+    "resolved_green": {
+      "fill": "resolved_green_fill",
+      "font": "resolved_green_font"
+    },
+    "review_amber": {
+      "fill": "review_amber_fill",
+      "font": "review_amber_font"
+    },
+    "duplicate_or_blocker_red": {
+      "fill": "duplicate_red_fill",
+      "font": "duplicate_red_font"
+    },
+    "rich_guard_purple": {
+      "fill": "guardrail_purple_fill",
+      "font": "ink"
+    },
+    "roster_blue": {
+      "fill": "roster_blue_fill",
+      "font": "ink"
+    },
+    "quiet_muted": {
+      "fill": "quiet_gray_fill",
+      "font": "muted_ink"
+    }
+  },
+  "layout": {
+    "default_row_height": 18,
+    "title_row_height": 28,
+    "header_row_height": 22,
+    "default_column_width": 16,
+    "text_column_width": 32,
+    "freeze_panes_default": "A2",
+    "border_color": "FFD0D7DE"
+  }
+}

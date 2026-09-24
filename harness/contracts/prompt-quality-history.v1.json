@@ -1,0 +1,62 @@
+{
+  "schema_version": "prompt-quality-history/v1",
+  "contract_id": "prompt-quality-history",
+  "baseline": {
+    "commit": "93a8886d77e043023eeecca05f5e2e8e13b89f06",
+    "reason": "Last mainline floor before compiler-backed effective prompt representations were introduced by PR #519.",
+    "established_at": "2026-09-17",
+    "authority": "git"
+  },
+  "canonical_body_sources": [
+    {"path": "docs/prompts.json", "git_blob_sha1": "0b5ff65078ab2bc0fdd70dd52a199e440ccbe6c7", "baseline_size_bytes": 328661},
+    {"path": "registry/prompts/ai-engineering-level-up-prompts.v1.json", "git_blob_sha1": "f25d7fd9bb09b42d022283aa33a24b6d43af67c7", "baseline_size_bytes": 60055},
+    {"path": "registry/prompts/correspondence-prompts.v1.json", "git_blob_sha1": "07df19ffcbe48d9b92af346a679799ac1d99510a", "baseline_size_bytes": 17432},
+    {"path": "registry/prompts/management-operations-prompts.v1.json", "git_blob_sha1": "fbcfde1ba452c42388d74f61b1f8a8392424f7cf", "baseline_size_bytes": 139881},
+    {"path": "registry/prompts/prompt-overrides.v1.json", "git_blob_sha1": "087ba54b9c109760fe812a4212d4d15a404b6f06", "baseline_size_bytes": 45289},
+    {"path": "registry/prompts/repository-work-ledger-prompts.v1.json", "git_blob_sha1": "583edc4fdd2c973eef8aa89b55dc053889e2e156", "baseline_size_bytes": 84311},
+    {"path": "registry/prompts/skill-development-prompts.v1.json", "git_blob_sha1": "7ef8e6991f558db191989c495d9255a282f88ba9", "baseline_size_bytes": 14278},
+    {"path": "registry/prompts/spec-architecture-prompts.v1.json", "git_blob_sha1": "fdebc3b1f1a96ab4a812244c9d27471e6bba9eb6", "baseline_size_bytes": 455427},
+    {"path": "registry/prompts/tutorial-discovery-prompts.v1.json", "git_blob_sha1": "e35ee86a19c6b7704544aaad6947f1324c7f3b2b", "baseline_size_bytes": 62484}
+  ],
+  "semantic_migrations": "harness/prompt-compilation/prompt-semantic-migrations.v1.json",
+  "effective_identity": {
+    "canonical_loader": "scripts.build_prompt_kit_registry.load_prompt_registry",
+    "effective_loader": "scripts.build_prompt_kit_registry.load_prompt_kit_registry",
+    "rule": "An effective or compiled prompt may append execution guidance, but must not replace or omit the governed canonical prompt unless an explicit reviewed semantic migration authorizes replacement for that prompt.",
+    "temporary_exception_policy": "A temporary exception is valid only while at least one compiled effective variant still violates canonical containment. Once the underlying representation is repaired, the validator fails the stale exception until it is removed.",
+    "temporary_exceptions": [
+      {
+        "prompt_id": "P07",
+        "reason": "Known effective-representation regression introduced by PR #519 is already owned by concurrent repair PR #533.",
+        "owner_pr": 533,
+        "remove_when": "Canonical containment is restored for every compiled P07 profile; PR #533 is the current repair owner."
+      }
+    ]
+  },
+  "invariants": [
+    {
+      "id": "PQH001",
+      "rule": "Known-good canonical prompt-body source blobs are immutable unless a semantic migration chains the accepted blob to the new blob."
+    },
+    {
+      "id": "PQH002",
+      "rule": "Prompt-body source shrinkage below its accepted predecessor requires an explicit semantic migration with affected prompt IDs and focused proof."
+    },
+    {
+      "id": "PQH003",
+      "rule": "Every compiledEffectivePrompts variant must contain the canonical copyContent verbatim unless an active temporary exception or explicit replacement-authorizing semantic migration exists."
+    },
+    {
+      "id": "PQH004",
+      "rule": "Generated Prompt Kit output is not history authority; canonical registry sources and reviewed semantic migrations are."
+    },
+    {
+      "id": "PQH005",
+      "rule": "A mass prompt edit must be represented as one or more auditable migration records rather than silently resetting the baseline."
+    },
+    {
+      "id": "PQH006",
+      "rule": "Temporary exceptions fail closed when they become unnecessary; an exception cannot survive restoration of canonical containment."
+    }
+  ]
+}

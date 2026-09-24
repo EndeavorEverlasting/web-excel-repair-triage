@@ -1,0 +1,50 @@
+name: Validator profile runner
+
+on:
+  pull_request:
+    paths:
+      - harness/validators.v1.json
+      - scripts/run_validator_profile.py
+      - tests/test_validator_profile_runner.py
+      - docs/HARNESS_LOCAL_FIRST_REQUIRED_CHECKS_REFERENCE_ARCHITECTURE.md
+      - .github/workflows/validator-profile-runner.yml
+  push:
+    branches: [main]
+    paths:
+      - harness/validators.v1.json
+      - scripts/run_validator_profile.py
+      - tests/test_validator_profile_runner.py
+      - docs/HARNESS_LOCAL_FIRST_REQUIRED_CHECKS_REFERENCE_ARCHITECTURE.md
+      - .github/workflows/validator-profile-runner.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validator-profile:
+    name: Validator profile / local-first contract
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          persist-credentials: false
+          fetch-depth: 0
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.11"
+      - name: Run focused profile-runner regression
+        run: python -m unittest tests.test_validator_profile_runner -v
+      - name: Execute repository-owned target profile
+        run: |
+          python scripts/run_validator_profile.py \
+            --profile target-repository \
+            --report "$RUNNER_TEMP/validator-profile-target-repository.json"
+      - name: Upload profile receipt
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: validator-profile-target-repository
+          path: ${{ runner.temp }}/validator-profile-target-repository.json
+          if-no-files-found: error

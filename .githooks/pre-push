@@ -1,0 +1,25 @@
+#!/bin/sh
+set -eu
+
+ORDER_NAV_REPORT="${TMPDIR:-/tmp}/web-excel-prompt-kit-order-navigation-audit.json"
+RELEASE_IDENTITY_REPORT="${TMPDIR:-/tmp}/web-excel-prompt-kit-release-identity.json"
+PROFILE_REPORT="${TMPDIR:-/tmp}/web-excel-pre-push-validator-profile.json"
+
+python3 scripts/validate_repository_work_ledger.py --summary
+python3 -m unittest tests.test_repository_work_ledger -v
+python3 scripts/validate_prompt_kit_cross_device_access.py --summary
+python3 -m unittest tests.test_prompt_kit_cross_device_access -v
+python3 scripts/validate_prompt_kit_freshness_guidance.py --summary
+python3 -m unittest tests.test_prompt_kit_freshness_guidance -v
+python3 scripts/validate_pr_merge_gate.py --summary
+python3 -m unittest tests.test_pr_merge_gate -v
+python3 scripts/validate_prompt_kit_release_identity.py --output "$RELEASE_IDENTITY_REPORT" --summary
+python3 -m unittest tests.test_prompt_kit_release_identity -v
+python3 scripts/validate_prompt_kit_order_navigation.py --output "$ORDER_NAV_REPORT" --summary
+python3 -m unittest tests.test_prompt_kit_order_navigation_contract -v
+python3 scripts/validate_artifact_handoff_harness.py --summary
+python3 -m unittest tests.test_artifact_handoff_harness -v
+python3 scripts/validate_artifact_derivation_harness.py --summary
+python3 -m unittest tests.test_artifact_derivation_harness -v
+
+python3 scripts/run_validator_profile.py --profile pre_push --report "$PROFILE_REPORT"

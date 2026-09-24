@@ -1,0 +1,23 @@
+{
+  "schema_version": "web_excel_stop_ship_tokens_v1",
+  "xml_tokens": [
+    "_xlfn.",
+    "_xludf.",
+    "_xlpm.",
+    "AGGREGATE("
+  ],
+  "error_literals": [
+    "#REF!",
+    "#VALUE!",
+    "#NAME?"
+  ],
+  "filename_markers": [
+    "repaired_",
+    "Deprecated_repaired_",
+    "web_repaired_"
+  ],
+  "cf_forbidden_patterns": [
+    "RC\\d",
+    "SEARCH\\(\"AMBER\""
+  ]
+}

@@ -1,0 +1,60 @@
+{
+  "case": "TC03",
+  "title": "Competing Hypotheses",
+  "root_cause": "generated_state_drift",
+  "plausible_hypotheses": [
+    "configuration",
+    "source_logic",
+    "generated_state_drift"
+  ],
+  "allowed_mutation": [
+    "generated/state.json",
+    "src/logic.py",
+    "config.json"
+  ],
+  "forbidden_mutation": [
+    "unrelated/"
+  ],
+  "required_validations": [
+    [
+      "python",
+      "validate.py"
+    ],
+    [
+      "python",
+      "build.py"
+    ]
+  ],
+  "required_contracts": [
+    "implementation",
+    "regression",
+    "generated_parity",
+    "integration_visibility"
+  ],
+  "executable_downstream_contracts": [
+    "generated_parity"
+  ],
+  "non_executable_downstream_contracts": [
+    "integration_visibility"
+  ],
+  "correct_repair": {
+    "preferred": "python build.py",
+    "acceptable_mutations": [
+      "generated/state.json"
+    ],
+    "incorrect_mutations": [
+      "config.json",
+      "src/logic.py"
+    ]
+  },
+  "fixed_point": {
+    "all_required_contracts_proven_or_correctly_blocked": true,
+    "no_known_seeded_defect_remaining": true
+  },
+  "seeded_defects": [
+    {
+      "id": "generated_state_drift",
+      "reachable": true
+    }
+  ]
+}

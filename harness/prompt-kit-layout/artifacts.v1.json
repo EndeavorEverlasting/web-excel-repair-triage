@@ -1,0 +1,8 @@
+{
+  "schema_version": "prompt-kit-layout-artifacts/v1",
+  "artifacts": [
+    {"id":"layout-harness-report","path":"Outputs/prompt-kit-layout-harness.json","producer":"scripts/validate_prompt_kit_layout_harness.py","tracked":false},
+    {"id":"layout-geometry-report","path":"Outputs/prompt-kit-layout-geometry.json","producer":"browser-geometry-probe","tracked":false,"status":"future_product_runtime_gate"},
+    {"id":"layout-operator-report","path":"harness/prompt-kit-layout/reports/CURRENT_STATE.md","producer":"operator-or-agent","tracked":true}
+  ]
+}

@@ -1,0 +1,75 @@
+{
+  "schema_version": "nth-qualitative-admin-profile/v1",
+  "profile_id": "nth-qualitative-admin",
+  "purpose": "Deterministic admin/management Neuron Track Hours workbook matching the current June completed-month and August MTD qualitative family without using reference workbooks as attendance truth.",
+  "reference_fingerprints": [
+    {"reference_id":"completed_month_2026_06_current_2026_08_19","sha256":"c3edff399c12d4a9359d45543d6d7e4f9385d92fc61e555cb912324adaef858c","sheet_count":5,"mode":"completed_month"},
+    {"reference_id":"mtd_2026_08_current_2026_08_19","sha256":"51528cd874c2f06b3acb9f9591758269e494bd232a5ca45f2e746102ee1375d6","sheet_count":6,"mode":"month_to_date"}
+  ],
+  "authority": {
+    "attendance": "detail_rows date + technician + paid_hours are evidence inputs; references never create hours",
+    "derived_metrics": {
+      "total_paid_hours": "sum(detail_rows.paid_hours)",
+      "completed_shift_records": "count(detail_rows)",
+      "technician_paid_hours": "sum(detail_rows.paid_hours) grouped by technician",
+      "technician_shift_count": "count(detail_rows) grouped by technician",
+      "daily_paid_hours": "sum(detail_rows.paid_hours) grouped by date",
+      "daily_shift_count": "count(detail_rows) grouped by date"
+    },
+    "workbook_formula_policy": "forbidden; references contain zero worksheet formulas and all quantitative cells are build-time values",
+    "planned_work": "never contributes paid hours until completed attendance exists"
+  },
+  "package_contract": {
+    "required_members": ["[Content_Types].xml","_rels/.rels","xl/workbook.xml","xl/_rels/workbook.xml.rels","xl/styles.xml","xl/theme/theme1.xml","xl/sharedStrings.xml"],
+    "worksheet_member_pattern": "xl/worksheets/sheet{n}.xml",
+    "forbidden_member_prefixes": ["xl/externalLinks/","xl/drawings/","xl/charts/","xl/tables/","xl/pivotTables/","xl/pivotCache/"],
+    "forbidden_members": ["xl/calcChain.xml","xl/connections.xml"],
+    "shared_strings": "present and empty",
+    "worksheet_formulas": 0,
+    "worksheet_auto_filters": 0,
+    "worksheet_conditional_formats": 0,
+    "worksheet_data_validations": 0,
+    "worksheet_drawings": 0,
+    "worksheet_freeze_panes": 0,
+    "default_row_height": 15,
+    "title_row_height": 30
+  },
+  "visual_contract": {
+    "font_family": "Carlito",
+    "palette": {"navy":"#173B5C","subtitle_gray":"#4B5563","body_dark":"#1F2937","light_gray":"#F3F5F7","light_blue":"#DCEAF7","success_green":"#DDEED9","attention_yellow":"#FFF1BF","white":"#FFFFFF"},
+    "number_formats": {"hours":"0.00","date":"m/d/yyyy"},
+    "style_ids": {"title":4,"subtitle":10,"section_title":12,"table_header_left":48,"table_header_middle":49,"table_header_right":50,"body_left":51,"body_hours":52,"body_right":53,"total_left":54,"total_hours":55,"total_right":56,"wrapped_left":68,"wrapped_middle":69,"wrapped_right":70,"wrapped_total_left":71,"wrapped_total_middle":72,"wrapped_total_right":73,"date_left":82,"date_middle":83,"detail_header_left":94,"detail_header_middle":95,"detail_header_right":96,"wrapped_date_left":104,"wrapped_hours_middle":105,"wrapped_date_total":106,"wrapped_hours_total":107,"boundary_note":112,"kpi_label_blue":115,"kpi_value_blue":118,"kpi_label_green":134,"kpi_value_green":137,"kpi_value_yellow":139,"kpi_label_completed":129,"kpi_value_completed":132,"date_last":84,"day_last":85,"hours_last":86,"count_last":87},
+    "template_sha256": {"styles.xml":"8396c3e861b1cc38c2433f7dffa4145d3beec3f4326a185243dc90a794df6d8e","theme1.xml":"9e968b92413c2476890e4b0bd8d26b65f2062b211bde8ebb628ffdaafc6607b9"}
+  },
+  "sheet_profiles": {
+    "Executive Dashboard":{"columns":[18,13,12,10,3,3,26,25,14,14,14,16]},
+    "Visual Summary":{"columns":[22,13,12,3,3,13,9,13,12,3]},
+    "NTH Detail":{"columns":[12,9,22,12,28,72]},
+    "Operational Themes":{"columns":[28,58,52]},
+    "Billing Support Context":{"columns":[30,75,20]},
+    "Carryover & Planned Work":{"columns":[13,20,48,28,15,24,55]},
+    "Configuration & Inventory Context":{"columns":[38,80]}
+  },
+  "language_profiles": {
+    "executive_dashboard":{"posture":"quantitative for direct attendance; qualitative for operational interpretation","required_concepts":["paid attendance is the quantitative authority","workstream context does not create task-hour allocations"],"forbidden_unless_directly_evidenced":["percentage allocation","peak day","ranking","top performer","inferred workstream hours"]},
+    "visual_summary":{"fixed_subtitle":"Direct paid hours and completed shift records only. No percentage, peak, ranking, or inferred workstream-hour metrics."},
+    "detail":{"fixed_subtitle":"Direct paid-hour rows with qualitative work context. The program label is neutral; workstream identity comes from the dated context.","posture":"describe evidenced work for the date without converting blended activity into synthetic task-hour splits"},
+    "operational_themes":{"fixed_subtitle":"Themes may overlap within a paid shift. They explain the service delivered; they are not an invented hours allocation.","posture":"service breadth, evidence-bounded, non-exclusive themes"},
+    "billing_support_context":{"fixed_subtitle":"Management context for explaining the service model. Direct paid attendance remains the quantitative authority.","posture":"management explanation with unresolved historical claims explicitly bounded"},
+    "carryover_planned_work":{"fixed_subtitle":"Planned and carryover context stays visible without creating paid hours.","posture":"all planned/carryover rows are zero paid hours until attendance posts"},
+    "technical_scope_context":{"fixed_subtitle":"Technical scope controls bound claims. They do not allocate paid hours across workstreams.","posture":"device/scope controls may bound capacity but never synthesize labor allocation"}
+  },
+  "mode_contracts": {
+    "completed_month":{"sheet_order":["Executive Dashboard","Visual Summary","{month_label} NTH Detail","Operational Themes","Billing Support Context"],"kpi_labels":["RECORDED NTH","SHIFT RECORDS","PRIOR BASELINE","BILLING STATUS"],"required_context":["billing_support_context"]},
+    "month_to_date":{"sheet_order":["Executive Dashboard","Visual Summary","{month_label} NTH Detail","Operational Themes","Carryover & Planned Work","Configuration & Inventory Context"],"kpi_labels":["MTD PAID HOURS","COMPLETED SHIFTS","THROUGH","MTD STATUS","{planned_day_label}"],"required_context":["carryover_planned_work","technical_scope_context"]}
+  },
+  "merge_contract": {
+    "Executive Dashboard":{"common":["A1:L1","A2:L2","A8:D8","G8:L8"],"completed_kpis":["A4:B4","A5:B6","C4:D4","C5:D6","E4:G4","E5:G6","H4:L4","H5:L6"],"month_to_date_kpis":["A4:B4","A5:B6","C4:D4","C5:D6","E4:G4","E5:G6","H4:I4","H5:I6","J4:L4","J5:L6"],"dynamic":["theme grounded-readout rows merge H:L","daily section merges A:D","executive section merges G:L","executive interpretation rows merge H:L"]},
+    "Visual Summary":["A1:J1","A2:J2"],
+    "NTH Detail":["A1:F1","A2:F2"],
+    "Operational Themes":["A1:C1","A2:C2"],
+    "Billing Support Context":["A1:C1","A2:C2","dynamic external-use section A:C","dynamic three-row external-use note A:C"],
+    "Carryover & Planned Work":["A1:G1","A2:G2"],
+    "Configuration & Inventory Context":["A1:B1","A2:B2","dynamic four-row closing note A:B"]
+  }
+}

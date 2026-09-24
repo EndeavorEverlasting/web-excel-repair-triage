@@ -1,0 +1,11 @@
+{
+  "schema_version": "prompt-kit-layout-capabilities/v1",
+  "capabilities": [
+    {
+      "id": "prompt-kit-responsive-layout-audit",
+      "inputs": ["viewport", "affected_elements", "observed_collision", "prompt_kit_commit_or_version"],
+      "outputs": ["collision_classification", "required_validation", "proof_ceiling", "handoff_gate"],
+      "skill": ".ai/skills/prompt-kit-responsive-layout/SKILL.md"
+    }
+  ]
+}

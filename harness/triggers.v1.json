@@ -1,0 +1,255 @@
+{
+  "schema_version": "web-excel-triggers/v1",
+  "triggers": [
+    {
+      "id": "prompt-language-change",
+      "capability_id": "prompt-language-audit",
+      "skill": ".ai/skills/prompt-language-audit/SKILL.md",
+      "workflow": "WORKFLOW.md#f-prompt-language-audit-or-repair",
+      "conditions": [
+        "prompt registry changes",
+        "actionability policy changes",
+        "Prompt Kit builder changes",
+        "generated Prompt Kit language changes",
+        "full prompt-language pass requested"
+      ],
+      "forbidden_conditions": [
+        "no canonical registry source",
+        "generated HTML is the only proposed mutation target"
+      ]
+    },
+    {
+      "id": "lazy-next-action-report",
+      "capability_id": "prompt-language-audit",
+      "skill": ".ai/skills/prompt-language-audit/SKILL.md",
+      "workflow": "WORKFLOW.md#f-prompt-language-audit-or-repair",
+      "conditions": [
+        "empty next action",
+        "placeholder next action",
+        "PR/status/log-only next action",
+        "generic next steps",
+        "optional-only next action"
+      ],
+      "forbidden_conditions": [
+        "request is only to display an existing validated audit report"
+      ]
+    },
+    {
+      "id": "skill-quality-unproven",
+      "capability_id": "skill-evaluation",
+      "skill": ".ai/skills/skill-evaluation/SKILL.md",
+      "workflow": "WORKFLOW.md#g-skill-evaluation-build",
+      "conditions": [
+        "skill correctness is unproven",
+        "routing quality is unproven",
+        "regression safety is unproven",
+        "performance or token use is unmeasured",
+        "known skill weakness lacks a reproducer",
+        "prompt strengthening sprint needs executable proof rather than prose-only confidence",
+        "strengthened Prompt Kit execution behavior needs runtime-compliance evaluation",
+        "prompt execution-boundary, continuation, proof-state, or regression behavior is unproven"
+      ],
+      "forbidden_conditions": [
+        "request is only cosmetic skill wording",
+        "target skill or owning repository is unknown",
+        "canonical prompt wording or shared policy still needs mutation before an evaluable strengthened candidate exists; route prompt-language-change first, then return for runtime proof"
+      ],
+      "intent_aliases": [
+        "prompt strengthening sprint",
+        "prove strengthened Prompt Kit execution behavior",
+        "runtime compliance for Prompt Kit execution contracts",
+        "verify prompt execution-boundary continuation proof-state and regression behavior"
+      ],
+      "use_case_ids": [
+        "prompt-strengthening-runtime-compliance"
+      ]
+    },
+    {
+      "id": "skill-boundary-defect",
+      "capability_id": "skill-factoring",
+      "skill": ".ai/skills/skill-factoring/SKILL.md",
+      "workflow": "WORKFLOW.md#c-harness-infrastructure-change",
+      "conditions": [
+        "oversized skill",
+        "overlapping skill ownership",
+        "ambiguous trigger",
+        "deterministic behavior hidden in prose"
+      ],
+      "forbidden_conditions": [
+        "healthy boundary with cosmetic-only change"
+      ]
+    },
+    {
+      "id": "technician-needs-latest-prompt-kit",
+      "capability_id": "technician-prompt-kit-acquisition",
+      "skill": ".ai/skills/technician-prompt-kit-acquisition/SKILL.md",
+      "workflow": "WORKFLOW.md#a-technician-acquisition-or-update",
+      "conditions": [
+        "user wants to open or use the Prompt Kit in a browser",
+        "phone or tablet user wants to open, install, or Add to Home Screen",
+        "Windows user wants the stable local Prompt Kit app",
+        "user wants an editable local checkout to edit, commit, push, or run repository tooling",
+        "user explicitly wants a source ZIP snapshot without Git"
+      ],
+      "forbidden_conditions": [
+        "destructive Git cleanup is proposed",
+        "credential embedding or authentication automation is requested",
+        "an editable checkout update is requested while that checkout is dirty, divergent, non-main, or has an unexpected origin",
+        "the request is a Prompt Kit product behavior change rather than acquisition or access"
+      ]
+    },
+    {
+      "id": "harness-infrastructure-change",
+      "capability_id": "harness-infrastructure-maintenance",
+      "skill": ".ai/skills/harness-infrastructure-maintenance/SKILL.md",
+      "workflow": "WORKFLOW.md#c-harness-infrastructure-change",
+      "conditions": [
+        "codebase map is missing or stale",
+        "workflow selection is ambiguous",
+        "artifact, validator, capability, trigger, or component registry drift exists",
+        "hook validates the wrong Git surface",
+        "harness completeness check is missing or failing",
+        "operator report is stale or incomplete",
+        "a PR integration failure reveals missing or incorrect merge-gate harness behavior",
+        "an agent labels a green mergeable authorized PR as a blocker or routes normal consumers to a feature branch after merge",
+        "an agent stops at a material or arbitrary boundary instead of continuing the requested outcome through a bounded recovery sprint",
+        "execution-boundary intent-to-implementation or implementation-to-owner routing is missing, stale, or ambiguous"
+      ],
+      "forbidden_conditions": [
+        "request changes AGENTS.md governance",
+        "request is product implementation only",
+        "request requires secrets or destructive cleanup"
+      ],
+      "intent_aliases": [
+        "agents stop at arbitrary boundaries instead of continuing",
+        "turn arbitrary boundaries into bounded sprints",
+        "why did the agent stop without reporting the boundary",
+        "classification became a stopping condition"
+      ],
+      "use_case_ids": [
+        "execution-boundary-continuation"
+      ]
+    },
+    {
+      "id": "prompt-kit-browser-proof-temp-path",
+      "capability_id": "prompt-kit-browser-proof-scratch-cleanup",
+      "skill": ".ai/skills/prompt-kit-browser-proof-cleanup/SKILL.md",
+      "workflow": "WORKFLOW.md#h-prompt-kit-browser-proof-scratch-cleanup",
+      "conditions": [
+        "operator supplies a prompt-kit-browser-proof-* path under the OS temp directory",
+        "operator asks to classify or clear detached Prompt Kit browser-proof scratch copies"
+      ],
+      "forbidden_conditions": [
+        "broad OS temp cleanup is requested",
+        "browser profile/localStorage/Favorites deletion is the actual request",
+        "target is a canonical repository checkout or durable Outputs evidence"
+      ]
+    },
+    {
+      "id": "prompt-kit-responsive-overlap",
+      "capability_id": "prompt-kit-responsive-layout",
+      "skill": ".ai/skills/prompt-kit-responsive-layout/SKILL.md",
+      "workflow": "WORKFLOW.md#c-harness-infrastructure-change",
+      "conditions": [
+        "Prompt Kit header, brand, search, filter, or navigation controls overlap",
+        "responsive header regression is reported across viewport widths",
+        "strict browser no-overlap proof is requested"
+      ],
+      "forbidden_conditions": [
+        "request is unrelated to Prompt Kit layout",
+        "browser geometry is claimed from static source assertions alone"
+      ]
+    },
+    {
+      "id": "prompt-kit-actionable-feedback",
+      "capability_id": "prompt-kit-feedback-afk-routing",
+      "skill": ".ai/skills/prompt-kit-feedback-afk-routing/SKILL.md",
+      "workflow": "WORKFLOW.md#i-prompt-kit-feedback-afk-routing",
+      "conditions": [
+        "accepted Prompt Kit written feedback requires follow-through",
+        "accepted Prompt Kit dislike vote requires follow-through",
+        "an accepted privacy-bounded Operant friction receipt crosses the contract actionability floor",
+        "a sanitized prompt-kit-feedback provider wakeup maps to an unconsumed local actionable signal"
+      ],
+      "forbidden_conditions": [
+        "signal is only a like or raw usage observation that has not been transformed by P99 into an accepted friction receipt",
+        "signal contains raw session or navigation history, search or typed content, user identity, URLs or referrers, clipboard content, or prompt bodies",
+        "signal is malformed, sensitive, unknown, or already consumed",
+        "the next action is only PR promotion or merge; route that gate to P105/pr-floor-integration",
+        "routing would require a second polling scheduler"
+      ]
+    },
+    {
+      "id": "repository-hook-installation-needed",
+      "capability_id": "repository-hook-integration",
+      "skill": ".ai/skills/repository-hook-integration/SKILL.md",
+      "workflow": "WORKFLOW.md#c-harness-infrastructure-change",
+      "conditions": [
+        "tracked repository hooks exist but are not activated or verified",
+        "pre-commit or pre-push enforcement needs installation",
+        "existing Git hook ownership must be reconciled before adding an agent/provider hook",
+        "a Claude, Codex, DeepSeek Harness, Husky, Lefthook, or other hook donor must be adapted without replacing repository authority"
+      ],
+      "forbidden_conditions": [
+        "global Git hook configuration would be changed",
+        "linked worktrees make shared core.hooksPath mutation ambiguous",
+        "an existing different hooksPath or default hook would be overwritten without reviewed replacement intent",
+        "provider-specific hook behavior is being claimed without its own runtime proof"
+      ]
+    },
+    {
+      "id": "operant-external-resource-refresh-needed",
+      "capability_id": "operant-external-resource-intake",
+      "skill": ".ai/skills/operant-external-resource-intake/SKILL.md",
+      "workflow": "WORKFLOW.md#c-harness-infrastructure-change",
+      "conditions": [
+        "approved donor repository resource inventory may have changed",
+        "scheduled Operant external-resource drift proof fails",
+        "user asks whether an existing open-source skill/resource already covers a task",
+        "prompt-gap maintenance needs current donor evidence"
+      ],
+      "forbidden_conditions": [
+        "donor content would be copied into PROMPTS merely for search",
+        "scheduled automation would write directly to the default branch",
+        "private or credentialed donor access is required",
+        "prompt addition would occur without P79 strategic strengthen-before-add review"
+      ]
+    },
+    {
+      "id": "prompt-semantic-lifecycle-change",
+      "capability_id": "prompt-semantic-coverage",
+      "skill": ".ai/skills/prompt-semantic-coverage/SKILL.md",
+      "workflow": "WORKFLOW.md#j-prompt-semantic-coverage",
+      "conditions": [
+        "canonical prompt body added, edited, or removed",
+        "prompt semantic migration changes",
+        "profile, catalog, or migration file changes",
+        "retirement or admission requested",
+        "P79 ADD/EDIT/RETIRE operation"
+      ],
+      "forbidden_conditions": [
+        "generated-site-only rebuild",
+        "documentation-only change",
+        "runtime observation with no canonical prompt mutation",
+        "unrelated registry metadata presentation changes proven semantically inert"
+      ]
+    },
+    {
+      "id": "repo-native-generated-surface-drift",
+      "capability_id": "repo-native-update",
+      "skill": ".ai/skills/repo-native-update/SKILL.md",
+      "workflow": "WORKFLOW.md#c-harness-infrastructure-change",
+      "conditions": [
+        "canonical repo-native-update input or contract changed",
+        "generated canary surface needs refresh from pinned JSON",
+        "operator needs local Actions-free codegen proof"
+      ],
+      "forbidden_conditions": [
+        "hand-editing harness/repo-native-update/generated/ instead of regenerating",
+        "adding a new GitHub Actions workflow solely to run this generator",
+        "writing undeclared paths or forbidden prefixes",
+        "auto-committing generated output in a recursive bot loop"
+      ]
+    }
+  ]
+}

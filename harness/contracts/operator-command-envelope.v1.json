@@ -1,0 +1,51 @@
+{
+  "schema_version": "operator-command-envelope/v1",
+  "contract_id": "operator-command-envelope",
+  "prompt_surface": "standard-ai",
+  "mission": "Make operator-facing next commands copy-safe, location-safe, non-destructive, and terminal-preserving.",
+  "failure_classes": {
+    "OC001": "person_specific_path",
+    "OC002": "markdown_link_in_command",
+    "OC003": "interactive_shell_exit",
+    "OC004": "git_before_directory_gate",
+    "OC005": "remote_work_not_pinned",
+    "OC006": "dirty_work_not_preserved",
+    "OC007": "canonical_artifact_not_resolved",
+    "OC008": "failure_not_propagated"
+  },
+  "requirements": {
+    "repository_location": [
+      "Never assume a remembered machine-local path or user profile name.",
+      "When the current repository root is not proven in the current shell, use an isolated checkout under an environment-derived root such as LOCALAPPDATA or TEMP.",
+      "Verify canonical origin before treating an existing checkout as this repository."
+    ],
+    "copy_safety": [
+      "PowerShell intended for direct paste must not contain Markdown hyperlink syntax.",
+      "Avoid raw auto-linkable URLs in chat-delivered PowerShell when a repository slug or split string can express the same target.",
+      "Do not use a top-level exit statement in an interactive PowerShell command envelope."
+    ],
+    "remote_pin": [
+      "Fetch without force.",
+      "Verify the intended remote branch resolves to the exact expected 40-character commit before checkout or validation.",
+      "Use detached checkout or an isolated worktree/clone for unmerged proof."
+    ],
+    "preservation": [
+      "Refuse dirty proof checkouts instead of resetting, cleaning, stashing, or overwriting them.",
+      "Never discard a separately owned primary checkout merely to run validation."
+    ],
+    "artifact_resolution": [
+      "Resolve the canonical artifact by artifact ID through harness/artifacts.v1.json.",
+      "Print or open the resolved artifact only after the owning validator succeeds."
+    ],
+    "failure_behavior": [
+      "Set ErrorActionPreference to Stop for PowerShell proof scripts.",
+      "Convert nonzero native process results into terminating errors without closing the operator terminal."
+    ]
+  },
+  "canonical_template": "harness/templates/Invoke-RemoteHarnessProof.ps1",
+  "fixtures": "harness/evals/fixtures/operator-command-cases.v1.json",
+  "validator": "scripts/validate_operator_command_envelope.py",
+  "tests": "tests/test_operator_command_envelope.py",
+  "canonical_artifact_id": "harness-completeness-report",
+  "proof_ceiling": "Static command-shape, fixture, repository integration, and executed validation proof. It does not prove the operator machine has network access, GitHub authentication, Python, or the target runtime."
+}

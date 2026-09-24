@@ -1,0 +1,22 @@
+{
+  "formula_substrings": [
+    "AND($A3<>\"\",$B3=\"\")",
+    "OR($C3=\"\",$D3=\"\")",
+    "MOD($D3-$C3,1)*24>=12",
+    "MOD($D3-$C3,1)*24>8,MOD($D3-$C3,1)*24<12",
+    "SEARCH(\"PTO\"",
+    "SEARCH(\"OUT SICK\"",
+    "SEARCH(\"CASR\"",
+    "SEARCH(\"DAY OFF\"",
+    "SEARCH(\"/\",C3)"
+  ],
+  "rule_intents": [
+    "missing_default_project",
+    "missing_punch_pair",
+    "long_shift",
+    "ot_shift",
+    "partial_shift",
+    "pto_accepted",
+    "note_bearing_punch"
+  ]
+}

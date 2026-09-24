@@ -1,0 +1,538 @@
+from __future__ import annotations
+
+import json
+import sys
+import unittest
+from pathlib import Path
+
+REPO_ROOT = Path(__file__).resolve().parents[1]
+SCRIPTS = REPO_ROOT / "scripts"
+if str(SCRIPTS) not in sys.path:
+    sys.path.insert(0, str(SCRIPTS))
+
+import build_prompt_kit_registry
+
+
+class ActionablePromptRegistryTests(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls) -> None:
+        cls.policy_path = (
+            REPO_ROOT
+            / "registry"
+            / "prompts"
+            / "actionable-next-step-policy.v1.json"
+        )
+        cls.policy = json.loads(cls.policy_path.read_text(encoding="utf-8"))
+        cls.prompts = build_prompt_kit_registry.load_prompt_registry()
+        cls.prompt_kit_prompts = build_prompt_kit_registry.load_prompt_kit_registry()
+
+    def test_policy_is_tracked_and_complete(self) -> None:
+        self.assertTrue(self.policy_path.is_file())
+        self.assertEqual(
+            self.policy["schema_version"], "prompt-next-action-policy/v1"
+        )
+        self.assertEqual(
+            self.policy["policy_id"], "actionable-next-command/v1"
+        )
+        self.assertEqual(
+            self.policy["allowed_none_value"],
+            "none; no safe actionable work remains",
+        )
+        for phrase in (
+            "ACTIONABLE NEXT COMMAND AND NEXT STEPS CONTRACT",
+            "Do not leave NEXT COMMAND, NEXT ACTION, NEXT STEP, or NEXT STEPS blank",
+            "Advance the work into the next useful unproven state",
+            "opening or reopening a PR",
+            "fetches without force",
+            "verifies the exact branch and commit",
+            "preserves dirty or separately owned work",
+            "runs the owning validator, build, or launcher",
+            "resolves the canonical artifact",
+            "opens or prints that artifact",
+            "propagates every nonzero exit code",
+            "When no artifact exists yet",
+            "A NEXT STEPS list must be ordered, dependency-aware, owner-assigned, executable, and specific",
+            "none; no safe actionable work remains",
+        ):
+            self.assertIn(phrase, self.policy["copy_content_appendix"])
+
+    def test_boundary_continuation_subpolicy_reaches_every_prompt(self) -> None:
+        policy = self.policy
+        self.assertEqual(
+            policy["boundary_sprint_policy_id"],
+            "boundary-to-sprint-continuation/v1",
+        )
+        self.assertEqual(
+            policy["boundary_sprint_marker"],
+            "BOUNDARY-TO-SPRINT CONTINUATION CONTRACT",
+        )
+        for phrase in (
+            "sprint eligibility",
+            "first safe progress-bearing action",
+            "What boundary am I treating as terminal?",
+        ):
+            self.assertIn(phrase, policy["boundary_sprint_suffix"])
+
+        for prompt in self.prompt_kit_prompts:
+            with self.subTest(prompt=prompt["id"]):
+                content = prompt["copyContent"]
+                self.assertEqual(
+                    prompt["boundaryContinuationPolicy"],
+                    policy["boundary_sprint_policy_id"],
+                )
+                self.assertIn("BOUNDARY-TO-SPRINT CONTINUATION", content)
+                self.assertIn("sprint eligibility", content.lower())
+                self.assertIn("first safe progress-bearing action", content.lower())
+
+        by_id = {prompt["id"]: prompt for prompt in self.prompt_kit_prompts}
+        for prompt_id in ("P72", "P73"):
+            with self.subTest(content_only_prompt=prompt_id):
+                prompt = by_id[prompt_id]
+                self.assertEqual(
+                    prompt["actionabilityPolicy"],
+                    "not-applicable:content-only",
+                )
+                self.assertIn(policy["boundary_sprint_marker"], prompt["copyContent"])
+                self.assertNotIn(policy["marker"], prompt["copyContent"])
+
+
+    def test_compute_authority_and_end_state_contract_horizon_are_global_policy(self) -> None:
+        appendix = self.policy["copy_content_appendix"]
+        for phrase in (
+            "COMPUTE AUTHORITY / SCOPE-BOUNDARY CONTRACT",
+            "bounded sprint limits mutation ownership and blast radius",
+            "use as much safe available compute as is materially useful",
+            "EXHAUSTIVE AVAILABLE COMPUTE RULE",
+            "Treat exhaustive available compute as authorized by default",
+            "Exhaust the decision-relevant safe compute available",
+            "Do not conserve tokens, tool calls, context windows",
+            "fixed point is evidence-defined, not attempt-count-defined",
+            "dispatch them immediately and execute them concurrently",
+            "residual-compute sweep",
+            "first PASS as a checkpoint",
+            "Broad compute authority never expands safety or mutation authority",
+            "END-STATE CONTRACT HORIZON",
+            "implementation/behavior",
+            "operator/user acceptance",
+            "durability/automation/observability",
+            "The contract horizon is broader than mutation authority",
+            "LOCAL PROMPT CONTRACT CLOSED",
+            "WHOLE OUTCOME CONTRACT CLOSED",
+            "CONTRACT HORIZON",
+        ):
+            self.assertIn(phrase, appendix)
+
+        self.assertIn(
+            "A bounded sprint limits mutation scope, not useful compute volume",
+            self.policy["next_step_suffix"],
+        )
+        self.assertIn(
+            "Treat exhaustive available compute as authorized by default",
+            self.policy["next_step_suffix"],
+        )
+        self.assertIn(
+            "stop only at an evidence-defined fixed point or exact ceiling/blocker",
+            self.policy["next_step_suffix"],
+        )
+        by_id = {prompt["id"]: prompt for prompt in self.prompts}
+        self.assertIn("COMPUTE AUTHORITY / SCOPE-BOUNDARY CONTRACT", by_id["P08"]["copyContent"])
+        self.assertIn("END-STATE CONTRACT HORIZON", by_id["P08"]["copyContent"])
+
+    def test_non_progress_quiescence_contract_prevents_proof_treadmills(self) -> None:
+        appendix = self.policy["copy_content_appendix"]
+        for phrase in (
+            "NON-PROGRESS / QUIESCENCE CONTRACT",
+            "Safe and executable is necessary but not sufficient for continuation",
+            "Remaining work must also be progress-bearing",
+            "Repository HEAD movement alone does not invalidate evidence",
+            "proof-relevant implementation, contract, schema, dependency, launcher, validator, environment assumption, or target",
+            "documentation, ledger, citation, timestamp, or proof-SHA-only mutation",
+            "MUST NOT trigger another runtime proof",
+            "quiescent BLOCKED state",
+            "proof-relevance fingerprint",
+            "PROOF-RELEVANCE FINGERPRINT",
+            "canonical ordered set of identity/revision pairs",
+            "Persist that set in the proof, receipt, or ledger",
+            "freshness is UNKNOWN",
+            "Two consecutive materially identical blocker observations",
+            "must not create work merely to satisfy a continuation rule",
+            "not bookkeeping churn",
+        ):
+            self.assertIn(phrase, appendix)
+
+        suffix = self.policy["next_step_suffix"]
+        self.assertNotIn("when safe executable work remains", suffix)
+        self.assertNotIn("Any SAFE & EXECUTABLE item disproves", suffix)
+        self.assertIn("safe, executable, progress-bearing work remains", suffix)
+        self.assertIn("SAFE & EXECUTABLE item that is progress-bearing", suffix)
+
+        for phrase in (
+            "the next action must be progress-bearing",
+            "Repository HEAD movement alone does not invalidate proof",
+            "unchanged proof-relevance fingerprint",
+            "quiesce rather than creating citation-only, ledger-only, or bookkeeping work",
+        ):
+            self.assertIn(phrase, suffix)
+
+        forbidden = "\n".join(self.policy["forbidden_solo_actions"])
+        self.assertIn("only purpose is to refresh an otherwise-valid proof citation", forbidden)
+        self.assertIn("repeat the same external blocker or runtime proof", forbidden)
+
+        by_id = {prompt["id"]: prompt for prompt in self.prompts}
+        for prompt_id in ("P07", "P08", "P100"):
+            with self.subTest(prompt=prompt_id):
+                self.assertIn("NON-PROGRESS / QUIESCENCE CONTRACT", by_id[prompt_id]["copyContent"])
+                self.assertIn("progress-bearing", by_id[prompt_id]["nextStep"])
+
+    def test_conversation_artifact_continuity_is_global_and_reaches_prototyping(self) -> None:
+        marker = "CONVERSATION-TO-ARTIFACT CONTINUITY CONTRACT"
+        appendix = self.policy["copy_content_appendix"]
+        for phrase in (
+            marker,
+            "Materialize throughout the work at evidence-changing checkpoints",
+            "Reuse the smallest existing canonical owner",
+            "document, spreadsheet, database/provider record, or established workspace artifact",
+            "Persist distilled task-relevant truth, not a raw transcript",
+            "When the canonical durable home is a connected provider rather than Git",
+            "another competent agent continue without reconstructing the originating chat",
+            "artifactization must reduce drift, not fossilize stale truth",
+            "For prototypes, prefer executable seams plus focused tests, fixtures, traces, or receipts",
+            "classify durability as BLOCKED",
+            "Avoid artifact theater",
+            "A durable artifact must govern behavior, prove it, route continuation, or preserve a material decision",
+        ):
+            self.assertIn(phrase, appendix)
+
+        self.assertIn(
+            "materialize the distilled safe truth into the smallest existing canonical artifact",
+            self.policy["next_step_suffix"],
+        )
+
+        forbidden = "\n".join(self.policy["forbidden_solo_actions"])
+        for phrase in (
+            "leave accepted execution-relevant or reusable conversation state only in chat",
+            "copy raw chat transcripts, secrets, private content, hidden reasoning",
+            "create duplicate summaries, second sources of truth, or consumerless artifacts",
+        ):
+            self.assertIn(phrase, forbidden)
+
+        by_id = {prompt["id"]: prompt for prompt in self.prompts}
+        self.assertIn("P95", by_id)
+        for prompt_id, prompt in by_id.items():
+            with self.subTest(prompt=prompt_id):
+                self.assertIn(marker, prompt["copyContent"])
+        self.assertIn(marker, by_id["P95"]["copyContent"])
+        self.assertIn(
+            "For prototypes, prefer executable seams plus focused tests, fixtures, traces, or receipts",
+            by_id["P95"]["copyContent"],
+        )
+
+    def test_existing_work_and_pr_reuse_is_global_policy(self) -> None:
+        reuse = self.policy["existing_work_reuse"]
+        self.assertIn(
+            "Before creating a new branch or pull request",
+            reuse["rule"],
+        )
+        self.assertIn(
+            "current, open, and recent pull requests, branches, worktrees, and commits",
+            reuse["rule"],
+        )
+        self.assertIn(
+            "Reuse, repair, update, retarget, or extend the existing owner",
+            reuse["rule"],
+        )
+        allowed = "\n".join(reuse["new_pr_allowed_when"])
+        for phrase in (
+            "no suitable existing owner exists",
+            "unsafe, irreparably stale, or intentionally superseded",
+            "scope isolation requires a distinct writer",
+        ):
+            self.assertIn(phrase, allowed)
+        self.assertIn("preserve every unique useful commit", reuse["preservation_rule"])
+        self.assertIn("disposition", reuse["disposition_evidence"].lower())
+        self.assertIn("where any unique useful work was preserved", reuse["disposition_evidence"])
+
+    def test_combined_registry_applies_policy_to_every_prompt(self) -> None:
+        marker = self.policy["marker"]
+        suffix = self.policy["next_step_suffix"]
+        policy_id = self.policy["policy_id"]
+        self.assertGreater(len(self.prompts), 1)
+
+        for prompt in self.prompts:
+            with self.subTest(prompt=prompt["id"]):
+                self.assertEqual(prompt["actionabilityPolicy"], policy_id)
+                self.assertIn(marker, prompt["copyContent"])
+                self.assertIn("EXHAUSTIVE AVAILABLE COMPUTE RULE", prompt["copyContent"])
+                self.assertIn("Exhaust the decision-relevant safe compute available", prompt["copyContent"])
+                self.assertIn("dispatch them immediately and execute them concurrently", prompt["copyContent"])
+                self.assertIn(suffix, prompt["nextStep"])
+                self.assertTrue(prompt["nextStep"].strip())
+                self.assertTrue(prompt["copyContent"].strip())
+
+    def test_general_build_prompt_receives_the_actionability_contract(self) -> None:
+        by_id = {prompt["id"]: prompt for prompt in self.prompts}
+        p07 = by_id["P07"]
+        self.assertEqual(p07["name"], "Repo Sprint Executor")
+        self.assertIn(self.policy["marker"], p07["copyContent"])
+        self.assertIn("first executable", p07["copyContent"])
+        self.assertIn("canonical artifact", p07["copyContent"])
+        self.assertIn("PR, status, branch, or log inspection alone is invalid", p07["nextStep"])
+
+    def test_p50_executes_directory_gate_without_absorbing_p07(self) -> None:
+        raw_prompts = json.loads(
+            (REPO_ROOT / "docs" / "prompts.json").read_text(encoding="utf-8")
+        )
+        raw_p50 = next(prompt for prompt in raw_prompts if prompt["id"] == "P50")
+        effective_p50 = {prompt["id"]: prompt for prompt in self.prompts}["P50"]
+
+        self.assertEqual(raw_p50["name"], "Directory-First Repository Command Guard")
+        self.assertEqual(raw_p50["type"], "ANALYZE + DIRECTORY")
+        self.assertEqual(raw_p50["class"], "STANDARD AI / LOCAL-FIRST REPOSITORY INTAKE")
+        self.assertEqual(raw_p50["copySheet"], "P50_COPY_SAFE")
+        self.assertEqual(raw_p50["category"], "standard")
+
+        for phrase in (
+            "EXECUTE THE DIRECTORY GATE YOURSELF",
+            "Do not merely print directory or verification commands",
+            "execute the first safe repository-backed step that advances `xyz_task`",
+            "asking for a genuinely user-only fact",
+            "a plausible path is not proof",
+        ):
+            self.assertIn(phrase, raw_p50["copyContent"])
+
+        self.assertNotIn(self.policy["marker"], raw_p50["copyContent"])
+        self.assertIn(self.policy["marker"], effective_p50["copyContent"])
+        for donor_role in (
+            "ITERATIVE SPRINT FIXED-POINT",
+            "MAINLINE CONVERGENCE",
+            "merge the exact validated head",
+        ):
+            self.assertNotIn(donor_role, raw_p50["copyContent"])
+        self.assertLessEqual(len(raw_p50["copyContent"]), 2200)
+
+    def test_p34_preserves_terminal_evidence_without_hanging_automation(self) -> None:
+        raw_prompts = json.loads(
+            (REPO_ROOT / "docs" / "prompts.json").read_text(encoding="utf-8")
+        )
+        raw_p34 = next(prompt for prompt in raw_prompts if prompt["id"] == "P34")
+        effective_p34 = {prompt["id"]: prompt for prompt in self.prompts}["P34"]
+
+        self.assertEqual(raw_p34["name"], "GNHF Technician Experience")
+        self.assertEqual(raw_p34["type"], "ENABLEMENT + BUILD")
+        self.assertEqual(raw_p34["class"], "GNHF / TECHNICIAN UX")
+        self.assertEqual(raw_p34["copySheet"], "P34_COPY_SAFE")
+        self.assertEqual(raw_p34["category"], "gnhf")
+
+        for phrase in (
+            "TERMINAL SURVIVAL + EVIDENCE PERSISTENCE",
+            "keep the terminal/window open after BOTH success and failure",
+            "OUTER HUMAN LAUNCHER",
+            "Noninteractive execution must fail nonzero rather than waiting for input",
+            "real exit status",
+            "durable log path",
+            "noninteractive runs never hang",
+            "PowerShell or Bash launcher",
+        ):
+            self.assertIn(phrase, raw_p34["copyContent"])
+
+        self.assertIn("spawned/double-click", raw_p34["inspectFirst"])
+        self.assertIn("original exit status is preserved", raw_p34["proofGate"])
+        self.assertIn("terminal stays open", raw_p34["keywords"])
+        self.assertIn("persistent logs", raw_p34["keywords"])
+        self.assertNotIn(self.policy["marker"], raw_p34["copyContent"])
+        self.assertIn(self.policy["marker"], effective_p34["copyContent"])
+        self.assertNotIn("REMOTE FRESHNESS / BRANCH FLOOR CONTRACT", raw_p34["copyContent"])
+        self.assertLessEqual(len(raw_p34["copyContent"]), 4200)
+
+    def test_boundary_continuation_application_is_idempotent(self) -> None:
+        sample = {
+            "id": "PX",
+            "nextStep": "Produce the requested artifact.",
+            "copyContent": "Complete the requested transformation.",
+        }
+        once = build_prompt_kit_registry.apply_boundary_sprint_policy(
+            sample, self.policy
+        )
+        twice = build_prompt_kit_registry.apply_boundary_sprint_policy(
+            once, self.policy
+        )
+        self.assertEqual(once, twice)
+        self.assertEqual(
+            once["boundaryContinuationPolicy"],
+            self.policy["boundary_sprint_policy_id"],
+        )
+        self.assertEqual(
+            once["copyContent"].count(self.policy["boundary_sprint_marker"]),
+            1,
+        )
+
+
+    def test_policy_rejects_an_empty_next_step(self) -> None:
+        sample = {
+            "id": "PX",
+            "nextStep": "   ",
+            "copyContent": "Perform the bounded work.",
+        }
+        with self.assertRaisesRegex(SystemExit, "empty nextStep"):
+            build_prompt_kit_registry.apply_actionability_policy(sample, self.policy)
+
+    def test_policy_rejects_empty_copy_content(self) -> None:
+        sample = {
+            "id": "PX",
+            "nextStep": "Run the owning validator.",
+            "copyContent": "   ",
+        }
+        with self.assertRaisesRegex(SystemExit, "empty copyContent"):
+            build_prompt_kit_registry.apply_actionability_policy(sample, self.policy)
+
+    def test_policy_application_is_idempotent(self) -> None:
+        sample = {
+            "id": "PX",
+            "nextStep": "Build and open the canonical artifact.",
+            "copyContent": "Perform the bounded work.",
+        }
+        once = build_prompt_kit_registry.apply_actionability_policy(sample, self.policy)
+        twice = build_prompt_kit_registry.apply_actionability_policy(once, self.policy)
+        self.assertEqual(once, twice)
+        self.assertEqual(once["copyContent"].count(self.policy["marker"]), 1)
+        self.assertEqual(
+            once["nextStep"].count(self.policy["next_step_suffix"]), 1
+        )
+
+    def test_stale_appendix_refresh_ignores_mutated_first_bullet(self) -> None:
+        marker = self.policy["marker"]
+        sample = {
+            "id": "PX",
+            "nextStep": "Run the owning validator.",
+            "copyContent": (
+                "Perform the bounded work.\n\n"
+                f"{marker}\n"
+                "- STALE MUTATED FIRST BULLET\n"
+                "- Unconditional stale implementation text."
+            ),
+        }
+        refreshed = build_prompt_kit_registry.apply_actionability_policy(
+            sample, self.policy
+        )
+        content = refreshed["copyContent"]
+        self.assertEqual(content.count(marker), 1)
+        self.assertNotIn("STALE MUTATED FIRST BULLET", content)
+        self.assertNotIn("Unconditional stale implementation text.", content)
+        self.assertIn(self.policy["disposition_marker"], content)
+
+    def test_disposition_tail_guard_is_idempotent_and_terminal(self) -> None:
+        sample = {
+            "id": "PX",
+            "nextStep": "Run the owning validator.",
+            "copyContent": "Perform the bounded work.",
+        }
+        sample = build_prompt_kit_registry.apply_actionability_policy(sample, self.policy)
+        sample = build_prompt_kit_registry.apply_boundary_sprint_policy(sample, self.policy)
+        once = build_prompt_kit_registry.apply_disposition_tail_guard(sample, self.policy)
+        twice = build_prompt_kit_registry.apply_disposition_tail_guard(once, self.policy)
+        self.assertEqual(once, twice)
+        self.assertEqual(
+            once["copyContent"].count(self.policy["disposition_tail_marker"]), 1
+        )
+        self.assertTrue(
+            once["copyContent"].rstrip().endswith(
+                self.policy["disposition_tail_guard"].strip()
+            )
+        )
+
+    def test_forbidden_solo_actions_cover_lazy_completion_patterns(self) -> None:
+        joined = "\n".join(self.policy["forbidden_solo_actions"]).lower()
+        for phrase in (
+            "pull request",
+            "suitable existing owner",
+            "reused, repaired, updated, retargeted, or extended",
+            "status",
+            "branches or commits",
+            "logs",
+            "wait or continue later",
+            "ask for permission",
+            "repeat an artifact path",
+            "generic verbs",
+            "owner, command, dependency, artifact, and proof gate",
+        ):
+            self.assertIn(phrase, joined)
+
+    def test_explicit_disposition_precedence_limits_global_continuation(self) -> None:
+        marker = "DISPOSITION / MODE PRECEDENCE CONTRACT"
+        tail_marker = "FINAL DISPOSITION AUTHORIZATION GUARD"
+        self.assertEqual(self.policy["disposition_marker"], marker)
+        self.assertEqual(self.policy["disposition_tail_marker"], tail_marker)
+        contract = self.policy["disposition_precedence"]
+        self.assertIn("authorization boundary", contract["rule"])
+        self.assertIn("P02 specifically", contract["p02_rule"])
+        self.assertIn("checkpoint or handoff persistence", contract["closeout_rule"])
+
+        appendix = self.policy["copy_content_appendix"]
+        suffix = self.policy["next_step_suffix"]
+        for phrase in (
+            marker,
+            "MUST NOT promote a non-execution disposition into implementation",
+            "Resolve the active disposition before applying generic continuation language",
+            "For P02 specifically, ORIENT and SUMMARIZE do not authorize repository implementation",
+            "A later shared suffix does not override an earlier explicit disposition boundary",
+        ):
+            self.assertIn(phrase, appendix)
+        self.assertIn("MUST NOT promote an ORIENT/SUMMARIZE/CLOSEOUT-style disposition into implementation", suffix)
+
+        for prompt in self.prompts:
+            with self.subTest(prompt=prompt["id"]):
+                content = prompt["copyContent"]
+                self.assertEqual(content.count(marker), 1)
+                self.assertEqual(content.count(tail_marker), 1)
+                self.assertTrue(
+                    content.rstrip().endswith(
+                        self.policy["disposition_tail_guard"].strip()
+                    )
+                )
+
+        p02 = {prompt["id"]: prompt for prompt in self.prompts}["P02"]["copyContent"]
+        tail_index = p02.rfind(tail_marker)
+        self.assertGreater(tail_index, p02.index("MODE: AUTO | ORIENT | SUMMARIZE | CLOSEOUT | CONTINUE"))
+        for shared_heading in (
+            "GREEN BRANCH INTEGRATION CONTRACT",
+            "EXHAUSTIVE AVAILABLE COMPUTE RULE",
+            "EXECUTION BOUNDARY ACCOUNTABILITY CONTRACT",
+            "BOUNDARY-TO-SPRINT CONTINUATION",
+        ):
+            self.assertGreaterEqual(p02.rfind(shared_heading), 0)
+            self.assertLess(p02.rfind(shared_heading), tail_index)
+
+    def test_execution_brief_contract_is_global_for_operational_prompts(self) -> None:
+        marker = "EXECUTION BRIEF / SOURCE / DONE / SELF-CHECK CONTRACT"
+        appendix = self.policy["copy_content_appendix"]
+        for phrase in (
+            marker,
+            "ROLE: Operate as the senior practitioner and execution owner",
+            "WHERE TO LOOK: Start with explicit source, repository, context, plan, artifact, or path inputs",
+            "DEFINITION OF DONE: Before mutation",
+            "SELF-CHECK: Before any completion claim",
+            "verify every material factual or quantitative claim",
+            "Flag unsupported or stale claims",
+        ):
+            self.assertIn(phrase, appendix)
+        for prompt in self.prompts:
+            with self.subTest(prompt=prompt["id"]):
+                self.assertIn(marker, prompt["copyContent"])
+
+    def test_p07_carries_direct_execution_brief_for_raw_consumers(self) -> None:
+        raw_prompts = json.loads((REPO_ROOT / "docs" / "prompts.json").read_text(encoding="utf-8"))
+        p07 = next(prompt for prompt in raw_prompts if prompt["id"] == "P07")
+        for phrase in (
+            "EXECUTION BRIEF / EVIDENCE BINDING",
+            "senior repository execution engineer/coordinator",
+            "WHERE TO LOOK: Start with `Context or plan path`",
+            "DEFINITION OF DONE: Before mutation",
+            "SELF-CHECK: Before claiming completion",
+            "Unsupported items are UNKNOWN or blockers",
+        ):
+            self.assertIn(phrase, p07["copyContent"])
+        self.assertIn("current/open/recent overlapping branches and PRs", p07["inspectFirst"])
+        self.assertIn("fixed point", p07["proofGate"])
+
+if __name__ == "__main__":
+    unittest.main()

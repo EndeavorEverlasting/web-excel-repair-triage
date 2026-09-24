@@ -1,0 +1,32 @@
+name: Package static analysis skill contracts
+
+permissions:
+  contents: read
+
+on:
+  pull_request:
+    paths:
+      - '.claude/skills/package-static-analysis/**'
+      - 'docs/PACKAGE_STATIC_ANALYSIS_ADOPTION.md'
+      - 'tests/test_package_static_analysis_skill_contract.py'
+      - '.github/workflows/package-static-analysis-skill.yml'
+  push:
+    branches: [main]
+    paths:
+      - '.claude/skills/package-static-analysis/**'
+      - 'docs/PACKAGE_STATIC_ANALYSIS_ADOPTION.md'
+      - 'tests/test_package_static_analysis_skill_contract.py'
+      - '.github/workflows/package-static-analysis-skill.yml'
+
+jobs:
+  contracts:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: python -m pip install pytest
+      - run: python -m pytest tests/test_package_static_analysis_skill_contract.py -q

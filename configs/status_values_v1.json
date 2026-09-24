@@ -1,0 +1,27 @@
+{
+  "schema_version": "status_values_v1",
+  "review_status": {
+    "resolved_green": [
+      "Done",
+      "Confirmed Valid",
+      "Addressed",
+      "Resolved"
+    ],
+    "skipped_gray": [
+      "Skipped/Gray",
+      "Gray/Skip"
+    ],
+    "active_review": [
+      "Needs Review",
+      "Open",
+      ""
+    ]
+  },
+  "work_queue_status": {
+    "blocker": ["BLOCKER", "RED"],
+    "amber": ["AMBER", "PARTIAL"],
+    "purple": ["RICH_GUARD", "PURPLE"],
+    "blue": ["ROSTER", "BLUE"]
+  },
+  "column_a_wins_before_queue_cf": true
+}

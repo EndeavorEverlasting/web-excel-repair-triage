@@ -1,0 +1,51 @@
+{
+  "schema_version": "ai-engineering-level-up-tutorial/v1",
+  "tutorial_id": "ai-engineering-repository-level-up",
+  "title": "Production AI Engineering: Five Repository Level-Up Tracks",
+  "modules": [
+    {
+      "order": 1,
+      "prompt_id": "P67",
+      "slug": "evals",
+      "path": "docs/tutorials/ai-engineering-level-up/01-evals.md",
+      "completion_gate": "A representative eval suite fails on a known bad case and passes on the current intended behavior."
+    },
+    {
+      "order": 2,
+      "prompt_id": "P68",
+      "slug": "context-engineering",
+      "path": "docs/tutorials/ai-engineering-level-up/02-context-engineering.md",
+      "completion_gate": "Context selection is mapped, measured, and regression-tested; unnecessary always-loaded context is reduced without quality loss."
+    },
+    {
+      "order": 3,
+      "prompt_id": "P69",
+      "slug": "production-agents",
+      "path": "docs/tutorials/ai-engineering-level-up/03-production-agents.md",
+      "completion_gate": "At least one high-risk synthetic failure path proves bounded retries, safe side effects, and actionable recovery."
+    },
+    {
+      "order": 4,
+      "prompt_id": "P70",
+      "slug": "llm-ops",
+      "path": "docs/tutorials/ai-engineering-level-up/04-llm-ops.md",
+      "completion_gate": "The exact candidate configuration has measurable readiness gates, fallback behavior, and rollback without claiming unauthorized deployment."
+    },
+    {
+      "order": 5,
+      "prompt_id": "P71",
+      "slug": "adaptability",
+      "path": "docs/tutorials/ai-engineering-level-up/05-adaptability.md",
+      "completion_gate": "The highest-risk volatile dependency is behind a tested stable contract or has an evidence-backed deferral with rollback/migration notes."
+    }
+  ],
+  "recommended_loop": [
+    "P67",
+    "P68",
+    "P69",
+    "P70",
+    "P71",
+    "P67"
+  ],
+  "proof_rule": "Do not treat completion of one module as production proof for another module. Re-run evals after material context, runtime, provider, or dependency changes."
+}

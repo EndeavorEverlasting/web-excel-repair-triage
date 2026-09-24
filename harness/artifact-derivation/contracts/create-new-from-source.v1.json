@@ -1,0 +1,27 @@
+{
+  "schema_version": "artifact-derivation-create-new-from-source/v1",
+  "default_intent": "create_new",
+  "source_role": "read_only_reference",
+  "create_language": ["create", "generate", "build", "produce", "make", "draft", "export"],
+  "update_language": ["update", "modify", "repair", "replace", "overwrite", "in place", "same artifact", "same drive id"],
+  "create_new": {
+    "output_must_be_new_identity": true,
+    "output_may_equal_source_identity": false,
+    "output_may_already_exist": false,
+    "source_actions_allowed": ["read", "analyze", "inspect", "copy_to_scratch", "derive"],
+    "source_actions_forbidden": ["update", "overwrite", "delete", "rename", "move", "replace"]
+  },
+  "update_existing": {
+    "requires_explicit_operator_update_intent": true,
+    "never_inferred_from_matching_subject_or_period": true,
+    "target_must_be_named_as_existing_artifact": true
+  },
+  "identity_rules": [
+    "A Drive ID, repository path, local path, file-library ID, or other stable artifact identifier names an artifact identity.",
+    "Create/generate/build requests mint a new output identity even when an existing artifact has the same subject, month, audience, or filename family.",
+    "An existing artifact matching the requested subject is a preferred reference source, not an implicit mutation target.",
+    "Only an explicit update/repair-in-place instruction may authorize same-identity mutation."
+  ],
+  "protected_input_prefixes": ["Candidates/", "Active/"],
+  "receipt_output_root": "Outputs/"
+}

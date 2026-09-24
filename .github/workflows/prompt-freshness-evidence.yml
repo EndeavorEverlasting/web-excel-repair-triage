@@ -1,0 +1,76 @@
+name: Prompt freshness and evidence contracts
+
+on:
+  pull_request:
+    paths:
+      - 'docs/prompts.json'
+      - 'registry/prompts/actionable-next-step-policy.v1.json'
+      - 'registry/prompts/repository-work-ledger-prompts.v1.json'
+      - 'scripts/build_prompt_kit_registry.py'
+      - 'scripts/validate_context_architecture.py'
+      - 'harness/contracts/context-architecture.v1.json'
+      - 'harness/specs/operator-delivery.md'
+      - 'tests/test_actionable_prompt_registry.py'
+      - 'tests/test_green_branch_integration_policy.py'
+      - 'tests/test_context_architecture.py'
+      - 'tests/test_remote_freshness_p13_iteration.py'
+      - 'tests/test_operational_closeout_contract.py'
+      - 'web/prompt-kit/index.html'
+      - '.github/workflows/prompt-freshness-evidence.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'docs/prompts.json'
+      - 'registry/prompts/actionable-next-step-policy.v1.json'
+      - 'registry/prompts/repository-work-ledger-prompts.v1.json'
+      - 'scripts/build_prompt_kit_registry.py'
+      - 'scripts/validate_context_architecture.py'
+      - 'harness/contracts/context-architecture.v1.json'
+      - 'harness/specs/operator-delivery.md'
+      - 'tests/test_actionable_prompt_registry.py'
+      - 'tests/test_green_branch_integration_policy.py'
+      - 'tests/test_context_architecture.py'
+      - 'tests/test_remote_freshness_p13_iteration.py'
+      - 'tests/test_operational_closeout_contract.py'
+      - 'web/prompt-kit/index.html'
+      - '.github/workflows/prompt-freshness-evidence.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  freshness-evidence:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Compile freshness contracts
+        run: |
+          python -m py_compile \
+            scripts/build_prompt_kit_registry.py \
+            scripts/validate_context_architecture.py \
+            tests/test_actionable_prompt_registry.py \
+            tests/test_green_branch_integration_policy.py \
+            tests/test_context_architecture.py \
+            tests/test_remote_freshness_p13_iteration.py \
+            tests/test_operational_closeout_contract.py
+      - name: Validate prompt freshness and evidence floors
+        run: python -m unittest tests.test_remote_freshness_p13_iteration -v
+      - name: Validate shared actionability and integration policy
+        run: |
+          python -m unittest tests.test_actionable_prompt_registry -v
+          python -m unittest tests.test_green_branch_integration_policy -v
+          python -m unittest tests.test_operational_closeout_contract -v
+      - name: Validate live-cert domain routing
+        run: |
+          python scripts/validate_context_architecture.py --summary
+          python -m unittest tests.test_context_architecture -v
+      - name: Validate generated Prompt Kit parity
+        run: |
+          python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html --check
+          git diff --check origin/main...HEAD

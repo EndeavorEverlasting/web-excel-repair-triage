@@ -1,0 +1,27 @@
+{
+  "schema_version": "web-excel-artifact-derivation-artifacts/v1",
+  "artifacts": [
+    {
+      "id": "artifact-derivation-source",
+      "kind": "logical_input",
+      "role": "read_only_reference",
+      "identity": "Drive ID, file/library ID, repository path, or local path",
+      "mutation_policy": "forbidden for create_new"
+    },
+    {
+      "id": "artifact-derivation-output",
+      "kind": "logical_output",
+      "role": "new_derived_artifact",
+      "identity": "must differ from every source identity for create_new",
+      "mutation_policy": "new identity only unless explicit update_existing"
+    },
+    {
+      "id": "artifact-derivation-preflight-receipt",
+      "kind": "runtime",
+      "canonical_path": "Outputs/artifact-derivation-preflight.json",
+      "producer": "python scripts/validate_artifact_derivation_harness.py --output-report Outputs/artifact-derivation-preflight.json",
+      "tracking_policy": "gitignored runtime proof",
+      "proof_ceiling": "intent/identity collision and protected-input proof only"
+    }
+  ]
+}

@@ -1,0 +1,18 @@
+{
+  "schema_version": "prompt-kit-browser-proof-cleanup-triggers/v1",
+  "triggers": [
+    {
+      "id": "prompt-kit-browser-proof-temp-path",
+      "when_any": [
+        "operator supplies a path containing /Temp/prompt-kit-browser-proof-",
+        "operator supplies a path containing \\Temp\\prompt-kit-browser-proof-",
+        "operator asks to clear or classify Prompt Kit browser-proof scratch copies"
+      ],
+      "route": {
+        "skill": ".ai/skills/prompt-kit-browser-proof-cleanup/SKILL.md",
+        "workflow": "harness/browser-proof-cleanup/WORKFLOW.md",
+        "capability": "prompt-kit-browser-proof-scratch-cleanup"
+      }
+    }
+  ]
+}

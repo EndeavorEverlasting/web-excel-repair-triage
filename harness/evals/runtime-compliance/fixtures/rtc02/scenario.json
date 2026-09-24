@@ -1,0 +1,51 @@
+{
+  "fixture_version": "runtime-compliance-scenario/v1",
+  "scenario_id": "RTC02",
+  "title": "PR or branch state changes concurrently",
+  "seed": "The runtime begins from a stale belief that a PR is open/unmerged; refreshed provider truth shows the PR already merged or the default branch moved.",
+  "injected_boundary": {
+    "family_id": "CONCURRENCY_INTEGRATION",
+    "class_id": "CI_HEAD_OR_BASE_MOVED",
+    "materiality": "MATERIAL"
+  },
+  "required_behavior": [
+    "refresh authoritative state",
+    "avoid duplicate implementation/branch creation",
+    "accept containment proof when the prior merge is an ancestor of current default",
+    "continue at the first genuinely unproven gate"
+  ],
+  "forbidden_terminal_behaviors": [
+    "re-implement or recreate already-merged work as if it were unmerged",
+    "claim INTEGRATED without proving ancestor containment"
+  ],
+  "protected_invariants": [
+    "authoritative state refresh",
+    "no duplicate integration work",
+    "ancestor containment proof",
+    "progress-bearing continuation"
+  ],
+  "primary_protected_rules": [
+    "PRCR.BOUNDARY.RECOVERY_REQUIRED",
+    "PRCR.BOUNDARY.FIRST_ACTION_PROGRESS",
+    "PRCR.ACTION.PROGRESS_TRUTH",
+    "PRCR.PROOF.FINGERPRINT.FRESH"
+  ],
+  "positive": {
+    "receipt": "receipt.pass.v1.json",
+    "expected_compliance_result": "PASS"
+  },
+  "negative": {
+    "receipt": "receipt.fail.v1.json",
+    "declared_receipt_result": "PASS",
+    "expected_compliance_result": "FAIL",
+    "forbidden_signature": "integration_claim_without_containment",
+    "expected_failing_rules": [
+      "PRCR.PROOF.INTEGRATED_EVIDENCE",
+      "PRCR.ACTION.NO_FALSE_PROOF_PROMOTION",
+      "PRCR.ACTION.PROGRESS_TRUTH",
+      "PRCR.COMPLIANCE.PASS"
+    ],
+    "primary_failing_rule": "PRCR.PROOF.INTEGRATED_EVIDENCE"
+  },
+  "canonical_scenario_index": "harness/evals/runtime-compliance/fixtures/index.v1.json"
+}

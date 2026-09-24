@@ -1,0 +1,242 @@
+{
+  "schema_version": "prompt-semantic-migrations/v1",
+  "effective_identity_change_values": [
+    "preserve_canonical",
+    "replacement_authorized"
+  ],
+  "migrations": [
+    {
+      "migration_id": "2026-09-18-p65-route-context-artifacts-to-p56",
+      "path": "registry/prompts/tutorial-discovery-prompts.v1.json",
+      "from_git_blob_sha1": "e35ee86a19c6b7704544aaad6947f1324c7f3b2b",
+      "to_git_blob_sha1": "272921ae2706f6329f29b7865137915ca0b69cfe",
+      "affected_prompt_ids": [
+        "P65"
+      ],
+      "change_kind": "strengthening",
+      "effective_identity_change": "preserve_canonical",
+      "rationale": "P65 already asks whether the user wants to create an artifact but its primary routing map omitted the canonical P56 Context-to-Artifact Generator. This migration records the reviewed strengthening that routes context-derived artifact creation to P56 while preserving P65's guided-finder identity and behavior.",
+      "focused_tests": [
+        "tests/test_prompt_kit_discovery.py",
+        "tests/test_prompt_quality_history.py"
+      ]
+    },
+    {
+      "migration_id": "2026-09-19-p79-route-protected-lifecycle-through-semantic-gates",
+      "path": "registry/prompts/spec-architecture-prompts.v1.json",
+      "from_git_blob_sha1": "fdebc3b1f1a96ab4a812244c9d27471e6bba9eb6",
+      "to_git_blob_sha1": "a3fdb112ffd593a0d6545bafe8e01ee823dad2b8",
+      "affected_prompt_ids": [
+        "P79"
+      ],
+      "change_kind": "strengthening",
+      "effective_identity_change": "preserve_canonical",
+      "rationale": "P79 is the lifecycle/admission owner but still instructed protected STRENGTHEN work to edit canonical source directly. Route profiled ADD/EDIT/RETIRE mutations through prompt_registry_ops semantic/history gates while preserving P79 identity and the 62-profile accepted baseline boundary.",
+      "focused_tests": [
+        "tests/test_spec_architecture_prompt_registry.py",
+        "tests/test_prompt_registry_expansion_regression_design_teach.py",
+        "tests/test_prompt_quality_history.py"
+      ]
+    },
+    {
+      "migration_id": "2026-09-19-agent-transport-panels-binding-law",
+      "path": "docs/prompts.json",
+      "from_git_blob_sha1": "0b5ff65078ab2bc0fdd70dd52a199e440ccbe6c7",
+      "to_git_blob_sha1": "aa4dd85a41f374db82d7800bc0ecdf78f62803cd",
+      "affected_prompt_ids": [
+        "P02",
+        "P04",
+        "P07",
+        "P59"
+      ],
+      "change_kind": "strengthening",
+      "effective_identity_change": "preserve_canonical",
+      "rationale": "Repository-wide binding law that copy/portability panels are agent transport, not human-only fallback. Agents can and must ingest and dispatch those prompts into workflows. Strengthens P02/P04/P07/P59 to make explicit that 'Copyable panels are machine-readable transport that agents must ingest and dispatch' rather than 'Human copy panels are portability/recovery fallback only'. Preserves prompt identities and parallel dispatch semantics while closing autonomy gap.",
+      "focused_tests": [
+        "tests/test_prompt_parallel_dispatch.py",
+        "tests/test_prompt_parallel_execution_contract.py",
+        "tests/test_p02_p07_autonomous_iteration.py"
+      ]
+    },
+    {
+      "migration_id": "2026-09-20-p02-continuity-alignment-modes",
+      "path": "registry/prompts/prompt-overrides.v1.json",
+      "from_git_blob_sha1": "087ba54b9c109760fe812a4212d4d15a404b6f06",
+      "to_git_blob_sha1": "c829602236b58aceeedd18c273255825179b45cc",
+      "affected_prompt_ids": [
+        "P02"
+      ],
+      "change_kind": "strengthening",
+      "effective_identity_change": "preserve_canonical",
+      "rationale": "Strengthen P02 continuity without losing its existing recovery and CONTINUE execution-first behavior: add explicit AUTO routing for ORIENT, SUMMARIZE, CLOSEOUT, or CONTINUE; require independently sourced conversation-fidelity and current-reality axes before reconciliation; preserve exact operator alternatives such as 'closeout or review'; bound contradiction review; and bind the effective override to a dedicated adversarial regression matrix. Stable P02 identity is preserved.",
+      "focused_tests": [
+        "tests/test_p02_continuity_regression_matrix.py",
+        "tests/test_skill_prompt_registry.py",
+        "tests/test_p02_p07_autonomous_iteration.py",
+        "harness/evals/prompt-strength/p02-continuity-regression-matrix.v1.json"
+      ]
+    },
+    {
+      "migration_id": "2026-09-22-p65-staged-actor-disposition-routing",
+      "path": "registry/prompts/tutorial-discovery-prompts.v1.json",
+      "from_git_blob_sha1": "272921ae2706f6329f29b7865137915ca0b69cfe",
+      "to_git_blob_sha1": "f91521d78f0ec2a1a6dfc70e9401f5fcf29de538",
+      "affected_prompt_ids": [
+        "P65"
+      ],
+      "change_kind": "strengthening",
+      "effective_identity_change": "preserve_canonical",
+      "rationale": "P65's scalar desired-prompt-behavior axis could collapse the current agent's planning/analysis disposition, its requested plan or handoff output, and a later recipient's execution disposition into a false execute-versus-report choice. This strengthening adds a staged actor/disposition model, preserves composite P04-to-P12 routing, and retains P56 only when artifact creation/update is itself the primary job without changing P65 identity.",
+      "focused_tests": [
+        "tests/test_p65_staged_routing_prompt.py",
+        "tests/test_prompt_kit_discovery.py",
+        "tests/test_prompt_quality_history.py"
+      ]
+    },
+    {
+      "migration_id": "p79-strengthen-p111-006",
+      "path": "registry/prompts/repository-work-ledger-prompts.v1.json",
+      "from_git_blob_sha1": "583edc4fdd2c973eef8aa89b55dc053889e2e156",
+      "to_git_blob_sha1": "6a5b324c52814abab944cd106360d6ab55ea3d93",
+      "affected_prompt_ids": [
+        "P111"
+      ],
+      "change_kind": "strengthening",
+      "effective_identity_change": "preserve_canonical",
+      "rationale": "Close P111's deferred-evidence gap: material referenced private/specialized artifacts remain in the dependency graph and must be persisted/read back through their canonical owner or retained as an exact BLOCKED dependency.",
+      "focused_tests": [
+        "tests/test_prompt_semantic_coverage.py",
+        "tests/test_prompt_quality_history.py"
+      ]
+    },
+    {
+      "migration_id": "p79-no-capability-change-p111-007",
+      "path": "registry/prompts/repository-work-ledger-prompts.v1.json",
+      "from_git_blob_sha1": "6a5b324c52814abab944cd106360d6ab55ea3d93",
+      "to_git_blob_sha1": "1c2efa7a40fec62ca8eb00327e2ea318fc81ef15",
+      "affected_prompt_ids": [
+        "P111"
+      ],
+      "change_kind": "strengthening",
+      "effective_identity_change": "preserve_canonical",
+      "rationale": "Compact the strengthened P111 canonical body below its existing 8000-character bounded-copy contract without changing capability ownership or specialized evidence-closure semantics.",
+      "focused_tests": [
+        "tests/test_prompt_semantic_coverage.py",
+        "tests/test_prompt_quality_history.py"
+      ]
+    },
+    {
+      "migration_id": "p79-no-capability-change-p55-008",
+      "path": "docs/prompts.json",
+      "from_git_blob_sha1": "aa4dd85a41f374db82d7800bc0ecdf78f62803cd",
+      "to_git_blob_sha1": "c963a857a8dc72ab5df8c99c2b3524c737271206",
+      "affected_prompt_ids": [
+        "P55"
+      ],
+      "change_kind": "strengthening",
+      "effective_identity_change": "preserve_canonical",
+      "rationale": "Strengthen the existing P55 repository bootstrap owner for context recovery, provider-neutral execution, one manifest-status vocabulary, explicit pre-mutation writer isolation, and execution-surface-aware continuation without changing capability ownership.",
+      "focused_tests": [
+        "tests/test_prompt_semantic_coverage.py",
+        "tests/test_prompt_quality_history.py"
+      ]
+    },
+    {
+      "migration_id": "p79-add-p143-008",
+      "path": "registry/prompts/repository-work-ledger-prompts.v1.json",
+      "from_git_blob_sha1": "1c2efa7a40fec62ca8eb00327e2ea318fc81ef15",
+      "to_git_blob_sha1": "3bdad1e03b1ddf1ce55ad1e936e4e3775a4d26d7",
+      "affected_prompt_ids": [
+        "P143"
+      ],
+      "change_kind": "strengthening",
+      "effective_identity_change": "preserve_canonical",
+      "rationale": "P143 owns multi-repository A+B→C convergence planning and typed P55 bootstrap handoff. Existing owners cover single-repo bootstrap (P55), single-repo integration/mainline (P16/P21/P07), and artifact sync (P111)—none own donor-floor inventory with capability dispositions, collision/phase maps, destination evidence-state ladders, or the pre-create convergence plan artifact.",
+      "focused_tests": [
+        "tests/test_prompt_semantic_coverage.py",
+        "tests/test_prompt_quality_history.py"
+      ]
+    },
+    {
+      "migration_id": "p79-intentional-change-p143-010",
+      "path": "registry/prompts/repository-work-ledger-prompts.v1.json",
+      "from_git_blob_sha1": "3bdad1e03b1ddf1ce55ad1e936e4e3775a4d26d7",
+      "to_git_blob_sha1": "e1d571b5490a68292c1953dd7b1ecf6ee28fe96c",
+      "affected_prompt_ids": [
+        "P143"
+      ],
+      "change_kind": "intentional_semantic_change",
+      "effective_identity_change": "preserve_canonical",
+      "rationale": "Repair P143 review defects by separating provider state from authority, routing existing destinations away from P55 creation, binding the typed P55 handoff contract, and making durable plan ownership executable without granting donor runtime mutation.",
+      "focused_tests": [
+        "tests/test_prompt_semantic_coverage.py",
+        "tests/test_prompt_quality_history.py"
+      ]
+    },
+    {
+      "migration_id": "p79-strengthen-p07-011",
+      "path": "docs/prompts.json",
+      "from_git_blob_sha1": "c963a857a8dc72ab5df8c99c2b3524c737271206",
+      "to_git_blob_sha1": "c963a857a8dc72ab5df8c99c2b3524c737271206",
+      "affected_prompt_ids": [
+        "P07"
+      ],
+      "change_kind": "strengthening",
+      "effective_identity_change": "preserve_canonical",
+      "rationale": "Profile-only lifecycle strengthening: assign the already-shared mainline-convergence execution capability to P07 without changing canonical P07 prompt text.",
+      "focused_tests": [
+        "tests/test_prompt_semantic_coverage.py",
+        "tests/test_prompt_quality_history.py",
+        "tests/test_p143_repository_convergence_prompt.py"
+      ]
+    },
+    {
+      "migration_id": "p79-strengthen-p114-012",
+      "path": "registry/prompts/spec-architecture-prompts.v1.json",
+      "from_git_blob_sha1": "a3fdb112ffd593a0d6545bafe8e01ee823dad2b8",
+      "to_git_blob_sha1": "d6a9ffe14f2b9630758244068657ba542429f4c0",
+      "affected_prompt_ids": [
+        "P114"
+      ],
+      "change_kind": "strengthening",
+      "effective_identity_change": "preserve_canonical",
+      "rationale": "Repeated operator-visible artifact handoff failures show P114 must detect scoped cloud relevance and require paired canonical cloud plus local/download delivery without duplicating P111 or artifact-handoff authority.",
+      "focused_tests": [
+        "tests/test_prompt_semantic_coverage.py",
+        "tests/test_prompt_quality_history.py"
+      ]
+    },
+    {
+      "migration_id": "p79-no-capability-change-p114-013",
+      "path": "registry/prompts/spec-architecture-prompts.v1.json",
+      "from_git_blob_sha1": "d6a9ffe14f2b9630758244068657ba542429f4c0",
+      "to_git_blob_sha1": "b150cb00c26a2ac49114426082edce339ae050ca",
+      "affected_prompt_ids": [
+        "P114"
+      ],
+      "change_kind": "strengthening",
+      "effective_identity_change": "preserve_canonical",
+      "rationale": "Review hardening restores observed-network mismatch semantics and makes local/cloud delivery branches explicit without changing P114 capability ownership.",
+      "focused_tests": [
+        "tests/test_prompt_semantic_coverage.py",
+        "tests/test_prompt_quality_history.py"
+      ]
+    },
+    {
+      "migration_id": "p79-no-capability-change-p114-014",
+      "path": "registry/prompts/spec-architecture-prompts.v1.json",
+      "from_git_blob_sha1": "b150cb00c26a2ac49114426082edce339ae050ca",
+      "to_git_blob_sha1": "5926a198a14567de55110ed19e922fc444b4dec7",
+      "affected_prompt_ids": [
+        "P114"
+      ],
+      "change_kind": "strengthening",
+      "effective_identity_change": "preserve_canonical",
+      "rationale": "Close the project-cloud binding ambiguity so unresolved artifact mapping cannot be treated as local-only; route through the existing provider owner while preserving P114 capability ownership.",
+      "focused_tests": [
+        "tests/test_prompt_semantic_coverage.py",
+        "tests/test_prompt_quality_history.py"
+      ]
+    }
+  ]
+}

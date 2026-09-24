@@ -1,0 +1,35 @@
+{
+  "schema_version": "prompt-finder-classifier-eval/v1",
+  "capability_id": "skill-evaluation",
+  "target": {
+    "runtime": "docs/prompt-kit-guided-recommendations.js",
+    "classifier_function": "scorePromptFinderAnswers",
+    "shared_search_runtime": "docs/prompt-kit.js",
+    "registry_builder": "scripts/build_prompt_kit_registry.py"
+  },
+  "fixtures": "harness/evals/fixtures/prompt-finder-classifier-cases.v1.json",
+  "runner": "scripts/prompt_kit_classifier_eval.py",
+  "result_artifact": "Outputs/prompt-finder-classifier-eval.json",
+  "metrics": {
+    "primary_accuracy_min": 1.0,
+    "required_recall_at_3_min": 1.0,
+    "case_pass_rate_min": 1.0,
+    "max_recommendations": 3,
+    "deterministic_repetitions": 3
+  },
+  "required_case_kinds": [
+    "positive",
+    "near_miss",
+    "boundary",
+    "malformed",
+    "historical_risk"
+  ],
+  "invariants": [
+    "recommendation IDs are unique and resolve to the canonical combined registry",
+    "scores are non-increasing",
+    "recommendation count never exceeds max_recommendations",
+    "the same canonical inputs return byte-equivalent ranked results across deterministic repetitions",
+    "unknown answer IDs do not fabricate a recommendation"
+  ],
+  "proof_ceiling": "Deterministic offline recommendation-routing quality for the canonical registry, shared search runtime, and Prompt Finder scoring function at one exact repository head. It does not prove human preference, provider/model judgment, browser interaction quality, or production acceptance."
+}

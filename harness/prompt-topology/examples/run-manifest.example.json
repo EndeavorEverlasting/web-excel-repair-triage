@@ -1,0 +1,29 @@
+{
+  "schema_version": "1.0.0",
+  "classifier_version": "0.1.0",
+  "source_commit": "abc123abc123abc123abc123abc123abc123abcd",
+  "registry_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "embedding_model": "openai/text-embedding-3-large",
+  "embedding_model_version": "2024-02-01",
+  "embedding_dimensions": 3072,
+  "cluster_algorithm": "hdbscan",
+  "projection_algorithm": "umap",
+  "random_seed": 42,
+  "prompt_count": 129,
+  "embedded_count": 129,
+  "classified_count": 122,
+  "unclassified_count": 2,
+  "outlier_count": 5,
+  "ordering_policy_version": "1.0.0",
+  "generated_at": "2026-09-11T00:00:00Z",
+  "input_config_sha256": "f4e5d6c7b8a90123456789abcdef0123456789abcdef0123456789abcdef01234",
+  "artifact_hashes": {
+    "canonical-prompts.json": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    "embeddings.json": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+    "neighbors.json": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+    "clusters.json": "dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd",
+    "classifications.json": "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee",
+    "projection-3d.json": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+    "kit-order.json": "1111111111111111111111111111111111111111111111111111111111111111"
+  }
+}

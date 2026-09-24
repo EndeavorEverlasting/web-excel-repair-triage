@@ -1,0 +1,118 @@
+{
+  "schema_version": "prompt-finder-classifier-cases/v1",
+  "cases": [
+    {
+      "id": "goal-build-primary",
+      "kind": "positive",
+      "purpose": "A direct implementation goal should select the canonical sprint executor.",
+      "answers": {"goal": "build"},
+      "expected_primary": "P07",
+      "expected_top3_contains": ["P07"]
+    },
+    {
+      "id": "goal-close-primary",
+      "kind": "positive",
+      "purpose": "A closeout goal should select the canonical handoff owner.",
+      "answers": {"goal": "close"},
+      "expected_primary": "P12",
+      "expected_top3_contains": ["P12"]
+    },
+    {
+      "id": "goal-ai-level-up-primary",
+      "kind": "positive",
+      "purpose": "The AI engineering level-up route should lead with the eval framework owner because evals add a second exact signal beyond the family route.",
+      "answers": {"goal": "ai-level-up"},
+      "expected_primary": "P67",
+      "expected_top3_contains": ["P67"]
+    },
+    {
+      "id": "starting-in-repo-primary",
+      "kind": "positive",
+      "purpose": "An operator already in an unfamiliar repository should select repository intake/discovery.",
+      "answers": {"startingPoint": "in-repo"},
+      "expected_primary": "P03",
+      "expected_top3_contains": ["P03"]
+    },
+    {
+      "id": "starting-app-open-primary",
+      "kind": "positive",
+      "purpose": "An already-open app or artifact should select the usage coach.",
+      "answers": {"startingPoint": "app-open"},
+      "expected_primary": "P24",
+      "expected_top3_contains": ["P24"]
+    },
+    {
+      "id": "known-failure-primary",
+      "kind": "positive",
+      "purpose": "A known broken behavior should select the troubleshooting/root-cause owner.",
+      "answers": {"problemKnown": "known-failure"},
+      "expected_primary": "P58",
+      "expected_top3_contains": ["P58"]
+    },
+    {
+      "id": "repeated-stall-primary",
+      "kind": "positive",
+      "purpose": "Repeated urgency or missing-parallelism failure should select the recurring-process-defect owner.",
+      "answers": {"problemKnown": "repeated-stall"},
+      "expected_primary": "P13",
+      "expected_top3_contains": ["P13"]
+    },
+    {
+      "id": "shape-parallel-primary",
+      "kind": "positive",
+      "purpose": "Parallel-lane organization should select the parallel sprint planner.",
+      "answers": {"shape": "parallel"},
+      "expected_primary": "P59",
+      "expected_top3_contains": ["P59"]
+    },
+    {
+      "id": "shape-sequential-primary",
+      "kind": "positive",
+      "purpose": "Dependency-ordered work should select the launch-pack/sequential planning owner.",
+      "answers": {"shape": "sequential"},
+      "expected_primary": "P05",
+      "expected_top3_contains": ["P05"]
+    },
+    {
+      "id": "shape-runtime-proof-primary",
+      "kind": "positive",
+      "purpose": "Moving from static checks to live behavior proof should select the runtime-proof owner.",
+      "answers": {"shape": "runtime-proof"},
+      "expected_primary": "P08",
+      "expected_top3_contains": ["P08"]
+    },
+    {
+      "id": "prove-near-miss-keeps-static-and-runtime",
+      "kind": "near_miss",
+      "purpose": "The broad prove goal spans validation and runtime proof; both canonical owners should survive into the recommendation set.",
+      "answers": {"goal": "prove"},
+      "expected_top3_contains": ["P08", "P11"]
+    },
+    {
+      "id": "eval-specialist-survives-generic-context",
+      "kind": "historical_risk",
+      "purpose": "Generic in-repo and one-sprint signals must not crowd the eval specialist out of the top three for an AI-engineering request.",
+      "answers": {
+        "startingPoint": "in-repo",
+        "problemKnown": "known-task",
+        "goal": "ai-level-up",
+        "shape": "one-sprint"
+      },
+      "expected_top3_contains": ["P07", "P67"]
+    },
+    {
+      "id": "empty-answer-boundary",
+      "kind": "boundary",
+      "purpose": "No answers should yield no fabricated recommendation.",
+      "answers": {},
+      "expected_empty": true
+    },
+    {
+      "id": "unknown-answer-malformed",
+      "kind": "malformed",
+      "purpose": "An unknown option ID should be ignored rather than inventing a route.",
+      "answers": {"goal": "not-a-real-option"},
+      "expected_empty": true
+    }
+  ]
+}

@@ -1,0 +1,68 @@
+{
+  "schema_version": "inventory_visual_aid_chart_v1",
+  "name": "Inventory executive visual aid system",
+  "intent": "Preserve the executive-tab in-cell visual quantity field as the primary inventory visual aid; separate charts are optional secondary aids.",
+  "rules": {
+    "executive_visual_field_is_required": true,
+    "separate_chart_is_optional": true,
+    "visual_is_presentation_aid_not_calculation_authority": true,
+    "do_not_remove_existing_valid_visual_field_during_restyle": true,
+    "do_not_change_formulas_when_restoring_visual_field": true,
+    "avoid_pivot_chart_dependency": true,
+    "prefer_in_cell_bar_for_row_level_rollups": true,
+    "prefer_horizontal_bar_for_optional_top_n_chart": true,
+    "max_optional_chart_categories_default": 15,
+    "sort_optional_chart_descending_by_quantity": true
+  },
+  "executive_visual_field": {
+    "sheet": "1M Recon Pivot Module",
+    "section": "Inventory Rollup by Item",
+    "header": "Visual",
+    "expected_column": "C",
+    "formula_pattern": "IF(qty_cell>0,REPT(\"█\",MAX(1,ROUND(qty_cell/MAX(qty_range)*18,0))),\"\")",
+    "font_color": "FF2563EB",
+    "purpose": "Compact row-level stock magnitude indicator embedded directly in the leadership-facing inventory rollup."
+  },
+  "optional_chart_defaults": {
+    "chart_type": "barChart",
+    "orientation": "horizontal",
+    "title": "Top stock quantities by part number",
+    "category_axis": "PartKeyDisplay",
+    "value_axis": "Qty",
+    "source_sheet": "1M Recon Pivot Module",
+    "helper_table_name": "TopStockChartSource",
+    "helper_range_columns": [
+      "Rank",
+      "PartKeyDisplay",
+      "Item Type",
+      "Qty"
+    ],
+    "recommended_anchor": "J13",
+    "recommended_size": {
+      "width_cells": 8,
+      "height_rows": 18
+    }
+  },
+  "label_rules": {
+    "category_label_format": "part key plus short item type when available",
+    "avoid_raw_part_numbers_on_bottom_axis": true,
+    "truncate_long_labels_after": 42,
+    "keep_quantity_axis_numeric": true
+  },
+  "web_excel_safety": {
+    "allowed": [
+      "in-cell REPT bar formulas",
+      "standard bar chart when optional chart is requested",
+      "bounded helper range",
+      "solid fills from spreadsheet_style_v1",
+      "plain worksheet formulas feeding helper rows"
+    ],
+    "avoid": [
+      "pivot charts as the primary visual aid",
+      "slicers",
+      "chart formulas pointing at entire columns",
+      "charts dependent on volatile formulas",
+      "charts whose absence breaks workbook logic"
+    ]
+  }
+}

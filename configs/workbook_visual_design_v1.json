@@ -1,0 +1,83 @@
+{
+  "schema_version": "workbook_visual_design_v1",
+  "name": "Workbook visual design system",
+  "intent": "Codify color coordination, visual hierarchy, and artistic workbook choices so generated spreadsheets do not reinvent presentation rules.",
+  "source_checkpoint": "One Marcus recon success checkpoint 2026-06-03",
+  "principles": {
+    "function_first": "Never change formulas, row contracts, or source data behavior during a style pass.",
+    "executive_scan_first": "Executive tabs must support fast visual scanning before detailed editing.",
+    "semantic_color_only": "Color must communicate state, role, or hierarchy. Do not decorate randomly.",
+    "calm_by_default": "Use slate, charcoal, muted blue-gray, and soft fills as the normal presentation layer.",
+    "red_is_expensive": "Use red only for blockers, duplicate review, failed checks, or stop-ship items.",
+    "amber_means_review": "Use amber for review-needed states, not for routine rows.",
+    "green_means_valid_or_source": "Use green for confirmed/resolved rows or trusted source-entry surfaces.",
+    "gray_means_quiet_or_evidence": "Use gray for snapshots, archives, deprecated sheets, and quiet reference material."
+  },
+  "visual_hierarchy": {
+    "level_1_title_bar": {
+      "fill": "header_primary",
+      "font": "white",
+      "font_size": 16,
+      "weight": "bold"
+    },
+    "level_2_section_bar": {
+      "fill": "header_secondary",
+      "font": "white",
+      "font_size": 12,
+      "weight": "bold"
+    },
+    "table_header": {
+      "fill": "table_header",
+      "font": "white",
+      "font_size": 10,
+      "weight": "bold"
+    },
+    "metric_panel": {
+      "fill": "panel",
+      "font": "ink",
+      "numeric_font_size": 14,
+      "numeric_weight": "bold"
+    },
+    "body_grid": {
+      "fill": "white",
+      "font": "ink",
+      "border": "grid"
+    }
+  },
+  "sheet_role_colors": {
+    "executive_view": "header_secondary",
+    "source_entry": "source_green",
+    "review_queue": "action_red",
+    "reference": "table_header",
+    "automation_notes": "table_header",
+    "snapshot": "snapshot_gray",
+    "deprecated": "deprecated_gray"
+  },
+  "inventory_visual_field": {
+    "required_for_inventory_executive_views": true,
+    "field_name": "Visual",
+    "placement": "Immediately after Total Qty in executive inventory rollup tables.",
+    "implementation": "In-cell REPT progression bar based on row quantity scaled against visible rollup max quantity.",
+    "font_color": "FF2563EB",
+    "not_a_chart_substitute": true
+  },
+  "anti_patterns": [
+    "Bright traffic-light colors on routine rows",
+    "Separate charts replacing embedded executive visual fields",
+    "Workbook-visible claims that an artifact is Web Excel-safe",
+    "URL-encoded text such as %20 in workbook titles or visible cells",
+    "Sheet protection before the functional view is proven",
+    "Style passes that rewrite formulas",
+    "Overwide dashboards where key fields are off-screen on first open",
+    "Hidden helper mechanics with no README or repo notes"
+  ],
+  "acceptance_checks": [
+    "Executive tab opens on a useful first-screen view",
+    "Required visual fields are visible without searching",
+    "The title is short and client-safe",
+    "The workbook contains no generated compatibility bragging text",
+    "Formula count and formula text are unchanged during style-only passes",
+    "Tab colors communicate each sheet's role",
+    "The artifact passes the operator's Excel for Web review before it is called successful"
+  ]
+}

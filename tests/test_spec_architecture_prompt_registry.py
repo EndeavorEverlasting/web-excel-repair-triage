@@ -1,0 +1,1174 @@
+from __future__ import annotations
+
+import json
+import unittest
+from pathlib import Path
+
+import build_prompt_kit
+from scripts import build_prompt_kit_registry
+from scripts import prompt_registry_ops
+
+
+REPO_ROOT = Path(__file__).resolve().parents[1]
+RAW_REGISTRY = REPO_ROOT / "registry" / "prompts" / "spec-architecture-prompts.v1.json"
+
+
+class SpecArchitecturePromptRegistryTests(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls) -> None:
+        cls.operational = {
+            prompt["id"]: prompt
+            for prompt in build_prompt_kit_registry.load_prompt_registry()
+        }
+        cls.full = {
+            prompt["id"]: prompt
+            for prompt in build_prompt_kit_registry.load_prompt_kit_registry()
+        }
+        cls.policy = build_prompt_kit_registry.load_actionability_policy()
+        raw_prompts = json.loads(RAW_REGISTRY.read_text(encoding="utf-8"))["prompts"]
+        cls.raw = {prompt["id"]: prompt for prompt in raw_prompts}
+
+    def test_p76_is_operational_and_distinct_from_general_context_engineering(self) -> None:
+        prompt = self.operational["P76"]
+        self.assertEqual(prompt["seq"], "76")
+        self.assertEqual(prompt["profile"], "spec-architecture")
+        self.assertEqual(prompt["color"], "Cyan")
+        self.assertEqual(prompt["class"], "HARNESS / SPEC ARCHITECTURE")
+        self.assertEqual(prompt["actionabilityPolicy"], self.policy["policy_id"])
+        self.assertIn(self.policy["marker"], prompt["copyContent"])
+        self.assertEqual(self.operational["P68"]["class"], "AI ENGINEERING / CONTEXT")
+        self.assertNotEqual(self.operational["P68"]["class"], prompt["class"])
+
+    def test_prompt_encodes_three_zoom_levels_and_demand_loaded_ground_detail(self) -> None:
+        content = self.full["P76"]["copyContent"]
+        self.assertIn("50,000 FT — ORIENTATION", content)
+        self.assertIn("30,000 FT — DOMAIN / CAPABILITY", content)
+        self.assertIn("15,000 FT — WORKFLOW / SPEC", content)
+        self.assertIn("Target <= 1,000 approximate tokens", content)
+        self.assertIn("Target <= 2,000 additional approximate tokens", content)
+        self.assertIn("Target <= 4,000 additional approximate tokens", content)
+        self.assertIn("Large code files, historical reports, full schemas, fixtures", content)
+        self.assertIn("remain on-demand", content)
+
+    def test_prompt_factors_authority_instead_of_summarizing_everything(self) -> None:
+        content = self.full["P76"]["copyContent"]
+        self.assertIn("`AGENTS.md`: governance, precedence, universal safety/operating law", content)
+        self.assertIn("skills: repeatable procedure and judgment only", content)
+        self.assertIn("Preserve one canonical owner and lightweight references elsewhere", content)
+        self.assertIn("Do not preload every skill, nested AGENTS file, tool schema", content)
+        self.assertIn("IMPLEMENT, DON'T JUST RECOMMEND", content)
+        self.assertIn("no unique rule or authority disappeared", content)
+
+    def test_prompt_requires_measured_before_after_retrieval_cost(self) -> None:
+        content = self.full["P76"]["copyContent"]
+        self.assertIn("MEASURE BEFORE MODIFYING", content)
+        self.assertIn("What is this app and how is it organized?", content)
+        self.assertIn("Record which files and approximate tokens/bytes", content)
+        self.assertIn("measured default context falls meaningfully", content)
+        self.assertIn("representative tasks still succeed", content)
+
+    def test_glossary_prompt_reduces_prose_without_creating_competing_truth(self) -> None:
+        prompt = self.full["P78"]
+        content = prompt["copyContent"]
+        self.assertEqual(prompt["seq"], "78")
+        self.assertEqual(prompt["profile"], "spec-architecture")
+        self.assertEqual(prompt["color"], "Cyan")
+        self.assertEqual(prompt["class"], "HARNESS / KNOWLEDGE ARCHITECTURE")
+        self.assertIn("DIET THE REPOSITORY DOCUMENTATION DOWN TO A LEAN GLOSSARY", content)
+        self.assertIn("glossary may explain vocabulary", content)
+        self.assertIn("must not become a second specification", content)
+        self.assertIn("KEEP-AUTHORITY, KEEP-OPERATIONAL, COLLAPSE-INTO-GLOSSARY", content)
+        self.assertIn("Do not create a new tutorial", content)
+        self.assertIn("current code plus its contracts/tests/validators", content)
+        self.assertEqual(prompt["actionabilityPolicy"], self.policy["policy_id"])
+        self.assertIn(self.policy["marker"], content)
+
+    def test_prompt_adder_uses_low_friction_helper_without_losing_semantic_proof(self) -> None:
+        prompt = self.full["P79"]
+        content = prompt["copyContent"]
+        self.assertEqual(prompt["seq"], "79")
+        self.assertEqual(prompt["profile"], "spec-architecture")
+        self.assertEqual(prompt["color"], "Cyan")
+        self.assertEqual(prompt["class"], "PROMPT KIT / REGISTRY OPERATIONS")
+        self.assertIn("CONTEXT IMMEDIATELY ABOVE THIS INSTRUCTION", content)
+        self.assertIn("DO NOT ASK ME TO RESTATE CONTEXT", content)
+        self.assertIn("scripts/prompt_registry_ops.py add", content)
+        self.assertIn("scripts/prompt_registry_ops.py edit", content)
+        self.assertIn("scripts/prompt_registry_ops.py retire", content)
+        self.assertIn("semantic_profile.direct_assignments", content)
+        self.assertIn("target lacks an ACCEPTED semantic profile", content)
+        self.assertIn("Do NOT set id, seq, or copySheet", content)
+        self.assertIn("roll back registry/site writes if validation fails", content)
+        self.assertIn("focused semantic assertion", content)
+        self.assertIn("materially overlapping prompt", content)
+        self.assertIn("search_operant_external_catalog.py", content)
+        self.assertIn("distinct residual before ADD", content)
+        self.assertIn("genuinely missing bounded behavior", content)
+        self.assertIn("Do not fall back to loading the entire Prompt Kit architecture", content)
+        self.assertIn("merge the exact green authorized head", content)
+        self.assertLess(len(self.raw["P79"]["copyContent"]), 5000)
+        self.assertEqual(prompt["actionabilityPolicy"], self.policy["policy_id"])
+        self.assertIn(self.policy["marker"], content)
+
+    def test_prompt_registry_ops_exposes_compact_current_routing_and_auto_identity(self) -> None:
+        state = prompt_registry_ops.inspect_state()
+        self.assertRegex(state["next_id"], r"^P\d+$")
+        self.assertEqual(state["next_id"][1:], state["next_seq"])
+        self.assertIn("id", state["auto_fields"])
+        self.assertIn("seq", state["auto_fields"])
+        self.assertIn("copySheet", state["auto_fields"])
+        ids = {item["registry_id"] for item in state["registries"]}
+        self.assertIn("spec-architecture-prompts", ids)
+        self.assertGreaterEqual(len(ids), 6)
+
+    def test_prompt_registry_ops_dry_run_builds_complete_record_without_mutation(self) -> None:
+        draft = {
+            "name": "Prompt Ops Test Fixture",
+            "type": "MAINTENANCE",
+            "class": "PROMPT KIT / TEST",
+            "sprintRole": "Exercise low-friction prompt contribution",
+            "useWhen": "A deterministic helper regression is required.",
+            "inspectFirst": "Current registry truth.",
+            "expectedOutput": "A complete dry-run prompt record.",
+            "nextStep": "Validate the dry-run record.",
+            "proofGate": "No tracked source is mutated by dry-run.",
+            "copyContent": "EXECUTE A DETERMINISTIC PROMPT REGISTRY HELPER TEST. " * 12,
+            "keywords": ["prompt ops fixture", "registry helper fixture"],
+            "profile": "spec-architecture",
+            "color": "Cyan",
+            "semantic_profile": {
+                "direct_assignments": [
+                    {
+                        "capability_id": "execution.implementation",
+                        "presence": "AWARE",
+                        "ownership": "NONE",
+                        "capability_relation": "ROUTES_TO",
+                        "delivery_source": "ROUTED_OWNER",
+                        "evidence_refs": ["tests/test_spec_architecture_prompt_registry.py"],
+                        "rationale": "Dry-run fixture routes implementation to the existing P07 owner.",
+                    }
+                ],
+                "evidence_refs": ["tests/test_spec_architecture_prompt_registry.py"],
+                "distinct_residual": {
+                    "summary": "Exercise the low-friction registry helper without claiming duplicate execution ownership.",
+                    "evidence_refs": ["tests/test_spec_architecture_prompt_registry.py"],
+                    "reviewed_against": ["P07"],
+                },
+            },
+        }
+        result = prompt_registry_ops.add_prompt(
+            draft, "spec-architecture-prompts", dry_run=True
+        )
+        record = result["record"]
+        self.assertEqual(result["status"], "dry-run")
+        self.assertRegex(record["id"], r"^P\d+$")
+        self.assertEqual(record["copySheet"], f"{record['id']}_COPY_SAFE")
+        self.assertEqual(record["profile"], "spec-architecture")
+        self.assertEqual(record["color"], "Cyan")
+        self.assertEqual(record["category"], "standard")
+
+    def test_p07_requires_repeated_evidence_passes_until_fixed_point(self) -> None:
+        p07 = self.full["P07"]
+        content = p07["copyContent"]
+        self.assertIn("ITERATIVE SPRINT FIXED-POINT", content)
+        self.assertIn("IMPLEMENT -> VALIDATE -> INSPECT EVIDENCE -> CRITIQUE -> IMPROVE", content)
+        self.assertIn("at least one deliberate second-pass review", content)
+        self.assertIn("Continue until a bounded fixed point", content)
+        self.assertIn("Do not manufacture churn", content)
+        self.assertIn("Each pass must either create/repair an owned artifact", content)
+        self.assertIn("ITERATION EVIDENCE", content)
+        self.assertIn("fixed-point reason", content)
+        self.assertIn("only then stop", content)
+
+    def test_client_prompt_pack_builds_local_overlay_without_global_mutation(self) -> None:
+        prompt = self.full["P80"]
+        content = prompt["copyContent"]
+        self.assertEqual(prompt["seq"], "80")
+        self.assertEqual(prompt["profile"], "spec-architecture")
+        self.assertEqual(prompt["class"], "PROMPT KIT / LOCAL PROFILE")
+        self.assertIn("GLOBAL VS LOCAL BOUNDARY", content)
+        self.assertIn("JSON file upload", content)
+        self.assertIn("paste-JSON/text area", content)
+        self.assertIn("type/color chips", content)
+        self.assertIn("local:<profile_id>:<prompt_id>", content)
+        self.assertIn("same search index", content)
+        self.assertIn("Favorites", content)
+        self.assertIn("export -> clear -> re-import", content)
+        self.assertIn("Treat uploaded/pasted JSON as hostile input", content)
+        self.assertEqual(prompt["actionabilityPolicy"], self.policy["policy_id"])
+        self.assertIn(self.policy["marker"], content)
+
+    def test_cache_prompt_covers_invalidation_and_production_failure_modes(self) -> None:
+        prompt = self.full["P81"]
+        content = prompt["copyContent"]
+        self.assertEqual(prompt["seq"], "81")
+        self.assertEqual(prompt["class"], "SOFTWARE ARCHITECTURE / CACHING")
+        self.assertIn("Client browser", content)
+        self.assertIn("Distributed L2", content)
+        self.assertIn("TTL / PASSIVE INVALIDATION", content)
+        self.assertIn("EVENT-DRIVEN / ACTIVE INVALIDATION", content)
+        self.assertIn("CACHE VERSIONING / KEY NAMESPACING", content)
+        self.assertIn("CACHE STAMPEDE / THUNDERING HERD", content)
+        self.assertIn("CACHE PENETRATION", content)
+        self.assertIn("CACHE AVALANCHE", content)
+        self.assertIn("TTL jitter", content)
+        self.assertIn("Bloom filter", content)
+        self.assertIn("negative caching", content)
+        self.assertIn("probabilistic early expiration", content)
+        self.assertIn("REDIS VS MEMCACHED", content)
+        self.assertIn("L1 + L2 COHERENCE", content)
+        self.assertIn("benchmark the actual runtime", content)
+        self.assertEqual(prompt["actionabilityPolicy"], self.policy["policy_id"])
+
+    def test_prototyping_prompt_enforces_measured_iteration_to_final(self) -> None:
+        prompt = self.full["P82"]
+        content = prompt["copyContent"]
+        self.assertEqual(prompt["seq"], "82")
+        self.assertEqual(prompt["class"], "ENGINEERING / PROTOTYPING")
+        self.assertIn("PROTOTYPE LADDER", content)
+        self.assertIn("HYPOTHESIS -> BUILD -> MEASURE -> CRITIQUE -> DECIDE", content)
+        self.assertIn("Do not present a prototype as final", content)
+        self.assertIn("Preserve the last known-good candidate", content)
+        self.assertIn("SAME acceptance rubric", content)
+        self.assertIn("USE FEEDBACK WITHOUT TURNING THE USER INTO THE TEST RUNNER", content)
+        self.assertIn("REMOVE PROTOTYPE DEBT BEFORE FINAL", content)
+        self.assertIn("FINAL PROOF IS STRICTER THAN PROTOTYPE PROOF", content)
+        self.assertIn("WHEN USER FLOW IS THE UNKNOWN", content)
+        self.assertIn("terminal user value", content)
+        self.assertIn("semantic completion events", content)
+        self.assertIn("must not erase an active query", content)
+        for phrase in (
+            "a semaphore will make this faster",
+            "A semaphore limits in-flight work, not operation cost",
+            "p50/p95/p99 latency",
+            "queue depth",
+            "required fairness/order",
+            "cancellation/timeouts",
+            "backpressure",
+            "Keep the simpler baseline",
+        ):
+            self.assertIn(phrase, content)
+        self.assertIn("semaphore", prompt["useWhen"])
+        self.assertIn("downstream quotas or rate limits", prompt["inspectFirst"])
+        self.assertIn("representative before/after evidence", prompt["proofGate"])
+        self.assertIn("KEEP/ADJUST/REVERT", prompt["expectedOutput"])
+        self.assertEqual(prompt["actionabilityPolicy"], self.policy["policy_id"])
+
+    def test_p141_to_p82_seam_routes_only_bounded_empirical_uncertainty(self) -> None:
+        p141 = self.full["P141"]["copyContent"]
+        p82 = self.full["P82"]["copyContent"]
+
+        sender_fixture = {
+            "admission_artifact": "P82 Experiment Admission Record",
+            "selected_thesis": "one surviving thesis",
+            "empirical_uncertainty": "primary empirical uncertainty",
+            "hypothesis": "falsifiable hypothesis",
+            "baseline": "baseline/comparator",
+            "prototype": "prototype boundary",
+            "measurement": "measurement",
+        }
+        receiver_fixture = {
+            "admission_artifact": "P82 Experiment Admission Record",
+            "hypothesis": "falsifiable hypothesis",
+            "baseline": "baseline/comparator",
+            "prototype": "prototype boundary",
+            "measurement": "measurement",
+            "decision_rule": "decision rule",
+        }
+
+        for field, phrase in sender_fixture.items():
+            self.assertIn(
+                phrase,
+                p141,
+                f"P141->P82 sender contract missing {field}: expected {phrase!r}.",
+            )
+        for field, phrase in receiver_fixture.items():
+            self.assertIn(
+                phrase,
+                p82,
+                f"P141->P82 receiver contract missing {field}: expected {phrase!r}.",
+            )
+
+        self.assertIn(
+            "remaining uncertainty is empirical",
+            p141,
+            "P141 must admit P82 only when the remaining uncertainty is empirical.",
+        )
+        self.assertIn(
+            "multiple strategic theses",
+            p141.lower(),
+            "P141 must retain routing when multiple strategic theses remain viable.",
+        )
+        self.assertIn(
+            "P95",
+            p141,
+            "P141 must route dominant architecture uncertainty to P95.",
+        )
+        self.assertIn(
+            "P95",
+            p82,
+            "P82 must reject architecture-dominant work toward P95.",
+        )
+        self.assertIn(
+            "P07",
+            p141,
+            "P141 must route implementation-ready work to P07 instead of P82.",
+        )
+
+        for forbidden in (
+            "generate 3-5 competing strategic theses",
+            "decide what the repository should build next",
+        ):
+            self.assertNotIn(
+                forbidden,
+                p82.lower(),
+                f"P141->P82 seam collapsed: P82 absorbed P141 behavior {forbidden!r}.",
+            )
+
+        for outcome in ("PROMOTE", "WEAKEN", "REJECT", "INCONCLUSIVE"):
+            self.assertIn(
+                outcome,
+                p82,
+                f"P82 decision contract missing experiment outcome {outcome}.",
+            )
+        self.assertIn(
+            "P141",
+            p82,
+            "P82 must return strategically weakened/rejected evidence to P141.",
+        )
+
+    def test_flow_friction_prompt_owns_terminal_actions_and_preference_telemetry(self) -> None:
+        prompt = self.full["P99"]
+        content = prompt["copyContent"]
+        self.assertEqual(prompt["name"], "User-Flow Friction & Preference Telemetry Refiner")
+        self.assertEqual(prompt["class"], "PRODUCT / UX FLOW + TELEMETRY")
+        self.assertEqual(prompt["profile"], "spec-architecture")
+        for phrase in (
+            "DEFINE THE TERMINAL USER VALUE",
+            "PRESERVE ORTHOGONAL STATE",
+            "COLLAPSE REDUNDANT INTERMEDIATE STEPS",
+            "REPAIR THE DEFAULT INFORMATION ARCHITECTURE",
+            "UNIFY ENTRYPOINTS ON SEMANTIC ACTIONS",
+            "INSTRUMENT SEMANTIC USAGE, NOT NOISE",
+            "DERIVE THE DASHBOARD FROM EVENTS",
+            "active search -> unrelated filter show/hide/toggle",
+            "favorite shortcut -> terminal action occurs once",
+            "reuse the normal success toast/feedback",
+            "Before mutating a shared telemetry/preferences owner",
+            "duplicate event dispatch does not double-count one completion",
+        ):
+            self.assertIn(phrase, content)
+        for default_view_phrase in (
+            "initial viewport is consumed before primary content",
+            "Persistent control density is friction",
+            "progressive disclosure -> subordinate choices",
+            "A Hide/Show toggle reduces clutter on demand but does not fix a noisy default information architecture",
+            "preserve search, keyboard and mobile use, Favorites, and active-state semantics",
+        ):
+            self.assertIn(default_view_phrase, content)
+        self.assertIn(
+            "default-view repairs reduce measured first-viewport consumption before primary content instead of only hiding controls behind a toggle",
+            prompt["proofGate"],
+        )
+        self.assertIn("persistent filter/control chrome", prompt["useWhen"])
+        self.assertNotEqual(prompt["id"], "P82")
+        self.assertNotEqual(prompt["id"], "P94")
+        self.assertNotEqual(prompt["id"], "P95")
+        self.assertEqual(prompt["actionabilityPolicy"], self.policy["policy_id"])
+
+    def test_p105_owns_provider_side_last_mile_merge_execution(self) -> None:
+        prompt = self.full["P105"]
+        content = prompt["copyContent"]
+        self.assertEqual(prompt["name"], "Validated CI/CD Promotion Pipeline Builder")
+        self.assertEqual(prompt["class"], "HARNESS / CI-CD PROMOTION")
+        for phrase in (
+            "PROVIDER-SIDE MERGE EXECUTOR — NO HUMAN MEMORY STEP",
+            "explicit repository-owned required-check names",
+            "unresolved review threads",
+            "immediately re-read provider truth",
+            "expected head SHA",
+            "A local branch switch or local checkout is not part of normal merge convergence",
+            "duplicate wakeups are idempotent",
+            "GitHub App/workflow permissions",
+            "merge API/queue response",
+            "missing/renamed/pending/failing blocks",
+            "PROVIDER-AGNOSTIC AT THE CONTRACT",
+            "provider capability map",
+            "8B. DEGRADED PROVIDER, OUTAGE, AND RATE LIMIT — FAIL CLOSED",
+            "PROVIDER_UNAVAILABLE",
+            "PROVIDER_RATE_LIMITED",
+            "PROVIDER_PARTIAL_TRUTH",
+            "Never treat a local `git merge` or local branch tip as substitute provider promotion",
+            "GitHub Actions is the first worked adapter",
+        ):
+            self.assertIn(phrase, content)
+        self.assertIn("last-mile provider-side merge", prompt["useWhen"])
+        self.assertIn("canonical SCM/CI provider", prompt["useWhen"])
+        self.assertIn("route to P112", prompt["useWhen"])
+        self.assertIn("route to P102", prompt["useWhen"])
+        self.assertIn("provider-agnostic", prompt["sprintRole"])
+        self.assertIn("provider-side executor", prompt["expectedOutput"])
+        self.assertIn("PROVIDER_UNAVAILABLE", prompt["expectedOutput"])
+        self.assertIn("unresolved review threads", prompt["proofGate"])
+        self.assertIn("PROVIDER_RATE_LIMITED", prompt["proofGate"])
+        self.assertIn("explicit repository-owned required-check set", prompt["nextStep"])
+        self.assertIn("hardcoding github.com", prompt["nextStep"])
+        self.assertIn("provider-agnostic CI/CD", prompt["keywords"])
+        self.assertIn("GitHub rate limit", prompt["keywords"])
+        self.assertNotIn("git switch main", content)
+
+    def test_repository_automation_prompts_have_distinct_generation_and_promotion_roles(self) -> None:
+        generation = [p for p in self.full.values() if p["name"] == "Repository-Native Code Update Harness Builder"]
+        promotion = [p for p in self.full.values() if p["name"] == "Validated CI/CD Promotion Pipeline Builder"]
+        self.assertEqual(len(generation), 1)
+        self.assertEqual(len(promotion), 1)
+        generation = generation[0]
+        promotion = promotion[0]
+        self.assertNotEqual(generation["id"], promotion["id"])
+        self.assertEqual(generation["class"], "HARNESS / REPO-NATIVE CODE GENERATION")
+        self.assertEqual(promotion["class"], "HARNESS / CI-CD PROMOTION")
+        self.assertEqual(promotion["profile"], "spec-architecture")
+        self.assertEqual(promotion["actionabilityPolicy"], self.policy["policy_id"])
+        self.assertIn(self.policy["marker"], promotion["copyContent"])
+        for phrase in (
+            "SEPARATE AUTHORING, VALIDATION, AND PROMOTION",
+            "KEEP HARNESS E2E AND APPLICATION E2E DISTINCT",
+            "PIN EVERY GATE TO ONE CANDIDATE IDENTITY",
+            "REQUIRED plus SKIP is not green",
+            "least-privilege",
+            "build-once/promote-the-same-artifact",
+            "recursively trigger another writer forever",
+            "PROVE POST-PROMOTION CONTAINMENT",
+            "provider run ID",
+        ):
+            self.assertIn(phrase, promotion["copyContent"])
+        self.assertLess(
+            promotion["copyContent"].index("MCP / SEMANTIC REPOSITORY RETRIEVAL CONTRACT"),
+            promotion["copyContent"].index("\nMISSION\n"),
+        )
+        for phrase in (
+            "FIRST EVIDENCE ACTION",
+            "Augment Context Engine MCP",
+            "Resolve the active MCP server/tool identity from Cursor",
+            "promotion authority, validation owners, proof/provenance, and write authority",
+            "Do not satisfy this contract with one vague or ceremonial MCP call",
+            "MCP maps architecture; it does not prove current SHA/base",
+            "MCP_RETRIEVAL_BLOCKED",
+            "Do not claim MCP-backed discovery or silently substitute assumptions",
+        ):
+            self.assertIn(phrase, promotion["copyContent"])
+        self.assertIn("augment mcp", promotion["keywords"])
+        self.assertIn("code already authored", promotion["copyContent"])
+        self.assertIn("repository-owned mechanism", generation["copyContent"])
+        self.assertIn("Validated CI/CD Promotion Pipeline Builder", build_prompt_kit_registry.render())
+
+    def test_new_source_prompts_are_intentionally_bounded(self) -> None:
+        for prompt_id in ("P78", "P79", "P80", "P81", "P82", "P99"):
+            content = self.raw[prompt_id]["copyContent"]
+            self.assertLess(len(content), 8000)
+            self.assertGreater(len(content), 1800)
+
+    def test_raw_p76_prompt_is_itself_bounded(self) -> None:
+        content = self.raw["P76"]["copyContent"]
+        self.assertLess(len(content), 7000)
+        self.assertGreater(len(content), 2500)
+
+    def test_discovery_aliases_route_spec_bloat_queries_to_p76(self) -> None:
+        self.assertEqual(build_prompt_kit.SYNONYMS["spec driven development"], "P76")
+        self.assertEqual(build_prompt_kit.SYNONYMS["progressive disclosure"], "P76")
+        self.assertEqual(build_prompt_kit.SYNONYMS["harness bloat"], "P76")
+        self.assertEqual(build_prompt_kit.SYNONYMS["50000 ft"], "P76")
+
+    def test_render_contains_spec_profile_and_extended_architecture_prompts(self) -> None:
+        html = build_prompt_kit_registry.render()
+        self.assertIn("prompt-kit-spec-architecture-styles", html)
+        self.assertIn("spec-architecture", html)
+        self.assertIn("◎ Spec Layers", html)
+        self.assertIn("Progressive-Disclosure Spec & Harness Factorer", html)
+        self.assertIn("Repository Glossary & Documentation Diet", html)
+        self.assertIn("Prompt Registry Prompt Adder", html)
+        self.assertIn("Client Prompt Pack & Local Profile Builder", html)
+        self.assertIn("Multi-Tier Cache Architecture & Invalidation Hardener", html)
+        self.assertIn("Prototype-Measure-Refine Delivery Loop", html)
+        self.assertIn("User-Flow Friction & Preference Telemetry Refiner", html)
+
+    def test_prompt_semantic_hardener_selectively_integrates_stronger_principles(self) -> None:
+        matches = [
+            prompt
+            for prompt in self.full.values()
+            if prompt["name"] == "Prompt Semantic Hardener & Principle Integrator"
+        ]
+        self.assertEqual(len(matches), 1)
+        prompt = matches[0]
+        content = prompt["copyContent"]
+        raw_content = self.raw[prompt["id"]]["copyContent"]
+        self.assertEqual(prompt["id"], "P86")
+        self.assertEqual(prompt["seq"], "86")
+        self.assertEqual(prompt["copySheet"], "P86_COPY_SAFE")
+        self.assertEqual(prompt["category"], "standard")
+        self.assertEqual(prompt["profile"], "spec-architecture")
+        self.assertEqual(prompt["color"], "Cyan")
+        self.assertEqual(prompt["class"], "PROMPT KIT / PROMPT ARCHITECTURE")
+        self.assertIn("RAW VS EFFECTIVE PROMPT", content)
+        self.assertIn("PRINCIPLE APPLICABILITY MATRIX", content)
+        self.assertIn("COMPATIBLE, INCOMPATIBLE, or NOT NEEDED", content)
+        self.assertIn("P03 REFERENCE CASE", content)
+        for donor in ("P07", "P13", "P48", "P76", "P83", "P84", "P85"):
+            self.assertIn(donor, content)
+        self.assertIn(
+            "do not transform P03 into P07, P13, P48, P76, P83, P84, or P85",
+            content,
+        )
+        self.assertIn("Do not copy every strong rule into every prompt", content)
+        self.assertIn("shared policy", content.lower())
+        self.assertIn("Extend the closest existing focused test", content)
+        self.assertIn("one deliberate second pass", content)
+        self.assertIn(
+            "Refresh again immediately before final exact-head conclusions", content
+        )
+        self.assertLess(len(raw_content), 7600)
+        self.assertGreater(len(raw_content), 3000)
+        self.assertEqual(prompt["actionabilityPolicy"], self.policy["policy_id"])
+        self.assertIn(self.policy["marker"], content)
+        html = build_prompt_kit_registry.render()
+        self.assertIn("Prompt Semantic Hardener & Principle Integrator", html)
+
+
+    def test_bidirectional_use_case_hook_routes_intent_and_reverse_ownership(self) -> None:
+        matches = [
+            prompt
+            for prompt in self.full.values()
+            if prompt["name"] == 'Bidirectional Use-Case Hook & Repository Route Builder'
+        ]
+        self.assertEqual(len(matches), 1)
+        prompt = matches[0]
+        content = prompt["copyContent"]
+        raw_content = self.raw[prompt["id"]]["copyContent"]
+        self.assertEqual(prompt["id"], 'P87')
+        self.assertEqual(prompt["seq"], '87')
+        self.assertEqual(prompt["copySheet"], 'P87_COPY_SAFE')
+        self.assertEqual(prompt["profile"], "spec-architecture")
+        self.assertEqual(prompt["color"], "Cyan")
+        self.assertEqual(prompt["class"], "HARNESS / ROUTING ARCHITECTURE")
+        self.assertIn("BIDIRECTIONAL ROUTE CONTRACT", content)
+        self.assertIn("USER INTENT -> TRIGGER / HOOK -> CAPABILITY", content)
+        self.assertIn("SCRIPT / MANIFEST / VALIDATOR / PROMPT / WORKFLOW / CAPABILITY RECORD", content)
+        self.assertIn("INTENT OVER FILENAME", content)
+        self.assertIn("REVERSE-OWNERSHIP QUESTIONS", content)
+        self.assertIn("Why does this resource exist?", content)
+        self.assertIn("What capability or supported use case owns it?", content)
+        self.assertIn("PROVE BOTH DIRECTIONS", content)
+        self.assertIn("A. INTENT-FIRST", content)
+        self.assertIn("B. IMPLEMENTATION-FIRST", content)
+        self.assertIn("without a pre-supplied implementation filename", content)
+        self.assertIn("Do not create a second capabilities registry", content)
+        self.assertIn("Harness Builder may create or repair general harness infrastructure", content)
+        self.assertIn("Progressive-Disclosure factoring may reduce default context", content)
+        self.assertGreater(len(raw_content), 3500)
+        self.assertLess(len(raw_content), 9000)
+        self.assertEqual(prompt["actionabilityPolicy"], self.policy["policy_id"])
+        self.assertIn(self.policy["marker"], content)
+        html = build_prompt_kit_registry.render()
+        self.assertIn('Bidirectional Use-Case Hook & Repository Route Builder', html)
+
+
+    def test_lua_flagging_host_enforcement_prompt_preserves_host_control_and_repair_loop(self) -> None:
+        matches = [
+            prompt
+            for prompt in self.full.values()
+            if prompt["name"] == "Lua Flagging + Host Enforcement Repair Loop"
+        ]
+        self.assertEqual(len(matches), 1)
+        prompt = matches[0]
+        content = prompt["copyContent"]
+        raw_content = self.raw[prompt["id"]]["copyContent"]
+        self.assertEqual(prompt["id"], "P90")
+        self.assertEqual(prompt["seq"], "90")
+        self.assertEqual(prompt["copySheet"], "P90_COPY_SAFE")
+        self.assertEqual(prompt["category"], "standard")
+        self.assertEqual(prompt["profile"], "spec-architecture")
+        self.assertEqual(prompt["color"], "Cyan")
+        self.assertEqual(prompt["class"], "HARNESS / LUA HOST ENFORCEMENT")
+        self.assertIn("Lua detects and classifies command defects", content)
+        self.assertIn("host language validates the finding schema", content)
+        self.assertIn("Lua error, malformed Lua result, or checker failure", content)
+        self.assertIn("wrong-shell syntax", content)
+        self.assertIn("Bash constructs emitted for a PowerShell or CMD operator path", content)
+        self.assertIn("CHECKER_FAILURE", content)
+        self.assertIn("SCAN -> LUA FLAGS -> HOST BLOCK/RAISE -> AGENT REPAIR -> REVALIDATE", content)
+        self.assertIn("Pass 2 must inspect the repaired command plus nearby failure classes", content)
+        self.assertIn("Do not ask the user to choose between technically equivalent safe implementations", content)
+        self.assertIn("Escalate only when progress truly requires user-controlled credentials", content)
+        self.assertIn("Do not claim command safety from Lua-only tests", content)
+        self.assertGreater(len(raw_content), 5000)
+        self.assertLess(len(raw_content), 8000)
+        self.assertEqual(prompt["actionabilityPolicy"], self.policy["policy_id"])
+        self.assertIn(self.policy["marker"], content)
+        html = build_prompt_kit_registry.render()
+        self.assertIn("Lua Flagging + Host Enforcement Repair Loop", html)
+
+    def test_failure_suite_prompts_cover_class_path_and_closure_without_collapsing_roles(self) -> None:
+        expected = {
+            "P91": ("Failure-Class Generalization & Repository Audit", "TESTING / FAILURE GENERALIZATION"),
+            "P92": ("Canonical Path Prompt", "HARNESS / CANONICAL PATH"),
+            "P93": ("Use-Case Closure Certification", "VERIFICATION / USE-CASE CLOSURE"),
+        }
+        for prompt_id, (name, prompt_class) in expected.items():
+            prompt = self.full[prompt_id]
+            self.assertEqual(prompt["id"], prompt_id)
+            self.assertEqual(prompt["seq"], prompt_id[1:])
+            self.assertEqual(prompt["copySheet"], f"{prompt_id}_COPY_SAFE")
+            self.assertEqual(prompt["category"], "standard")
+            self.assertEqual(prompt["profile"], "spec-architecture")
+            self.assertEqual(prompt["color"], "Cyan")
+            self.assertEqual(prompt["name"], name)
+            self.assertEqual(prompt["class"], prompt_class)
+            self.assertEqual(prompt["actionabilityPolicy"], self.policy["policy_id"])
+            self.assertIn(self.policy["marker"], prompt["copyContent"])
+
+        p91 = self.full["P91"]["copyContent"]
+        self.assertIn("BUILD A FAILURE-STATE MATRIX", p91)
+        self.assertIn("UNKNOWN is not PASS", p91)
+        self.assertIn("Do not blanket-replace", p91)
+        self.assertIn("What adjacent state could still fail for the same underlying reason?", p91)
+
+        p92_prompt = self.full["P92"]
+        p92 = p92_prompt["copyContent"]
+        self.assertEqual(p92_prompt["name"], "Canonical Path Prompt")
+        self.assertEqual(p92_prompt["class"], "HARNESS / CANONICAL PATH")
+        for phrase in (
+            "ESTABLISH AND ENFORCE THE CANONICAL DEVELOPMENT AND PRODUCTION PATH",
+            "CANONICAL DEVELOPMENT CHECKOUT",
+            "CANONICAL PRODUCTION / USE PATH",
+            "Do not standardize a filename across repositories",
+            "PREVENT PATH SPRAWL AND COMPUTER BLOAT",
+            "REMOTE INTEGRATION IS NOT LOCAL DEPLOYMENT",
+            "REMOTE_INTEGRATED",
+            "DEV_CHECKOUT_CURRENT",
+            "PROD_PATH_CURRENT",
+            "ENTRYPOINT_PROVED",
+            "UNKNOWN is not permission to guess",
+            "MAP BOTH PATHS WHEN TEST PROOF IS INVOLVED",
+            "PRODUCTION-ONLY",
+            "Green helper tests do not prove a production wrapper",
+            "same-entrypoint synthetic proof",
+            "Could another agent entering fresh still choose a different directory?",
+            "ENVIRONMENT-DERIVED MACHINE / PROFILE PATH RESOLUTION",
+            "PATH INPUT RECEIPT",
+            "TARGET_FOLDER_REDIRECTED",
+            "An installed/running client is not proof",
+            "do not assume `%USERPROFILE%\\Desktop`",
+            "Ambiguous roots/redirection -> CONFLICT/UNKNOWN",
+            "tracked canonical-path/profile contract -> authorized machine/profile override",
+            "5A. EXECUTION CONTEXT RECEIPT BEFORE PATH-SENSITIVE COMMANDS",
+            "A terminal application is not the shell",
+            "EXECUTION_CONTEXT=UNKNOWN",
+            "5B. DEVELOPMENT MUTATION VS ACTIVE PRODUCTION USE",
+            "Production/use path is a consumer path, not the default development mutation target",
+            "PROD_USE_STATE",
+            "UNKNOWN is not idle",
+            "same physical path",
+            "Any write is production-impacting",
+            "prevents partial candidate state",
+        ):
+            self.assertIn(phrase, p92)
+        self.assertIn("remote merged SHA is never treated as local deployment proof", p92_prompt["proofGate"])
+        self.assertIn("production/use path is not the default development mutation target", p92_prompt["proofGate"])
+        self.assertIn("UNKNOWN production use state blocks production mutation", p92_prompt["proofGate"])
+        self.assertIn("running processes, services, launchers", p92_prompt["inspectFirst"])
+        self.assertIn("OneDrive/cloud roots", p92_prompt["inspectFirst"])
+        self.assertIn("hard-coded username", p92_prompt["proofGate"])
+        self.assertLess(len(self.raw["P92"]["copyContent"]), 12000)
+        for synonym in (
+            "canonical path",
+            "canonical repository path",
+            "canonical checkout",
+            "development path",
+            "production path",
+            "local deployment path",
+            "path drift",
+            "scattered clones",
+            "onedrive path",
+            "onedrive repository path",
+            "known folder redirection",
+            "user profile path",
+            "os path resolution",
+        ):
+            self.assertEqual(build_prompt_kit.SYNONYMS[synonym], "P92")
+
+        p01 = self.full["P01"]["copyContent"]
+        self.assertIn("CANONICAL PATH CONTRACT", p01)
+        self.assertIn("Every app harness must answer where normal development occurs", p01)
+        self.assertIn("Do not let a fresh agent choose a new directory from model preference", p01)
+        self.assertIn("GitHub merge success alone is not workstation deployment proof", p01)
+        self.assertIn("P92 Canonical Path Prompt owns deep repair/audit of this contract", p01)
+
+        p93 = self.full["P93"]["copyContent"]
+        self.assertIn("BUILD THE OBLIGATION LEDGER", p93)
+        self.assertIn("UNKNOWN is not PASS", p93)
+        self.assertIn("FALSIFY CLOSURE", p93)
+        self.assertIn("NOT CERTIFIED", p93)
+        self.assertIn("CHECK FAITHFULNESS BEFORE FETCHING MORE", p93)
+        self.assertIn("FACTUALITY_MISSING_CONTEXT", p93)
+        self.assertIn("FAITHFULNESS_CONTEXT_IGNORED", p93)
+        self.assertIn("ATTENTION_SATURATION", p93)
+        self.assertIn("A confident, plausible, good-faith answer can still fail closure", p93)
+        self.assertIn("do not reflexively add more context", p93)
+
+        html = build_prompt_kit_registry.render()
+        for _, (name, _) in expected.items():
+            self.assertIn(name, html)
+
+    def test_open_source_prior_art_prompt_separates_real_world_baseline_from_local_gap(self) -> None:
+        matches = [
+            prompt
+            for prompt in self.full.values()
+            if prompt["name"] == 'Open-Source Prior-Art & Gap Analyst'
+        ]
+        self.assertEqual(len(matches), 1)
+        prompt = matches[0]
+        content = prompt["copyContent"]
+        raw_content = self.raw[prompt["id"]]["copyContent"]
+        self.assertEqual(prompt["id"], 'P97')
+        self.assertEqual(prompt["seq"], '97')
+        self.assertEqual(prompt["copySheet"], 'P97_COPY_SAFE')
+        self.assertEqual(prompt["profile"], "spec-architecture")
+        self.assertEqual(prompt["color"], "Cyan")
+        self.assertEqual(prompt["class"], "RESEARCH / REFERENCE ARCHITECTURE")
+        self.assertIn(
+            "ANALYZE OPEN-SOURCE REPOSITORIES THAT HAVE ALREADY DONE THINGS LIKE THIS SO THAT WE CAN EMULATE THAT",
+            content,
+        )
+        self.assertIn("WHAT IS ALREADY AVAILABLE IN THE REAL WORLD", content)
+        self.assertIn("WHAT PROJECT-SPECIFIC GAP IS STILL WORTH DEVELOPING", content)
+        self.assertIn("VERIFY IMPLEMENTATION, NOT MARKETING", content)
+        self.assertIn("A README can orient the search but cannot by itself prove an implementation claim", content)
+        for evidence_state in (
+            "OBSERVED_IMPLEMENTED",
+            "DOCUMENTED_UNVERIFIED",
+            "INFERRED",
+            "ABSENT",
+        ):
+            self.assertIn(evidence_state, content)
+        for disposition in ("ADOPT", "ADAPT", "REJECT", "UNKNOWN"):
+            self.assertIn(disposition, content)
+        for gap_state in (
+            "ALREADY_SOLVED_INTERNALLY",
+            "AVAILABLE_TO_EMULATE_EXTERNALLY",
+            "PROJECT_SPECIFIC_GAP",
+            "EVIDENCE_GAP",
+        ):
+            self.assertIn(gap_state, content)
+        self.assertIn("EMULATE MECHANISMS, NOT CODE BLINDLY", content)
+        self.assertIn("verify license compatibility", content)
+        self.assertIn("Search the current repo before the wider ecosystem", content)
+        self.assertIn("fresh current repository", content.lower())
+        self.assertIn("refresh the evidence", content.lower())
+        self.assertIn("ADVANCE, DON'T END WITH A RESEARCH ESSAY", content)
+        self.assertIn("not portfolio ranking", content.lower())
+        self.assertIn("do not primarily rank which of our internal repositories", content.lower())
+        self.assertIn("do not replace the repository's internal intent routing", content.lower())
+        self.assertGreater(len(raw_content), 4500)
+        self.assertLess(len(raw_content), 9000)
+        self.assertEqual(prompt["actionabilityPolicy"], self.policy["policy_id"])
+        self.assertIn(self.policy["marker"], content)
+        html = build_prompt_kit_registry.render()
+        self.assertIn('Open-Source Prior-Art & Gap Analyst', html)
+
+
+    def test_p90_command_snippets_preserve_operator_terminal_observability(self) -> None:
+        prompt = self.full["P90"]
+        content = prompt["copyContent"]
+        raw_content = self.raw["P90"]["copyContent"]
+        self.assertEqual(prompt["name"], "Lua Flagging + Host Enforcement Repair Loop")
+        self.assertEqual(prompt["class"], "HARNESS / LUA HOST ENFORCEMENT")
+        self.assertEqual(prompt["profile"], "spec-architecture")
+        for phrase in (
+            "ARCHITECTURE BOUNDARY — HOST STAYS IN CONTROL",
+            "COMMAND CLASSES TO EXERCISE",
+            "wrong-shell syntax",
+            "HOST ENFORCEMENT",
+            "SCAN -> LUA FLAGS -> HOST BLOCK/RAISE -> AGENT REPAIR -> REVALIDATE",
+            "CHECKER_FAILURE",
+        ):
+            self.assertIn(phrase, content)
+        for phrase in (
+            "OPERATOR OBSERVABILITY / TERMINAL-LIFETIME CONTRACT",
+            "INTERACTIVE_PASTE",
+            "TRANSIENT_CONSOLE",
+            "CHILD_PROCESS",
+            "AUTOMATION_CI",
+            "no top-level `exit`",
+            "preserve status and keep the parent shell alive",
+            "save exit code first",
+            "never wait for human input",
+            "Waits are inspection aids, not error handling",
+        ):
+            self.assertIn(phrase, content)
+        self.assertIn("terminal", prompt["useWhen"].lower())
+        self.assertIn("invocation mode", prompt["inspectFirst"].lower())
+        self.assertIn("unattended", prompt["proofGate"].lower())
+        self.assertIn("terminal stays open", prompt["keywords"])
+        self.assertIn("preserve exit code", prompt["keywords"])
+        self.assertGreater(len(raw_content), 5000)
+        self.assertLess(len(raw_content), 8000)
+        self.assertEqual(prompt["actionabilityPolicy"], self.policy["policy_id"])
+        self.assertIn(self.policy["marker"], content)
+        html = build_prompt_kit_registry.render()
+        self.assertIn("Lua Flagging + Host Enforcement Repair Loop", html)
+
+    def test_p86_supports_bounded_multi_prompt_principle_campaign(self) -> None:
+        prompt = self.full["P86"]
+        raw = self.raw["P86"]
+        content = raw["copyContent"]
+        for phrase in (
+            "HARDEN ONE OR MORE EXISTING PROMPTS",
+            "SINGLE TARGET hardening or a bounded PRINCIPLE PROPAGATION CAMPAIGN",
+            "do not stop at the first obvious prompt",
+            "NORMALIZE THE SOURCE PRINCIPLE",
+            "Distinguish principle from costume",
+            "role/competence anchoring",
+            "explicit source map",
+            "observable definition of done",
+            "final self-check against evidence",
+            "literal domain wording, invented tenure, emotional urgency",
+            "Every material candidate must receive a disposition",
+            "CHOOSE THE CANONICAL OWNER",
+            "A campaign succeeds by correct coverage, not by number of edited prompts",
+        ):
+            self.assertIn(phrase, content)
+        self.assertIn("one existing Prompt Kit prompt or a bounded family", raw["sprintRole"])
+        self.assertIn("every relevant existing prompt", raw["useWhen"])
+        self.assertIn("candidate target set", raw["inspectFirst"])
+        self.assertIn("targets changed", content)
+        self.assertLess(len(content), 7600)
+        self.assertEqual(prompt["id"], "P86")
+        self.assertEqual(prompt["copySheet"], "P86_COPY_SAFE")
+    def test_afk_feedback_executor_connects_real_work_to_existing_owners(self) -> None:
+        matches = [p for p in self.full.values() if p.get("name") == 'AFK Feedback-Driven Development Loop Executor']
+        self.assertEqual(len(matches), 1)
+        owner = matches[0]
+        self.assertEqual(owner["id"], 'P115')
+        self.assertEqual(owner["class"], "HARNESS / AFK DEVELOPMENT")
+        content = owner["copyContent"]
+        for phrase in (
+            "FEEDBACK IS A WORK QUEUE, NOT A REPORT ENDPOINT",
+            "P07-STYLE NONTERMINAL WORK LOOP",
+            "REFRESH -> INGEST SIGNALS -> SELECT SAFE HIGHEST-VALUE WORK -> EXECUTE -> VALIDATE -> INGEST NEW FEEDBACK -> CRITIQUE -> IMPROVE -> INTEGRATE -> REFRESH -> REPEAT",
+            "A status-only pass is a failed pass when safe agent-capable work exists",
+            "developers, scripts, agents, models, PRs",
+            "AFK WAKEUPS ARE NOT AFK WORK",
+            "COERCE REAL WORK, NOT STATUS THEATER",
+            "one writer per mutation surface",
+            "Prove the operator did not have to relay ordinary logs",
+            "An open PR, green CI, generated report",
+        ):
+            self.assertIn(phrase, content)
+        for neighbor in ("P07", "P32", "P104", "P105", "P112", "P113"):
+            self.assertIn(neighbor, content)
+        self.assertEqual(self.full["P104"]["class"], "HARNESS / REPO-NATIVE CODE GENERATION")
+        self.assertEqual(self.full["P105"]["class"], "HARNESS / CI-CD PROMOTION")
+        self.assertEqual(self.full["P112"]["class"], "HARNESS / AUTOMATED TESTING")
+        self.assertEqual(self.full["P113"]["class"], "HARNESS / TEST EVOLUTION")
+
+    def test_p105_failed_gate_routes_to_afk_repair_without_gaining_authoring(self) -> None:
+        owner = [p for p in self.full.values() if p.get("name") == 'AFK Feedback-Driven Development Loop Executor'][0]
+        promotion = self.full["P105"]
+        self.assertIn(owner["id"], promotion["nextStep"])
+        self.assertIn(owner["id"], promotion["copyContent"])
+        self.assertIn("FAILED PROMOTION GATES FEED DEVELOPMENT", promotion["copyContent"])
+        content = promotion["copyContent"]
+        self.assertIn("This pipeline remains promotion-only", content)
+        self.assertIn("Emit candidate SHA/base, failing job/check/command", content)
+        self.assertIn("artifact/log or review-thread identity", content)
+        self.assertIn("owning surface, required acceptance condition, and proof ceiling", content)
+        self.assertIn("hand that exact signal to P115", content)
+        self.assertIn("keep promotion blocked", content)
+        self.assertIn("The repair owner must create a new exact candidate", content)
+        self.assertIn("re-enter this P105 pipeline from the beginning", content)
+        self.assertIn("never reuse proof from the failed candidate", content)
+
+    def test_p113_evolution_covers_crlf_second_sink_and_built_output_release_check(self) -> None:
+        prompt = self.full["P113"]
+        raw = self.raw["P113"]
+        content = prompt["copyContent"]
+        raw_content = raw["copyContent"]
+        self.assertEqual(prompt["id"], "P113")
+        self.assertEqual(prompt["class"], "HARNESS / TEST EVOLUTION")
+        for phrase in (
+            "CRLF-normalized mutation fixtures",
+            "second-sink",
+            "built-output",
+            "release:check",
+            "mutation fixture",
+            "Normalize line endings in fixtures",
+            "CRLF vs LF",
+        ):
+            self.assertIn(phrase, content)
+            self.assertIn(phrase, raw_content)
+        for kw in ("CRLF-normalized", "second-sink", "built-output", "release:check"):
+            self.assertIn(kw, prompt["keywords"])
+            self.assertIn(kw, raw["keywords"])
+        self.assertEqual(prompt["actionabilityPolicy"], self.policy["policy_id"])
+        self.assertIn(self.policy["marker"], content)
+
+    def test_p122_web_contact_form_semantic_validation_and_mutation_release_guard(self) -> None:
+        prompt = self.full["P122"]
+        raw = self.raw["P122"]
+        content = prompt["copyContent"]
+        raw_content = raw["copyContent"]
+        self.assertEqual(prompt["seq"], "122")
+        self.assertEqual(prompt["profile"], "spec-architecture")
+        self.assertEqual(prompt["color"], "Cyan")
+        self.assertEqual(prompt["class"], "WEB / FORM SECURITY & VALIDATION")
+        self.assertEqual(prompt["name"], "Web Contact Form Semantic Validation & Mutation-Hardened Release Guard")
+        self.assertEqual(raw["id"], "P122")
+        for phrase in (
+            "form=\"contact-form\"",
+            "SEMANTIC FORM-CONTROL ASSOCIATION",
+            "UNNAMED AND EXTERNAL NATIVE-SUBMIT REJECTION",
+            "required-attribute",
+            "COMPUTED AND ALIASED REQUEST ACCESS",
+            "ALL-CONSOLE DENIAL",
+            "SEMANTIC RESEND PAYLOAD",
+            "SECOND-SINK",
+            "CRLF-NORMALIZED MUTATION FIXTURES",
+            "CRLF",
+            "HTML-AWARE TAG BOUNDARIES",
+            "COMMENT-SAFE",
+            "TEMPLATE-INTERPOLATION",
+            "TURNSTILE",
+            "passive Turnstile-resource",
+            "release:check",
+            "built-output",
+        ):
+            self.assertIn(phrase, content)
+            self.assertIn(phrase, raw_content)
+        for kw in ("contact form", "Resend payload", "second-sink", "CRLF-normalized", "mutation fixture", "release:check"):
+            self.assertIn(kw, prompt["keywords"])
+        self.assertIn("HARDEN THE WEB CONTACT FORM", content)
+        self.assertEqual(prompt["actionabilityPolicy"], self.policy["policy_id"])
+        self.assertIn(self.policy["marker"], content)
+        html = build_prompt_kit_registry.render()
+        self.assertIn("P122", html)
+        self.assertIn("Web Contact Form Semantic Validation", html)
+        self.assertIn("contact-form", html)
+
+
+    def test_code_readability_prompt_owns_general_source_refactoring_without_absorbing_specialists(self) -> None:
+        matches = [p for p in self.full.values() if p.get("name") == 'Repository Code Readability & Structural Refactorer']
+        self.assertEqual(len(matches), 1)
+        prompt = matches[0]
+        content = prompt["copyContent"]
+        raw_content = self.raw[prompt["id"]]["copyContent"]
+        self.assertEqual(prompt["class"], "ENGINEERING / CODE READABILITY")
+        self.assertEqual(prompt["profile"], "spec-architecture")
+        self.assertEqual(prompt["color"], "Cyan")
+        for phrase in (
+            "BUILD A STRUCTURAL-DEBT LEDGER",
+            "REPO-WIDE INTAKE + REPRESENTATIVE EDIT",
+            "Size is a clue, never a verdict",
+            "Where do I change <behavior>?",
+            "PROTECT BEHAVIOR BEFORE MOVING IT",
+            "REFACTOR FOR COHESION, NOT SMALLNESS ALONE",
+            "DO NOT REPLACE A MONOLITH WITH A MAZE",
+            "Pass 2: read the resulting diff from the perspective of a fresh maintainer",
+            "Where would a fresh maintainer change <responsibility>?",
+            "Never hand-edit generated output for tidiness",
+        ):
+            self.assertIn(phrase, content)
+        self.assertLess(len(raw_content), 7000)
+        self.assertEqual(prompt["actionabilityPolicy"], self.policy["policy_id"])
+        for existing_id in ("P06", "P63", "P68", "P76", "P78"):
+            self.assertNotEqual(prompt["id"], existing_id)
+        for synonym in (
+            "code readability",
+            "codebase readability",
+            "code cleanup",
+            "code refactor",
+            "structural refactor",
+            "maintainability refactor",
+            "god file",
+            "giant function",
+        ):
+            self.assertEqual(build_prompt_kit.SYNONYMS[synonym], prompt["id"])
+
+    def test_general_execution_review_and_discovery_prompts_do_not_hide_readability_debt(self) -> None:
+        owner = [p for p in self.full.values() if p.get("name") == 'Repository Code Readability & Structural Refactorer'][0]
+        owner_id = owner["id"]
+        p03 = self.full["P03"]["copyContent"]
+        p07 = self.full["P07"]
+        p14 = self.full["P14"]
+        self.assertIn("do not misclassify evidenced structural editability debt as speculative refactoring", p03)
+        self.assertIn(f"route a bounded cleanup to {owner_id}", p03)
+        self.assertIn("CODE READABILITY / EDITABILITY FLOOR", p07["copyContent"])
+        self.assertIn("Green behavior is not enough", p07["copyContent"])
+        self.assertIn(f"route that separate cleanup to {owner_id}", p07["copyContent"])
+        self.assertIn("readability/editability regression", p07["proofGate"])
+        self.assertIn("READABILITY / STRUCTURAL EDITABILITY CHECK — STANDARDS, NOT TASTE", p14["copyContent"])
+        self.assertIn("do not hijack the feature review", p14["copyContent"])
+        self.assertIn(f"route the bounded cleanup to {owner_id}", p14["copyContent"])
+        self.assertIn("structural editability", p14["proofGate"])
+        self.assertIn("Avoid permission theater, duplicate ownership, giant prompts, and trivial-only progress", self.full["P04"]["copyContent"])
+        self.assertEqual(self.full["P76"]["class"], "HARNESS / SPEC ARCHITECTURE")
+        self.assertEqual(self.full["P78"]["class"], "HARNESS / KNOWLEDGE ARCHITECTURE")
+        self.assertEqual(self.full["P63"]["class"], "AGENT HARNESS / SKILL FACTORING")
+        self.assertEqual(self.full["P68"]["class"], "AI ENGINEERING / CONTEXT")
+
+    def test_programming_paradigm_specialist_is_distinct_bounded_and_routed_from_general_owners(self) -> None:
+        matches = [p for p in self.full.values() if p.get("name") == "Programming Paradigm Fit & Boundary Refactorer"]
+        self.assertEqual(len(matches), 1)
+        specialist = matches[0]
+        sid = specialist["id"]
+        self.assertEqual(sid, "P128")
+        self.assertEqual(specialist["seq"], "128")
+        content = specialist["copyContent"]
+        self.assertEqual(specialist["class"], "ENGINEERING / PROGRAMMING PARADIGMS")
+        self.assertNotEqual(sid, "P124")
+        for phrase in ("TOOL, NOT RELIGION", "PRESERVE, ADOPT, HYBRIDIZE, or DEFER", "OBJECT-ORIENTED", "FUNCTIONAL", "PROCEDURAL / IMPERATIVE", "DECLARATIVE", "DATA-ORIENTED", "EVENT / MESSAGE-DRIVEN", "HYBRID", "functional core + imperative shell", "Do not convert an entire module tree", "Where is state owned, where do effects occur"):
+            self.assertIn(phrase, content)
+        for declaration_field in (
+            "Branch/worktree:", "Lane/sprint:", "Owned scope:", "Forbidden scope:",
+            "Dependencies/collision risks:", "Expected tracked artifacts:", "Validation order:",
+            "Integration authority:", "Proof ceiling:", "Commit/PR expectation:",
+            "SPRINT DECLARATION — REQUIRED BEFORE MUTATION",
+        ):
+            self.assertIn(declaration_field, content)
+        self.assertLess(len(self.raw[sid]["copyContent"]), 7000)
+        self.assertIn(sid, self.full["P124"]["useWhen"])
+        self.assertIn("programming-paradigm specialist", self.full["P124"]["nextStep"])
+        self.assertLess(len(self.raw["P124"]["copyContent"]), 7000)
+        self.assertIn("do not drift into a programming paradigm accidentally", self.full["P07"]["copyContent"])
+        self.assertIn(sid, self.full["P07"]["proofGate"])
+        self.assertIn("Review paradigm coherence only when the diff materially changes a design boundary", self.full["P14"]["copyContent"])
+        self.assertIn(sid, self.full["P14"]["proofGate"])
+        for keyword in (
+            "programming paradigm", "functional programming", "object-oriented programming", "OOP",
+            "procedural programming", "imperative programming", "declarative programming",
+            "data-oriented programming", "event-driven programming", "functional core imperative shell",
+        ):
+            self.assertIn(keyword, specialist["keywords"])
+        self.assertEqual(self.full["P86"]["name"], "Prompt Semantic Hardener & Principle Integrator")
+        self.assertEqual(self.full["P79"]["name"], "Prompt Registry Prompt Adder")
+
+
+    def test_p137_builds_evidence_backed_project_case_study_and_demo_deck(self) -> None:
+        prompt = self.full["P137"]
+        content = prompt["copyContent"]
+        self.assertEqual(prompt["name"], "Evidence-Backed Project Case Study & Demo Deck Builder")
+        self.assertEqual(prompt["type"], "BUILD + ARTIFACT")
+        self.assertEqual(prompt["class"], "PROJECT DEVELOPMENT / PORTFOLIO ANALYTICS")
+        self.assertEqual(prompt["profile"], "spec-architecture")
+        for phrase in (
+            "INSPIRATION / ORIGIN",
+            "FIRST STEPS",
+            "DELIVERY / OUTCOME QUALITY",
+            "WHAT I LEARNED",
+            "HOW I WOULD DO IT AGAIN",
+            "SCALE AND EXPANSION",
+            "SYSTEM-DESIGN ALTERNATIVES",
+            "TIME-SPENT MODEL",
+            "ACTUAL DISTRIBUTION PIE CHARTS",
+            "PERSPECTIVE / COUNTERFACTUAL PIE CHARTS",
+            "MEASURED, DERIVED, ESTIMATED, COUNTERFACTUAL",
+            "BASELINE VECTOR",
+            "SCENARIO VECTOR",
+            "DELTA TABLE",
+            "scenario-data table/sidecar",
+            "sum to 100% within rounding",
+            "AxTask, ASB, Triage",
+            "DATA-ANALYSIS PORTFOLIO VALUE",
+        ):
+            self.assertIn(phrase, content)
+        self.assertIn("measured, derived, estimated, or counterfactual", prompt["expectedOutput"].lower())
+        self.assertIn("outcome-quality claims are tied to supported criteria", prompt["proofGate"].lower())
+        self.assertIn("counterfactual pie chart", " ".join(prompt["keywords"]).lower())
+
+
+        boundary_start = content.index("SPRINT / ARTIFACT BOUNDARY")
+        artifact_start = content.index("PRESENTATION / DEMO ARTIFACT")
+        self.assertLess(boundary_start, artifact_start)
+        boundary = content[boundary_start:artifact_start]
+        for phrase in (
+            "REPOSITORY / WORKSPACE",
+            "BRANCH / REF",
+            "MUTATION AUTHORITY",
+            "OWNED SCOPE",
+            "FORBIDDEN SCOPE",
+            "source evidence as read-only by default",
+            "under `Outputs/`",
+            "timestamped backup",
+            "Outputs/backups/YYYYMMDD-HHMMSS/",
+            "Never use this overwrite path for source evidence",
+            "stop before file mutation",
+        ):
+            self.assertIn(phrase, boundary)
+        self.assertIn("source evidence remains preserved", prompt["expectedOutput"])
+        self.assertIn("timestamped backup and mapping", prompt["proofGate"])
+
+        scenario_start = content.index("PERSPECTIVE / COUNTERFACTUAL PIE CHARTS")
+        scenario_end = content.index("DATA-ANALYSIS PORTFOLIO VALUE", scenario_start)
+        scenario = content[scenario_start:scenario_end]
+        ordered_steps = (
+            "BASELINE VECTOR",
+            "INTERVENTION",
+            "CAUSAL ASSUMPTION",
+            "SCENARIO VECTOR",
+            "Validate the vector",
+            "Visualize BASELINE vs SCENARIO",
+            "DELTA TABLE",
+            "scenario-data table/sidecar",
+        )
+        positions = [scenario.index(step) for step in ordered_steps]
+        self.assertEqual(positions, sorted(positions))
+        self.assertIn("Never silently create or destroy hours/tasks", scenario)
+        self.assertIn("pie shares sum to 100% within rounding", scenario)
+        self.assertIn("same category definitions", scenario)
+        self.assertNotEqual(prompt["id"], "P64")
+        self.assertNotEqual(prompt["id"], "P79")
+        self.assertEqual(prompt["actionabilityPolicy"], self.policy["policy_id"])
+        self.assertIn(self.policy["marker"], content)
+
+
+    def test_p141_strategic_scout_falsifies_theses_and_routes_without_execution(self) -> None:
+        prompt = self.full["P141"]
+        content = prompt["copyContent"]
+        self.assertEqual(prompt["name"], "Repository Strategic Opportunity Scout")
+        self.assertEqual(prompt["type"], "PLAN")
+        self.assertEqual(prompt["class"], "REPOSITORY STRATEGY / OPPORTUNITY DISCOVERY")
+        self.assertEqual(prompt["profile"], "spec-architecture")
+        for phrase in (
+            "3-5 COMPETING STRATEGIC THESES",
+            "FALSIFY EACH THESIS BEFORE RANKING",
+            "SURVIVES",
+            "WEAKENED",
+            "REJECTED",
+            "DEFERRED",
+            "SELECT EXACTLY ONE NEXT THESIS TO INVESTIGATE",
+            "CHEAPEST DISCRIMINATING INVESTIGATION",
+            "P95 Program Design & Call-Stack Prototype Architect",
+            "P97 Open-Source Prior-Art & Gap Analyst",
+            "P82 prototyping owner",
+            "P79 Prompt Registry Prompt Adder",
+            "P07 Repo Sprint Executor",
+            "use only when strategic uncertainty is resolved",
+            "NEW CONTRACT CANDIDATE",
+            "PRESERVE THE EXPLORATION / EXECUTION BOUNDARY",
+            "Do not continue into bounded execution",
+            "P20 executes an already-selected Opportunity_Discovery row",
+            "P22/P23 rank which repository should move first across a portfolio",
+        ):
+            self.assertIn(phrase, content)
+        self.assertLess(content.index("FALSIFY EACH THESIS BEFORE RANKING"), content.index("COMPARE SURVIVING THESES"))
+        self.assertLess(content.index("COMPARE SURVIVING THESES"), content.index("SELECT EXACTLY ONE NEXT THESIS TO INVESTIGATE"))
+        self.assertIn("at least 3 and no more than 5", content)
+        self.assertIn("No selected initiative is implemented", prompt["expectedOutput"])
+        self.assertIn("Do not implement that routed contract", prompt["nextStep"])
+        self.assertIn("P07 is selected only after strategic uncertainty is resolved", prompt["proofGate"])
+        self.assertEqual(prompt["actionabilityPolicy"], self.policy["policy_id"])
+        self.assertIn(self.policy["marker"], content)
+        for existing in ("P03", "P20", "P22", "P23", "P79", "P82", "P95", "P97"):
+            self.assertNotEqual(prompt["id"], existing)
+
+if __name__ == "__main__":
+    unittest.main()

@@ -1,0 +1,34 @@
+{
+  "schema_version": "lua-harness-capabilities/v1",
+  "capabilities": [
+    {
+      "id": "lua-embedding-readiness",
+      "version": "1.0.0",
+      "status": "canonical",
+      "skill": ".ai/skills/lua-embedding-readiness/SKILL.md",
+      "trigger_ids": [
+        "lua-embedding-request"
+      ],
+      "operation": "Translate a Lua embedding request into an auditable host-controlled readiness contract, validate the repository harness, and hand product implementation to its owning lane without pretending runtime proof exists.",
+      "inputs": [
+        "repository governance and root harness",
+        "requested Lua use case",
+        "host entry points and resource boundaries",
+        "sandbox/API exposure requirements",
+        "state lifecycle and error cleanup requirements",
+        "runtime proof requirements"
+      ],
+      "outputs": [
+        "lua-embedding-readiness/v1 contract",
+        "lua-embedding-readiness-report/v1",
+        "product-lane implementation boundary",
+        "runtime acceptance checklist"
+      ],
+      "implementation": {
+        "kind": "script",
+        "path": "scripts/validate_lua_harness.py"
+      },
+      "proof_ceiling": "Static harness/readiness proof until a separately owned product implementation executes Lua inside the host."
+    }
+  ]
+}

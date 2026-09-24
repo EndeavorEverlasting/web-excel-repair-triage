@@ -1,0 +1,40 @@
+{
+  "schema_version": "compute-authority-conditions/v1",
+  "study_id": "prompt-kit-compute-authority",
+  "generation": "v2",
+  "frozen": true,
+  "conditions": {
+    "control": {
+      "condition": "control",
+      "source_commit": "49951e238bd47e536b40815552ceb32a1aac7815",
+      "prompt_path": "harness/evals/compute-authority/prompts/gen2/prompt-control.txt",
+      "prompt_contract_sha": "6330edbc6b510fa6f09e204c0faba50d93bbdb749c52d773804b3227fe1ae78d"
+    },
+    "treatment": {
+      "condition": "treatment",
+      "source_commit": "fc9437ff3fa83ce9df82c6ad85a79d09d7e0bd17",
+      "prompt_path": "harness/evals/compute-authority/prompts/gen2/prompt-treatment.txt",
+      "prompt_contract_sha": "3f63851634cc4b42ac4afd9101c76065d202b6d15e15734818a68dd59e8dda8c"
+    }
+  },
+  "pilot": {
+    "cases": [
+      "TC01",
+      "TC02",
+      "TC03",
+      "TC04",
+      "TC05",
+      "TC06",
+      "TC07",
+      "TC08"
+    ],
+    "repetitions": 1,
+    "conditions": [
+      "control",
+      "treatment"
+    ],
+    "expected_runs": 16,
+    "pair_order_seed": "compute-authority-pilot-v1"
+  },
+  "runtime_absence_state": "UNPROVEN_RUNTIME"
+}

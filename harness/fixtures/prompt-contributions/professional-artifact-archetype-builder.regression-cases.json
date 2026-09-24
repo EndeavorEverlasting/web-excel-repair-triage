@@ -1,0 +1,138 @@
+{
+  "schema_version": "professional-artifact-archetype-builder-candidate-regressions/v1",
+  "owner_issue": "#644",
+  "status": "CANDIDATE_UNTIL_P79_ADD",
+  "cases": [
+    {
+      "id": "PAAB001",
+      "title": "Favorite-document locator is not the exemplar",
+      "input": "User points to a READ FIRST/index document whose links lead to a longer favorite meeting-notes exemplar and a source mirror.",
+      "expected": [
+        "trace locator to actual visual exemplar",
+        "distinguish visual exemplar from provenance source and convenience mirror",
+        "do not style from the index summary alone"
+      ]
+    },
+    {
+      "id": "PAAB002",
+      "title": "Sign-off keeps sign-off structure",
+      "input": "Create a delivery sign-off with scope, equipment checklist, acceptance, signature and date using the same visual family as meeting notes.",
+      "expected": [
+        "PRIMARY ARCHETYPE=SIGN_OFF_OR_ACCEPTANCE",
+        "no forced meeting-notes agenda/quick-links requirement",
+        "acceptance statement present",
+        "signature/date block kept intact"
+      ]
+    },
+    {
+      "id": "PAAB003",
+      "title": "SOP uses executable procedure structure",
+      "input": "Create an SOP from operational evidence.",
+      "expected": [
+        "PRIMARY ARCHETYPE=SOP_OR_RUNBOOK",
+        "purpose/scope and prerequisites",
+        "ordered procedure",
+        "decision points/exceptions",
+        "expected result/evidence",
+        "troubleshooting",
+        "related owners/docs",
+        "version history when durable"
+      ]
+    },
+    {
+      "id": "PAAB004",
+      "title": "Ledger spreadsheet preserves semantics",
+      "input": "Restyle an existing Excel ledger without changing its record schema or source authority.",
+      "expected": [
+        "MEDIUM=SPREADSHEET",
+        "PRIMARY ARCHETYPE=LEDGER_OR_REGISTER",
+        "preserve IDs/schema/formulas/provenance",
+        "use Excel-native tables/filter/freeze/validation semantics",
+        "do not treat Google Sheets as required acceptance unless explicitly targeted"
+      ]
+    },
+    {
+      "id": "PAAB005",
+      "title": "Ticket tracker is functional before decorative",
+      "input": "Create or repair a ticket tracker with a professional aesthetic.",
+      "expected": [
+        "PRIMARY ARCHETYPE=TICKET_TRACKER",
+        "ticket identity/status/owner/lifecycle dates/evidence/next action modeled",
+        "validation/dropdowns/dedup warnings considered when useful",
+        "style cannot break sort/filter/formulas/lifecycle semantics"
+      ]
+    },
+    {
+      "id": "PAAB006",
+      "title": "Reference fidelity precedes H&H palette",
+      "input": "Use a favorite S-class document aesthetic for an H&H artifact and later apply H&H colors.",
+      "expected": [
+        "REFERENCE_CONTROL first",
+        "REFERENCE_FIDELITY_CROSS_PLATFORM_ACCEPTED before brand selection",
+        "GENERIC_AESTHETIC_LOCKED before BRAND_OVERLAY",
+        "brand overlay preserves non-color and pagination fingerprints"
+      ]
+    },
+    {
+      "id": "PAAB007",
+      "title": "Verified Word appearance outranks theme-inverted OOXML",
+      "input": "Raw DOCX/headless rendering appears dark while the operator-verified Microsoft Word view is light.",
+      "expected": [
+        "operator-verified rendered appearance wins",
+        "headless renderer limited to layout QA",
+        "no giant dark narrative panels copied from theme-aware internals"
+      ]
+    },
+    {
+      "id": "PAAB008",
+      "title": "First prototype cannot self-promote",
+      "input": "Prototype 1 renders and API operations succeed, but visual comparison exposes spacing/hierarchy defects.",
+      "expected": [
+        "candidate remains prototype",
+        "record FAIL on visual gate",
+        "revise and rerender",
+        "at least two deliberate passes when visual uncertainty is material",
+        "no 'looks close' completion"
+      ]
+    },
+    {
+      "id": "PAAB009",
+      "title": "Reusable correction is backported",
+      "input": "A manual formatting correction should apply to several sibling artifacts in a repository-backed workflow.",
+      "expected": [
+        "manual artifact treated as prototype/evidence",
+        "repair or create canonical generator/template/spec/profile and tests before batch propagation",
+        "avoid repeated hand-formatting"
+      ]
+    },
+    {
+      "id": "PAAB010",
+      "title": "Artifact link leads the handoff",
+      "input": "A real Drive/document artifact has been created and validated.",
+      "expected": [
+        "canonical artifact link/path is first substantive delivery item",
+        "process explanation follows as receipt rather than burying the artifact"
+      ]
+    },
+    {
+      "id": "PAAB011",
+      "title": "OTHER remains valid",
+      "input": "The artifact is a new operational form that does not honestly fit existing named archetypes.",
+      "expected": [
+        "ARCHETYPE=OTHER allowed",
+        "derive and state minimal repeatable schema from purpose",
+        "do not force sign-off/SOP/meeting-notes structure"
+      ]
+    },
+    {
+      "id": "PAAB012",
+      "title": "Synchronization remains separately owned",
+      "input": "The finished artifact must be published to an established Drive workspace.",
+      "expected": [
+        "professional artifact prompt owns artifact design/acceptance",
+        "route repository/provider synchronization to its canonical sync owner",
+        "do not invent a second sync mechanism"
+      ]
+    }
+  ]
+}

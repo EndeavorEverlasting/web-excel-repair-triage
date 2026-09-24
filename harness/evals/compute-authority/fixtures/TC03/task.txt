@@ -1,0 +1,4 @@
+Diagnose and repair the failure reported by python validate.py.
+
+The failure is plausibly explained by configuration, source logic, or generated-state drift.
+Repair the true root cause and leave validators green.

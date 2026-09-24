@@ -1,0 +1,23 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex">
+  <link rel="canonical" href="../afk-agent-flow/">
+  <meta http-equiv="refresh" content="0; url=../afk-agent-flow/">
+  <title>AFK Agent Flow</title>
+</head>
+<body>
+  <p>Prompt Kit moved to <a id="destination" href="../afk-agent-flow/">AFK Agent Flow</a>.</p>
+  <script>
+    (() => {
+      const target = new URL("../afk-agent-flow/", window.location.href);
+      target.search = window.location.search;
+      target.hash = window.location.hash;
+      document.getElementById("destination").href = target.href;
+      window.location.replace(target.href);
+    })();
+  </script>
+</body>
+</html>

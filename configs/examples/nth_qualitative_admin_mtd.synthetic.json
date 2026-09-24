@@ -1,0 +1,35 @@
+{
+  "schema_version": "nth-qualitative-admin-input/v1",
+  "mode": "month_to_date",
+  "month_key": "2026-08",
+  "artifact_date": "2026-08-05",
+  "through_date": "2026-08-04",
+  "planned_date": "2026-08-05",
+  "mtd_status": "OPEN",
+  "tracked_technicians": ["Alpha Tech", "Beta Tech", "Gamma Tech"],
+  "detail_rows": [
+    {"date":"2026-08-03","technician":"Alpha Tech","paid_hours":8,"program_assignment":"Neuron Track / Program Support","qualitative_work_context":"Configuration, validation, documentation, and readiness support."},
+    {"date":"2026-08-03","technician":"Beta Tech","paid_hours":8,"program_assignment":"Neuron Track / Program Support","qualitative_work_context":"Inventory reconciliation, staging, documentation, and coordination."},
+    {"date":"2026-08-04","technician":"Alpha Tech","paid_hours":8,"program_assignment":"Neuron Track / Program Support","qualitative_work_context":"Configuration production, validation, handoff support, and documentation."},
+    {"date":"2026-08-04","technician":"Beta Tech","paid_hours":8,"program_assignment":"Neuron Track / Program Support","qualitative_work_context":"Inventory control, readiness support, reporting, and coordination."}
+  ],
+  "operational_themes": [
+    {"theme":"Configuration / Validation","readout":"Configuration-led work appears with validation, readiness, handoff, and documentation.","why":"Shows technical production without turning one workstream into the whole shift."},
+    {"theme":"Inventory / Reconciliation","readout":"Inventory control and reconciliation accompany delivery readiness.","why":"Preserves warehouse and control work in the management record."},
+    {"theme":"Documentation / Coordination","readout":"Documentation, reporting, stakeholder coordination, and follow-up recur.","why":"Keeps management and coordination work visible."}
+  ],
+  "executive_readout": [
+    {"finding":"Blended technical work","management_interpretation":"Configuration and inventory work occur alongside validation, readiness, documentation, reporting, and coordination."},
+    {"finding":"Carryover preserved","management_interpretation":"Planned work is tracked separately with zero posted paid hours until completed attendance exists."}
+  ],
+  "carryover_planned_work": [
+    {"planned_date":"2026-08-05","owner":"Alpha Tech","item":"Configuration plan / assignment underway","project":"Neuron Track / Program Support","paid_hours_posted":0,"status":"PLANNED — NOT BILLED","context":"Assignment recorded; no completed attendance posted yet."},
+    {"planned_date":"2026-08-05","owner":"Beta Tech","item":"Inventory follow-up and reporting carryover","project":"Neuron Track / Program Support","paid_hours_posted":0,"status":"CARRYOVER — NOT BILLED","context":"Carryover context only; no paid time is created by this row."}
+  ],
+  "technical_scope_context": [
+    {"control":"Assigned technical scope","statement":"The tracked device scope is a planning/control measure, not a labor-hours source."},
+    {"control":"Interpretation","statement":"Attendance and technical-scope controls are different measures; neither is used to infer a task-hour split."},
+    {"control":"Planned day","statement":"Planned work remains excluded from paid MTD until completed attendance posts."}
+  ],
+  "technical_scope_closing_note": "Configuration, inventory/reconciliation, readiness, staging, documentation, reporting, coordination, troubleshooting/support, and site delivery may overlap inside a shift. This workbook keeps the paid-hour record direct and the workstream explanation qualitative."
+}

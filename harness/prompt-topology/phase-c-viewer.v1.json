@@ -1,0 +1,80 @@
+{
+  "schema_version": "prompt-topology-phase-c-viewer/v1",
+  "contract_id": "prompt-topology-executable-phase-c-viewer",
+  "inputs": {
+    "topology": "artifacts/prompt-topology/topology.v1.json",
+    "projection": "artifacts/prompt-topology/projection-3d.json",
+    "projection_state": "artifacts/prompt-topology/projection-state.v1.json"
+  },
+  "principle": "Phase C is a read-only presentation layer over exact Phase A semantic topology and Phase B coordinates. Presentation state may filter, focus, rotate, zoom, hover, and select, but it must never redefine prompt identity, relationships, clusters, opportunity evidence, ordering, or projection evidence.",
+  "canonical_artifact": {
+    "path": "Outputs/prompt-topology-viewer/index.html",
+    "producer": "python scripts/build_prompt_topology_viewer.py --output Outputs/prompt-topology-viewer/index.html",
+    "validator": "python scripts/build_prompt_topology_viewer.py --output Outputs/prompt-topology-viewer/index.html --check",
+    "tracking_policy": "gitignored runtime artifact / CI evidence; publication is a separate successor gate"
+  },
+  "sources": {
+    "javascript": "docs/prompt-topology-viewer.js",
+    "stylesheet": "docs/prompt-topology-viewer.css",
+    "builder": "scripts/build_prompt_topology_viewer.py",
+    "contract_tests": "tests/test_prompt_topology_phase_c.py",
+    "browser_proof": "tests/prompt_topology_viewer_browser_proof.py",
+    "workflow": ".github/workflows/prompt-topology-phase-c.yml"
+  },
+  "binding": {
+    "topology_state_hash_exact": true,
+    "projection_state_hash_exact": true,
+    "prompt_point_parity_exact": true,
+    "cluster_membership_source": "Phase A topology only",
+    "relationship_source": "Phase A edge channels only",
+    "opportunity_source": "Phase A opportunity records only",
+    "duplicate_prompt_ids_rejected": true
+  },
+  "interaction_baseline": [
+    "drag-to-rotate",
+    "wheel-to-zoom",
+    "hover-nearest-prompt",
+    "click-to-select",
+    "prompt-search-and-focus",
+    "cluster-focus",
+    "relationship-detail-panel",
+    "opportunity-state-detail",
+    "shift-drag-to-pan",
+    "keyboard-view-controls",
+    "static-text-index-fallback"
+  ],
+  "privacy": {
+    "network_requests_after_document_load": false,
+    "telemetry": false,
+    "session_tracking": false,
+    "user_analytics": false,
+    "persistent_browser_storage": false
+  },
+  "forbidden": [
+    "projection-driven classification",
+    "registry mutation",
+    "prompt ID or sequence renumbering",
+    "cluster reassignment from viewer position",
+    "relationship inference from screen distance",
+    "live telemetry or behavioral collection",
+    "localStorage or sessionStorage persistence",
+    "fetch/XHR/WebSocket/EventSource/sendBeacon data transport",
+    "vector database infrastructure",
+    "NodeWeaver expansion"
+  ],
+  "proof_gates": [
+    "phase-a-and-phase-b-contracts-pass",
+    "phase-c-focused-tests-pass",
+    "generated-viewer-byte-parity",
+    "javascript-syntax-pass",
+    "headless-chromium-interaction-proof",
+    "git-diff-check"
+  ],
+  "proof_ceiling": "Repository/static and headless Chromium proof for the deterministic Phase C viewer. This does not prove GitHub Pages publication, arbitrary browser/GPU behavior, human usability acceptance, production telemetry, or any semantic change to topology truth.",
+  "accessibility": {
+    "canvas_keyboard_focusable": true,
+    "keyboard_view_controls": true,
+    "static_text_index_for_non_3d_reading": true,
+    "selection_detail_semantic_html": true
+  }
+}

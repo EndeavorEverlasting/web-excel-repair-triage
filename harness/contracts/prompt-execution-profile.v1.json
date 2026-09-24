@@ -1,0 +1,70 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "prompt-execution-profile/v1",
+  "title": "Prompt Execution Profile",
+  "description": "Exhaustive vs Efficient compute preference for prompt compilation. Profiles may not weaken safety, evidence truth, destructive-operation rules, privacy, explicit user scope, or required acceptance gates.",
+  "schema_version": "prompt-execution-profile/v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "profile",
+    "compute_policy",
+    "parallel_policy",
+    "hypothesis_policy",
+    "validation_policy",
+    "stop_policy",
+    "non_weakenable_constraints"
+  ],
+  "properties": {
+    "schema_version": {"const": "prompt-execution-profile/v1"},
+    "profile": {"type": "string", "enum": ["exhaustive", "efficient"]},
+    "compute_policy": {"type": "string", "minLength": 1, "maxLength": 160},
+    "parallel_policy": {"type": "string", "minLength": 1, "maxLength": 160},
+    "hypothesis_policy": {"type": "string", "minLength": 1, "maxLength": 160},
+    "validation_policy": {"type": "string", "minLength": 1, "maxLength": 160},
+    "stop_policy": {"type": "string", "minLength": 1, "maxLength": 160},
+    "non_weakenable_constraints": {
+      "type": "array",
+      "minItems": 6,
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "enum": [
+          "safety",
+          "evidence_truth",
+          "destructive_operation_rules",
+          "privacy",
+          "explicit_user_scope",
+          "required_acceptance_gates"
+        ]
+      }
+    }
+  },
+  "allOf": [
+    {
+      "if": {"properties": {"profile": {"const": "exhaustive"}}, "required": ["profile"]},
+      "then": {
+        "properties": {
+          "compute_policy": {"const": "maximize_useful_compute_until_fixed_point"},
+          "parallel_policy": {"const": "dispatch_when_safe_parallel_width_exists"},
+          "hypothesis_policy": {"const": "falsify_material_alternatives"},
+          "validation_policy": {"const": "advance_all_executable_contracts"},
+          "stop_policy": {"const": "evidence_defined_fixed_point"}
+        }
+      }
+    },
+    {
+      "if": {"properties": {"profile": {"const": "efficient"}}, "required": ["profile"]},
+      "then": {
+        "properties": {
+          "compute_policy": {"const": "minimum_sufficient_compute"},
+          "parallel_policy": {"const": "parallelize_when_expected_gain_exceeds_coordination_cost"},
+          "hypothesis_policy": {"const": "test_alternatives_only_when_materially_ambiguous"},
+          "validation_policy": {"const": "minimum_authoritative_acceptance_set"},
+          "stop_policy": {"const": "sufficient_proof_for_requested_scope"}
+        }
+      }
+    }
+  ]
+}

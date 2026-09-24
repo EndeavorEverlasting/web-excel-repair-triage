@@ -1,0 +1,1487 @@
+{
+  "source_file": "Deprecated\\active\\Deprecated 3_1_26 - Deployment Tracker - Refactor rows - Fix CF for Software_List_hostname_and_peripherals - update CF with necessary fields for deployment in deep purple.xlsx",
+  "dxf_styles": [
+    "<dxf><font><b/><i val=\"0\"/><strike val=\"0\"/><condense val=\"0\"/><extend val=\"0\"/><outline val=\"0\"/><shadow val=\"0\"/><u val=\"none\"/><vertAlign val=\"baseline\"/><sz val=\"11\"/><color rgb=\"FF000000\"/><name val=\"Calibri\"/><scheme val=\"minor\"/></font></dxf>",
+    "<dxf><fill><patternFill patternType=\"solid\"><fgColor rgb=\"FFFFC7CE\"/><bgColor rgb=\"FFFFC7CE\"/></patternFill></fill></dxf>",
+    "<dxf><fill><patternFill patternType=\"solid\"><fgColor rgb=\"FFC6EFCE\"/><bgColor rgb=\"FFC6EFCE\"/></patternFill></fill></dxf>",
+    "<dxf><fill><patternFill patternType=\"solid\"><fgColor rgb=\"FFFFE699\"/><bgColor rgb=\"FFFFE699\"/></patternFill></fill></dxf>",
+    "<dxf><fill><patternFill patternType=\"solid\"><fgColor rgb=\"FFFFE699\"/><bgColor rgb=\"FFFFE699\"/></patternFill></fill></dxf>",
+    "<dxf><fill><patternFill patternType=\"solid\"><fgColor rgb=\"FFFFC7CE\"/><bgColor rgb=\"FFFFC7CE\"/></patternFill></fill></dxf>",
+    "<dxf><fill><patternFill patternType=\"solid\"><fgColor rgb=\"FFFFEB9C\"/><bgColor rgb=\"FFFFEB9C\"/></patternFill></fill></dxf>",
+    "<dxf><fill><patternFill patternType=\"solid\"><fgColor rgb=\"FFC6EFCE\"/><bgColor rgb=\"FFC6EFCE\"/></patternFill></fill></dxf>",
+    "<dxf><font><color theme=\"1\"/></font><fill><patternFill patternType=\"solid\"><bgColor theme=\"6\" tint=\"0.79998168889431442\"/></patternFill></fill></dxf>",
+    "<dxf><font><color theme=\"1\"/></font><fill><patternFill patternType=\"solid\"><bgColor theme=\"9\" tint=\"0.59999389629810485\"/></patternFill></fill></dxf>",
+    "<dxf><font><color theme=\"1\"/></font><fill><patternFill patternType=\"solid\"><bgColor rgb=\"FFFEFFA6\"/></patternFill></fill></dxf>",
+    "<dxf><font><color theme=\"1\"/></font><fill><patternFill patternType=\"solid\"><bgColor rgb=\"FFFF0000\"/></patternFill></fill></dxf>",
+    "<dxf><font><color theme=\"1\"/></font><fill><patternFill patternType=\"solid\"><bgColor rgb=\"FF92D050\"/></patternFill></fill></dxf>",
+    "<dxf><font><color rgb=\"FF00B050\"/></font><fill><patternFill patternType=\"solid\"><bgColor theme=\"6\" tint=\"0.79998168889431442\"/></patternFill></fill></dxf>",
+    "<dxf><numFmt numFmtId=\"30\" formatCode=\"@\"/></dxf>",
+    "<dxf><numFmt numFmtId=\"30\" formatCode=\"@\"/></dxf>",
+    "<dxf><numFmt numFmtId=\"30\" formatCode=\"@\"/></dxf>",
+    "<dxf><numFmt numFmtId=\"30\" formatCode=\"@\"/></dxf>",
+    "<dxf><numFmt numFmtId=\"30\" formatCode=\"@\"/></dxf>",
+    "<dxf><alignment horizontal=\"center\"/></dxf>",
+    "<dxf><numFmt numFmtId=\"0\" formatCode=\"General\"/></dxf>",
+    "<dxf><numFmt numFmtId=\"0\" formatCode=\"General\"/><alignment horizontal=\"center\"/></dxf>",
+    "<dxf><alignment horizontal=\"center\"/></dxf>",
+    "<dxf><alignment horizontal=\"center\"/></dxf>",
+    "<dxf><font><b/><color rgb=\"FF9C0006\"/></font><fill><patternFill patternType=\"solid\"><fgColor rgb=\"FFFFC7CE\"/><bgColor rgb=\"FFFFC7CE\"/></patternFill></fill></dxf>",
+    "<dxf><font><b/><color rgb=\"FF9C0006\"/></font><fill><patternFill patternType=\"solid\"><fgColor rgb=\"FFFFC7CE\"/><bgColor rgb=\"FFFFC7CE\"/></patternFill></fill></dxf>",
+    "<dxf><font><b/><color rgb=\"FF9C0006\"/></font><fill><patternFill patternType=\"solid\"><fgColor rgb=\"FFFFC7CE\"/><bgColor rgb=\"FFFFC7CE\"/></patternFill></fill></dxf>",
+    "<dxf><font><b/><color rgb=\"FF9C0006\"/></font><fill><patternFill patternType=\"solid\"><fgColor rgb=\"FFFFC7CE\"/><bgColor rgb=\"FFFFC7CE\"/></patternFill></fill></dxf>",
+    "<dxf><font><b/><color rgb=\"FF9C0006\"/></font><fill><patternFill patternType=\"solid\"><fgColor rgb=\"FFFFC7CE\"/><bgColor rgb=\"FFFFC7CE\"/></patternFill></fill></dxf>",
+    "<dxf><font><b/><color rgb=\"FF9C0006\"/></font><fill><patternFill patternType=\"solid\"><fgColor rgb=\"FFFFC7CE\"/><bgColor rgb=\"FFFFC7CE\"/></patternFill></fill></dxf>",
+    "<dxf><font><b/><color rgb=\"FF9C0006\"/></font><fill><patternFill patternType=\"solid\"><fgColor rgb=\"FFFFC7CE\"/><bgColor rgb=\"FFFFC7CE\"/></patternFill></fill></dxf>",
+    "<dxf><font><b/><color rgb=\"FF9C0006\"/></font><fill><patternFill patternType=\"solid\"><fgColor rgb=\"FFFFC7CE\"/><bgColor rgb=\"FFFFC7CE\"/></patternFill></fill></dxf>",
+    "<dxf><font><b/><color rgb=\"FF9C0006\"/></font><fill><patternFill patternType=\"solid\"><fgColor rgb=\"FFFFC7CE\"/><bgColor rgb=\"FFFFC7CE\"/></patternFill></fill></dxf>",
+    "<dxf><font><b/><color rgb=\"FF9C0006\"/></font><fill><patternFill patternType=\"solid\"><fgColor rgb=\"FFFFC7CE\"/><bgColor rgb=\"FFFFC7CE\"/></patternFill></fill></dxf>",
+    "<dxf><font><b/><color rgb=\"FF9C0006\"/></font><fill><patternFill patternType=\"solid\"><fgColor rgb=\"FFFFC7CE\"/><bgColor rgb=\"FFFFC7CE\"/></patternFill></fill></dxf>",
+    "<dxf><font><b/><color rgb=\"FF9C0006\"/></font><fill><patternFill patternType=\"solid\"><fgColor rgb=\"FFFFC7CE\"/><bgColor rgb=\"FFFFC7CE\"/></patternFill></fill></dxf>",
+    "<dxf><font><b/><color rgb=\"FF9C0006\"/></font><fill><patternFill patternType=\"solid\"><fgColor rgb=\"FFFFC7CE\"/><bgColor rgb=\"FFFFC7CE\"/></patternFill></fill></dxf>",
+    "<dxf><fill><patternFill><bgColor rgb=\"FFFFC7CE\"/></patternFill></fill></dxf>",
+    "<dxf><font><b/><color rgb=\"FF9C0006\"/></font><fill><patternFill patternType=\"solid\"><fgColor rgb=\"FFFFC7CE\"/><bgColor rgb=\"FFFFC7CE\"/></patternFill></fill></dxf>",
+    "<dxf><font><b/><color rgb=\"FF9C0006\"/></font><fill><patternFill patternType=\"solid\"><fgColor rgb=\"FFFFC7CE\"/><bgColor rgb=\"FFFFC7CE\"/></patternFill></fill></dxf>",
+    "<dxf><font><b/><color rgb=\"FF9C0006\"/></font><fill><patternFill patternType=\"solid\"><fgColor rgb=\"FFFFC7CE\"/><bgColor rgb=\"FFFFC7CE\"/></patternFill></fill></dxf>",
+    "<dxf><fill><patternFill patternType=\"solid\"><fgColor rgb=\"FFF4CCCC\"/><bgColor rgb=\"FFF4CCCC\"/></patternFill></fill></dxf>",
+    "<dxf><font><b/><color rgb=\"FF9C0006\"/></font><fill><patternFill patternType=\"solid\"><fgColor rgb=\"FFFFC7CE\"/><bgColor rgb=\"FFFFC7CE\"/></patternFill></fill></dxf>",
+    "<dxf><font><b/><color rgb=\"FF9C5700\"/></font><fill><patternFill patternType=\"solid\"><fgColor rgb=\"FFFCE4D6\"/><bgColor rgb=\"FFFCE4D6\"/></patternFill></fill></dxf>",
+    "<dxf><fill><patternFill patternType=\"solid\"><fgColor rgb=\"FFFFEB9C\"/><bgColor rgb=\"FFFFEB9C\"/></patternFill></fill></dxf>",
+    "<dxf><font><color rgb=\"FF9C0006\"/></font><fill><patternFill><bgColor rgb=\"FFFFC7CE\"/></patternFill></fill></dxf>",
+    "<dxf><font><color rgb=\"FF006100\"/></font><fill><patternFill><bgColor rgb=\"FFC6EFCE\"/></patternFill></fill></dxf>",
+    "<dxf><fill><patternFill patternType=\"solid\"><fgColor rgb=\"FFF4CCCC\"/><bgColor rgb=\"FFF4CCCC\"/></patternFill></fill></dxf>",
+    "<dxf><fill><patternFill patternType=\"solid\"><fgColor rgb=\"FFFFEB9C\"/><bgColor rgb=\"FFFFEB9C\"/></patternFill></fill></dxf>",
+    "<dxf><fill><patternFill patternType=\"solid\"><fgColor rgb=\"FFC6EFCE\"/><bgColor rgb=\"FFC6EFCE\"/></patternFill></fill></dxf>",
+    "<dxf><fill><patternFill patternType=\"solid\"><fgColor rgb=\"FFFFEB9C\"/></patternFill></fill></dxf>",
+    "<dxf><fill><patternFill patternType=\"solid\"><fgColor rgb=\"FFC6EFCE\"/></patternFill></fill></dxf>",
+    "<dxf><font><color rgb=\"FF006100\"/></font><fill><patternFill><bgColor rgb=\"FFC6EFCE\"/></patternFill></fill></dxf>",
+    "<dxf><font><color rgb=\"FF9C5700\"/></font><fill><patternFill><bgColor rgb=\"FFFFEB9C\"/></patternFill></fill></dxf>",
+    "<dxf><font><b/><color rgb=\"FF9C0006\"/></font><fill><patternFill patternType=\"solid\"><fgColor rgb=\"FFFFC7CE\"/><bgColor rgb=\"FFFFC7CE\"/></patternFill></fill></dxf>",
+    "<dxf><font><b/><color rgb=\"FF9C0006\"/></font><fill><patternFill patternType=\"solid\"><fgColor rgb=\"FFFFC7CE\"/><bgColor rgb=\"FFFFC7CE\"/></patternFill></fill></dxf>",
+    "<dxf><fill><patternFill patternType=\"solid\"><fgColor rgb=\"FFF4CCCC\"/><bgColor rgb=\"FFF4CCCC\"/></patternFill></fill></dxf>",
+    "<dxf><font><b/><color rgb=\"FF9C5700\"/></font><fill><patternFill patternType=\"solid\"><fgColor rgb=\"FFFCE4D6\"/><bgColor rgb=\"FFFCE4D6\"/></patternFill></fill></dxf>",
+    "<dxf><font><b/><color rgb=\"FF006100\"/></font><fill><patternFill patternType=\"solid\"><fgColor rgb=\"FFC6EFCE\"/><bgColor rgb=\"FFC6EFCE\"/></patternFill></fill></dxf>",
+    "<dxf><fill><patternFill patternType=\"solid\"><fgColor rgb=\"FFFFEB9C\"/><bgColor rgb=\"FFFFEB9C\"/></patternFill></fill></dxf>",
+    "<dxf><font><b/><color rgb=\"FF9C0006\"/></font><fill><patternFill patternType=\"solid\"><fgColor rgb=\"FFFFC7CE\"/><bgColor rgb=\"FFFFC7CE\"/></patternFill></fill></dxf>",
+    "<dxf><fill><patternFill patternType=\"solid\"><fgColor rgb=\"FFFFEB9C\"/><bgColor rgb=\"FFFFEB9C\"/></patternFill></fill></dxf>",
+    "<dxf><font><color rgb=\"FFFFFFFF\"/></font><fill><patternFill patternType=\"solid\"><fgColor rgb=\"FF8B0000\"/><bgColor rgb=\"FF8B0000\"/></patternFill></fill></dxf>",
+    "<dxf><alignment horizontal=\"center\" vertical=\"bottom\" textRotation=\"0\" wrapText=\"0\" indent=\"0\" justifyLastLine=\"0\" shrinkToFit=\"0\" readingOrder=\"0\"/></dxf>",
+    "<dxf><alignment horizontal=\"center\" vertical=\"bottom\" textRotation=\"0\" wrapText=\"0\" indent=\"0\" justifyLastLine=\"0\" shrinkToFit=\"0\" readingOrder=\"0\"/></dxf>",
+    "<dxf><alignment horizontal=\"center\" vertical=\"bottom\"/></dxf>",
+    "<dxf><alignment horizontal=\"center\" vertical=\"bottom\"/></dxf>",
+    "<dxf><alignment horizontal=\"center\" vertical=\"bottom\"/></dxf>",
+    "<dxf><alignment horizontal=\"center\" vertical=\"bottom\"/></dxf>",
+    "<dxf><alignment horizontal=\"center\" vertical=\"center\"/></dxf>",
+    "<dxf><fill><patternFill patternType=\"solid\"><fgColor rgb=\"FFFFF2CC\"/><bgColor rgb=\"FFFFF2CC\"/></patternFill></fill></dxf>",
+    "<dxf><fill><patternFill patternType=\"solid\"><fgColor rgb=\"FFF8CBAD\"/><bgColor rgb=\"FFF8CBAD\"/></patternFill></fill></dxf>",
+    "<dxf><fill><patternFill patternType=\"solid\"><fgColor rgb=\"FFF8CBAD\"/><bgColor rgb=\"FFF8CBAD\"/></patternFill></fill></dxf>",
+    "<dxf><fill><patternFill patternType=\"solid\"><fgColor rgb=\"FFF8CBAD\"/><bgColor rgb=\"FFF8CBAD\"/></patternFill></fill></dxf>",
+    "<dxf><fill><patternFill patternType=\"solid\"><fgColor rgb=\"FFFFF2CC\"/><bgColor rgb=\"FFFFF2CC\"/></patternFill></fill></dxf>",
+    "<dxf><fill><patternFill patternType=\"solid\"><fgColor rgb=\"FFFFF2CC\"/><bgColor rgb=\"FFFFF2CC\"/></patternFill></fill></dxf>",
+    "<dxf><fill><patternFill patternType=\"solid\"><fgColor rgb=\"FFF8CBAD\"/><bgColor rgb=\"FFF8CBAD\"/></patternFill></fill></dxf>",
+    "<dxf><fill><patternFill patternType=\"solid\"><fgColor rgb=\"FFF8CBAD\"/><bgColor rgb=\"FFF8CBAD\"/></patternFill></fill></dxf>",
+    "<dxf><fill><patternFill patternType=\"solid\"><fgColor rgb=\"FFF8CBAD\"/><bgColor rgb=\"FFF8CBAD\"/></patternFill></fill></dxf>",
+    "<dxf><fill><patternFill patternType=\"solid\"><fgColor rgb=\"FFF8CBAD\"/><bgColor rgb=\"FFF8CBAD\"/></patternFill></fill></dxf>",
+    "<dxf><fill><patternFill patternType=\"solid\"><fgColor rgb=\"FFF8CBAD\"/><bgColor rgb=\"FFF8CBAD\"/></patternFill></fill></dxf>",
+    "<dxf><fill><patternFill patternType=\"solid\"><fgColor rgb=\"FFF8CBAD\"/><bgColor rgb=\"FFF8CBAD\"/></patternFill></fill></dxf>",
+    "<dxf><fill><patternFill patternType=\"solid\"><fgColor rgb=\"FFF8CBAD\"/><bgColor rgb=\"FFF8CBAD\"/></patternFill></fill></dxf>",
+    "<dxf><fill><patternFill patternType=\"solid\"><fgColor rgb=\"FFF8CBAD\"/><bgColor rgb=\"FFF8CBAD\"/></patternFill></fill></dxf>",
+    "<dxf><fill><patternFill patternType=\"solid\"><fgColor rgb=\"FFF8CBAD\"/><bgColor rgb=\"FFF8CBAD\"/></patternFill></fill></dxf>",
+    "<dxf><fill><patternFill patternType=\"solid\"><fgColor rgb=\"FFFFF2CC\"/><bgColor rgb=\"FFFFF2CC\"/></patternFill></fill></dxf>",
+    "<dxf><fill><patternFill patternType=\"solid\"><fgColor rgb=\"FFF8CBAD\"/><bgColor rgb=\"FFF8CBAD\"/></patternFill></fill></dxf>",
+    "<dxf><fill><patternFill patternType=\"solid\"><fgColor rgb=\"FFF8CBAD\"/><bgColor rgb=\"FFF8CBAD\"/></patternFill></fill></dxf>",
+    "<dxf><fill><patternFill patternType=\"solid\"><fgColor rgb=\"FFF8CBAD\"/><bgColor rgb=\"FFF8CBAD\"/></patternFill></fill></dxf>"
+  ],
+  "blocks": [
+    {
+      "id": "3684011a",
+      "sheet_part": "xl/worksheets/sheet10.xml",
+      "sheet_name": "12 - Deployments &amp; Config",
+      "sqref": "CC2:CC532 A2:BZ49 AJ101:BZ103 AJ104:AQ104 T105:AQ105 AS104:BZ105 T101:AH101 T103:AH104 U102:AH102 A150:BZ531 A99:R149 A98:P98 R98 A50:R97 T50:BZ100 T143:BZ149 T142:AK142 AM142:BZ142 T106:BZ141",
+      "rules": [
+        {
+          "id": "de241b18",
+          "rule_type": "expression",
+          "dxf_id": 62,
+          "priority": 10,
+          "operator": "",
+          "text": "",
+          "formula": "$F2=\"Yes\"",
+          "formula2": "",
+          "stop_if_true": true,
+          "dxf_xml": "<dxf><font><color rgb=\"FFFFFFFF\"/></font><fill><patternFill patternType=\"solid\"><fgColor rgb=\"FF8B0000\"/><bgColor rgb=\"FF8B0000\"/></patternFill></fill></dxf>",
+          "raw_xml": "<cfRule type=\"expression\" dxfId=\"62\" priority=\"10\" stopIfTrue=\"1\"><formula>$F2=\"Yes\"</formula></cfRule>"
+        }
+      ],
+      "raw_xml": "<conditionalFormatting sqref=\"CC2:CC532 A2:BZ49 AJ101:BZ103 AJ104:AQ104 T105:AQ105 AS104:BZ105 T101:AH101 T103:AH104 U102:AH102 A150:BZ531 A99:R149 A98:P98 R98 A50:R97 T50:BZ100 T143:BZ149 T142:AK142 AM142:BZ142 T106:BZ141\"><cfRule type=\"expression\" dxfId=\"62\" priority=\"10\" stopIfTrue=\"1\"><formula>$F2=\"Yes\"</formula></cfRule></conditionalFormatting>"
+    },
+    {
+      "id": "0dc01ebd",
+      "sheet_part": "xl/worksheets/sheet10.xml",
+      "sheet_name": "12 - Deployments &amp; Config",
+      "sqref": "B2:B532",
+      "rules": [
+        {
+          "id": "10f877dd",
+          "rule_type": "expression",
+          "dxf_id": 61,
+          "priority": 13,
+          "operator": "",
+          "text": "",
+          "formula": "LOWER(TRIM($B2))=\"no\"",
+          "formula2": "",
+          "stop_if_true": true,
+          "dxf_xml": "<dxf><fill><patternFill patternType=\"solid\"><fgColor rgb=\"FFFFEB9C\"/><bgColor rgb=\"FFFFEB9C\"/></patternFill></fill></dxf>",
+          "raw_xml": "<cfRule type=\"expression\" dxfId=\"61\" priority=\"13\" stopIfTrue=\"1\"><formula>LOWER(TRIM($B2))=\"no\"</formula></cfRule>"
+        }
+      ],
+      "raw_xml": "<conditionalFormatting sqref=\"B2:B532\"><cfRule type=\"expression\" dxfId=\"61\" priority=\"13\" stopIfTrue=\"1\"><formula>LOWER(TRIM($B2))=\"no\"</formula></cfRule></conditionalFormatting>"
+    },
+    {
+      "id": "a9672a62",
+      "sheet_part": "xl/worksheets/sheet10.xml",
+      "sheet_name": "12 - Deployments &amp; Config",
+      "sqref": "G167:H532 H165:H166 G162:G166 G2:H163",
+      "rules": [
+        {
+          "id": "a011d7ff",
+          "rule_type": "expression",
+          "dxf_id": 60,
+          "priority": 116,
+          "operator": "",
+          "text": "",
+          "formula": "AND($B2=\"Yes\",$G2&lt;&gt;\"\",$H2&lt;&gt;\"\",LOWER(TRIM($G2))&lt;&gt;LOWER(TRIM($H2)))",
+          "formula2": "",
+          "stop_if_true": true,
+          "dxf_xml": "<dxf><font><b/><color rgb=\"FF9C0006\"/></font><fill><patternFill patternType=\"solid\"><fgColor rgb=\"FFFFC7CE\"/><bgColor rgb=\"FFFFC7CE\"/></patternFill></fill></dxf>",
+          "raw_xml": "<cfRule type=\"expression\" dxfId=\"60\" priority=\"116\" stopIfTrue=\"1\"><formula>AND($B2=\"Yes\",$G2&lt;&gt;\"\",$H2&lt;&gt;\"\",LOWER(TRIM($G2))&lt;&gt;LOWER(TRIM($H2)))</formula></cfRule>"
+        }
+      ],
+      "raw_xml": "<conditionalFormatting sqref=\"G167:H532 H165:H166 G162:G166 G2:H163\"><cfRule type=\"expression\" dxfId=\"60\" priority=\"116\" stopIfTrue=\"1\"><formula>AND($B2=\"Yes\",$G2&lt;&gt;\"\",$H2&lt;&gt;\"\",LOWER(TRIM($G2))&lt;&gt;LOWER(TRIM($H2)))</formula></cfRule></conditionalFormatting>"
+    },
+    {
+      "id": "73c23328",
+      "sheet_part": "xl/worksheets/sheet10.xml",
+      "sheet_name": "12 - Deployments &amp; Config",
+      "sqref": "I2:I532",
+      "rules": [
+        {
+          "id": "14384f30",
+          "rule_type": "expression",
+          "dxf_id": 59,
+          "priority": 16,
+          "operator": "",
+          "text": "",
+          "formula": "AND($A2&lt;&gt;\"\",LEN(TRIM($I2))=0)",
+          "formula2": "",
+          "stop_if_true": false,
+          "dxf_xml": "<dxf><fill><patternFill patternType=\"solid\"><fgColor rgb=\"FFFFEB9C\"/><bgColor rgb=\"FFFFEB9C\"/></patternFill></fill></dxf>",
+          "raw_xml": "<cfRule type=\"expression\" dxfId=\"59\" priority=\"16\"><formula>AND($A2&lt;&gt;\"\",LEN(TRIM($I2))=0)</formula></cfRule>"
+        }
+      ],
+      "raw_xml": "<conditionalFormatting sqref=\"I2:I532\"><cfRule type=\"expression\" dxfId=\"59\" priority=\"16\"><formula>AND($A2&lt;&gt;\"\",LEN(TRIM($I2))=0)</formula></cfRule></conditionalFormatting>"
+    },
+    {
+      "id": "84abfaee",
+      "sheet_part": "xl/worksheets/sheet10.xml",
+      "sheet_name": "12 - Deployments &amp; Config",
+      "sqref": "R2:S49 R50:R149 R150:S531",
+      "rules": [
+        {
+          "id": "204e86df",
+          "rule_type": "expression",
+          "dxf_id": 58,
+          "priority": 112,
+          "operator": "",
+          "text": "",
+          "formula": "AND($B2=\"Yes\",$N2&lt;&gt;\"\")",
+          "formula2": "",
+          "stop_if_true": false,
+          "dxf_xml": "<dxf><font><b/><color rgb=\"FF006100\"/></font><fill><patternFill patternType=\"solid\"><fgColor rgb=\"FFC6EFCE\"/><bgColor rgb=\"FFC6EFCE\"/></patternFill></fill></dxf>",
+          "raw_xml": "<cfRule type=\"expression\" dxfId=\"58\" priority=\"112\"><formula>AND($B2=\"Yes\",$N2&lt;&gt;\"\")</formula></cfRule>"
+        }
+      ],
+      "raw_xml": "<conditionalFormatting sqref=\"R2:S49 R50:R149 R150:S531\"><cfRule type=\"expression\" dxfId=\"58\" priority=\"112\"><formula>AND($B2=\"Yes\",$N2&lt;&gt;\"\")</formula></cfRule></conditionalFormatting>"
+    },
+    {
+      "id": "d4e81bdd",
+      "sheet_part": "xl/worksheets/sheet10.xml",
+      "sheet_name": "12 - Deployments &amp; Config",
+      "sqref": "R99:R144",
+      "rules": [
+        {
+          "id": "0ebff995",
+          "rule_type": "expression",
+          "dxf_id": 57,
+          "priority": 14,
+          "operator": "",
+          "text": "",
+          "formula": "AND(INDEX($A:$BI,ROW(),MATCH(\"Deployed\",$A$1:$BI$1,0))=\"Yes\",LEN(TRIM(N99))=0)",
+          "formula2": "",
+          "stop_if_true": true,
+          "dxf_xml": "<dxf><font><b/><color rgb=\"FF9C5700\"/></font><fill><patternFill patternType=\"solid\"><fgColor rgb=\"FFFCE4D6\"/><bgColor rgb=\"FFFCE4D6\"/></patternFill></fill></dxf>",
+          "raw_xml": "<cfRule type=\"expression\" dxfId=\"57\" priority=\"14\" stopIfTrue=\"1\"><formula>AND(INDEX($A:$BI,ROW(),MATCH(\"Deployed\",$A$1:$BI$1,0))=\"Yes\",LEN(TRIM(N99))=0)</formula></cfRule>"
+        }
+      ],
+      "raw_xml": "<conditionalFormatting sqref=\"R99:R144\"><cfRule type=\"expression\" dxfId=\"57\" priority=\"14\" stopIfTrue=\"1\"><formula>AND(INDEX($A:$BI,ROW(),MATCH(\"Deployed\",$A$1:$BI$1,0))=\"Yes\",LEN(TRIM(N99))=0)</formula></cfRule></conditionalFormatting>"
+    },
+    {
+      "id": "324e6ac7",
+      "sheet_part": "xl/worksheets/sheet10.xml",
+      "sheet_name": "12 - Deployments &amp; Config",
+      "sqref": "T2:T101 T103:T532",
+      "rules": [
+        {
+          "id": "d6701843",
+          "rule_type": "expression",
+          "dxf_id": 56,
+          "priority": 114,
+          "operator": "",
+          "text": "",
+          "formula": "AND($B2=\"Yes\",$O2&lt;&gt;\"\",LOWER(TRIM($O2))&lt;&gt;\"n/a\",COUNTIFS($O$2:$O$532,$O2,$B$2:$B$532,\"Yes\")&gt;1)",
+          "formula2": "",
+          "stop_if_true": false,
+          "dxf_xml": "<dxf><fill><patternFill patternType=\"solid\"><fgColor rgb=\"FFF4CCCC\"/><bgColor rgb=\"FFF4CCCC\"/></patternFill></fill></dxf>",
+          "raw_xml": "<cfRule type=\"expression\" dxfId=\"56\" priority=\"114\"><formula>AND($B2=\"Yes\",$O2&lt;&gt;\"\",LOWER(TRIM($O2))&lt;&gt;\"n/a\",COUNTIFS($O$2:$O$532,$O2,$B$2:$B$532,\"Yes\")&gt;1)</formula></cfRule>"
+        }
+      ],
+      "raw_xml": "<conditionalFormatting sqref=\"T2:T101 T103:T532\"><cfRule type=\"expression\" dxfId=\"56\" priority=\"114\"><formula>AND($B2=\"Yes\",$O2&lt;&gt;\"\",LOWER(TRIM($O2))&lt;&gt;\"n/a\",COUNTIFS($O$2:$O$532,$O2,$B$2:$B$532,\"Yes\")&gt;1)</formula></cfRule></conditionalFormatting>"
+    },
+    {
+      "id": "555e01a0",
+      "sheet_part": "xl/worksheets/sheet10.xml",
+      "sheet_name": "12 - Deployments &amp; Config",
+      "sqref": "S2:U101 S103:U532 S102 U102",
+      "rules": [
+        {
+          "id": "c8a2312f",
+          "rule_type": "expression",
+          "dxf_id": 55,
+          "priority": 41,
+          "operator": "",
+          "text": "",
+          "formula": "AND(   $B2=\"Yes\",   $U2&lt;&gt;\"\",   LOWER(TRIM($U2))&lt;&gt;\"n/a\",   COUNTIFS($U$2:$U$532,$U2,$B$2:$B$532,\"Yes\")&gt;1 )",
+          "formula2": "",
+          "stop_if_true": true,
+          "dxf_xml": "<dxf><font><b/><color rgb=\"FF9C0006\"/></font><fill><patternFill patternType=\"solid\"><fgColor rgb=\"FFFFC7CE\"/><bgColor rgb=\"FFFFC7CE\"/></patternFill></fill></dxf>",
+          "raw_xml": "<cfRule type=\"expression\" dxfId=\"55\" priority=\"41\" stopIfTrue=\"1\"><formula>AND(   $B2=\"Yes\",   $U2&lt;&gt;\"\",   LOWER(TRIM($U2))&lt;&gt;\"n/a\",   COUNTIFS($U$2:$U$532,$U2,$B$2:$B$532,\"Yes\")&gt;1 )</formula></cfRule>"
+        }
+      ],
+      "raw_xml": "<conditionalFormatting sqref=\"S2:U101 S103:U532 S102 U102\"><cfRule type=\"expression\" dxfId=\"55\" priority=\"41\" stopIfTrue=\"1\"><formula>AND(   $B2=\"Yes\",   $U2&lt;&gt;\"\",   LOWER(TRIM($U2))&lt;&gt;\"n/a\",   COUNTIFS($U$2:$U$532,$U2,$B$2:$B$532,\"Yes\")&gt;1 )</formula></cfRule></conditionalFormatting>"
+    },
+    {
+      "id": "4f715c1e",
+      "sheet_part": "xl/worksheets/sheet10.xml",
+      "sheet_name": "12 - Deployments &amp; Config",
+      "sqref": "W2:W49 W150:W531",
+      "rules": [
+        {
+          "id": "98b78f5c",
+          "rule_type": "expression",
+          "dxf_id": 54,
+          "priority": 42,
+          "operator": "",
+          "text": "",
+          "formula": "AND($B2=\"Yes\",$S2&lt;&gt;\"\",LOWER(TRIM($S2))&lt;&gt;\"n/a\",COUNTIFS($S$2:$S$532,$S2,$B$2:$B$532,\"Yes\")&gt;1)",
+          "formula2": "",
+          "stop_if_true": true,
+          "dxf_xml": "<dxf><font><b/><color rgb=\"FF9C0006\"/></font><fill><patternFill patternType=\"solid\"><fgColor rgb=\"FFFFC7CE\"/><bgColor rgb=\"FFFFC7CE\"/></patternFill></fill></dxf>",
+          "raw_xml": "<cfRule type=\"expression\" dxfId=\"54\" priority=\"42\" stopIfTrue=\"1\"><formula>AND($B2=\"Yes\",$S2&lt;&gt;\"\",LOWER(TRIM($S2))&lt;&gt;\"n/a\",COUNTIFS($S$2:$S$532,$S2,$B$2:$B$532,\"Yes\")&gt;1)</formula></cfRule>"
+        }
+      ],
+      "raw_xml": "<conditionalFormatting sqref=\"W2:W49 W150:W531\"><cfRule type=\"expression\" dxfId=\"54\" priority=\"42\" stopIfTrue=\"1\"><formula>AND($B2=\"Yes\",$S2&lt;&gt;\"\",LOWER(TRIM($S2))&lt;&gt;\"n/a\",COUNTIFS($S$2:$S$532,$S2,$B$2:$B$532,\"Yes\")&gt;1)</formula></cfRule></conditionalFormatting>"
+    },
+    {
+      "id": "e906f6b4",
+      "sheet_part": "xl/worksheets/sheet10.xml",
+      "sheet_name": "12 - Deployments &amp; Config",
+      "sqref": "BI2:BI1048576",
+      "rules": [
+        {
+          "id": "664fa911",
+          "rule_type": "expression",
+          "dxf_id": 53,
+          "priority": 26,
+          "operator": "",
+          "text": "",
+          "formula": "AND($BE2&lt;&gt;\"\", $BD2&lt;&gt;\"Yes\")",
+          "formula2": "",
+          "stop_if_true": false,
+          "dxf_xml": "<dxf><font><color rgb=\"FF9C5700\"/></font><fill><patternFill><bgColor rgb=\"FFFFEB9C\"/></patternFill></fill></dxf>",
+          "raw_xml": "<cfRule type=\"expression\" dxfId=\"53\" priority=\"26\"><formula>AND($BE2&lt;&gt;\"\", $BD2&lt;&gt;\"Yes\")</formula></cfRule>"
+        },
+        {
+          "id": "7dc05442",
+          "rule_type": "expression",
+          "dxf_id": 52,
+          "priority": 27,
+          "operator": "",
+          "text": "",
+          "formula": "AND($BE2&lt;&gt;\"\", $BD2=\"Yes\")",
+          "formula2": "",
+          "stop_if_true": false,
+          "dxf_xml": "<dxf><font><color rgb=\"FF006100\"/></font><fill><patternFill><bgColor rgb=\"FFC6EFCE\"/></patternFill></fill></dxf>",
+          "raw_xml": "<cfRule type=\"expression\" dxfId=\"52\" priority=\"27\"><formula>AND($BE2&lt;&gt;\"\", $BD2=\"Yes\")</formula></cfRule>"
+        }
+      ],
+      "raw_xml": "<conditionalFormatting sqref=\"BI2:BI1048576\"><cfRule type=\"expression\" dxfId=\"53\" priority=\"26\"><formula>AND($BE2&lt;&gt;\"\", $BD2&lt;&gt;\"Yes\")</formula></cfRule><cfRule type=\"expression\" dxfId=\"52\" priority=\"27\"><formula>AND($BE2&lt;&gt;\"\", $BD2=\"Yes\")</formula></cfRule></conditionalFormatting>"
+    },
+    {
+      "id": "e216787d",
+      "sheet_part": "xl/worksheets/sheet10.xml",
+      "sheet_name": "12 - Deployments &amp; Config",
+      "sqref": "BM2:BM532",
+      "rules": [
+        {
+          "id": "029ba82b",
+          "rule_type": "expression",
+          "dxf_id": 51,
+          "priority": 34,
+          "operator": "",
+          "text": "",
+          "formula": "BI2=\"Yes\"",
+          "formula2": "",
+          "stop_if_true": false,
+          "dxf_xml": "<dxf><fill><patternFill patternType=\"solid\"><fgColor rgb=\"FFC6EFCE\"/></patternFill></fill></dxf>",
+          "raw_xml": "<cfRule type=\"expression\" dxfId=\"51\" priority=\"34\"><formula>BI2=\"Yes\"</formula></cfRule>"
+        },
+        {
+          "id": "58030580",
+          "rule_type": "expression",
+          "dxf_id": 50,
+          "priority": 35,
+          "operator": "",
+          "text": "",
+          "formula": "BI2=\"Blocked\"",
+          "formula2": "",
+          "stop_if_true": false,
+          "dxf_xml": "<dxf><fill><patternFill patternType=\"solid\"><fgColor rgb=\"FFFFEB9C\"/></patternFill></fill></dxf>",
+          "raw_xml": "<cfRule type=\"expression\" dxfId=\"50\" priority=\"35\"><formula>BI2=\"Blocked\"</formula></cfRule>"
+        }
+      ],
+      "raw_xml": "<conditionalFormatting sqref=\"BM2:BM532\"><cfRule type=\"expression\" dxfId=\"51\" priority=\"34\"><formula>BI2=\"Yes\"</formula></cfRule><cfRule type=\"expression\" dxfId=\"50\" priority=\"35\"><formula>BI2=\"Blocked\"</formula></cfRule></conditionalFormatting>"
+    },
+    {
+      "id": "89181cac",
+      "sheet_part": "xl/worksheets/sheet10.xml",
+      "sheet_name": "12 - Deployments &amp; Config",
+      "sqref": "R2:S49 R50:R149 R150:S531 B2:C532",
+      "rules": [
+        {
+          "id": "6c242b96",
+          "rule_type": "expression",
+          "dxf_id": 49,
+          "priority": 153,
+          "operator": "",
+          "text": "",
+          "formula": "AND($B2=\"Yes\",$BO2=\"Yes\")",
+          "formula2": "",
+          "stop_if_true": false,
+          "dxf_xml": "<dxf><fill><patternFill patternType=\"solid\"><fgColor rgb=\"FFC6EFCE\"/><bgColor rgb=\"FFC6EFCE\"/></patternFill></fill></dxf>",
+          "raw_xml": "<cfRule type=\"expression\" dxfId=\"49\" priority=\"153\"><formula>AND($B2=\"Yes\",$BO2=\"Yes\")</formula></cfRule>"
+        }
+      ],
+      "raw_xml": "<conditionalFormatting sqref=\"R2:S49 R50:R149 R150:S531 B2:C532\"><cfRule type=\"expression\" dxfId=\"49\" priority=\"153\"><formula>AND($B2=\"Yes\",$BO2=\"Yes\")</formula></cfRule></conditionalFormatting>"
+    },
+    {
+      "id": "758311ed",
+      "sheet_part": "xl/worksheets/sheet10.xml",
+      "sheet_name": "12 - Deployments &amp; Config",
+      "sqref": "D2:E532",
+      "rules": [
+        {
+          "id": "0d9589e1",
+          "rule_type": "expression",
+          "dxf_id": 48,
+          "priority": 155,
+          "operator": "",
+          "text": "",
+          "formula": "AND($B2=\"Yes\",$BO2=\"No\")",
+          "formula2": "",
+          "stop_if_true": false,
+          "dxf_xml": "<dxf><fill><patternFill patternType=\"solid\"><fgColor rgb=\"FFFFEB9C\"/><bgColor rgb=\"FFFFEB9C\"/></patternFill></fill></dxf>",
+          "raw_xml": "<cfRule type=\"expression\" dxfId=\"48\" priority=\"155\"><formula>AND($B2=\"Yes\",$BO2=\"No\")</formula></cfRule>"
+        }
+      ],
+      "raw_xml": "<conditionalFormatting sqref=\"D2:E532\"><cfRule type=\"expression\" dxfId=\"48\" priority=\"155\"><formula>AND($B2=\"Yes\",$BO2=\"No\")</formula></cfRule></conditionalFormatting>"
+    },
+    {
+      "id": "a675d0fb",
+      "sheet_part": "xl/worksheets/sheet10.xml",
+      "sheet_name": "12 - Deployments &amp; Config",
+      "sqref": "I99:Q532 I98:P98 I2:Q97",
+      "rules": [
+        {
+          "id": "db18808a",
+          "rule_type": "expression",
+          "dxf_id": 47,
+          "priority": 156,
+          "operator": "",
+          "text": "",
+          "formula": "AND($BO2=\"Yes\",$A2&lt;&gt;\"Neuron\",COUNTBLANK($E2:$L2)&gt;0)",
+          "formula2": "",
+          "stop_if_true": false,
+          "dxf_xml": "<dxf><fill><patternFill patternType=\"solid\"><fgColor rgb=\"FFF4CCCC\"/><bgColor rgb=\"FFF4CCCC\"/></patternFill></fill></dxf>",
+          "raw_xml": "<cfRule type=\"expression\" dxfId=\"47\" priority=\"156\"><formula>AND($BO2=\"Yes\",$A2&lt;&gt;\"Neuron\",COUNTBLANK($E2:$L2)&gt;0)</formula></cfRule>"
+        }
+      ],
+      "raw_xml": "<conditionalFormatting sqref=\"I99:Q532 I98:P98 I2:Q97\"><cfRule type=\"expression\" dxfId=\"47\" priority=\"156\"><formula>AND($BO2=\"Yes\",$A2&lt;&gt;\"Neuron\",COUNTBLANK($E2:$L2)&gt;0)</formula></cfRule></conditionalFormatting>"
+    },
+    {
+      "id": "d4f036ad",
+      "sheet_part": "xl/worksheets/sheet10.xml",
+      "sheet_name": "12 - Deployments &amp; Config",
+      "sqref": "P2:P1048576",
+      "rules": [
+        {
+          "id": "bc368b72",
+          "rule_type": "expression",
+          "dxf_id": 46,
+          "priority": 157,
+          "operator": "",
+          "text": "",
+          "formula": "AND($BE2&lt;&gt;\"\",OR($BD2=\"Yes\",$L2&lt;&gt;\"\"))",
+          "formula2": "",
+          "stop_if_true": false,
+          "dxf_xml": "<dxf><font><color rgb=\"FF006100\"/></font><fill><patternFill><bgColor rgb=\"FFC6EFCE\"/></patternFill></fill></dxf>",
+          "raw_xml": "<cfRule type=\"expression\" dxfId=\"46\" priority=\"157\"><formula>AND($BE2&lt;&gt;\"\",OR($BD2=\"Yes\",$L2&lt;&gt;\"\"))</formula></cfRule>"
+        },
+        {
+          "id": "855acc8f",
+          "rule_type": "expression",
+          "dxf_id": 45,
+          "priority": 158,
+          "operator": "",
+          "text": "",
+          "formula": "AND($BE2&lt;&gt;\"\",$BD2&lt;&gt;\"Yes\",$L2=\"\")",
+          "formula2": "",
+          "stop_if_true": false,
+          "dxf_xml": "<dxf><font><color rgb=\"FF9C0006\"/></font><fill><patternFill><bgColor rgb=\"FFFFC7CE\"/></patternFill></fill></dxf>",
+          "raw_xml": "<cfRule type=\"expression\" dxfId=\"45\" priority=\"158\"><formula>AND($BE2&lt;&gt;\"\",$BD2&lt;&gt;\"Yes\",$L2=\"\")</formula></cfRule>"
+        }
+      ],
+      "raw_xml": "<conditionalFormatting sqref=\"P2:P1048576\"><cfRule type=\"expression\" dxfId=\"46\" priority=\"157\"><formula>AND($BE2&lt;&gt;\"\",OR($BD2=\"Yes\",$L2&lt;&gt;\"\"))</formula></cfRule><cfRule type=\"expression\" dxfId=\"45\" priority=\"158\"><formula>AND($BE2&lt;&gt;\"\",$BD2&lt;&gt;\"Yes\",$L2=\"\")</formula></cfRule></conditionalFormatting>"
+    },
+    {
+      "id": "72b9cc7e",
+      "sheet_part": "xl/worksheets/sheet10.xml",
+      "sheet_name": "12 - Deployments &amp; Config",
+      "sqref": "R2:S49 R50:R149 R150:S531 B2:C532",
+      "rules": [
+        {
+          "id": "20ac0d79",
+          "rule_type": "expression",
+          "dxf_id": 44,
+          "priority": 159,
+          "operator": "",
+          "text": "",
+          "formula": "AND($B2=\"Yes\",$BO2&lt;&gt;\"Yes\")",
+          "formula2": "",
+          "stop_if_true": false,
+          "dxf_xml": "<dxf><fill><patternFill patternType=\"solid\"><fgColor rgb=\"FFFFEB9C\"/><bgColor rgb=\"FFFFEB9C\"/></patternFill></fill></dxf>",
+          "raw_xml": "<cfRule type=\"expression\" dxfId=\"44\" priority=\"159\"><formula>AND($B2=\"Yes\",$BO2&lt;&gt;\"Yes\")</formula></cfRule>"
+        }
+      ],
+      "raw_xml": "<conditionalFormatting sqref=\"R2:S49 R50:R149 R150:S531 B2:C532\"><cfRule type=\"expression\" dxfId=\"44\" priority=\"159\"><formula>AND($B2=\"Yes\",$BO2&lt;&gt;\"Yes\")</formula></cfRule></conditionalFormatting>"
+    },
+    {
+      "id": "6f857f5c",
+      "sheet_part": "xl/worksheets/sheet10.xml",
+      "sheet_name": "12 - Deployments &amp; Config",
+      "sqref": "R94:R98",
+      "rules": [
+        {
+          "id": "8029c85a",
+          "rule_type": "expression",
+          "dxf_id": 43,
+          "priority": 161,
+          "operator": "",
+          "text": "",
+          "formula": "AND(INDEX($A:$BH,ROW(),MATCH(\"Deployed\",$A$1:$BH$1,0))=\"Yes\",LEN(TRIM(N94))=0)",
+          "formula2": "",
+          "stop_if_true": true,
+          "dxf_xml": "<dxf><font><b/><color rgb=\"FF9C5700\"/></font><fill><patternFill patternType=\"solid\"><fgColor rgb=\"FFFCE4D6\"/><bgColor rgb=\"FFFCE4D6\"/></patternFill></fill></dxf>",
+          "raw_xml": "<cfRule type=\"expression\" dxfId=\"43\" priority=\"161\" stopIfTrue=\"1\"><formula>AND(INDEX($A:$BH,ROW(),MATCH(\"Deployed\",$A$1:$BH$1,0))=\"Yes\",LEN(TRIM(N94))=0)</formula></cfRule>"
+        }
+      ],
+      "raw_xml": "<conditionalFormatting sqref=\"R94:R98\"><cfRule type=\"expression\" dxfId=\"43\" priority=\"161\" stopIfTrue=\"1\"><formula>AND(INDEX($A:$BH,ROW(),MATCH(\"Deployed\",$A$1:$BH$1,0))=\"Yes\",LEN(TRIM(N94))=0)</formula></cfRule></conditionalFormatting>"
+    },
+    {
+      "id": "8f70876a",
+      "sheet_part": "xl/worksheets/sheet10.xml",
+      "sheet_name": "12 - Deployments &amp; Config",
+      "sqref": "Y2:Y532",
+      "rules": [
+        {
+          "id": "29020fbc",
+          "rule_type": "expression",
+          "dxf_id": 42,
+          "priority": 163,
+          "operator": "",
+          "text": "",
+          "formula": "AND($B2=\"Yes\",$Y2&lt;&gt;\"\",LOWER(TRIM($Y2))&lt;&gt;\"n/a\",LOWER(TRIM($Y2))&lt;&gt;\"na\",COUNTIFS($Y$2:$Y$532,$Y2,$B$2:$B$532,\"Yes\")&gt;1)",
+          "formula2": "",
+          "stop_if_true": true,
+          "dxf_xml": "<dxf><font><b/><color rgb=\"FF9C0006\"/></font><fill><patternFill patternType=\"solid\"><fgColor rgb=\"FFFFC7CE\"/><bgColor rgb=\"FFFFC7CE\"/></patternFill></fill></dxf>",
+          "raw_xml": "<cfRule type=\"expression\" dxfId=\"42\" priority=\"163\" stopIfTrue=\"1\"><formula>AND($B2=\"Yes\",$Y2&lt;&gt;\"\",LOWER(TRIM($Y2))&lt;&gt;\"n/a\",LOWER(TRIM($Y2))&lt;&gt;\"na\",COUNTIFS($Y$2:$Y$532,$Y2,$B$2:$B$532,\"Yes\")&gt;1)</formula></cfRule>"
+        }
+      ],
+      "raw_xml": "<conditionalFormatting sqref=\"Y2:Y532\"><cfRule type=\"expression\" dxfId=\"42\" priority=\"163\" stopIfTrue=\"1\"><formula>AND($B2=\"Yes\",$Y2&lt;&gt;\"\",LOWER(TRIM($Y2))&lt;&gt;\"n/a\",LOWER(TRIM($Y2))&lt;&gt;\"na\",COUNTIFS($Y$2:$Y$532,$Y2,$B$2:$B$532,\"Yes\")&gt;1)</formula></cfRule></conditionalFormatting>"
+    },
+    {
+      "id": "a8502837",
+      "sheet_part": "xl/worksheets/sheet10.xml",
+      "sheet_name": "12 - Deployments &amp; Config",
+      "sqref": "Z2:Z115 Z120:Z508",
+      "rules": [
+        {
+          "id": "eedaf281",
+          "rule_type": "expression",
+          "dxf_id": 41,
+          "priority": 164,
+          "operator": "",
+          "text": "",
+          "formula": "AND($B2=\"Yes\",$Z2&lt;&gt;\"\",LOWER(TRIM($Z2))&lt;&gt;\"n/a\",LOWER(TRIM($Z2))&lt;&gt;\"na\",COUNTIFS($Z$2:$Z$532,$Z2,$B$2:$B$532,\"Yes\")&gt;1)",
+          "formula2": "",
+          "stop_if_true": false,
+          "dxf_xml": "<dxf><fill><patternFill patternType=\"solid\"><fgColor rgb=\"FFF4CCCC\"/><bgColor rgb=\"FFF4CCCC\"/></patternFill></fill></dxf>",
+          "raw_xml": "<cfRule type=\"expression\" dxfId=\"41\" priority=\"164\"><formula>AND($B2=\"Yes\",$Z2&lt;&gt;\"\",LOWER(TRIM($Z2))&lt;&gt;\"n/a\",LOWER(TRIM($Z2))&lt;&gt;\"na\",COUNTIFS($Z$2:$Z$532,$Z2,$B$2:$B$532,\"Yes\")&gt;1)</formula></cfRule>"
+        }
+      ],
+      "raw_xml": "<conditionalFormatting sqref=\"Z2:Z115 Z120:Z508\"><cfRule type=\"expression\" dxfId=\"41\" priority=\"164\"><formula>AND($B2=\"Yes\",$Z2&lt;&gt;\"\",LOWER(TRIM($Z2))&lt;&gt;\"n/a\",LOWER(TRIM($Z2))&lt;&gt;\"na\",COUNTIFS($Z$2:$Z$532,$Z2,$B$2:$B$532,\"Yes\")&gt;1)</formula></cfRule></conditionalFormatting>"
+    },
+    {
+      "id": "c8b49055",
+      "sheet_part": "xl/worksheets/sheet10.xml",
+      "sheet_name": "12 - Deployments &amp; Config",
+      "sqref": "AC2:AC532",
+      "rules": [
+        {
+          "id": "f620bad7",
+          "rule_type": "expression",
+          "dxf_id": 40,
+          "priority": 166,
+          "operator": "",
+          "text": "",
+          "formula": "AND($B2=\"Yes\",$AC2&lt;&gt;\"\",LOWER(TRIM($AC2))&lt;&gt;\"n/a\",LOWER(TRIM($AC2))&lt;&gt;\"na\",COUNTIFS($AC$2:$AC$532,$AC2,$B$2:$B$532,\"Yes\")&gt;1)",
+          "formula2": "",
+          "stop_if_true": true,
+          "dxf_xml": "<dxf><font><b/><color rgb=\"FF9C0006\"/></font><fill><patternFill patternType=\"solid\"><fgColor rgb=\"FFFFC7CE\"/><bgColor rgb=\"FFFFC7CE\"/></patternFill></fill></dxf>",
+          "raw_xml": "<cfRule type=\"expression\" dxfId=\"40\" priority=\"166\" stopIfTrue=\"1\"><formula>AND($B2=\"Yes\",$AC2&lt;&gt;\"\",LOWER(TRIM($AC2))&lt;&gt;\"n/a\",LOWER(TRIM($AC2))&lt;&gt;\"na\",COUNTIFS($AC$2:$AC$532,$AC2,$B$2:$B$532,\"Yes\")&gt;1)</formula></cfRule>"
+        }
+      ],
+      "raw_xml": "<conditionalFormatting sqref=\"AC2:AC532\"><cfRule type=\"expression\" dxfId=\"40\" priority=\"166\" stopIfTrue=\"1\"><formula>AND($B2=\"Yes\",$AC2&lt;&gt;\"\",LOWER(TRIM($AC2))&lt;&gt;\"n/a\",LOWER(TRIM($AC2))&lt;&gt;\"na\",COUNTIFS($AC$2:$AC$532,$AC2,$B$2:$B$532,\"Yes\")&gt;1)</formula></cfRule></conditionalFormatting>"
+    },
+    {
+      "id": "b418f0dd",
+      "sheet_part": "xl/worksheets/sheet10.xml",
+      "sheet_name": "12 - Deployments &amp; Config",
+      "sqref": "AD2:AD532",
+      "rules": [
+        {
+          "id": "8be9c705",
+          "rule_type": "expression",
+          "dxf_id": 39,
+          "priority": 167,
+          "operator": "",
+          "text": "",
+          "formula": "AND($B2=\"Yes\",$Y2&lt;&gt;\"\",LOWER(TRIM($Y2))&lt;&gt;\"n/a\",COUNTIFS($Y$2:$Y$532,$Y2,$B$2:$B$532,\"Yes\")&gt;1)",
+          "formula2": "",
+          "stop_if_true": true,
+          "dxf_xml": "<dxf><font><b/><color rgb=\"FF9C0006\"/></font><fill><patternFill patternType=\"solid\"><fgColor rgb=\"FFFFC7CE\"/><bgColor rgb=\"FFFFC7CE\"/></patternFill></fill></dxf>",
+          "raw_xml": "<cfRule type=\"expression\" dxfId=\"39\" priority=\"167\" stopIfTrue=\"1\"><formula>AND($B2=\"Yes\",$Y2&lt;&gt;\"\",LOWER(TRIM($Y2))&lt;&gt;\"n/a\",COUNTIFS($Y$2:$Y$532,$Y2,$B$2:$B$532,\"Yes\")&gt;1)</formula></cfRule>"
+        }
+      ],
+      "raw_xml": "<conditionalFormatting sqref=\"AD2:AD532\"><cfRule type=\"expression\" dxfId=\"39\" priority=\"167\" stopIfTrue=\"1\"><formula>AND($B2=\"Yes\",$Y2&lt;&gt;\"\",LOWER(TRIM($Y2))&lt;&gt;\"n/a\",COUNTIFS($Y$2:$Y$532,$Y2,$B$2:$B$532,\"Yes\")&gt;1)</formula></cfRule></conditionalFormatting>"
+    },
+    {
+      "id": "23ff3bcd",
+      "sheet_part": "xl/worksheets/sheet10.xml",
+      "sheet_name": "12 - Deployments &amp; Config",
+      "sqref": "AL2:AL141 AL143:AL532",
+      "rules": [
+        {
+          "id": "2d553151",
+          "rule_type": "expression",
+          "dxf_id": 38,
+          "priority": 168,
+          "operator": "",
+          "text": "",
+          "formula": "AND($B2=\"Yes\",$AH2&lt;&gt;\"\",LOWER(TRIM($AH2))&lt;&gt;\"n/a\",COUNTIFS($AH$2:$AH$532,$AH2,$B$2:$B$532,\"Yes\")&gt;1)",
+          "formula2": "",
+          "stop_if_true": true,
+          "dxf_xml": "<dxf><font><b/><color rgb=\"FF9C0006\"/></font><fill><patternFill patternType=\"solid\"><fgColor rgb=\"FFFFC7CE\"/><bgColor rgb=\"FFFFC7CE\"/></patternFill></fill></dxf>",
+          "raw_xml": "<cfRule type=\"expression\" dxfId=\"38\" priority=\"168\" stopIfTrue=\"1\"><formula>AND($B2=\"Yes\",$AH2&lt;&gt;\"\",LOWER(TRIM($AH2))&lt;&gt;\"n/a\",COUNTIFS($AH$2:$AH$532,$AH2,$B$2:$B$532,\"Yes\")&gt;1)</formula></cfRule>"
+        }
+      ],
+      "raw_xml": "<conditionalFormatting sqref=\"AL2:AL141 AL143:AL532\"><cfRule type=\"expression\" dxfId=\"38\" priority=\"168\" stopIfTrue=\"1\"><formula>AND($B2=\"Yes\",$AH2&lt;&gt;\"\",LOWER(TRIM($AH2))&lt;&gt;\"n/a\",COUNTIFS($AH$2:$AH$532,$AH2,$B$2:$B$532,\"Yes\")&gt;1)</formula></cfRule></conditionalFormatting>"
+    },
+    {
+      "id": "2760ffad",
+      "sheet_part": "xl/worksheets/sheet10.xml",
+      "sheet_name": "12 - Deployments &amp; Config",
+      "sqref": "I2:M532",
+      "rules": [
+        {
+          "id": "5e77f584",
+          "rule_type": "expression",
+          "dxf_id": 37,
+          "priority": 174,
+          "operator": "",
+          "text": "",
+          "formula": "AND($A2=\"Cybernet\",$U2&lt;&gt;\"\",E2=\"\")",
+          "formula2": "",
+          "stop_if_true": false,
+          "dxf_xml": "<dxf><fill><patternFill><bgColor rgb=\"FFFFC7CE\"/></patternFill></fill></dxf>",
+          "raw_xml": "<cfRule type=\"expression\" dxfId=\"37\" priority=\"174\"><formula>AND($A2=\"Cybernet\",$U2&lt;&gt;\"\",E2=\"\")</formula></cfRule>"
+        }
+      ],
+      "raw_xml": "<conditionalFormatting sqref=\"I2:M532\"><cfRule type=\"expression\" dxfId=\"37\" priority=\"174\"><formula>AND($A2=\"Cybernet\",$U2&lt;&gt;\"\",E2=\"\")</formula></cfRule></conditionalFormatting>"
+    },
+    {
+      "id": "48e3fdfb",
+      "sheet_part": "xl/worksheets/sheet10.xml",
+      "sheet_name": "12 - Deployments &amp; Config",
+      "sqref": "W50:W149",
+      "rules": [
+        {
+          "id": "ebe2781a",
+          "rule_type": "expression",
+          "dxf_id": 36,
+          "priority": 182,
+          "operator": "",
+          "text": "",
+          "formula": "AND($B50=\"Yes\",$R50&lt;&gt;\"\",LOWER(TRIM($R50))&lt;&gt;\"n/a\",COUNTIFS($S$2:$S$532,$R50,$B$2:$B$532,\"Yes\")&gt;1)",
+          "formula2": "",
+          "stop_if_true": true,
+          "dxf_xml": "<dxf><font><b/><color rgb=\"FF9C0006\"/></font><fill><patternFill patternType=\"solid\"><fgColor rgb=\"FFFFC7CE\"/><bgColor rgb=\"FFFFC7CE\"/></patternFill></fill></dxf>",
+          "raw_xml": "<cfRule type=\"expression\" dxfId=\"36\" priority=\"182\" stopIfTrue=\"1\"><formula>AND($B50=\"Yes\",$R50&lt;&gt;\"\",LOWER(TRIM($R50))&lt;&gt;\"n/a\",COUNTIFS($S$2:$S$532,$R50,$B$2:$B$532,\"Yes\")&gt;1)</formula></cfRule>"
+        }
+      ],
+      "raw_xml": "<conditionalFormatting sqref=\"W50:W149\"><cfRule type=\"expression\" dxfId=\"36\" priority=\"182\" stopIfTrue=\"1\"><formula>AND($B50=\"Yes\",$R50&lt;&gt;\"\",LOWER(TRIM($R50))&lt;&gt;\"n/a\",COUNTIFS($S$2:$S$532,$R50,$B$2:$B$532,\"Yes\")&gt;1)</formula></cfRule></conditionalFormatting>"
+    },
+    {
+      "id": "241d02e9",
+      "sheet_part": "xl/worksheets/sheet10.xml",
+      "sheet_name": "12 - Deployments &amp; Config",
+      "sqref": "R2:S103 R106:S532 R104:R105",
+      "rules": [
+        {
+          "id": "4eb766a6",
+          "rule_type": "expression",
+          "dxf_id": 35,
+          "priority": 111,
+          "operator": "",
+          "text": "",
+          "formula": "AND($B2=\"Yes\",$R2&lt;&gt;\"\",LOWER(TRIM($R2))&lt;&gt;\"n/a\",COUNTIFS($R$2:$R$532,$R2,$B$2:$B$532,\"Yes\")&gt;1)",
+          "formula2": "",
+          "stop_if_true": true,
+          "dxf_xml": "<dxf><font><b/><color rgb=\"FF9C0006\"/></font><fill><patternFill patternType=\"solid\"><fgColor rgb=\"FFFFC7CE\"/><bgColor rgb=\"FFFFC7CE\"/></patternFill></fill></dxf>",
+          "raw_xml": "<cfRule type=\"expression\" dxfId=\"35\" priority=\"111\" stopIfTrue=\"1\"><formula>AND($B2=\"Yes\",$R2&lt;&gt;\"\",LOWER(TRIM($R2))&lt;&gt;\"n/a\",COUNTIFS($R$2:$R$532,$R2,$B$2:$B$532,\"Yes\")&gt;1)</formula></cfRule>"
+        }
+      ],
+      "raw_xml": "<conditionalFormatting sqref=\"R2:S103 R106:S532 R104:R105\"><cfRule type=\"expression\" dxfId=\"35\" priority=\"111\" stopIfTrue=\"1\"><formula>AND($B2=\"Yes\",$R2&lt;&gt;\"\",LOWER(TRIM($R2))&lt;&gt;\"n/a\",COUNTIFS($R$2:$R$532,$R2,$B$2:$B$532,\"Yes\")&gt;1)</formula></cfRule></conditionalFormatting>"
+    },
+    {
+      "id": "74b21a92",
+      "sheet_part": "xl/worksheets/sheet10.xml",
+      "sheet_name": "12 - Deployments &amp; Config",
+      "sqref": "S104:S105",
+      "rules": [
+        {
+          "id": "7be08ed2",
+          "rule_type": "expression",
+          "dxf_id": 34,
+          "priority": 206,
+          "operator": "",
+          "text": "",
+          "formula": "AND($B103=\"Yes\",$R103&lt;&gt;\"\",LOWER(TRIM($R103))&lt;&gt;\"n/a\",COUNTIFS($R$2:$R$532,$R103,$B$2:$B$532,\"Yes\")&gt;1)",
+          "formula2": "",
+          "stop_if_true": true,
+          "dxf_xml": "<dxf><font><b/><color rgb=\"FF9C0006\"/></font><fill><patternFill patternType=\"solid\"><fgColor rgb=\"FFFFC7CE\"/><bgColor rgb=\"FFFFC7CE\"/></patternFill></fill></dxf>",
+          "raw_xml": "<cfRule type=\"expression\" dxfId=\"34\" priority=\"206\" stopIfTrue=\"1\"><formula>AND($B103=\"Yes\",$R103&lt;&gt;\"\",LOWER(TRIM($R103))&lt;&gt;\"n/a\",COUNTIFS($R$2:$R$532,$R103,$B$2:$B$532,\"Yes\")&gt;1)</formula></cfRule>"
+        }
+      ],
+      "raw_xml": "<conditionalFormatting sqref=\"S104:S105\"><cfRule type=\"expression\" dxfId=\"34\" priority=\"206\" stopIfTrue=\"1\"><formula>AND($B103=\"Yes\",$R103&lt;&gt;\"\",LOWER(TRIM($R103))&lt;&gt;\"n/a\",COUNTIFS($R$2:$R$532,$R103,$B$2:$B$532,\"Yes\")&gt;1)</formula></cfRule></conditionalFormatting>"
+    },
+    {
+      "id": "d9562e34",
+      "sheet_part": "xl/worksheets/sheet10.xml",
+      "sheet_name": "12 - Deployments &amp; Config",
+      "sqref": "H164",
+      "rules": [
+        {
+          "id": "6280ec38",
+          "rule_type": "expression",
+          "dxf_id": 33,
+          "priority": 211,
+          "operator": "",
+          "text": "",
+          "formula": "AND($B164=\"Yes\",$G166&lt;&gt;\"\",$H164&lt;&gt;\"\",LOWER(TRIM($G166))&lt;&gt;LOWER(TRIM($H164)))",
+          "formula2": "",
+          "stop_if_true": true,
+          "dxf_xml": "<dxf><font><b/><color rgb=\"FF9C0006\"/></font><fill><patternFill patternType=\"solid\"><fgColor rgb=\"FFFFC7CE\"/><bgColor rgb=\"FFFFC7CE\"/></patternFill></fill></dxf>",
+          "raw_xml": "<cfRule type=\"expression\" dxfId=\"33\" priority=\"211\" stopIfTrue=\"1\"><formula>AND($B164=\"Yes\",$G166&lt;&gt;\"\",$H164&lt;&gt;\"\",LOWER(TRIM($G166))&lt;&gt;LOWER(TRIM($H164)))</formula></cfRule>"
+        }
+      ],
+      "raw_xml": "<conditionalFormatting sqref=\"H164\"><cfRule type=\"expression\" dxfId=\"33\" priority=\"211\" stopIfTrue=\"1\"><formula>AND($B164=\"Yes\",$G166&lt;&gt;\"\",$H164&lt;&gt;\"\",LOWER(TRIM($G166))&lt;&gt;LOWER(TRIM($H164)))</formula></cfRule></conditionalFormatting>"
+    },
+    {
+      "id": "6bea81dd",
+      "sheet_part": "xl/worksheets/sheet10.xml",
+      "sheet_name": "12 - Deployments &amp; Config",
+      "sqref": "AL93",
+      "rules": [
+        {
+          "id": "6102fe93",
+          "rule_type": "expression",
+          "dxf_id": 32,
+          "priority": 9,
+          "operator": "",
+          "text": "",
+          "formula": "AND($B93=\"Yes\",$Y93&lt;&gt;\"\",LOWER(TRIM($Y93))&lt;&gt;\"n/a\",COUNTIFS($Y$2:$Y$532,$Y93,$B$2:$B$532,\"Yes\")&gt;1)",
+          "formula2": "",
+          "stop_if_true": true,
+          "dxf_xml": "<dxf><font><b/><color rgb=\"FF9C0006\"/></font><fill><patternFill patternType=\"solid\"><fgColor rgb=\"FFFFC7CE\"/><bgColor rgb=\"FFFFC7CE\"/></patternFill></fill></dxf>",
+          "raw_xml": "<cfRule type=\"expression\" dxfId=\"32\" priority=\"9\" stopIfTrue=\"1\"><formula>AND($B93=\"Yes\",$Y93&lt;&gt;\"\",LOWER(TRIM($Y93))&lt;&gt;\"n/a\",COUNTIFS($Y$2:$Y$532,$Y93,$B$2:$B$532,\"Yes\")&gt;1)</formula></cfRule>"
+        }
+      ],
+      "raw_xml": "<conditionalFormatting sqref=\"AL93\"><cfRule type=\"expression\" dxfId=\"32\" priority=\"9\" stopIfTrue=\"1\"><formula>AND($B93=\"Yes\",$Y93&lt;&gt;\"\",LOWER(TRIM($Y93))&lt;&gt;\"n/a\",COUNTIFS($Y$2:$Y$532,$Y93,$B$2:$B$532,\"Yes\")&gt;1)</formula></cfRule></conditionalFormatting>"
+    },
+    {
+      "id": "4eb12936",
+      "sheet_part": "xl/worksheets/sheet10.xml",
+      "sheet_name": "12 - Deployments &amp; Config",
+      "sqref": "AL122",
+      "rules": [
+        {
+          "id": "ef8e4a82",
+          "rule_type": "expression",
+          "dxf_id": 31,
+          "priority": 8,
+          "operator": "",
+          "text": "",
+          "formula": "AND($B122=\"Yes\",$Y122&lt;&gt;\"\",LOWER(TRIM($Y122))&lt;&gt;\"n/a\",COUNTIFS($Y$2:$Y$532,$Y122,$B$2:$B$532,\"Yes\")&gt;1)",
+          "formula2": "",
+          "stop_if_true": true,
+          "dxf_xml": "<dxf><font><b/><color rgb=\"FF9C0006\"/></font><fill><patternFill patternType=\"solid\"><fgColor rgb=\"FFFFC7CE\"/><bgColor rgb=\"FFFFC7CE\"/></patternFill></fill></dxf>",
+          "raw_xml": "<cfRule type=\"expression\" dxfId=\"31\" priority=\"8\" stopIfTrue=\"1\"><formula>AND($B122=\"Yes\",$Y122&lt;&gt;\"\",LOWER(TRIM($Y122))&lt;&gt;\"n/a\",COUNTIFS($Y$2:$Y$532,$Y122,$B$2:$B$532,\"Yes\")&gt;1)</formula></cfRule>"
+        }
+      ],
+      "raw_xml": "<conditionalFormatting sqref=\"AL122\"><cfRule type=\"expression\" dxfId=\"31\" priority=\"8\" stopIfTrue=\"1\"><formula>AND($B122=\"Yes\",$Y122&lt;&gt;\"\",LOWER(TRIM($Y122))&lt;&gt;\"n/a\",COUNTIFS($Y$2:$Y$532,$Y122,$B$2:$B$532,\"Yes\")&gt;1)</formula></cfRule></conditionalFormatting>"
+    },
+    {
+      "id": "127bfe1e",
+      "sheet_part": "xl/worksheets/sheet10.xml",
+      "sheet_name": "12 - Deployments &amp; Config",
+      "sqref": "AL98",
+      "rules": [
+        {
+          "id": "75ea49ca",
+          "rule_type": "expression",
+          "dxf_id": 30,
+          "priority": 7,
+          "operator": "",
+          "text": "",
+          "formula": "AND($B98=\"Yes\",$Y98&lt;&gt;\"\",LOWER(TRIM($Y98))&lt;&gt;\"n/a\",COUNTIFS($Y$2:$Y$532,$Y98,$B$2:$B$532,\"Yes\")&gt;1)",
+          "formula2": "",
+          "stop_if_true": true,
+          "dxf_xml": "<dxf><font><b/><color rgb=\"FF9C0006\"/></font><fill><patternFill patternType=\"solid\"><fgColor rgb=\"FFFFC7CE\"/><bgColor rgb=\"FFFFC7CE\"/></patternFill></fill></dxf>",
+          "raw_xml": "<cfRule type=\"expression\" dxfId=\"30\" priority=\"7\" stopIfTrue=\"1\"><formula>AND($B98=\"Yes\",$Y98&lt;&gt;\"\",LOWER(TRIM($Y98))&lt;&gt;\"n/a\",COUNTIFS($Y$2:$Y$532,$Y98,$B$2:$B$532,\"Yes\")&gt;1)</formula></cfRule>"
+        }
+      ],
+      "raw_xml": "<conditionalFormatting sqref=\"AL98\"><cfRule type=\"expression\" dxfId=\"30\" priority=\"7\" stopIfTrue=\"1\"><formula>AND($B98=\"Yes\",$Y98&lt;&gt;\"\",LOWER(TRIM($Y98))&lt;&gt;\"n/a\",COUNTIFS($Y$2:$Y$532,$Y98,$B$2:$B$532,\"Yes\")&gt;1)</formula></cfRule></conditionalFormatting>"
+    },
+    {
+      "id": "d9bbb6f2",
+      "sheet_part": "xl/worksheets/sheet10.xml",
+      "sheet_name": "12 - Deployments &amp; Config",
+      "sqref": "AL97",
+      "rules": [
+        {
+          "id": "f04fa5f4",
+          "rule_type": "expression",
+          "dxf_id": 29,
+          "priority": 6,
+          "operator": "",
+          "text": "",
+          "formula": "AND($B97=\"Yes\",$Y97&lt;&gt;\"\",LOWER(TRIM($Y97))&lt;&gt;\"n/a\",COUNTIFS($Y$2:$Y$532,$Y97,$B$2:$B$532,\"Yes\")&gt;1)",
+          "formula2": "",
+          "stop_if_true": true,
+          "dxf_xml": "<dxf><font><b/><color rgb=\"FF9C0006\"/></font><fill><patternFill patternType=\"solid\"><fgColor rgb=\"FFFFC7CE\"/><bgColor rgb=\"FFFFC7CE\"/></patternFill></fill></dxf>",
+          "raw_xml": "<cfRule type=\"expression\" dxfId=\"29\" priority=\"6\" stopIfTrue=\"1\"><formula>AND($B97=\"Yes\",$Y97&lt;&gt;\"\",LOWER(TRIM($Y97))&lt;&gt;\"n/a\",COUNTIFS($Y$2:$Y$532,$Y97,$B$2:$B$532,\"Yes\")&gt;1)</formula></cfRule>"
+        }
+      ],
+      "raw_xml": "<conditionalFormatting sqref=\"AL97\"><cfRule type=\"expression\" dxfId=\"29\" priority=\"6\" stopIfTrue=\"1\"><formula>AND($B97=\"Yes\",$Y97&lt;&gt;\"\",LOWER(TRIM($Y97))&lt;&gt;\"n/a\",COUNTIFS($Y$2:$Y$532,$Y97,$B$2:$B$532,\"Yes\")&gt;1)</formula></cfRule></conditionalFormatting>"
+    },
+    {
+      "id": "8fd4aaf3",
+      "sheet_part": "xl/worksheets/sheet10.xml",
+      "sheet_name": "12 - Deployments &amp; Config",
+      "sqref": "AL140",
+      "rules": [
+        {
+          "id": "aa3ec792",
+          "rule_type": "expression",
+          "dxf_id": 28,
+          "priority": 5,
+          "operator": "",
+          "text": "",
+          "formula": "AND($B140=\"Yes\",$Y140&lt;&gt;\"\",LOWER(TRIM($Y140))&lt;&gt;\"n/a\",COUNTIFS($Y$2:$Y$532,$Y140,$B$2:$B$532,\"Yes\")&gt;1)",
+          "formula2": "",
+          "stop_if_true": true,
+          "dxf_xml": "<dxf><font><b/><color rgb=\"FF9C0006\"/></font><fill><patternFill patternType=\"solid\"><fgColor rgb=\"FFFFC7CE\"/><bgColor rgb=\"FFFFC7CE\"/></patternFill></fill></dxf>",
+          "raw_xml": "<cfRule type=\"expression\" dxfId=\"28\" priority=\"5\" stopIfTrue=\"1\"><formula>AND($B140=\"Yes\",$Y140&lt;&gt;\"\",LOWER(TRIM($Y140))&lt;&gt;\"n/a\",COUNTIFS($Y$2:$Y$532,$Y140,$B$2:$B$532,\"Yes\")&gt;1)</formula></cfRule>"
+        }
+      ],
+      "raw_xml": "<conditionalFormatting sqref=\"AL140\"><cfRule type=\"expression\" dxfId=\"28\" priority=\"5\" stopIfTrue=\"1\"><formula>AND($B140=\"Yes\",$Y140&lt;&gt;\"\",LOWER(TRIM($Y140))&lt;&gt;\"n/a\",COUNTIFS($Y$2:$Y$532,$Y140,$B$2:$B$532,\"Yes\")&gt;1)</formula></cfRule></conditionalFormatting>"
+    },
+    {
+      "id": "18f16e78",
+      "sheet_part": "xl/worksheets/sheet10.xml",
+      "sheet_name": "12 - Deployments &amp; Config",
+      "sqref": "AL115",
+      "rules": [
+        {
+          "id": "300fdb58",
+          "rule_type": "expression",
+          "dxf_id": 27,
+          "priority": 4,
+          "operator": "",
+          "text": "",
+          "formula": "AND($B115=\"Yes\",$Y115&lt;&gt;\"\",LOWER(TRIM($Y115))&lt;&gt;\"n/a\",COUNTIFS($Y$2:$Y$532,$Y115,$B$2:$B$532,\"Yes\")&gt;1)",
+          "formula2": "",
+          "stop_if_true": true,
+          "dxf_xml": "<dxf><font><b/><color rgb=\"FF9C0006\"/></font><fill><patternFill patternType=\"solid\"><fgColor rgb=\"FFFFC7CE\"/><bgColor rgb=\"FFFFC7CE\"/></patternFill></fill></dxf>",
+          "raw_xml": "<cfRule type=\"expression\" dxfId=\"27\" priority=\"4\" stopIfTrue=\"1\"><formula>AND($B115=\"Yes\",$Y115&lt;&gt;\"\",LOWER(TRIM($Y115))&lt;&gt;\"n/a\",COUNTIFS($Y$2:$Y$532,$Y115,$B$2:$B$532,\"Yes\")&gt;1)</formula></cfRule>"
+        }
+      ],
+      "raw_xml": "<conditionalFormatting sqref=\"AL115\"><cfRule type=\"expression\" dxfId=\"27\" priority=\"4\" stopIfTrue=\"1\"><formula>AND($B115=\"Yes\",$Y115&lt;&gt;\"\",LOWER(TRIM($Y115))&lt;&gt;\"n/a\",COUNTIFS($Y$2:$Y$532,$Y115,$B$2:$B$532,\"Yes\")&gt;1)</formula></cfRule></conditionalFormatting>"
+    },
+    {
+      "id": "81695d15",
+      "sheet_part": "xl/worksheets/sheet10.xml",
+      "sheet_name": "12 - Deployments &amp; Config",
+      "sqref": "AL116",
+      "rules": [
+        {
+          "id": "682787c4",
+          "rule_type": "expression",
+          "dxf_id": 26,
+          "priority": 3,
+          "operator": "",
+          "text": "",
+          "formula": "AND($B116=\"Yes\",$Y116&lt;&gt;\"\",LOWER(TRIM($Y116))&lt;&gt;\"n/a\",COUNTIFS($Y$2:$Y$532,$Y116,$B$2:$B$532,\"Yes\")&gt;1)",
+          "formula2": "",
+          "stop_if_true": true,
+          "dxf_xml": "<dxf><font><b/><color rgb=\"FF9C0006\"/></font><fill><patternFill patternType=\"solid\"><fgColor rgb=\"FFFFC7CE\"/><bgColor rgb=\"FFFFC7CE\"/></patternFill></fill></dxf>",
+          "raw_xml": "<cfRule type=\"expression\" dxfId=\"26\" priority=\"3\" stopIfTrue=\"1\"><formula>AND($B116=\"Yes\",$Y116&lt;&gt;\"\",LOWER(TRIM($Y116))&lt;&gt;\"n/a\",COUNTIFS($Y$2:$Y$532,$Y116,$B$2:$B$532,\"Yes\")&gt;1)</formula></cfRule>"
+        }
+      ],
+      "raw_xml": "<conditionalFormatting sqref=\"AL116\"><cfRule type=\"expression\" dxfId=\"26\" priority=\"3\" stopIfTrue=\"1\"><formula>AND($B116=\"Yes\",$Y116&lt;&gt;\"\",LOWER(TRIM($Y116))&lt;&gt;\"n/a\",COUNTIFS($Y$2:$Y$532,$Y116,$B$2:$B$532,\"Yes\")&gt;1)</formula></cfRule></conditionalFormatting>"
+    },
+    {
+      "id": "31132ffd",
+      "sheet_part": "xl/worksheets/sheet10.xml",
+      "sheet_name": "12 - Deployments &amp; Config",
+      "sqref": "AL99",
+      "rules": [
+        {
+          "id": "d6ef9fdc",
+          "rule_type": "expression",
+          "dxf_id": 25,
+          "priority": 2,
+          "operator": "",
+          "text": "",
+          "formula": "AND($B99=\"Yes\",$Y99&lt;&gt;\"\",LOWER(TRIM($Y99))&lt;&gt;\"n/a\",COUNTIFS($Y$2:$Y$532,$Y99,$B$2:$B$532,\"Yes\")&gt;1)",
+          "formula2": "",
+          "stop_if_true": true,
+          "dxf_xml": "<dxf><font><b/><color rgb=\"FF9C0006\"/></font><fill><patternFill patternType=\"solid\"><fgColor rgb=\"FFFFC7CE\"/><bgColor rgb=\"FFFFC7CE\"/></patternFill></fill></dxf>",
+          "raw_xml": "<cfRule type=\"expression\" dxfId=\"25\" priority=\"2\" stopIfTrue=\"1\"><formula>AND($B99=\"Yes\",$Y99&lt;&gt;\"\",LOWER(TRIM($Y99))&lt;&gt;\"n/a\",COUNTIFS($Y$2:$Y$532,$Y99,$B$2:$B$532,\"Yes\")&gt;1)</formula></cfRule>"
+        }
+      ],
+      "raw_xml": "<conditionalFormatting sqref=\"AL99\"><cfRule type=\"expression\" dxfId=\"25\" priority=\"2\" stopIfTrue=\"1\"><formula>AND($B99=\"Yes\",$Y99&lt;&gt;\"\",LOWER(TRIM($Y99))&lt;&gt;\"n/a\",COUNTIFS($Y$2:$Y$532,$Y99,$B$2:$B$532,\"Yes\")&gt;1)</formula></cfRule></conditionalFormatting>"
+    },
+    {
+      "id": "fac838ac",
+      "sheet_part": "xl/worksheets/sheet10.xml",
+      "sheet_name": "12 - Deployments &amp; Config",
+      "sqref": "AL141",
+      "rules": [
+        {
+          "id": "dde62c49",
+          "rule_type": "expression",
+          "dxf_id": 24,
+          "priority": 1,
+          "operator": "",
+          "text": "",
+          "formula": "AND($B141=\"Yes\",$Y141&lt;&gt;\"\",LOWER(TRIM($Y141))&lt;&gt;\"n/a\",COUNTIFS($Y$2:$Y$532,$Y141,$B$2:$B$532,\"Yes\")&gt;1)",
+          "formula2": "",
+          "stop_if_true": true,
+          "dxf_xml": "<dxf><font><b/><color rgb=\"FF9C0006\"/></font><fill><patternFill patternType=\"solid\"><fgColor rgb=\"FFFFC7CE\"/><bgColor rgb=\"FFFFC7CE\"/></patternFill></fill></dxf>",
+          "raw_xml": "<cfRule type=\"expression\" dxfId=\"24\" priority=\"1\" stopIfTrue=\"1\"><formula>AND($B141=\"Yes\",$Y141&lt;&gt;\"\",LOWER(TRIM($Y141))&lt;&gt;\"n/a\",COUNTIFS($Y$2:$Y$532,$Y141,$B$2:$B$532,\"Yes\")&gt;1)</formula></cfRule>"
+        }
+      ],
+      "raw_xml": "<conditionalFormatting sqref=\"AL141\"><cfRule type=\"expression\" dxfId=\"24\" priority=\"1\" stopIfTrue=\"1\"><formula>AND($B141=\"Yes\",$Y141&lt;&gt;\"\",LOWER(TRIM($Y141))&lt;&gt;\"n/a\",COUNTIFS($Y$2:$Y$532,$Y141,$B$2:$B$532,\"Yes\")&gt;1)</formula></cfRule></conditionalFormatting>"
+    },
+    {
+      "id": "f818ce25",
+      "sheet_part": "xl/worksheets/sheet11.xml",
+      "sheet_name": "15 - Imaging Progress ",
+      "sqref": "D1:D1048576",
+      "rules": [
+        {
+          "id": "313a2e9d",
+          "rule_type": "cellIs",
+          "dxf_id": 13,
+          "priority": 1,
+          "operator": "equal",
+          "text": "",
+          "formula": "100%",
+          "formula2": "",
+          "stop_if_true": false,
+          "dxf_xml": "<dxf><font><color rgb=\"FF00B050\"/></font><fill><patternFill patternType=\"solid\"><bgColor theme=\"6\" tint=\"0.79998168889431442\"/></patternFill></fill></dxf>",
+          "raw_xml": "<cfRule type=\"cellIs\" dxfId=\"13\" priority=\"1\" operator=\"equal\"><formula>100%</formula></cfRule>"
+        }
+      ],
+      "raw_xml": "<conditionalFormatting sqref=\"D1:D1048576\"><cfRule type=\"cellIs\" dxfId=\"13\" priority=\"1\" operator=\"equal\"><formula>100%</formula></cfRule></conditionalFormatting>"
+    },
+    {
+      "id": "370341b3",
+      "sheet_part": "xl/worksheets/sheet11.xml",
+      "sheet_name": "15 - Imaging Progress ",
+      "sqref": "F2:F14",
+      "rules": [
+        {
+          "id": "6b4e994c",
+          "rule_type": "cellIs",
+          "dxf_id": 12,
+          "priority": 2,
+          "operator": "greaterThan",
+          "text": "",
+          "formula": "20",
+          "formula2": "",
+          "stop_if_true": false,
+          "dxf_xml": "<dxf><font><color theme=\"1\"/></font><fill><patternFill patternType=\"solid\"><bgColor rgb=\"FF92D050\"/></patternFill></fill></dxf>",
+          "raw_xml": "<cfRule type=\"cellIs\" dxfId=\"12\" priority=\"2\" operator=\"greaterThan\"><formula>20</formula></cfRule>"
+        },
+        {
+          "id": "704a9b06",
+          "rule_type": "cellIs",
+          "dxf_id": 11,
+          "priority": 3,
+          "operator": "lessThan",
+          "text": "",
+          "formula": "2",
+          "formula2": "",
+          "stop_if_true": false,
+          "dxf_xml": "<dxf><font><color theme=\"1\"/></font><fill><patternFill patternType=\"solid\"><bgColor rgb=\"FFFF0000\"/></patternFill></fill></dxf>",
+          "raw_xml": "<cfRule type=\"cellIs\" dxfId=\"11\" priority=\"3\" operator=\"lessThan\"><formula>2</formula></cfRule>"
+        },
+        {
+          "id": "8628c260",
+          "rule_type": "cellIs",
+          "dxf_id": 10,
+          "priority": 4,
+          "operator": "between",
+          "text": "",
+          "formula": "6",
+          "formula2": "9",
+          "stop_if_true": false,
+          "dxf_xml": "<dxf><font><color theme=\"1\"/></font><fill><patternFill patternType=\"solid\"><bgColor rgb=\"FFFEFFA6\"/></patternFill></fill></dxf>",
+          "raw_xml": "<cfRule type=\"cellIs\" dxfId=\"10\" priority=\"4\" operator=\"between\"><formula>6</formula><formula>9</formula></cfRule>"
+        },
+        {
+          "id": "5a73eddc",
+          "rule_type": "cellIs",
+          "dxf_id": 9,
+          "priority": 5,
+          "operator": "between",
+          "text": "",
+          "formula": "3",
+          "formula2": "5",
+          "stop_if_true": false,
+          "dxf_xml": "<dxf><font><color theme=\"1\"/></font><fill><patternFill patternType=\"solid\"><bgColor theme=\"9\" tint=\"0.59999389629810485\"/></patternFill></fill></dxf>",
+          "raw_xml": "<cfRule type=\"cellIs\" dxfId=\"9\" priority=\"5\" operator=\"between\"><formula>3</formula><formula>5</formula></cfRule>"
+        }
+      ],
+      "raw_xml": "<conditionalFormatting sqref=\"F2:F14\"><cfRule type=\"cellIs\" dxfId=\"12\" priority=\"2\" operator=\"greaterThan\"><formula>20</formula></cfRule><cfRule type=\"cellIs\" dxfId=\"11\" priority=\"3\" operator=\"lessThan\"><formula>2</formula></cfRule><cfRule type=\"cellIs\" dxfId=\"10\" priority=\"4\" operator=\"between\"><formula>6</formula><formula>9</formula></cfRule><cfRule type=\"cellIs\" dxfId=\"9\" priority=\"5\" operator=\"between\"><formula>3</formula><formula>5</formula></cfRule></conditionalFormatting>"
+    },
+    {
+      "id": "4906c775",
+      "sheet_part": "xl/worksheets/sheet11.xml",
+      "sheet_name": "15 - Imaging Progress ",
+      "sqref": "F2:F15",
+      "rules": [
+        {
+          "id": "dddc793d",
+          "rule_type": "cellIs",
+          "dxf_id": 8,
+          "priority": 6,
+          "operator": "between",
+          "text": "",
+          "formula": "10",
+          "formula2": "20",
+          "stop_if_true": false,
+          "dxf_xml": "<dxf><font><color theme=\"1\"/></font><fill><patternFill patternType=\"solid\"><bgColor theme=\"6\" tint=\"0.79998168889431442\"/></patternFill></fill></dxf>",
+          "raw_xml": "<cfRule type=\"cellIs\" dxfId=\"8\" priority=\"6\" operator=\"between\"><formula>10</formula><formula>20</formula></cfRule>"
+        }
+      ],
+      "raw_xml": "<conditionalFormatting sqref=\"F2:F15\"><cfRule type=\"cellIs\" dxfId=\"8\" priority=\"6\" operator=\"between\"><formula>10</formula><formula>20</formula></cfRule></conditionalFormatting>"
+    },
+    {
+      "id": "6e0c8108",
+      "sheet_part": "xl/worksheets/sheet13.xml",
+      "sheet_name": "14 - Config Log",
+      "sqref": "I2:I503",
+      "rules": [
+        {
+          "id": "95a2e77d",
+          "rule_type": "expression",
+          "dxf_id": 7,
+          "priority": 8,
+          "operator": "",
+          "text": "",
+          "formula": "AND($I2&lt;&gt;\"\",OR($K2=\"Yes\",$J2=\"PM Approved\"))",
+          "formula2": "",
+          "stop_if_true": true,
+          "dxf_xml": "<dxf><fill><patternFill patternType=\"solid\"><fgColor rgb=\"FFC6EFCE\"/><bgColor rgb=\"FFC6EFCE\"/></patternFill></fill></dxf>",
+          "raw_xml": "<cfRule type=\"expression\" dxfId=\"7\" priority=\"8\" stopIfTrue=\"1\"><formula>AND($I2&lt;&gt;\"\",OR($K2=\"Yes\",$J2=\"PM Approved\"))</formula></cfRule>"
+        },
+        {
+          "id": "99fc1905",
+          "rule_type": "expression",
+          "dxf_id": 6,
+          "priority": 9,
+          "operator": "",
+          "text": "",
+          "formula": "AND($I2&lt;&gt;\"\",NOT(OR($K2=\"Yes\",$J2=\"PM Approved\")))",
+          "formula2": "",
+          "stop_if_true": true,
+          "dxf_xml": "<dxf><fill><patternFill patternType=\"solid\"><fgColor rgb=\"FFFFEB9C\"/><bgColor rgb=\"FFFFEB9C\"/></patternFill></fill></dxf>",
+          "raw_xml": "<cfRule type=\"expression\" dxfId=\"6\" priority=\"9\" stopIfTrue=\"1\"><formula>AND($I2&lt;&gt;\"\",NOT(OR($K2=\"Yes\",$J2=\"PM Approved\")))</formula></cfRule>"
+        }
+      ],
+      "raw_xml": "<conditionalFormatting sqref=\"I2:I503\"><cfRule type=\"expression\" dxfId=\"7\" priority=\"8\" stopIfTrue=\"1\"><formula>AND($I2&lt;&gt;\"\",OR($K2=\"Yes\",$J2=\"PM Approved\"))</formula></cfRule><cfRule type=\"expression\" dxfId=\"6\" priority=\"9\" stopIfTrue=\"1\"><formula>AND($I2&lt;&gt;\"\",NOT(OR($K2=\"Yes\",$J2=\"PM Approved\")))</formula></cfRule></conditionalFormatting>"
+    },
+    {
+      "id": "743d5fe5",
+      "sheet_part": "xl/worksheets/sheet13.xml",
+      "sheet_name": "14 - Config Log",
+      "sqref": "Q2:Q503",
+      "rules": [
+        {
+          "id": "cee2344b",
+          "rule_type": "expression",
+          "dxf_id": 5,
+          "priority": 10,
+          "operator": "",
+          "text": "",
+          "formula": "Q2&lt;&gt;\"\"",
+          "formula2": "",
+          "stop_if_true": false,
+          "dxf_xml": "<dxf><fill><patternFill patternType=\"solid\"><fgColor rgb=\"FFFFC7CE\"/><bgColor rgb=\"FFFFC7CE\"/></patternFill></fill></dxf>",
+          "raw_xml": "<cfRule type=\"expression\" dxfId=\"5\" priority=\"10\"><formula>Q2&lt;&gt;\"\"</formula></cfRule>"
+        }
+      ],
+      "raw_xml": "<conditionalFormatting sqref=\"Q2:Q503\"><cfRule type=\"expression\" dxfId=\"5\" priority=\"10\"><formula>Q2&lt;&gt;\"\"</formula></cfRule></conditionalFormatting>"
+    },
+    {
+      "id": "2d60a379",
+      "sheet_part": "xl/worksheets/sheet13.xml",
+      "sheet_name": "14 - Config Log",
+      "sqref": "R2:R503",
+      "rules": [
+        {
+          "id": "85dabc42",
+          "rule_type": "expression",
+          "dxf_id": 4,
+          "priority": 11,
+          "operator": "",
+          "text": "",
+          "formula": "R2&lt;&gt;\"\"",
+          "formula2": "",
+          "stop_if_true": false,
+          "dxf_xml": "<dxf><fill><patternFill patternType=\"solid\"><fgColor rgb=\"FFFFE699\"/><bgColor rgb=\"FFFFE699\"/></patternFill></fill></dxf>",
+          "raw_xml": "<cfRule type=\"expression\" dxfId=\"4\" priority=\"11\"><formula>R2&lt;&gt;\"\"</formula></cfRule>"
+        }
+      ],
+      "raw_xml": "<conditionalFormatting sqref=\"R2:R503\"><cfRule type=\"expression\" dxfId=\"4\" priority=\"11\"><formula>R2&lt;&gt;\"\"</formula></cfRule></conditionalFormatting>"
+    },
+    {
+      "id": "23f90015",
+      "sheet_part": "xl/worksheets/sheet13.xml",
+      "sheet_name": "14 - Config Log",
+      "sqref": "S2:S503",
+      "rules": [
+        {
+          "id": "236d92b1",
+          "rule_type": "expression",
+          "dxf_id": 3,
+          "priority": 12,
+          "operator": "",
+          "text": "",
+          "formula": "S2&lt;&gt;\"\"",
+          "formula2": "",
+          "stop_if_true": false,
+          "dxf_xml": "<dxf><fill><patternFill patternType=\"solid\"><fgColor rgb=\"FFFFE699\"/><bgColor rgb=\"FFFFE699\"/></patternFill></fill></dxf>",
+          "raw_xml": "<cfRule type=\"expression\" dxfId=\"3\" priority=\"12\"><formula>S2&lt;&gt;\"\"</formula></cfRule>"
+        }
+      ],
+      "raw_xml": "<conditionalFormatting sqref=\"S2:S503\"><cfRule type=\"expression\" dxfId=\"3\" priority=\"12\"><formula>S2&lt;&gt;\"\"</formula></cfRule></conditionalFormatting>"
+    },
+    {
+      "id": "9e23cbc9",
+      "sheet_part": "xl/worksheets/sheet13.xml",
+      "sheet_name": "14 - Config Log",
+      "sqref": "T2:T503",
+      "rules": [
+        {
+          "id": "2b06fade",
+          "rule_type": "expression",
+          "dxf_id": 2,
+          "priority": 13,
+          "operator": "",
+          "text": "",
+          "formula": "AND(T2&lt;&gt;\"\",T2=\"OK\")",
+          "formula2": "",
+          "stop_if_true": false,
+          "dxf_xml": "<dxf><fill><patternFill patternType=\"solid\"><fgColor rgb=\"FFC6EFCE\"/><bgColor rgb=\"FFC6EFCE\"/></patternFill></fill></dxf>",
+          "raw_xml": "<cfRule type=\"expression\" dxfId=\"2\" priority=\"13\"><formula>AND(T2&lt;&gt;\"\",T2=\"OK\")</formula></cfRule>"
+        },
+        {
+          "id": "9fa92062",
+          "rule_type": "expression",
+          "dxf_id": 1,
+          "priority": 14,
+          "operator": "",
+          "text": "",
+          "formula": "AND(T2&lt;&gt;\"\",T2&lt;&gt;\"OK\")",
+          "formula2": "",
+          "stop_if_true": false,
+          "dxf_xml": "<dxf><fill><patternFill patternType=\"solid\"><fgColor rgb=\"FFFFC7CE\"/><bgColor rgb=\"FFFFC7CE\"/></patternFill></fill></dxf>",
+          "raw_xml": "<cfRule type=\"expression\" dxfId=\"1\" priority=\"14\"><formula>AND(T2&lt;&gt;\"\",T2&lt;&gt;\"OK\")</formula></cfRule>"
+        }
+      ],
+      "raw_xml": "<conditionalFormatting sqref=\"T2:T503\"><cfRule type=\"expression\" dxfId=\"2\" priority=\"13\"><formula>AND(T2&lt;&gt;\"\",T2=\"OK\")</formula></cfRule><cfRule type=\"expression\" dxfId=\"1\" priority=\"14\"><formula>AND(T2&lt;&gt;\"\",T2&lt;&gt;\"OK\")</formula></cfRule></conditionalFormatting>"
+    },
+    {
+      "id": "10d913a4",
+      "sheet_part": "xl/worksheets/sheet2.xml",
+      "sheet_name": "01_Warehouse_Ledger",
+      "sqref": "A2:R7 A8:B8 D8:R8 A9:R2002",
+      "rules": [
+        {
+          "id": "492a67c4",
+          "rule_type": "expression",
+          "dxf_id": 88,
+          "priority": 3,
+          "operator": "",
+          "text": "",
+          "formula": "AND(TRIM($A2)=\"\",OR($B2&lt;&gt;\"\",$C2&lt;&gt;\"\",$D2&lt;&gt;\"\",$E2&lt;&gt;\"\",$I2&lt;&gt;\"\",$J2&lt;&gt;\"\"))",
+          "formula2": "",
+          "stop_if_true": true,
+          "dxf_xml": "<dxf><fill><patternFill patternType=\"solid\"><fgColor rgb=\"FFF8CBAD\"/><bgColor rgb=\"FFF8CBAD\"/></patternFill></fill></dxf>",
+          "raw_xml": "<cfRule type=\"expression\" dxfId=\"88\" priority=\"3\" stopIfTrue=\"1\"><formula>AND(TRIM($A2)=\"\",OR($B2&lt;&gt;\"\",$C2&lt;&gt;\"\",$D2&lt;&gt;\"\",$E2&lt;&gt;\"\",$I2&lt;&gt;\"\",$J2&lt;&gt;\"\"))</formula></cfRule>"
+        },
+        {
+          "id": "5fa890a5",
+          "rule_type": "expression",
+          "dxf_id": 87,
+          "priority": 4,
+          "operator": "",
+          "text": "",
+          "formula": "AND(TRIM($A2)&lt;&gt;\"\",NOT(AND(LEFT($A2,4)=\"PAL-\",LEN($A2)=11,ISNUMBER(--MID($A2,5,7)))))",
+          "formula2": "",
+          "stop_if_true": false,
+          "dxf_xml": "<dxf><fill><patternFill patternType=\"solid\"><fgColor rgb=\"FFF8CBAD\"/><bgColor rgb=\"FFF8CBAD\"/></patternFill></fill></dxf>",
+          "raw_xml": "<cfRule type=\"expression\" dxfId=\"87\" priority=\"4\"><formula>AND(TRIM($A2)&lt;&gt;\"\",NOT(AND(LEFT($A2,4)=\"PAL-\",LEN($A2)=11,ISNUMBER(--MID($A2,5,7)))))</formula></cfRule>"
+        },
+        {
+          "id": "03780503",
+          "rule_type": "expression",
+          "dxf_id": 86,
+          "priority": 5,
+          "operator": "",
+          "text": "",
+          "formula": "AND(TRIM($A2)&lt;&gt;\"\",COUNTIF($A$2:$A$2002,$A2)&gt;1)",
+          "formula2": "",
+          "stop_if_true": false,
+          "dxf_xml": "<dxf><fill><patternFill patternType=\"solid\"><fgColor rgb=\"FFF8CBAD\"/><bgColor rgb=\"FFF8CBAD\"/></patternFill></fill></dxf>",
+          "raw_xml": "<cfRule type=\"expression\" dxfId=\"86\" priority=\"5\"><formula>AND(TRIM($A2)&lt;&gt;\"\",COUNTIF($A$2:$A$2002,$A2)&gt;1)</formula></cfRule>"
+        },
+        {
+          "id": "7057fa36",
+          "rule_type": "expression",
+          "dxf_id": 85,
+          "priority": 6,
+          "operator": "",
+          "text": "",
+          "formula": "AND(TRIM($A2)&lt;&gt;\"\",$C2&lt;&gt;\"\",$D2&lt;&gt;\"\",$D2&lt;&gt;\"0\",$C2&lt;&gt;$D2)",
+          "formula2": "",
+          "stop_if_true": false,
+          "dxf_xml": "<dxf><fill><patternFill patternType=\"solid\"><fgColor rgb=\"FFFFF2CC\"/><bgColor rgb=\"FFFFF2CC\"/></patternFill></fill></dxf>",
+          "raw_xml": "<cfRule type=\"expression\" dxfId=\"85\" priority=\"6\"><formula>AND(TRIM($A2)&lt;&gt;\"\",$C2&lt;&gt;\"\",$D2&lt;&gt;\"\",$D2&lt;&gt;\"0\",$C2&lt;&gt;$D2)</formula></cfRule>"
+        }
+      ],
+      "raw_xml": "<conditionalFormatting sqref=\"A2:R7 A8:B8 D8:R8 A9:R2002\"><cfRule type=\"expression\" dxfId=\"88\" priority=\"3\" stopIfTrue=\"1\"><formula>AND(TRIM($A2)=\"\",OR($B2&lt;&gt;\"\",$C2&lt;&gt;\"\",$D2&lt;&gt;\"\",$E2&lt;&gt;\"\",$I2&lt;&gt;\"\",$J2&lt;&gt;\"\"))</formula></cfRule><cfRule type=\"expression\" dxfId=\"87\" priority=\"4\"><formula>AND(TRIM($A2)&lt;&gt;\"\",NOT(AND(LEFT($A2,4)=\"PAL-\",LEN($A2)=11,ISNUMBER(--MID($A2,5,7)))))</formula></cfRule><cfRule type=\"expression\" dxfId=\"86\" priority=\"5\"><formula>AND(TRIM($A2)&lt;&gt;\"\",COUNTIF($A$2:$A$2002,$A2)&gt;1)</formula></cfRule><cfRule type=\"expression\" dxfId=\"85\" priority=\"6\"><formula>AND(TRIM($A2)&lt;&gt;\"\",$C2&lt;&gt;\"\",$D2&lt;&gt;\"\",$D2&lt;&gt;\"0\",$C2&lt;&gt;$D2)</formula></cfRule></conditionalFormatting>"
+    },
+    {
+      "id": "3e335fbe",
+      "sheet_part": "xl/worksheets/sheet2.xml",
+      "sheet_name": "01_Warehouse_Ledger",
+      "sqref": "C8",
+      "rules": [
+        {
+          "id": "c8b6dcbe",
+          "rule_type": "expression",
+          "dxf_id": 84,
+          "priority": 1,
+          "operator": "",
+          "text": "",
+          "formula": "AND(TRIM($A8)=\"\",OR($B8&lt;&gt;\"\",$C8&lt;&gt;\"\",$D8&lt;&gt;\"\",$E8&lt;&gt;\"\",$F8&lt;&gt;\"\",$I8&lt;&gt;\"\"))",
+          "formula2": "",
+          "stop_if_true": true,
+          "dxf_xml": "<dxf><fill><patternFill patternType=\"solid\"><fgColor rgb=\"FFF8CBAD\"/><bgColor rgb=\"FFF8CBAD\"/></patternFill></fill></dxf>",
+          "raw_xml": "<cfRule type=\"expression\" dxfId=\"84\" priority=\"1\" stopIfTrue=\"1\"><formula>AND(TRIM($A8)=\"\",OR($B8&lt;&gt;\"\",$C8&lt;&gt;\"\",$D8&lt;&gt;\"\",$E8&lt;&gt;\"\",$F8&lt;&gt;\"\",$I8&lt;&gt;\"\"))</formula></cfRule>"
+        },
+        {
+          "id": "55d2b109",
+          "rule_type": "expression",
+          "dxf_id": 83,
+          "priority": 2,
+          "operator": "",
+          "text": "",
+          "formula": "AND(TRIM($A8)&lt;&gt;\"\",COUNTIF($A$2:$A$2002,$A8)&gt;1)",
+          "formula2": "",
+          "stop_if_true": false,
+          "dxf_xml": "<dxf><fill><patternFill patternType=\"solid\"><fgColor rgb=\"FFF8CBAD\"/><bgColor rgb=\"FFF8CBAD\"/></patternFill></fill></dxf>",
+          "raw_xml": "<cfRule type=\"expression\" dxfId=\"83\" priority=\"2\"><formula>AND(TRIM($A8)&lt;&gt;\"\",COUNTIF($A$2:$A$2002,$A8)&gt;1)</formula></cfRule>"
+        }
+      ],
+      "raw_xml": "<conditionalFormatting sqref=\"C8\"><cfRule type=\"expression\" dxfId=\"84\" priority=\"1\" stopIfTrue=\"1\"><formula>AND(TRIM($A8)=\"\",OR($B8&lt;&gt;\"\",$C8&lt;&gt;\"\",$D8&lt;&gt;\"\",$E8&lt;&gt;\"\",$F8&lt;&gt;\"\",$I8&lt;&gt;\"\"))</formula></cfRule><cfRule type=\"expression\" dxfId=\"83\" priority=\"2\"><formula>AND(TRIM($A8)&lt;&gt;\"\",COUNTIF($A$2:$A$2002,$A8)&gt;1)</formula></cfRule></conditionalFormatting>"
+    },
+    {
+      "id": "564840f1",
+      "sheet_part": "xl/worksheets/sheet3.xml",
+      "sheet_name": "02_Warehouse_Locations",
+      "sqref": "A133",
+      "rules": [
+        {
+          "id": "39dc19b6",
+          "rule_type": "expression",
+          "dxf_id": 82,
+          "priority": 1,
+          "operator": "",
+          "text": "",
+          "formula": "AND(TRIM($A133)=\"\",OR($B133&lt;&gt;\"\",$C133&lt;&gt;\"\",$D133&lt;&gt;\"\",$E133&lt;&gt;\"\",$F133&lt;&gt;\"\",$I133&lt;&gt;\"\"))",
+          "formula2": "",
+          "stop_if_true": true,
+          "dxf_xml": "<dxf><fill><patternFill patternType=\"solid\"><fgColor rgb=\"FFF8CBAD\"/><bgColor rgb=\"FFF8CBAD\"/></patternFill></fill></dxf>",
+          "raw_xml": "<cfRule type=\"expression\" dxfId=\"82\" priority=\"1\" stopIfTrue=\"1\"><formula>AND(TRIM($A133)=\"\",OR($B133&lt;&gt;\"\",$C133&lt;&gt;\"\",$D133&lt;&gt;\"\",$E133&lt;&gt;\"\",$F133&lt;&gt;\"\",$I133&lt;&gt;\"\"))</formula></cfRule>"
+        },
+        {
+          "id": "75e1be0d",
+          "rule_type": "expression",
+          "dxf_id": 81,
+          "priority": 2,
+          "operator": "",
+          "text": "",
+          "formula": "AND(TRIM($A133)&lt;&gt;\"\",COUNTIF($A$2:$A$2002,$A133)&gt;1)",
+          "formula2": "",
+          "stop_if_true": false,
+          "dxf_xml": "<dxf><fill><patternFill patternType=\"solid\"><fgColor rgb=\"FFF8CBAD\"/><bgColor rgb=\"FFF8CBAD\"/></patternFill></fill></dxf>",
+          "raw_xml": "<cfRule type=\"expression\" dxfId=\"81\" priority=\"2\"><formula>AND(TRIM($A133)&lt;&gt;\"\",COUNTIF($A$2:$A$2002,$A133)&gt;1)</formula></cfRule>"
+        }
+      ],
+      "raw_xml": "<conditionalFormatting sqref=\"A133\"><cfRule type=\"expression\" dxfId=\"82\" priority=\"1\" stopIfTrue=\"1\"><formula>AND(TRIM($A133)=\"\",OR($B133&lt;&gt;\"\",$C133&lt;&gt;\"\",$D133&lt;&gt;\"\",$E133&lt;&gt;\"\",$F133&lt;&gt;\"\",$I133&lt;&gt;\"\"))</formula></cfRule><cfRule type=\"expression\" dxfId=\"81\" priority=\"2\"><formula>AND(TRIM($A133)&lt;&gt;\"\",COUNTIF($A$2:$A$2002,$A133)&gt;1)</formula></cfRule></conditionalFormatting>"
+    },
+    {
+      "id": "24e1d095",
+      "sheet_part": "xl/worksheets/sheet3.xml",
+      "sheet_name": "02_Warehouse_Locations",
+      "sqref": "A2:I132 A134:I2002",
+      "rules": [
+        {
+          "id": "ed3ccc06",
+          "rule_type": "expression",
+          "dxf_id": 80,
+          "priority": 3,
+          "operator": "",
+          "text": "",
+          "formula": "AND(TRIM($A2)=\"\",OR($B2&lt;&gt;\"\",$C2&lt;&gt;\"\",$D2&lt;&gt;\"\",$E2&lt;&gt;\"\",$F2&lt;&gt;\"\",$I2&lt;&gt;\"\"))",
+          "formula2": "",
+          "stop_if_true": true,
+          "dxf_xml": "<dxf><fill><patternFill patternType=\"solid\"><fgColor rgb=\"FFF8CBAD\"/><bgColor rgb=\"FFF8CBAD\"/></patternFill></fill></dxf>",
+          "raw_xml": "<cfRule type=\"expression\" dxfId=\"80\" priority=\"3\" stopIfTrue=\"1\"><formula>AND(TRIM($A2)=\"\",OR($B2&lt;&gt;\"\",$C2&lt;&gt;\"\",$D2&lt;&gt;\"\",$E2&lt;&gt;\"\",$F2&lt;&gt;\"\",$I2&lt;&gt;\"\"))</formula></cfRule>"
+        },
+        {
+          "id": "585b7cc1",
+          "rule_type": "expression",
+          "dxf_id": 79,
+          "priority": 4,
+          "operator": "",
+          "text": "",
+          "formula": "AND(TRIM($A2)&lt;&gt;\"\",COUNTIF($A$2:$A$2002,$A2)&gt;1)",
+          "formula2": "",
+          "stop_if_true": false,
+          "dxf_xml": "<dxf><fill><patternFill patternType=\"solid\"><fgColor rgb=\"FFF8CBAD\"/><bgColor rgb=\"FFF8CBAD\"/></patternFill></fill></dxf>",
+          "raw_xml": "<cfRule type=\"expression\" dxfId=\"79\" priority=\"4\"><formula>AND(TRIM($A2)&lt;&gt;\"\",COUNTIF($A$2:$A$2002,$A2)&gt;1)</formula></cfRule>"
+        }
+      ],
+      "raw_xml": "<conditionalFormatting sqref=\"A2:I132 A134:I2002\"><cfRule type=\"expression\" dxfId=\"80\" priority=\"3\" stopIfTrue=\"1\"><formula>AND(TRIM($A2)=\"\",OR($B2&lt;&gt;\"\",$C2&lt;&gt;\"\",$D2&lt;&gt;\"\",$E2&lt;&gt;\"\",$F2&lt;&gt;\"\",$I2&lt;&gt;\"\"))</formula></cfRule><cfRule type=\"expression\" dxfId=\"79\" priority=\"4\"><formula>AND(TRIM($A2)&lt;&gt;\"\",COUNTIF($A$2:$A$2002,$A2)&gt;1)</formula></cfRule></conditionalFormatting>"
+    },
+    {
+      "id": "9959c50b",
+      "sheet_part": "xl/worksheets/sheet3.xml",
+      "sheet_name": "02_Warehouse_Locations",
+      "sqref": "B133:I133",
+      "rules": [
+        {
+          "id": "97e46d63",
+          "rule_type": "expression",
+          "dxf_id": 78,
+          "priority": 116,
+          "operator": "",
+          "text": "",
+          "formula": "AND(TRIM(#REF!)=\"\",OR($B133&lt;&gt;\"\",$C133&lt;&gt;\"\",$D133&lt;&gt;\"\",$E133&lt;&gt;\"\",$F133&lt;&gt;\"\",$I133&lt;&gt;\"\"))",
+          "formula2": "",
+          "stop_if_true": true,
+          "dxf_xml": "<dxf><fill><patternFill patternType=\"solid\"><fgColor rgb=\"FFF8CBAD\"/><bgColor rgb=\"FFF8CBAD\"/></patternFill></fill></dxf>",
+          "raw_xml": "<cfRule type=\"expression\" dxfId=\"78\" priority=\"116\" stopIfTrue=\"1\"><formula>AND(TRIM(#REF!)=\"\",OR($B133&lt;&gt;\"\",$C133&lt;&gt;\"\",$D133&lt;&gt;\"\",$E133&lt;&gt;\"\",$F133&lt;&gt;\"\",$I133&lt;&gt;\"\"))</formula></cfRule>"
+        },
+        {
+          "id": "b688b1bc",
+          "rule_type": "expression",
+          "dxf_id": 77,
+          "priority": 117,
+          "operator": "",
+          "text": "",
+          "formula": "AND(TRIM(#REF!)&lt;&gt;\"\",COUNTIF($A$2:$A$2002,#REF!)&gt;1)",
+          "formula2": "",
+          "stop_if_true": false,
+          "dxf_xml": "<dxf><fill><patternFill patternType=\"solid\"><fgColor rgb=\"FFF8CBAD\"/><bgColor rgb=\"FFF8CBAD\"/></patternFill></fill></dxf>",
+          "raw_xml": "<cfRule type=\"expression\" dxfId=\"77\" priority=\"117\"><formula>AND(TRIM(#REF!)&lt;&gt;\"\",COUNTIF($A$2:$A$2002,#REF!)&gt;1)</formula></cfRule>"
+        }
+      ],
+      "raw_xml": "<conditionalFormatting sqref=\"B133:I133\"><cfRule type=\"expression\" dxfId=\"78\" priority=\"116\" stopIfTrue=\"1\"><formula>AND(TRIM(#REF!)=\"\",OR($B133&lt;&gt;\"\",$C133&lt;&gt;\"\",$D133&lt;&gt;\"\",$E133&lt;&gt;\"\",$F133&lt;&gt;\"\",$I133&lt;&gt;\"\"))</formula></cfRule><cfRule type=\"expression\" dxfId=\"77\" priority=\"117\"><formula>AND(TRIM(#REF!)&lt;&gt;\"\",COUNTIF($A$2:$A$2002,#REF!)&gt;1)</formula></cfRule></conditionalFormatting>"
+    },
+    {
+      "id": "83028570",
+      "sheet_part": "xl/worksheets/sheet4.xml",
+      "sheet_name": "03_Warehouse_Movements",
+      "sqref": "A2:J500",
+      "rules": [
+        {
+          "id": "6a157a7a",
+          "rule_type": "expression",
+          "dxf_id": 76,
+          "priority": 1,
+          "operator": "",
+          "text": "",
+          "formula": "AND($B2&lt;&gt;\"\",OR($A2=\"\",TRIM($C2)=\"\",TRIM($E2)=\"\"))",
+          "formula2": "",
+          "stop_if_true": true,
+          "dxf_xml": "<dxf><fill><patternFill patternType=\"solid\"><fgColor rgb=\"FFF8CBAD\"/><bgColor rgb=\"FFF8CBAD\"/></patternFill></fill></dxf>",
+          "raw_xml": "<cfRule type=\"expression\" dxfId=\"76\" priority=\"1\" stopIfTrue=\"1\"><formula>AND($B2&lt;&gt;\"\",OR($A2=\"\",TRIM($C2)=\"\",TRIM($E2)=\"\"))</formula></cfRule>"
+        },
+        {
+          "id": "f8832759",
+          "rule_type": "expression",
+          "dxf_id": 75,
+          "priority": 4,
+          "operator": "",
+          "text": "",
+          "formula": "AND(TRIM($C2)&lt;&gt;\"\",TRIM($E2)&lt;&gt;\"\",$D2=\"\")",
+          "formula2": "",
+          "stop_if_true": false,
+          "dxf_xml": "<dxf><fill><patternFill patternType=\"solid\"><fgColor rgb=\"FFFFF2CC\"/><bgColor rgb=\"FFFFF2CC\"/></patternFill></fill></dxf>",
+          "raw_xml": "<cfRule type=\"expression\" dxfId=\"75\" priority=\"4\"><formula>AND(TRIM($C2)&lt;&gt;\"\",TRIM($E2)&lt;&gt;\"\",$D2=\"\")</formula></cfRule>"
+        }
+      ],
+      "raw_xml": "<conditionalFormatting sqref=\"A2:J500\"><cfRule type=\"expression\" dxfId=\"76\" priority=\"1\" stopIfTrue=\"1\"><formula>AND($B2&lt;&gt;\"\",OR($A2=\"\",TRIM($C2)=\"\",TRIM($E2)=\"\"))</formula></cfRule><cfRule type=\"expression\" dxfId=\"75\" priority=\"4\"><formula>AND(TRIM($C2)&lt;&gt;\"\",TRIM($E2)&lt;&gt;\"\",$D2=\"\")</formula></cfRule></conditionalFormatting>"
+    },
+    {
+      "id": "83139c48",
+      "sheet_part": "xl/worksheets/sheet5.xml",
+      "sheet_name": "04_Label_Export",
+      "sqref": "A3:D1005",
+      "rules": [
+        {
+          "id": "f3cea605",
+          "rule_type": "expression",
+          "dxf_id": 74,
+          "priority": 3,
+          "operator": "",
+          "text": "",
+          "formula": "AND(OR($A3=\"LOCATION\",$A3=\"PALLET\"),TRIM($B3)&lt;&gt;\"\",TRIM($C3)=\"\")",
+          "formula2": "",
+          "stop_if_true": false,
+          "dxf_xml": "<dxf><fill><patternFill patternType=\"solid\"><fgColor rgb=\"FFFFF2CC\"/><bgColor rgb=\"FFFFF2CC\"/></patternFill></fill></dxf>",
+          "raw_xml": "<cfRule type=\"expression\" dxfId=\"74\" priority=\"3\"><formula>AND(OR($A3=\"LOCATION\",$A3=\"PALLET\"),TRIM($B3)&lt;&gt;\"\",TRIM($C3)=\"\")</formula></cfRule>"
+        }
+      ],
+      "raw_xml": "<conditionalFormatting sqref=\"A3:D1005\"><cfRule type=\"expression\" dxfId=\"74\" priority=\"3\"><formula>AND(OR($A3=\"LOCATION\",$A3=\"PALLET\"),TRIM($B3)&lt;&gt;\"\",TRIM($C3)=\"\")</formula></cfRule></conditionalFormatting>"
+    },
+    {
+      "id": "5c7ab455",
+      "sheet_part": "xl/worksheets/sheet6.xml",
+      "sheet_name": "05_Scan_Lookup",
+      "sqref": "B3",
+      "rules": [
+        {
+          "id": "95324adf",
+          "rule_type": "expression",
+          "dxf_id": 73,
+          "priority": 1,
+          "operator": "",
+          "text": "",
+          "formula": "AND(TRIM($A3)=\"\",OR($B3&lt;&gt;\"\",$C3&lt;&gt;\"\",$D3&lt;&gt;\"\",$E3&lt;&gt;\"\",$I3&lt;&gt;\"\",$J3&lt;&gt;\"\"))",
+          "formula2": "",
+          "stop_if_true": true,
+          "dxf_xml": "<dxf><fill><patternFill patternType=\"solid\"><fgColor rgb=\"FFF8CBAD\"/><bgColor rgb=\"FFF8CBAD\"/></patternFill></fill></dxf>",
+          "raw_xml": "<cfRule type=\"expression\" dxfId=\"73\" priority=\"1\" stopIfTrue=\"1\"><formula>AND(TRIM($A3)=\"\",OR($B3&lt;&gt;\"\",$C3&lt;&gt;\"\",$D3&lt;&gt;\"\",$E3&lt;&gt;\"\",$I3&lt;&gt;\"\",$J3&lt;&gt;\"\"))</formula></cfRule>"
+        },
+        {
+          "id": "cdf7603b",
+          "rule_type": "expression",
+          "dxf_id": 72,
+          "priority": 2,
+          "operator": "",
+          "text": "",
+          "formula": "AND(TRIM($A3)&lt;&gt;\"\",NOT(AND(LEFT($A3,4)=\"PAL-\",LEN($A3)=11,ISNUMBER(--MID($A3,5,7)))))",
+          "formula2": "",
+          "stop_if_true": false,
+          "dxf_xml": "<dxf><fill><patternFill patternType=\"solid\"><fgColor rgb=\"FFF8CBAD\"/><bgColor rgb=\"FFF8CBAD\"/></patternFill></fill></dxf>",
+          "raw_xml": "<cfRule type=\"expression\" dxfId=\"72\" priority=\"2\"><formula>AND(TRIM($A3)&lt;&gt;\"\",NOT(AND(LEFT($A3,4)=\"PAL-\",LEN($A3)=11,ISNUMBER(--MID($A3,5,7)))))</formula></cfRule>"
+        },
+        {
+          "id": "5a53cc49",
+          "rule_type": "expression",
+          "dxf_id": 71,
+          "priority": 3,
+          "operator": "",
+          "text": "",
+          "formula": "AND(TRIM($A3)&lt;&gt;\"\",COUNTIF($A$2:$A$2002,$A3)&gt;1)",
+          "formula2": "",
+          "stop_if_true": false,
+          "dxf_xml": "<dxf><fill><patternFill patternType=\"solid\"><fgColor rgb=\"FFF8CBAD\"/><bgColor rgb=\"FFF8CBAD\"/></patternFill></fill></dxf>",
+          "raw_xml": "<cfRule type=\"expression\" dxfId=\"71\" priority=\"3\"><formula>AND(TRIM($A3)&lt;&gt;\"\",COUNTIF($A$2:$A$2002,$A3)&gt;1)</formula></cfRule>"
+        },
+        {
+          "id": "96a655b8",
+          "rule_type": "expression",
+          "dxf_id": 70,
+          "priority": 4,
+          "operator": "",
+          "text": "",
+          "formula": "AND(TRIM($A3)&lt;&gt;\"\",$C3&lt;&gt;\"\",$D3&lt;&gt;\"\",$D3&lt;&gt;\"0\",$C3&lt;&gt;$D3)",
+          "formula2": "",
+          "stop_if_true": false,
+          "dxf_xml": "<dxf><fill><patternFill patternType=\"solid\"><fgColor rgb=\"FFFFF2CC\"/><bgColor rgb=\"FFFFF2CC\"/></patternFill></fill></dxf>",
+          "raw_xml": "<cfRule type=\"expression\" dxfId=\"70\" priority=\"4\"><formula>AND(TRIM($A3)&lt;&gt;\"\",$C3&lt;&gt;\"\",$D3&lt;&gt;\"\",$D3&lt;&gt;\"0\",$C3&lt;&gt;$D3)</formula></cfRule>"
+        }
+      ],
+      "raw_xml": "<conditionalFormatting sqref=\"B3\"><cfRule type=\"expression\" dxfId=\"73\" priority=\"1\" stopIfTrue=\"1\"><formula>AND(TRIM($A3)=\"\",OR($B3&lt;&gt;\"\",$C3&lt;&gt;\"\",$D3&lt;&gt;\"\",$E3&lt;&gt;\"\",$I3&lt;&gt;\"\",$J3&lt;&gt;\"\"))</formula></cfRule><cfRule type=\"expression\" dxfId=\"72\" priority=\"2\"><formula>AND(TRIM($A3)&lt;&gt;\"\",NOT(AND(LEFT($A3,4)=\"PAL-\",LEN($A3)=11,ISNUMBER(--MID($A3,5,7)))))</formula></cfRule><cfRule type=\"expression\" dxfId=\"71\" priority=\"3\"><formula>AND(TRIM($A3)&lt;&gt;\"\",COUNTIF($A$2:$A$2002,$A3)&gt;1)</formula></cfRule><cfRule type=\"expression\" dxfId=\"70\" priority=\"4\"><formula>AND(TRIM($A3)&lt;&gt;\"\",$C3&lt;&gt;\"\",$D3&lt;&gt;\"\",$D3&lt;&gt;\"0\",$C3&lt;&gt;$D3)</formula></cfRule></conditionalFormatting>"
+    }
+  ]
+}

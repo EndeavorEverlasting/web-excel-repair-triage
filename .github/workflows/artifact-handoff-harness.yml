@@ -1,0 +1,63 @@
+name: Artifact handoff alias harness
+
+on:
+  pull_request:
+    paths:
+      - harness/artifact-handoff/**
+      - harness/CONTEXT.md
+      - CODEBASE_MAP.md
+      - SKILLS.md
+      - .ai/skills/share-artifact-alias-handoff/**
+      - .githooks/pre-commit
+      - .githooks/pre-push
+      - scripts/validate_artifact_handoff_harness.py
+      - tests/test_artifact_handoff_harness.py
+      - .github/workflows/artifact-handoff-harness.yml
+  push:
+    branches: [main]
+    paths:
+      - harness/artifact-handoff/**
+      - harness/CONTEXT.md
+      - CODEBASE_MAP.md
+      - SKILLS.md
+      - .ai/skills/share-artifact-alias-handoff/**
+      - .githooks/pre-commit
+      - .githooks/pre-push
+      - scripts/validate_artifact_handoff_harness.py
+      - tests/test_artifact_handoff_harness.py
+      - .github/workflows/artifact-handoff-harness.yml
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Compile focused harness
+        run: python -m py_compile scripts/validate_artifact_handoff_harness.py tests/test_artifact_handoff_harness.py
+      - name: Validate artifact handoff harness
+        run: python scripts/validate_artifact_handoff_harness.py --output Outputs/share-artifact-alias-handoff.json --summary
+      - name: Run artifact handoff regressions
+        run: python -m unittest tests.test_artifact_handoff_harness -v
+      - name: Validate root harness remains intact
+        run: |
+          python scripts/validate_harness.py --report "$RUNNER_TEMP/harness-completeness-report.json"
+          python -m unittest tests.test_harness_contract -v
+      - name: Validate repository artifact hygiene
+        run: python -m triage.gitignore_hygiene
+      - name: Check exact PR patch hygiene
+        run: git diff --check origin/main...HEAD
+      - name: Upload focused receipt
+        uses: actions/upload-artifact@v4
+        with:
+          name: artifact-handoff-alias-harness-report
+          path: Outputs/share-artifact-alias-handoff.json
+          if-no-files-found: error

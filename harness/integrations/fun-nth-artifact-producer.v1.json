@@ -1,0 +1,49 @@
+{
+  "schema_version": "web-excel-integration-capability/v1",
+  "id": "fun-nth-artifact-export",
+  "version": "1.0.0",
+  "status": "canonical",
+  "owner": "EndeavorEverlasting/web-excel-repair-triage",
+  "canonical_contract_donor": "EndeavorEverlasting/FUN",
+  "trigger": {
+    "id": "nth-workbook-ready-for-fun-proof",
+    "conditions": [
+      "generated or repaired NTH workbook exists",
+      "reviewed FUN packet specification is explicit",
+      "artifact assertion profile is explicit",
+      "artifact byte path is available"
+    ],
+    "forbidden_conditions": [
+      "workbook identity is unresolved",
+      "packet specification is absent",
+      "private production bytes would be committed as fixtures",
+      "the exporter is expected to infer evidence truth or labor attribution"
+    ]
+  },
+  "skill": ".ai/skills/fun-nth-artifact-export/SKILL.md",
+  "implementation": {
+    "module": "triage/fun_nth_artifact_export.py",
+    "cli": "scripts/export_fun_nth_artifact_manifest.py"
+  },
+  "inputs": [
+    "artifact XLSX bytes",
+    "FUN packet specification",
+    "artifact assertion profile",
+    "pinned FUN contract lock",
+    "producer commit and builder version",
+    "publication posture and generation mode"
+  ],
+  "outputs": [
+    "fun-nth-artifact-manifest/v1 manifest",
+    "web-excel-fun-nth-producer-receipt/v1 receipt"
+  ],
+  "guardrails": [
+    "FUN remains canonical schema and final acceptance owner",
+    "artifact identity is computed from actual local bytes",
+    "share-ready sheet order must match the packet approved tabs",
+    "packet forbidden content must be preserved in the sheet contract",
+    "unsupported evidence or labor claim fields fail closed",
+    "fixture posture cannot be represented as production runtime proof"
+  ],
+  "proof_ceiling": "Producer contract, schema pinning, manifest construction, and local byte identity only. Final artifact acceptance and evidence truth remain in FUN."
+}

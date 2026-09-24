@@ -1,0 +1,57 @@
+{
+  "schema_version": "1.0.0",
+  "ordering_policy_version": "1.0.0",
+  "family_order": ["foundation", "discover-plan", "build-repair", "validate-protect", "integrate-ship", "autonomy"],
+  "groups": [
+    {
+      "family": "Foundation",
+      "family_id": "foundation",
+      "clusters": [
+        {
+          "cluster_id": "C-A1B2C3",
+          "prompts": ["P00", "P01"],
+          "centroid": { "x": -1.2, "y": 0.3, "z": 0.1 },
+          "shape": { "type": "bounding-sphere", "radius": 0.42 }
+        }
+      ]
+    },
+    {
+      "family": "Build & Repair",
+      "family_id": "build-repair",
+      "clusters": [
+        {
+          "cluster_id": "C-18C5A7",
+          "prompts": ["P091", "P105", "P117"],
+          "centroid": { "x": 1.2, "y": -0.7, "z": 4.9 },
+          "shape": { "type": "bounding-sphere", "radius": 0.58 }
+        },
+        {
+          "cluster_id": "C-2B91F3",
+          "prompts": ["P074", "P088"],
+          "centroid": { "x": 1.5, "y": -0.3, "z": 4.2 },
+          "shape": { "type": "bounding-sphere", "radius": 0.31 }
+        }
+      ]
+    },
+    {
+      "family": "Validate & Protect",
+      "family_id": "validate-protect",
+      "clusters": [
+        {
+          "cluster_id": "C-9F3D01",
+          "prompts": ["P11", "P58"],
+          "centroid": { "x": 0.8, "y": 2.1, "z": -1.4 },
+          "shape": { "type": "none" }
+        }
+      ]
+    }
+  ],
+  "linear_order": ["P00", "P01", "P091", "P105", "P117", "P074", "P088", "P11", "P58", "P99"],
+  "outliers_group": {
+    "family": "Outliers",
+    "family_id": "outliers",
+    "cluster_id": "OUTLIER",
+    "prompts": ["P99"]
+  },
+  "_comment": "Example demonstrates derived placement: families in explicit order, clusters by (-size, id), prompts by (role_rank, -centrality, seq_int, prompt_id). Linear_order is the total deterministic order. P99 is HDBSCAN outlier, always last within its family bucket, here in dedicated outliers_group after real families."
+}

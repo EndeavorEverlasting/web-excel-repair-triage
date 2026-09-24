@@ -1,0 +1,50 @@
+{
+  "schema_version": "prompt-feedback-maintenance-report/v1",
+  "event_count": 2,
+  "minimum_dislikes": 2,
+  "candidates": [],
+  "summaries": [],
+  "usage_stats": {
+    "event_count": 2,
+    "action_counts": {
+      "copy": 1,
+      "favorite": 0,
+      "invoke": 0,
+      "open": 1
+    },
+    "prompt_finder_candidate_count": 1
+  },
+  "eval_sample_candidates": [
+    {
+      "candidate_id": "fixture-prompt-finder-01",
+      "surface": "prompt_finder",
+      "measurement": "selection_intent",
+      "answers": {
+        "startingPoint": "in-repo",
+        "problemKnown": "known-failure",
+        "goal": "prove",
+        "shape": "runtime-proof"
+      },
+      "recommendations": [
+        "P08",
+        "P11",
+        "P58"
+      ],
+      "observed_actions": [
+        {
+          "prompt_id": "P08",
+          "value": "open"
+        },
+        {
+          "prompt_id": "P08",
+          "value": "copy"
+        }
+      ],
+      "candidate_only": true,
+      "gold_eval_authority": false,
+      "promotion_required": "manual_review_into_harness/evals/fixtures/prompt-finder-classifier-cases.v1.json"
+    }
+  ],
+  "mutation_authority": false,
+  "gold_eval_authority": false
+}

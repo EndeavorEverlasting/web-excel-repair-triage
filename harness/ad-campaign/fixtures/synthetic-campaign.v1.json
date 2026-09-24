@@ -1,0 +1,156 @@
+{
+  "schema_version": "ad-campaign/v1",
+  "campaign_id": "synthetic-example",
+  "revision": 1,
+  "brief": {
+    "brand": "Synthetic Brand",
+    "offer": "Demo item",
+    "objective": "Demo conversions",
+    "audience": "Test hypothesis",
+    "geography": "Test area",
+    "language": "English",
+    "currency": "USD",
+    "budget_cap": 1000,
+    "account": "synthetic-account",
+    "period": {
+      "start": "2026-09-01",
+      "end": "2026-09-30",
+      "timezone": "UTC"
+    }
+  },
+  "doctrine": {
+    "version": "1",
+    "source": "synthetic source",
+    "brand_rules": [
+      "Plain language"
+    ],
+    "claims": [
+      {
+        "id": "c1",
+        "text": "Demo item",
+        "status": "supported",
+        "evidence": "synthetic product sheet"
+      }
+    ]
+  },
+  "plan": {
+    "version": "1",
+    "objective": "Demo conversions",
+    "metric": {
+      "name": "CPA",
+      "numerator": "spend",
+      "denominator": "conversions",
+      "source": "synthetic report",
+      "window": "September"
+    },
+    "allocations": [
+      {
+        "channel": "synthetic channel",
+        "amount": 900
+      }
+    ],
+    "reserve": 100,
+    "experiment": {
+      "hypothesis": "Concept A improves response",
+      "comparison": "A/B",
+      "decision_rule": "predefined test rule",
+      "window": "September",
+      "stop_rule": "cap reached"
+    }
+  },
+  "assets": [
+    {
+      "id": "a1",
+      "version": "1",
+      "claim_ids": [
+        "c1"
+      ],
+      "channel": "synthetic channel",
+      "headline": "Demo item",
+      "copy": "Explore the demo item",
+      "cta": "Explore",
+      "destination": "https://example.com/demo",
+      "kind": "copy",
+      "artifact": "synthetic-copy.txt",
+      "format_evidence": "synthetic format check",
+      "rights_evidence": "synthetic rights receipt"
+    }
+  ],
+  "review": {
+    "snapshot_sha256": "bab227d4470b08fd3634fbfea89ddb7421210d30aca0a2163d835e310b94fe5e",
+    "reviewer": "synthetic reviewer",
+    "at": "2026-09-01T10:00:00Z",
+    "checks": [
+      {
+        "name": "claims",
+        "status": "PASS",
+        "evidence": "synthetic check"
+      },
+      {
+        "name": "brand_offer_destination",
+        "status": "PASS",
+        "evidence": "synthetic check"
+      },
+      {
+        "name": "format",
+        "status": "PASS",
+        "evidence": "synthetic check"
+      },
+      {
+        "name": "rights",
+        "status": "PASS",
+        "evidence": "synthetic check"
+      },
+      {
+        "name": "budget_targeting_schedule",
+        "status": "PASS",
+        "evidence": "synthetic check"
+      },
+      {
+        "name": "tracking",
+        "status": "PASS",
+        "evidence": "synthetic check"
+      },
+      {
+        "name": "platform_requirements",
+        "status": "PASS",
+        "evidence": "synthetic check"
+      }
+    ]
+  },
+  "authorization": {
+    "snapshot_sha256": "bab227d4470b08fd3634fbfea89ddb7421210d30aca0a2163d835e310b94fe5e",
+    "approver": "synthetic approver",
+    "at": "2026-09-01T11:00:00Z",
+    "actions": [
+      "publish",
+      "spend"
+    ]
+  },
+  "launch": {
+    "snapshot_sha256": "bab227d4470b08fd3634fbfea89ddb7421210d30aca0a2163d835e310b94fe5e",
+    "campaign_platform_id": "synthetic-platform-id",
+    "observed_state": "live",
+    "at": "2026-09-01T12:00:00Z",
+    "evidence": "synthetic observation"
+  },
+  "results": {
+    "snapshot_sha256": "bab227d4470b08fd3634fbfea89ddb7421210d30aca0a2163d835e310b94fe5e",
+    "source": "synthetic aggregate",
+    "extracted_at": "2026-10-01T00:00:00Z",
+    "period": {
+      "start": "2026-09-01",
+      "end": "2026-09-30",
+      "timezone": "UTC"
+    },
+    "currency": "USD",
+    "attribution_model": "synthetic model",
+    "attribution_window": "7 days",
+    "conversion_definition": "synthetic conversion",
+    "impressions": 10000,
+    "clicks": 200,
+    "spend": 100,
+    "conversions": 10,
+    "revenue": 500
+  }
+}

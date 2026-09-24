@@ -1,0 +1,124 @@
+name: Prompt topology Phase B
+
+on:
+  pull_request:
+    paths:
+      - 'harness/prompt-topology/**'
+      - 'harness/contracts/prompt-topology-classifier.v1.json'
+      - 'scripts/prompt-topology/**'
+      - 'scripts/validate_prompt_topology.py'
+      - 'scripts/build_prompt_kit_registry.py'
+      - 'scripts/prompt_classification.py'
+      - 'registry/prompts/**'
+      - 'docs/prompts.json'
+      - 'tests/test_prompt_topology_phase_a.py'
+      - 'tests/test_prompt_topology_phase_b.py'
+      - 'requirements-prompt-topology.txt'
+      - '.github/workflows/prompt-topology-phase-b.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'harness/prompt-topology/**'
+      - 'harness/contracts/prompt-topology-classifier.v1.json'
+      - 'scripts/prompt-topology/**'
+      - 'scripts/validate_prompt_topology.py'
+      - 'scripts/build_prompt_kit_registry.py'
+      - 'scripts/prompt_classification.py'
+      - 'registry/prompts/**'
+      - 'docs/prompts.json'
+      - 'tests/test_prompt_topology_phase_a.py'
+      - 'tests/test_prompt_topology_phase_b.py'
+      - 'requirements-prompt-topology.txt'
+      - '.github/workflows/prompt-topology-phase-b.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  PYTHONHASHSEED: '0'
+  TZ: UTC
+  LC_ALL: C.UTF-8
+  LANG: C.UTF-8
+
+jobs:
+  phase-b:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Prove exact candidate and refreshed main floor
+        shell: bash
+        env:
+          EXPECTED_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = "$EXPECTED_SHA"
+          git fetch --no-tags origin +refs/heads/main:refs/remotes/origin/main
+          git diff --check origin/main...HEAD
+          echo "candidate=$EXPECTED_SHA main=$(git rev-parse origin/main)"
+
+      - uses: actions/setup-python@v7
+        with:
+          python-version: '3.11'
+
+      - name: Install scoped topology runtime
+        shell: bash
+        run: |
+          set -euo pipefail
+          python -m pip install --upgrade pip
+          python -m pip install -r requirements-prompt-topology.txt
+
+      - name: Validate Phase A+B contracts and focused fixtures
+        shell: bash
+        run: |
+          set -euo pipefail
+          python scripts/validate_prompt_topology.py --summary
+          python -m unittest tests.test_prompt_topology_phase_a tests.test_prompt_topology_phase_b -v
+
+      - name: Build topology and deterministic Phase B projection
+        shell: bash
+        run: |
+          set -euo pipefail
+          python scripts/prompt-topology/run.py --output "$RUNNER_TEMP/topology.v1.json" --summary
+          python scripts/prompt-topology/project.py \
+            --topology "$RUNNER_TEMP/topology.v1.json" \
+            --output "$RUNNER_TEMP/projection-3d.json" \
+            --state-output "$RUNNER_TEMP/projection-state.v1.json" \
+            --summary
+          cp "$RUNNER_TEMP/projection-3d.json" "$RUNNER_TEMP/projection-3d.baseline.json"
+          cp "$RUNNER_TEMP/projection-state.v1.json" "$RUNNER_TEMP/projection-state.baseline.v1.json"
+          python scripts/prompt-topology/project.py \
+            --topology "$RUNNER_TEMP/topology.v1.json" \
+            --output "$RUNNER_TEMP/projection-3d.json" \
+            --state-output "$RUNNER_TEMP/projection-state.v1.json" \
+            --check
+          rm "$RUNNER_TEMP/projection-3d.json" "$RUNNER_TEMP/projection-state.v1.json"
+          python scripts/prompt-topology/project.py \
+            --topology "$RUNNER_TEMP/topology.v1.json" \
+            --output "$RUNNER_TEMP/projection-3d.json" \
+            --state-output "$RUNNER_TEMP/projection-state.v1.json"
+          cmp "$RUNNER_TEMP/projection-3d.baseline.json" "$RUNNER_TEMP/projection-3d.json"
+          cmp "$RUNNER_TEMP/projection-state.baseline.v1.json" "$RUNNER_TEMP/projection-state.v1.json"
+          python scripts/prompt-topology/validate_projection.py \
+            --topology "$RUNNER_TEMP/topology.v1.json" \
+            --projection "$RUNNER_TEMP/projection-3d.json" \
+            --state "$RUNNER_TEMP/projection-state.v1.json" \
+            --rebuild --summary > "$RUNNER_TEMP/projection-validation.json"
+          cat "$RUNNER_TEMP/projection-validation.json"
+
+      - name: Upload Phase B evidence
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: prompt-topology-phase-b-evidence
+          path: |
+            ${{ runner.temp }}/topology.v1.json
+            ${{ runner.temp }}/projection-3d.json
+            ${{ runner.temp }}/projection-state.v1.json
+            ${{ runner.temp }}/projection-validation.json
+          if-no-files-found: error

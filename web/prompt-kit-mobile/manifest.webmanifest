@@ -1,0 +1,40 @@
+{
+  "id": "./afk-agent-flow/",
+  "name": "AFK Agent Flow",
+  "short_name": "AFK Agent Flow",
+  "description": "Away-from-keyboard agentic execution routing prompts, skills, agents, validation, and evidence into reliable work flows.",
+  "start_url": "./afk-agent-flow/",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#080d16",
+  "theme_color": "#111827",
+  "orientation": "any",
+  "icons": [
+    {
+      "src": "./icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "./icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Open AFK Agent Flow",
+      "short_name": "Open",
+      "url": "./afk-agent-flow/",
+      "icons": [
+        {
+          "src": "./icon-192.png",
+          "sizes": "192x192",
+          "type": "image/png"
+        }
+      ]
+    }
+  ]
+}

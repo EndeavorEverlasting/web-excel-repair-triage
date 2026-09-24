@@ -1,0 +1,140 @@
+{
+  "schema_version": "web-excel-artifacts/v1",
+  "protected_paths": [
+    "Candidates/",
+    "Active/"
+  ],
+  "artifacts": [
+    {
+      "id": "harness-control-plane",
+      "kind": "tracked",
+      "canonical_path": "harness/manifest.v1.json",
+      "producer": "Harness infrastructure workflow",
+      "validator": "harness-completeness",
+      "naming": "Stable versioned JSON under harness/",
+      "tracking_policy": "Tracked; update atomically with connected indexes, registries, tests, hooks, workflows, and reports.",
+      "proof_ceiling": "Repository integration and static contract proof."
+    },
+    {
+      "id": "operator-harness-state",
+      "kind": "tracked",
+      "canonical_path": "harness/reports/CURRENT_STATE.md",
+      "producer": "Harness infrastructure workflow",
+      "validator": "harness-completeness",
+      "naming": "Stable uppercase operator report name.",
+      "tracking_policy": "Tracked human-readable state; do not hard-code transient CI or PR claims as permanent truth.",
+      "proof_ceiling": "Human-readable repository state, not runtime acceptance."
+    },
+    {
+      "id": "prompt-kit-website",
+      "kind": "tracked",
+      "canonical_path": "web/prompt-kit/index.html",
+      "producer": "python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html",
+      "validator": "prompt-kit-parity",
+      "naming": "Stable checked-in canonical site path.",
+      "tracking_policy": "Tracked deterministic output; edit canonical sources and rebuild. Delivery surfaces may expose this same canonical release without creating a second editable Prompt Kit.",
+      "delivery_surfaces": [
+        "https://endeavoreverlasting.github.io/web-excel-repair-triage/afk-agent-flow/",
+        "https://endeavoreverlasting.github.io/web-excel-repair-triage/",
+        "Open-Latest-PromptKit.cmd",
+        "PROMPT_KIT_ACCESS.md",
+        "OPEN_PROMPT_KIT_ON_PHONE.md"
+      ],
+      "proof_ceiling": "Exact generated parity and registered delivery routing, not browser installation, mobile, clipboard, local-storage, network, or device acceptance."
+    },
+    {
+      "id": "harness-completeness-report",
+      "kind": "runtime",
+      "canonical_path": "Outputs/harness-completeness-report.json",
+      "producer": "python scripts/validate_harness.py --report Outputs/harness-completeness-report.json",
+      "validator": "harness-completeness",
+      "naming": "Stable family name; CI may store the same file as a run artifact.",
+      "tracking_policy": "Gitignored runtime evidence or CI artifact.",
+      "proof_ceiling": "Executed static harness checks on one checkout and commit."
+    },
+    {
+      "id": "prompt-kit-interaction-audit-report",
+      "kind": "runtime",
+      "canonical_path": "Outputs/prompt-kit-interaction-audit.json",
+      "producer": "python scripts/validate_prompt_kit_interactions.py --output Outputs/prompt-kit-interaction-audit.json --summary",
+      "validator": "prompt-kit-interaction-audit",
+      "naming": "Stable result schema and family name.",
+      "tracking_policy": "Gitignored runtime evidence or CI artifact.",
+      "proof_ceiling": "Static interaction-contract audit; strict static markers still do not prove browser behavior."
+    },
+    {
+      "id": "prompt-language-audit-report",
+      "kind": "runtime",
+      "canonical_path": "Outputs/prompt-language-audit.json",
+      "producer": "python scripts/evaluate_prompt_language.py --output Outputs/prompt-language-audit.json --summary",
+      "validator": "prompt-language-audit",
+      "naming": "Stable result schema and family name.",
+      "tracking_policy": "Gitignored runtime evidence or CI artifact.",
+      "proof_ceiling": "Exhaustive canonical/effective prompt-language proof, not provider obedience."
+    },
+    {
+      "id": "workbook-engine-output",
+      "kind": "runtime",
+      "canonical_path": "Outputs/",
+      "producer": "Focused triage module, launcher, or workflow",
+      "validator": "Focused engine tests plus artifact-hygiene",
+      "naming": "Focused contract; otherwise artifact family plus run ID or timestamp.",
+      "tracking_policy": "Gitignored unless explicitly sanitized and approved as a fixture.",
+      "proof_ceiling": "Depends on executed engine and runtime gates; Excel for Web acceptance remains separate."
+    },
+    {
+      "id": "prompt-kit-browser-proof-cleanup-report",
+      "kind": "runtime",
+      "canonical_path": "Outputs/prompt-kit-browser-proof-cleanup-report.json",
+      "producer": "scripts/Clear-PromptKitBrowserProofScratch.ps1",
+      "validator": "prompt-kit-browser-proof-cleanup-completeness",
+      "naming": "Stable latest receipt; previous receipt is preserved under Outputs/backups/prompt-kit-browser-proof-cleanup/ with UTC timestamp.",
+      "tracking_policy": "Gitignored operator evidence; never commit scratch directories or cleanup receipts.",
+      "proof_ceiling": "Filesystem classification and cleanup receipt only; no browser-profile/localStorage/Favorites proof."
+    },
+    {
+      "id": "app-harness-validation-report",
+      "kind": "runtime",
+      "canonical_path": "Outputs/app-harness-validation.json",
+      "producer": "python scripts/validate_app_harness.py --output Outputs/app-harness-validation.json",
+      "validator": "app-harness-validation",
+      "naming": "Stable exact-head synthetic harness receipt; CI artifact name includes the observed head SHA.",
+      "tracking_policy": "Gitignored runtime evidence or CI artifact; never treat it as live/runtime proof.",
+      "schema": "app-harness-validation/v2",
+      "proof_ceiling": "Offline/synthetic repository harness proof only; no live runtime, browser, launcher, network, target, save/account, provider-runtime, deployment, or production proof."
+    },
+    {
+      "id": "operant-external-resource-index",
+      "kind": "tracked",
+      "canonical_path": "web/prompt-kit/resources.v1.json",
+      "producer": "python scripts/sync_operant_external_resources.py",
+      "validator": "operant-external-resource-audit",
+      "naming": "Stable metadata-only sidecar next to the generated Prompt Kit website.",
+      "tracking_policy": "Tracked deterministic projection of approved public donors pinned to exact commits; donor bodies are not copied.",
+      "proof_ceiling": "Donor inventory metadata, pinning, and projection proof; no donor content quality or browser-network proof."
+    },
+    {
+      "id": "operant-external-resource-gap-ledger",
+      "kind": "tracked",
+      "canonical_path": "registry/resources/operant-external-resource-gaps.v1.json",
+      "producer": "python scripts/sync_operant_external_resources.py",
+      "validator": "operant-external-resource-audit",
+      "naming": "Stable deterministic donor-to-Operant coverage ledger.",
+      "tracking_policy": "Tracked maintenance input. REVIEW_ADD_PROMPT routes to P79; it is not prompt publication authority.",
+      "proof_ceiling": "Deterministic lexical coverage classification and maintenance routing only; strategic prompt quality remains separate."
+    },
+    {
+      "id": "prompt-runtime-compliance-evidence",
+      "kind": "runtime",
+      "canonical_path": "Outputs/repository-ai-evals/runtime-compliance/",
+      "producer": "python harness/evals/runtime-compliance/scripts/pilot.py --summary",
+      "validator": "prompt-runtime-compliance-receipt-audit",
+      "naming": "Stable pilot-plan.json and pilot-receipt.json plus runs/<run-id>/{scenario,run,receipt,validation}.json.",
+      "tracking_policy": "Gitignored runtime evidence or CI artifact; observed external-agent receipts remain sanitized and proof-scoped rather than tracked as canonical source truth.",
+      "proof_ceiling": "Repository contract, fixture, runner, linkage, and deterministic receipt-validation proof unless an exact external-agent run is independently observed.",
+      "primary_artifact": "Outputs/repository-ai-evals/runtime-compliance/pilot-receipt.json",
+      "schema": "prompt-runtime-compliance-pilot-receipt/v1",
+      "schema_owner": "harness/evals/runtime-compliance/scripts/pilot.py"
+    }
+  ]
+}

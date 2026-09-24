@@ -1,0 +1,18 @@
+{
+  "schema_version": "prompt-improvement-candidate/v1",
+  "candidate_id": "IC-parallel-dispatch-modality-weakened",
+  "failure_identity": "parallel_dispatch.modality_weakened",
+  "evidence_refs": [
+    "receipt-example-1",
+    "receipt-example-2",
+    "finding-parallel-dispatch-modality"
+  ],
+  "affected_authority": "language-engine",
+  "proposed_change": {
+    "rule": "MUST obligations may not compile through permissive modal verbs"
+  },
+  "required_regressions": [
+    "TC06-parallelism-modality"
+  ],
+  "promotion_authority": "reviewed_pr_only"
+}

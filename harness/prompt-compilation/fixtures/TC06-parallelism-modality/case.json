@@ -1,0 +1,21 @@
+{
+  "case_id": "TC06-parallelism-modality",
+  "schema_version": "prompt-compilation-fixture/v1",
+  "description": "MUST parallel dispatch under exhaustive mode with parallel_width>=2 and capacity>=2 must compile to imperative semantics and reject weakening language.",
+  "expect": {
+    "activated_obligations": ["parallel_dispatch"],
+    "must_reject_weakening": true,
+    "required_phrases": [
+      "MUST dispatch independent lanes in parallel",
+      "typed failure disposition AUTONOMY_GAP",
+      "observed_parallel_dispatch_receipt"
+    ],
+    "forbidden_phrases": [
+      "consider parallel",
+      "where useful",
+      "if appropriate",
+      "could dispatch",
+      "may parallelize"
+    ]
+  }
+}

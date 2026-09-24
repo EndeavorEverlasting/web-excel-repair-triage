@@ -1,0 +1,61 @@
+name: Governance contract
+
+on:
+  pull_request:
+    paths:
+      - AGENTS.md
+      - harness/CONTEXT.md
+      - harness/specs/**
+      - harness/contracts/context-architecture.v1.json
+      - harness/contracts/agent-execution-tiering.v1.json
+      - harness/contracts/agent-capability-evidence.v1.json
+      - scripts/validate_context_architecture.py
+      - tests/test_context_architecture.py
+      - tests/test_governance_contract.py
+      - tests/test_agent_execution_tiering.py
+      - tests/test_agent_capability_evidence.py
+      - .github/workflows/governance-contract.yml
+  push:
+    branches: [main]
+    paths:
+      - AGENTS.md
+      - harness/CONTEXT.md
+      - harness/specs/**
+      - harness/contracts/context-architecture.v1.json
+      - harness/contracts/agent-execution-tiering.v1.json
+      - harness/contracts/agent-capability-evidence.v1.json
+      - scripts/validate_context_architecture.py
+      - tests/test_context_architecture.py
+      - tests/test_governance_contract.py
+      - tests/test_agent_execution_tiering.py
+      - tests/test_agent_capability_evidence.py
+      - .github/workflows/governance-contract.yml
+
+permissions:
+  contents: read
+
+jobs:
+  governance-contract:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Compile governance and context validators
+        run: |
+          python -m py_compile \
+            scripts/validate_context_architecture.py \
+            tests/test_context_architecture.py \
+            tests/test_governance_contract.py \
+            tests/test_agent_execution_tiering.py \
+            tests/test_agent_capability_evidence.py
+      - name: Enforce progressive-disclosure governance
+        run: |
+          python scripts/validate_context_architecture.py --summary
+          python -m unittest tests.test_context_architecture tests.test_governance_contract tests.test_agent_execution_tiering tests.test_agent_capability_evidence -v
+      - name: Check patch hygiene
+        run: git diff --check origin/main...HEAD

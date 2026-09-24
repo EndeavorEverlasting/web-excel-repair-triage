@@ -1,0 +1,922 @@
+#!/usr/bin/env python3
+"""Build the Prompt Kit website from canonical registries and shared policies."""
+from __future__ import annotations
+
+import argparse
+import json
+import sys
+import webbrowser
+from pathlib import Path
+from typing import Any
+
+REPO_ROOT = Path(__file__).resolve().parents[1]
+if str(REPO_ROOT) not in sys.path:
+    sys.path.insert(0, str(REPO_ROOT))
+
+import build_prompt_kit  # noqa: E402
+from scripts import prompt_classification  # noqa: E402
+from scripts import prompt_registry_product_boundaries  # noqa: E402
+
+PRODUCT_BOUNDARIES = prompt_registry_product_boundaries.load_contract()
+BASE_REGISTRY = prompt_registry_product_boundaries.base_registry(PRODUCT_BOUNDARIES)
+EXTENSION_REGISTRIES = prompt_registry_product_boundaries.legacy_extension_registries(
+    PRODUCT_BOUNDARIES
+)
+CONTENT_REGISTRIES = prompt_registry_product_boundaries.content_registries(
+    PRODUCT_BOUNDARIES
+)
+PROMPT_OVERRIDES = REPO_ROOT / "registry" / "prompts" / "prompt-overrides.v1.json"
+DISPLAY_ORDER_POLICY = (
+    REPO_ROOT / "registry" / "prompts" / "prompt-display-order.v1.json"
+)
+GUIDED_RECOMMENDATIONS = REPO_ROOT / "docs" / "prompt-kit-guided-recommendations.js"
+PROMPT_JOURNEY_RUNTIME = REPO_ROOT / "docs" / "prompt-kit-journey.js"
+STORAGE_LIFECYCLE_RUNTIME = REPO_ROOT / "docs" / "prompt-kit-storage-lifecycle.js"
+COMPUTE_MODE_RUNTIME = REPO_ROOT / "docs" / "prompt-kit-compute-mode.js"
+PROFILE_RUNTIME = REPO_ROOT / "docs" / "prompt-kit-profiles.js"
+POLISH_RUNTIME = REPO_ROOT / "docs" / "prompt-kit-polish.js"
+CORRESPONDENCE_RUNTIME = REPO_ROOT / "docs" / "prompt-kit-correspondence.js"
+MANAGEMENT_RUNTIME = REPO_ROOT / "docs" / "prompt-kit-management.js"
+SPEC_ARCHITECTURE_RUNTIME = REPO_ROOT / "docs" / "prompt-kit-spec-architecture.js"
+FEEDBACK_PRODUCTION_RUNTIME = REPO_ROOT / "docs" / "prompt-kit-feedback-production.js"
+ONTOLOGY_RUNTIME = REPO_ROOT / "docs" / "prompt-kit-ontology.js"
+EXTERNAL_RESOURCES_RUNTIME = REPO_ROOT / "docs" / "prompt-kit-external-resources.js"
+PROMPT_SEMANTICS_ROOT = REPO_ROOT / "harness" / "prompt-compilation" / "semantics"
+PROMPT_BUILD_CONTEXT = (
+    REPO_ROOT / "harness" / "prompt-compilation" / "build-context" / "default.v1.json"
+)
+CAPABILITIES_REGISTRY = REPO_ROOT / "harness" / "capabilities.v1.json"
+ONTOLOGY_EVIDENCE_CONTRACT = (
+    REPO_ROOT / "harness" / "contracts" / "prompt-kit-ontology-evidence.v1.json"
+)
+SKILLS_ROOT = REPO_ROOT / ".ai" / "skills"
+ACTIONABILITY_POLICY = (
+    REPO_ROOT / "registry" / "prompts" / "actionable-next-step-policy.v1.json"
+)
+REFERENCE = REPO_ROOT / "docs" / "reference.json"
+DEFAULT_OUTPUT = REPO_ROOT / "web" / "prompt-kit" / "index.html"
+PROTECTED_OUTPUT_ROOTS = (
+    REPO_ROOT / "Candidates",
+    REPO_ROOT / "Active",
+)
+REQUIRED_PROMPT_FIELDS = {
+    "id",
+    "seq",
+    "name",
+    "type",
+    "class",
+    "sprintRole",
+    "progress",
+    "useWhen",
+    "inspectFirst",
+    "expectedOutput",
+    "nextStep",
+    "proofGate",
+    "color",
+    "copySheet",
+    "category",
+    "copyContent",
+    "keywords",
+}
+REQUIRED_ACTIONABILITY_POLICY_FIELDS = {
+    "schema_version",
+    "policy_id",
+    "marker",
+    "integration_marker",
+    "freshness_marker",
+    "closeout_marker",
+    "disposition_marker",
+    "disposition_precedence",
+    "disposition_tail_marker",
+    "disposition_tail_guard",
+    "integration_target",
+    "applies_to",
+    "next_step_suffix",
+    "allowed_none_value",
+    "green_merge_conditions",
+    "merge_exceptions",
+    "existing_work_reuse",
+    "forbidden_solo_actions",
+    "copy_content_appendix",
+    "boundary_sprint_policy_id",
+    "boundary_sprint_marker",
+    "boundary_sprint_suffix",
+}
+REQUIRED_DISPLAY_ORDER_FIELDS = {
+    "schema_version",
+    "policy_id",
+    "promoted_prompt_ids",
+    "fallback",
+    "rationale",
+}
+
+
+def _load_json(path: Path) -> Any:
+    try:
+        return json.loads(path.read_text(encoding="utf-8"))
+    except FileNotFoundError as exc:
+        raise SystemExit(f"Required registry file is missing: {path}") from exc
+    except json.JSONDecodeError as exc:
+        raise SystemExit(f"Invalid JSON in {path}: {exc}") from exc
+
+
+def validate_output_path(output: Path) -> Path:
+    """Return a resolved output path or reject read-only operator input roots."""
+    resolved = output.expanduser().resolve()
+    for protected_root in PROTECTED_OUTPUT_ROOTS:
+        try:
+            resolved.relative_to(protected_root.resolve())
+        except ValueError:
+            continue
+        raise ValueError(
+            "Output path is inside a protected operator input directory: "
+            f"{protected_root}"
+        )
+    return resolved
+
+
+def load_actionability_policy() -> dict[str, Any]:
+    """Load and fail closed on the shared next-command and next-step policy."""
+    payload = _load_json(ACTIONABILITY_POLICY)
+    if not isinstance(payload, dict):
+        raise SystemExit(
+            f"Actionability policy must be a JSON object: {ACTIONABILITY_POLICY}"
+        )
+    if payload.get("schema_version") != "prompt-next-action-policy/v1":
+        raise SystemExit(
+            f"Unsupported actionability policy schema in {ACTIONABILITY_POLICY}"
+        )
+
+    missing = sorted(REQUIRED_ACTIONABILITY_POLICY_FIELDS - set(payload))
+    if missing:
+        raise SystemExit(f"Actionability policy is missing fields: {missing}")
+
+    for field in (
+        "policy_id",
+        "marker",
+        "integration_marker",
+        "freshness_marker",
+        "closeout_marker",
+        "disposition_marker",
+        "disposition_tail_marker",
+        "disposition_tail_guard",
+        "integration_target",
+        "applies_to",
+        "next_step_suffix",
+        "allowed_none_value",
+        "copy_content_appendix",
+        "boundary_sprint_policy_id",
+        "boundary_sprint_marker",
+        "boundary_sprint_suffix",
+    ):
+        value = payload.get(field)
+        if not isinstance(value, str) or not value.strip():
+            raise SystemExit(f"Actionability policy field must be non-empty: {field}")
+
+    forbidden = payload.get("forbidden_solo_actions")
+    if not isinstance(forbidden, list) or not forbidden:
+        raise SystemExit("Actionability policy must define forbidden_solo_actions")
+    if any(not isinstance(item, str) or not item.strip() for item in forbidden):
+        raise SystemExit("Every forbidden solo action must be a non-empty string")
+
+    for field in ("green_merge_conditions", "merge_exceptions"):
+        values = payload.get(field)
+        if not isinstance(values, list) or not values:
+            raise SystemExit(
+                f"Actionability policy field must define a non-empty list: {field}"
+            )
+        if any(not isinstance(item, str) or not item.strip() for item in values):
+            raise SystemExit(
+                f"Every actionability policy entry must be a non-empty string: {field}"
+            )
+        if len(values) != len(set(values)):
+            raise SystemExit(
+                f"Actionability policy list must not contain duplicates: {field}"
+            )
+
+    reuse = payload.get("existing_work_reuse")
+    if not isinstance(reuse, dict):
+        raise SystemExit("Actionability policy must define existing_work_reuse")
+    for field in ("rule", "preservation_rule", "disposition_evidence"):
+        value = reuse.get(field)
+        if not isinstance(value, str) or not value.strip():
+            raise SystemExit(
+                f"Actionability existing-work field must be non-empty: {field}"
+            )
+    allowed = reuse.get("new_pr_allowed_when")
+    if not isinstance(allowed, list) or not allowed:
+        raise SystemExit(
+            "Actionability existing-work policy must define new_pr_allowed_when"
+        )
+    if any(not isinstance(item, str) or not item.strip() for item in allowed):
+        raise SystemExit(
+            "Every new-PR allowance must be a non-empty string"
+        )
+    marker = str(payload["marker"])
+    appendix = str(payload["copy_content_appendix"])
+    if marker not in appendix:
+        raise SystemExit("Actionability appendix must include its declared marker")
+    integration_marker = str(payload["integration_marker"])
+    if integration_marker not in appendix:
+        raise SystemExit("Actionability appendix must include its integration marker")
+    freshness_marker = str(payload["freshness_marker"])
+    if freshness_marker not in appendix:
+        raise SystemExit("Actionability appendix must include its freshness marker")
+    closeout_marker = str(payload["closeout_marker"])
+    if closeout_marker not in appendix:
+        raise SystemExit("Actionability appendix must include its operational closeout marker")
+
+    disposition_marker = str(payload["disposition_marker"]).strip()
+    if disposition_marker not in appendix:
+        raise SystemExit("Actionability appendix must include its disposition precedence marker")
+    if "Respect explicit mode/disposition authority" not in str(payload["next_step_suffix"]):
+        raise SystemExit("Actionability next-step suffix must include disposition precedence")
+    disposition = payload.get("disposition_precedence")
+    if not isinstance(disposition, dict):
+        raise SystemExit("Actionability policy must define disposition_precedence")
+    for field in ("rule", "p02_rule", "closeout_rule"):
+        value = disposition.get(field)
+        if not isinstance(value, str) or not value.strip():
+            raise SystemExit(f"Actionability disposition field must be non-empty: {field}")
+
+    tail_marker = str(payload["disposition_tail_marker"]).strip()
+    tail_guard = str(payload["disposition_tail_guard"]).strip()
+    if tail_marker not in tail_guard:
+        raise SystemExit("Disposition tail guard must include its declared marker")
+    for phrase in (
+        "FINAL AUTHORIZATION",
+        "conditional on that authorization boundary",
+        "A non-execution disposition MUST NOT start a new implementation",
+        "For P02, resolve AUTO before executing",
+    ):
+        if phrase not in tail_guard:
+            raise SystemExit(f"Disposition tail guard is missing required semantic: {phrase}")
+
+    boundary_marker = str(payload["boundary_sprint_marker"]).strip()
+    boundary_suffix = str(payload["boundary_sprint_suffix"]).strip()
+    if boundary_marker not in boundary_suffix:
+        raise SystemExit("Boundary continuation suffix must include its declared marker")
+    boundary_lower = boundary_suffix.lower()
+    for phrase in (
+        "sprint eligibility",
+        "first safe progress-bearing action",
+        "what boundary am i treating as terminal?",
+    ):
+        if phrase not in boundary_lower:
+            raise SystemExit(
+                f"Boundary continuation suffix is missing required semantic: {phrase}"
+            )
+    return payload
+
+
+def load_display_order_policy() -> dict[str, Any]:
+    """Load recommendation discovery metadata without changing stable identity."""
+    payload = _load_json(DISPLAY_ORDER_POLICY)
+    if not isinstance(payload, dict):
+        raise SystemExit(
+            f"Display order policy must be a JSON object: {DISPLAY_ORDER_POLICY}"
+        )
+    if payload.get("schema_version") != "prompt-display-order/v1":
+        raise SystemExit(
+            f"Unsupported display order schema in {DISPLAY_ORDER_POLICY}"
+        )
+    missing = sorted(REQUIRED_DISPLAY_ORDER_FIELDS - set(payload))
+    if missing:
+        raise SystemExit(f"Display order policy is missing fields: {missing}")
+    promoted = payload.get("promoted_prompt_ids")
+    if not isinstance(promoted, list) or not promoted:
+        raise SystemExit("Display order policy must define promoted_prompt_ids")
+    if any(not isinstance(item, str) or not item.strip() for item in promoted):
+        raise SystemExit("Every promoted prompt id must be a non-empty string")
+    normalized = [item.strip().upper() for item in promoted]
+    if len(normalized) != len(set(normalized)):
+        raise SystemExit("Display order policy contains duplicate prompt ids")
+    if payload.get("fallback") != "sequence_ascending":
+        raise SystemExit("Display order fallback must be sequence_ascending")
+    payload = dict(payload)
+    payload["promoted_prompt_ids"] = normalized
+    return payload
+
+
+def apply_prompt_overrides(prompts: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    """Replace legacy prompt records through one explicit versioned override registry."""
+    payload = _load_json(PROMPT_OVERRIDES)
+    if not isinstance(payload, dict):
+        raise SystemExit(f"Prompt override registry must be an object: {PROMPT_OVERRIDES}")
+    if payload.get("schema_version") != "prompt-registry-overrides/v1":
+        raise SystemExit(f"Unsupported prompt override schema in {PROMPT_OVERRIDES}")
+    overrides = payload.get("overrides")
+    if not isinstance(overrides, list):
+        raise SystemExit("Prompt override registry must define an overrides array")
+
+    positions: dict[str, int] = {}
+    for index, prompt in enumerate(prompts):
+        prompt_id = str(prompt.get("id", "")).upper()
+        if not prompt_id:
+            raise SystemExit(f"Prompt record {index} has no id before overrides")
+        if prompt_id in positions:
+            raise SystemExit(f"Duplicate prompt id before overrides: {prompt_id}")
+        positions[prompt_id] = index
+
+    seen: set[str] = set()
+    result = [dict(prompt) for prompt in prompts]
+    for index, override in enumerate(overrides):
+        if not isinstance(override, dict):
+            raise SystemExit(f"Prompt override {index} is not an object")
+        missing = sorted(REQUIRED_PROMPT_FIELDS - set(override))
+        if missing:
+            raise SystemExit(
+                f"Prompt override {override.get('id', index)} is missing fields: {missing}"
+            )
+        override_id = str(override["id"])
+        prompt_id = override_id.upper()
+        if prompt_id in seen:
+            raise SystemExit(f"Duplicate prompt override id: {prompt_id}")
+        seen.add(prompt_id)
+        if prompt_id not in positions:
+            raise SystemExit(f"Prompt override references unknown prompt id: {prompt_id}")
+        current = result[positions[prompt_id]]
+        canonical_id = str(current.get("id", ""))
+        if override_id != canonical_id:
+            raise SystemExit(
+                "Prompt override id must exactly match canonical identity: "
+                f"{override_id} != {canonical_id}"
+            )
+        if str(override["seq"]) != str(current.get("seq")):
+            raise SystemExit(
+                f"Prompt override may not change stable sequence: {prompt_id} "
+                f"{current.get('seq')} -> {override['seq']}"
+            )
+        result[positions[prompt_id]] = dict(override)
+    return result
+
+
+def _policy_section_start(text: str, marker: str) -> int:
+    """Return a real section start for marker, avoiding incidental inline mentions."""
+    if text == marker or text.startswith(f"{marker}\n"):
+        return 0
+    needle = f"\n\n{marker}"
+    start = text.rfind(needle)
+    if start < 0:
+        return -1
+    section_start = start + 2
+    marker_end = section_start + len(marker)
+    if marker_end == len(text) or text[marker_end] == "\n":
+        return section_start
+    return -1
+
+
+def apply_actionability_policy(
+    prompt: dict[str, Any], policy: dict[str, Any]
+) -> dict[str, Any]:
+    """Return one operational prompt strengthened by the shared actionability contract."""
+    prompt_id = str(prompt.get("id", "unknown"))
+    next_step = str(prompt.get("nextStep", "")).strip()
+    if not next_step:
+        raise SystemExit(f"Prompt {prompt_id} has an empty nextStep")
+
+    copy_content = str(prompt.get("copyContent", "")).rstrip()
+    if not copy_content:
+        raise SystemExit(f"Prompt {prompt_id} has empty copyContent")
+
+    strengthened = dict(prompt)
+    suffix = str(policy["next_step_suffix"]).strip()
+    if suffix not in next_step:
+        strengthened["nextStep"] = f"{next_step} {suffix}"
+
+    marker = str(policy["marker"])
+    appendix = str(policy["copy_content_appendix"]).strip()
+    integration_marker = str(policy.get("integration_marker", "")).strip()
+    has_current_integration = not integration_marker or integration_marker in copy_content
+    freshness_marker = str(policy.get("freshness_marker", "")).strip()
+    has_current_freshness = not freshness_marker or freshness_marker in copy_content
+    closeout_marker = str(policy.get("closeout_marker", "")).strip()
+    has_current_closeout = not closeout_marker or closeout_marker in copy_content
+    disposition_marker = str(policy.get("disposition_marker", "")).strip()
+    has_current_disposition = not disposition_marker or disposition_marker in copy_content
+    if marker not in copy_content:
+        strengthened["copyContent"] = f"{copy_content}\n\n{appendix}"
+    elif (
+        not has_current_integration
+        or not has_current_freshness
+        or not has_current_closeout
+        or not has_current_disposition
+    ):
+        legacy_start = _policy_section_start(copy_content, marker)
+        if legacy_start < 0:
+            raise SystemExit(
+                f"Prompt {prompt_id} contains the actionability marker outside a section boundary"
+            )
+        base_content = copy_content[:legacy_start].rstrip()
+        strengthened["copyContent"] = (
+            f"{base_content}\n\n{appendix}" if base_content else appendix
+        )
+    strengthened["actionabilityPolicy"] = str(policy["policy_id"])
+    return strengthened
+
+
+def apply_boundary_sprint_policy(
+    prompt: dict[str, Any], policy: dict[str, Any]
+) -> dict[str, Any]:
+    """Attach the universal boundary-continuation contract without importing repo-only policy."""
+    prompt_id = str(prompt.get("id", "unknown"))
+    copy_content = str(prompt.get("copyContent", "")).rstrip()
+    if not copy_content:
+        raise SystemExit(f"Prompt {prompt_id} has empty copyContent")
+
+    strengthened = dict(prompt)
+    semantic_marker = "BOUNDARY-TO-SPRINT CONTINUATION"
+    if semantic_marker not in copy_content:
+        strengthened["copyContent"] = (
+            f"{copy_content}\n\n{str(policy['boundary_sprint_suffix']).strip()}"
+        )
+    strengthened["boundaryContinuationPolicy"] = str(
+        policy["boundary_sprint_policy_id"]
+    )
+    return strengthened
+
+
+def apply_disposition_tail_guard(
+    prompt: dict[str, Any], policy: dict[str, Any]
+) -> dict[str, Any]:
+    """Make explicit mode/disposition authority the terminal composed instruction."""
+    prompt_id = str(prompt.get("id", "unknown"))
+    copy_content = str(prompt.get("copyContent", "")).rstrip()
+    if not copy_content:
+        raise SystemExit(f"Prompt {prompt_id} has empty copyContent")
+
+    marker = str(policy["disposition_tail_marker"]).strip()
+    guard = str(policy["disposition_tail_guard"]).strip()
+    existing_start = _policy_section_start(copy_content, marker)
+    if existing_start >= 0:
+        copy_content = copy_content[:existing_start].rstrip()
+
+    strengthened = dict(prompt)
+    strengthened["copyContent"] = (
+        f"{copy_content}\n\n{guard}" if copy_content else guard
+    )
+    strengthened["dispositionAuthorizationPolicy"] = str(policy["policy_id"])
+    return strengthened
+
+
+def apply_display_order(
+    prompts: list[dict[str, Any]], policy: dict[str, Any]
+) -> list[dict[str, Any]]:
+    """Annotate recommendation discovery rank while preserving library chronology."""
+    by_id = {str(prompt["id"]).upper(): prompt for prompt in prompts}
+    promoted_ids = list(policy["promoted_prompt_ids"])
+    missing = [prompt_id for prompt_id in promoted_ids if prompt_id not in by_id]
+    if missing:
+        raise SystemExit(f"Display order references unknown prompt ids: {missing}")
+
+    promoted_rank = {prompt_id: index + 1 for index, prompt_id in enumerate(promoted_ids)}
+    fallback_offset = len(promoted_ids) + 1000
+    annotated: list[dict[str, Any]] = []
+    for prompt in prompts:
+        prompt_id = str(prompt["id"]).upper()
+        ranked = dict(prompt)
+        if prompt_id in promoted_rank:
+            ranked["discoveryRank"] = promoted_rank[prompt_id]
+            ranked["discoveryGroup"] = "promoted"
+        else:
+            ranked["discoveryRank"] = fallback_offset + int(str(prompt["seq"]))
+            ranked["discoveryGroup"] = "sequence"
+        ranked["displayOrderPolicy"] = str(policy["policy_id"])
+        annotated.append(ranked)
+    return annotated
+
+
+def _validate_unique_prompt_identity(prompts: list[dict[str, Any]], label: str) -> None:
+    seen_ids: set[str] = set()
+    seen_sequences: set[str] = set()
+    for index, prompt in enumerate(prompts):
+        if not isinstance(prompt, dict):
+            raise SystemExit(f"{label} prompt record {index} is not an object")
+        missing = sorted(REQUIRED_PROMPT_FIELDS - set(prompt))
+        if missing:
+            raise SystemExit(
+                f"{label} prompt {prompt.get('id', index)} is missing fields: {missing}"
+            )
+        prompt_id = str(prompt["id"])
+        sequence = str(prompt["seq"])
+        if prompt_id in seen_ids:
+            raise SystemExit(f"Duplicate {label} prompt id: {prompt_id}")
+        if sequence in seen_sequences:
+            raise SystemExit(f"Duplicate {label} prompt sequence: {sequence}")
+        seen_ids.add(prompt_id)
+        seen_sequences.add(sequence)
+
+
+def load_prompt_registry() -> list[dict[str, Any]]:
+    """Load the canonical operational registry and apply its shared policies."""
+    base = _load_json(BASE_REGISTRY)
+    if not isinstance(base, list):
+        raise SystemExit(f"Base prompt registry must be a JSON array: {BASE_REGISTRY}")
+
+    prompts: list[dict[str, Any]] = list(base)
+    for path in EXTENSION_REGISTRIES:
+        payload = _load_json(path)
+        if payload.get("schema_version") != "prompt-registry-extension/v1":
+            raise SystemExit(f"Unsupported registry extension schema in {path}")
+        extension_prompts = payload.get("prompts")
+        if not isinstance(extension_prompts, list):
+            raise SystemExit(f"Registry extension prompts must be an array: {path}")
+        prompts.extend(extension_prompts)
+
+    prompts = apply_prompt_overrides(prompts)
+    _validate_unique_prompt_identity(prompts, "operational")
+    prompt_classification.validate_prompt_classification(prompts, "operational")
+    actionability_policy = load_actionability_policy()
+    strengthened_prompts = [
+        apply_actionability_policy(prompt, actionability_policy) for prompt in prompts
+    ]
+    strengthened_prompts = [
+        apply_boundary_sprint_policy(prompt, actionability_policy)
+        for prompt in strengthened_prompts
+    ]
+    strengthened_prompts = [
+        apply_disposition_tail_guard(prompt, actionability_policy)
+        for prompt in strengthened_prompts
+    ]
+    annotated_prompts = apply_display_order(
+        strengthened_prompts, load_display_order_policy()
+    )
+    return sorted(
+        annotated_prompts,
+        key=lambda prompt: (int(str(prompt["seq"])), str(prompt["id"])),
+    )
+
+
+def load_content_prompt_registry() -> list[dict[str, Any]]:
+    """Load content-only website prompts without injecting repo-execution policy text."""
+    prompts: list[dict[str, Any]] = []
+    for path in CONTENT_REGISTRIES:
+        payload = _load_json(path)
+        if not isinstance(payload, dict):
+            raise SystemExit(f"Content registry must be a JSON object: {path}")
+        if payload.get("schema_version") != "prompt-registry-extension/v1":
+            raise SystemExit(f"Unsupported content registry schema in {path}")
+        content_prompts = payload.get("prompts")
+        if not isinstance(content_prompts, list):
+            raise SystemExit(f"Content registry prompts must be an array: {path}")
+        prompts.extend(content_prompts)
+
+    _validate_unique_prompt_identity(prompts, "content")
+    prompt_classification.validate_prompt_classification(prompts, "content")
+    actionability_policy = load_actionability_policy()
+    prepared: list[dict[str, Any]] = []
+    for prompt in prompts:
+        prompt_id = str(prompt["id"])
+        if str(prompt.get("profile", "")).strip().lower() != "correspondence":
+            raise SystemExit(
+                f"Content prompt {prompt_id} must declare profile=correspondence"
+            )
+        if not str(prompt.get("nextStep", "")).strip():
+            raise SystemExit(f"Content prompt {prompt_id} has an empty nextStep")
+        if not str(prompt.get("copyContent", "")).strip():
+            raise SystemExit(f"Content prompt {prompt_id} has empty copyContent")
+        item = dict(prompt)
+        item["actionabilityPolicy"] = "not-applicable:content-only"
+        item = apply_boundary_sprint_policy(item, actionability_policy)
+        prepared.append(item)
+    return prepared
+
+
+def load_prompt_kit_registry() -> list[dict[str, Any]]:
+    """Merge governed operational prompts with content-only website prompt profiles."""
+    prompts = [dict(prompt) for prompt in load_prompt_registry()]
+    prompts.extend(load_content_prompt_registry())
+    _validate_unique_prompt_identity(prompts, "Prompt Kit")
+    prompt_classification.validate_prompt_classification(prompts, "Prompt Kit")
+    annotated_prompts = apply_display_order(prompts, load_display_order_policy())
+    annotated_prompts = attach_compiled_effective_prompts(annotated_prompts)
+    return sorted(
+        annotated_prompts,
+        key=lambda prompt: (int(str(prompt["seq"])), str(prompt["id"])),
+    )
+
+
+def attach_compiled_effective_prompts(
+    prompts: list[dict[str, Any]],
+) -> list[dict[str, Any]]:
+    """Attach Language Engine compiled prompts for semantics-backed prompt IDs."""
+    if not PROMPT_SEMANTICS_ROOT.is_dir():
+        return prompts
+    if not PROMPT_BUILD_CONTEXT.is_file():
+        raise SystemExit(f"Missing prompt compilation build context: {PROMPT_BUILD_CONTEXT}")
+
+    from scripts import prompt_context_engine as context_engine
+    from scripts import prompt_language_compiler as language_compiler
+
+    context = language_compiler.load_json(PROMPT_BUILD_CONTEXT)
+    language_compiler.validate_context(context)
+    policy = language_compiler.load_policy()
+    enriched: list[dict[str, Any]] = []
+    for prompt in prompts:
+        item = dict(prompt)
+        prompt_id = str(item.get("id") or "").strip().upper()
+        semantics_path = PROMPT_SEMANTICS_ROOT / f"{prompt_id}.json"
+        if not semantics_path.is_file():
+            enriched.append(item)
+            continue
+        semantics = language_compiler.load_json(semantics_path)
+        language_compiler.validate_semantics(semantics)
+        compiled: dict[str, str] = {}
+        for profile_name in ("exhaustive", "efficient"):
+            profile = context_engine.PROFILE_LIBRARY[profile_name]
+            result = language_compiler.render(
+                semantics,
+                profile,
+                context,
+                policy=policy,
+            )
+            compiled[profile_name] = result["effective_prompt"]
+        item["compiledEffectivePrompts"] = compiled
+        enriched.append(item)
+    return enriched
+
+
+def _read_runtime(path: Path, label: str) -> str:
+    try:
+        return path.read_text(encoding="utf-8")
+    except FileNotFoundError as exc:
+        raise SystemExit(f"{label} is missing: {path}") from exc
+
+
+def _skill_title(path: Path) -> str:
+    text = path.read_text(encoding="utf-8")
+    for line in text.splitlines():
+        stripped = line.strip()
+        if stripped.startswith("# "):
+            return stripped[2:].strip()
+    return path.parent.name
+
+
+def load_ontology_evidence() -> dict[str, Any]:
+    """Attach the settled evidence contract and append-only history ledger to the ontology model."""
+    from scripts import validate_prompt_kit_ontology_evidence as ontology_evidence
+
+    contract = _load_json(ONTOLOGY_EVIDENCE_CONTRACT)
+    if not isinstance(contract, dict):
+        raise SystemExit(f"Ontology evidence contract must be an object: {ONTOLOGY_EVIDENCE_CONTRACT}")
+    if contract.get("schema_version") != "prompt-kit-ontology-evidence/v1":
+        raise SystemExit("Unsupported ontology evidence contract schema")
+    history_path = ontology_evidence.history_ledger_path(contract)
+    history = _load_json(history_path)
+    if not isinstance(history, dict):
+        raise SystemExit(f"Ontology history ledger must be an object: {history_path}")
+    errors = ontology_evidence.validate_history_ledger(contract, history)
+    if errors:
+        raise SystemExit("Ontology history ledger is invalid: " + "; ".join(errors))
+    records = history.get("records") if isinstance(history.get("records"), list) else []
+    return {
+        "schema_version": contract.get("schema_version"),
+        "relation_chain": list(contract.get("relation_chain") or []),
+        "required_lineage_fields": list(contract.get("required_lineage_fields") or []),
+        "record_kinds": dict(contract.get("record_kinds") or {}),
+        "separation_rules": dict(contract.get("separation_rules") or {}),
+        "history": {
+            "schema_version": history.get("schema_version"),
+            "append_only": history.get("append_only") is True,
+            "records": list(records),
+            "count": len(records),
+            "proof_ceiling": str(history.get("proof_ceiling") or ""),
+        },
+        "proof_ceiling": str(contract.get("proof_ceiling") or ""),
+    }
+
+
+def build_ontology_model(prompts: list[dict[str, Any]]) -> dict[str, Any]:
+    """Build a repository-backed capability/skill/implementation lens for Prompt Kit."""
+    payload = _load_json(CAPABILITIES_REGISTRY)
+    if not isinstance(payload, dict):
+        raise SystemExit(f"Capability registry must be an object: {CAPABILITIES_REGISTRY}")
+    if payload.get("schema_version") != "web-excel-capabilities/v1":
+        raise SystemExit(f"Unsupported capability registry schema in {CAPABILITIES_REGISTRY}")
+    source_capabilities = payload.get("capabilities")
+    if not isinstance(source_capabilities, list):
+        raise SystemExit("Capability registry must define a capabilities array")
+
+    prompt_by_id = {str(prompt["id"]): prompt for prompt in prompts}
+    capability_ids: set[str] = set()
+    skill_links: dict[str, list[str]] = {}
+    capabilities: list[dict[str, Any]] = []
+    implementations: list[dict[str, Any]] = []
+
+    for index, source in enumerate(source_capabilities):
+        if not isinstance(source, dict):
+            raise SystemExit(f"Capability record {index} is not an object")
+        capability_id = str(source.get("id", "")).strip()
+        if not capability_id:
+            raise SystemExit(f"Capability record {index} has no id")
+        if capability_id in capability_ids:
+            raise SystemExit(f"Duplicate capability id: {capability_id}")
+        capability_ids.add(capability_id)
+
+        skill = str(source.get("skill", "")).strip()
+        operation = str(source.get("operation", "")).strip()
+        proof_ceiling = str(source.get("proof_ceiling", "")).strip()
+        implementation = source.get("implementation")
+        trigger_ids = source.get("trigger_ids", [])
+        inputs = source.get("inputs", [])
+        outputs = source.get("outputs", [])
+        use_cases = source.get("use_cases", [])
+        if not skill or not operation or not proof_ceiling:
+            raise SystemExit(
+                f"Capability {capability_id} must define skill, operation, and proof_ceiling"
+            )
+        if not isinstance(implementation, dict):
+            raise SystemExit(f"Capability {capability_id} implementation must be an object")
+        if not isinstance(trigger_ids, list) or not isinstance(inputs, list) or not isinstance(outputs, list):
+            raise SystemExit(
+                f"Capability {capability_id} trigger_ids, inputs, and outputs must be arrays"
+            )
+        if not isinstance(use_cases, list) or any(not isinstance(item, dict) for item in use_cases):
+            raise SystemExit(
+                f"Capability {capability_id} use_cases must be an array of objects"
+            )
+        kind = str(implementation.get("kind", "")).strip()
+        if not kind:
+            raise SystemExit(f"Capability {capability_id} implementation has no kind")
+
+        normalized = {
+            "id": capability_id,
+            "version": source.get("version"),
+            "status": source.get("status"),
+            "skill": skill,
+            "trigger_ids": list(trigger_ids),
+            "operation": operation,
+            "inputs": list(inputs),
+            "outputs": list(outputs),
+            "implementation": dict(implementation),
+            "use_cases": [dict(item) for item in use_cases],
+            "proof_ceiling": proof_ceiling,
+        }
+        capabilities.append(normalized)
+        skill_links.setdefault(skill, []).append(capability_id)
+
+        prompt_id = str(implementation.get("prompt_id", "")).strip()
+        path = str(implementation.get("path", "")).strip()
+        if prompt_id:
+            locator = prompt_id
+        elif path:
+            locator = path
+        else:
+            locator = ", ".join(
+                f"{key}: {value}"
+                for key, value in implementation.items()
+                if key != "kind"
+            ) or "registered without locator"
+        implementation_record: dict[str, Any] = {
+            "capability_id": capability_id,
+            "skill": skill,
+            "kind": kind,
+            "locator": locator,
+        }
+        if prompt_id:
+            if prompt_id not in prompt_by_id:
+                raise SystemExit(
+                    f"Capability {capability_id} references unknown prompt implementation: {prompt_id}"
+                )
+            implementation_record["prompt_id"] = prompt_id
+            implementation_record["prompt_name"] = str(prompt_by_id[prompt_id].get("name", ""))
+        if path:
+            implementation_record["path"] = path
+        implementations.append(implementation_record)
+
+    skills: list[dict[str, Any]] = []
+    for path in sorted(SKILLS_ROOT.glob("*/SKILL.md")):
+        relative = path.relative_to(REPO_ROOT).as_posix()
+        skills.append(
+            {
+                "id": path.parent.name,
+                "title": _skill_title(path),
+                "path": relative,
+                "capability_ids": list(skill_links.get(relative, [])),
+            }
+        )
+
+    registered_skill_paths = set(skill_links)
+    actual_skill_paths = {item["path"] for item in skills}
+    missing_skills = sorted(registered_skill_paths - actual_skill_paths)
+    if missing_skills:
+        raise SystemExit(
+            "Capability registry references missing skill files: " + ", ".join(missing_skills)
+        )
+
+    return {
+        "schema_version": "prompt-kit-ontology/v1",
+        "capabilities": capabilities,
+        "skills": skills,
+        "implementations": implementations,
+        "evidence": load_ontology_evidence(),
+    }
+
+
+def render() -> str:
+    """Return the exact combined Prompt Kit HTML without writing it."""
+    prompts = load_prompt_kit_registry()
+    reference = _load_json(REFERENCE)
+    ontology = build_ontology_model(prompts)
+    ontology_json = json.dumps(ontology, ensure_ascii=False, separators=(",", ":")).replace("</", r"<\/")
+    html = build_prompt_kit.build_html(prompts, reference)
+    guided_script = _read_runtime(GUIDED_RECOMMENDATIONS, "Guided recommendation behavior")
+    journey_script = _read_runtime(PROMPT_JOURNEY_RUNTIME, "Guided next-step journey behavior")
+    storage_lifecycle_script = _read_runtime(
+        STORAGE_LIFECYCLE_RUNTIME, "Prompt Kit local storage lifecycle behavior"
+    )
+    compute_mode_script = _read_runtime(
+        COMPUTE_MODE_RUNTIME, "Prompt Kit Compute Mode behavior"
+    )
+    profile_script = _read_runtime(PROFILE_RUNTIME, "Prompt Kit named profile behavior")
+    polish_script = _read_runtime(POLISH_RUNTIME, "Prompt Kit polish behavior")
+    correspondence_script = _read_runtime(
+        CORRESPONDENCE_RUNTIME, "Prompt Kit correspondence profile behavior"
+    )
+    management_script = _read_runtime(
+        MANAGEMENT_RUNTIME, "Prompt Kit management profile behavior"
+    )
+    spec_architecture_script = _read_runtime(
+        SPEC_ARCHITECTURE_RUNTIME, "Prompt Kit spec architecture profile behavior"
+    )
+    feedback_production_script = _read_runtime(
+        FEEDBACK_PRODUCTION_RUNTIME, "Prompt Kit production feedback behavior"
+    )
+    ontology_script = _read_runtime(
+        ONTOLOGY_RUNTIME, "Prompt Kit ontology lens behavior"
+    )
+    external_resources_script = _read_runtime(
+        EXTERNAL_RESOURCES_RUNTIME, "Operant external resource browsing behavior"
+    )
+    closing = "</body>"
+    if closing not in html:
+        raise SystemExit("Prompt Kit builder output is missing </body>")
+    supplemental = (
+        f"<script>\nwindow.PROMPT_KIT_ONTOLOGY = {ontology_json};\n</script>\n"
+        f"<script>\n{guided_script}\n</script>\n"
+        f"<script>\n{journey_script}\n</script>\n"
+        f"<script>\n{storage_lifecycle_script}\n</script>\n"
+        f"<script>\n{compute_mode_script}\n</script>\n"
+        f"<script>\n{profile_script}\n</script>\n"
+        f"<script>\n{polish_script}\n</script>\n"
+        f"<script>\n{correspondence_script}\n</script>\n"
+        f"<script>\n{management_script}\n</script>\n"
+        f"<script>\n{spec_architecture_script}\n</script>\n"
+        f"<script>\n{feedback_production_script}\n</script>\n"
+        f"<script>\n{ontology_script}\n</script>\n"
+        f"<script>\n{external_resources_script}\n</script>\n"
+    )
+    return html.replace(closing, supplemental + closing, 1)
+
+
+def build(output: Path) -> str:
+    output = validate_output_path(output)
+    html = render()
+    output.parent.mkdir(parents=True, exist_ok=True)
+    output.write_text(html, encoding="utf-8")
+    return html
+
+
+def main(argv: list[str] | None = None) -> int:
+    parser = argparse.ArgumentParser(
+        description="Build the Prompt Kit website with registry extensions and policies."
+    )
+    parser.add_argument("--output", type=Path, default=DEFAULT_OUTPUT)
+    parser.add_argument(
+        "--check",
+        action="store_true",
+        help="Fail when the selected output is not the exact current generated website.",
+    )
+    parser.add_argument("--open", action="store_true", dest="open_after_build")
+    args = parser.parse_args(argv)
+
+    try:
+        output = validate_output_path(args.output)
+    except ValueError as exc:
+        print(f"Prompt Kit output rejected: {exc}", file=sys.stderr)
+        return 2
+
+    prompts = load_prompt_kit_registry()
+    expected = render()
+
+    if args.check:
+        if not output.exists():
+            print(f"Prompt Kit check failed: output is missing: {output}", file=sys.stderr)
+            return 1
+        actual = output.read_text(encoding="utf-8")
+        if actual != expected:
+            print(f"Prompt Kit check failed: output is stale: {output}", file=sys.stderr)
+            return 1
+        print(f"Prompt Kit check passed: {output} ({len(prompts)} prompts)")
+        return 0
+
+    output.parent.mkdir(parents=True, exist_ok=True)
+    output.write_text(expected, encoding="utf-8")
+    print(f"Built {output} ({len(expected)} bytes, {len(prompts)} prompts)")
+    if args.open_after_build:
+        webbrowser.open(output.as_uri())
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

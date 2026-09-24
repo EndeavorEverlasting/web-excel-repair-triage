@@ -1,0 +1,70 @@
+name: Prompt Kit browser-proof scratch cleanup harness
+
+on:
+  pull_request:
+    paths:
+      - "harness/browser-proof-cleanup/**"
+      - ".ai/skills/prompt-kit-browser-proof-cleanup/**"
+      - "scripts/Clear-PromptKitBrowserProofScratch.ps1"
+      - "scripts/validate_prompt_kit_browser_proof_cleanup.py"
+      - "tests/test_prompt_kit_browser_proof_cleanup_harness.py"
+      - ".github/workflows/prompt-kit-browser-proof-cleanup.yml"
+  push:
+    branches:
+      - main
+    paths:
+      - "harness/browser-proof-cleanup/**"
+      - ".ai/skills/prompt-kit-browser-proof-cleanup/**"
+      - "scripts/Clear-PromptKitBrowserProofScratch.ps1"
+      - "scripts/validate_prompt_kit_browser_proof_cleanup.py"
+      - "tests/test_prompt_kit_browser_proof_cleanup_harness.py"
+      - ".github/workflows/prompt-kit-browser-proof-cleanup.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  browser-proof-cleanup-harness:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Compile harness validator and contract tests
+        run: python -m py_compile scripts/validate_prompt_kit_browser_proof_cleanup.py tests/test_prompt_kit_browser_proof_cleanup_harness.py
+
+      - name: Validate harness completeness
+        run: python scripts/validate_prompt_kit_browser_proof_cleanup.py --summary
+
+      - name: Run harness contract tests
+        run: python -m unittest tests.test_prompt_kit_browser_proof_cleanup_harness -v
+
+      - name: Exercise preview receipt retention and explicit apply against test-owned scratch
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $Scratch = Join-Path ([IO.Path]::GetTempPath()) ('prompt-kit-browser-proof-' + [guid]::NewGuid().ToString('N'))
+          $Marker = Join-Path $Scratch 'web/prompt-kit/index.html'
+          New-Item -ItemType Directory -Force -Path (Split-Path -Parent $Marker) | Out-Null
+          Set-Content -LiteralPath $Marker -Value '<!doctype html><title>test-owned-browser-proof</title>' -Encoding UTF8
+
+          & ./scripts/Clear-PromptKitBrowserProofScratch.ps1 -TargetPath $Scratch -MinimumAgeMinutes 0 -ReportPath ./Outputs/browser-proof-preview.json
+          if ($LASTEXITCODE) { exit $LASTEXITCODE }
+          if (-not (Test-Path -LiteralPath $Scratch)) { throw 'Preview deleted the test-owned scratch directory.' }
+
+          & ./scripts/Clear-PromptKitBrowserProofScratch.ps1 -TargetPath $Scratch -MinimumAgeMinutes 0 -ReportPath ./Outputs/browser-proof-preview.json
+          if ($LASTEXITCODE) { exit $LASTEXITCODE }
+          $Backup = @(Get-ChildItem ./Outputs/backups/prompt-kit-browser-proof-cleanup -File -Filter 'browser-proof-preview_backup_*.json' -ErrorAction Stop)
+          if ($Backup.Count -lt 1) { throw 'Repeated preview did not preserve the previous durable receipt.' }
+
+          & ./scripts/Clear-PromptKitBrowserProofScratch.ps1 -TargetPath $Scratch -MinimumAgeMinutes 0 -Apply -ReportPath ./Outputs/browser-proof-apply.json
+          if ($LASTEXITCODE) { exit $LASTEXITCODE }
+          if (Test-Path -LiteralPath $Scratch) { throw 'Apply did not delete the eligible test-owned scratch directory.' }
+          $Report = Get-Content ./Outputs/browser-proof-apply.json -Raw | ConvertFrom-Json
+          if ($Report.deleted_count -ne 1 -or $Report.failed_count -ne 0) { throw 'Cleanup receipt did not record the expected deletion.' }
+
+      - name: Patch hygiene
+        run: git diff --check

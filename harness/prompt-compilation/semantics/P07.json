@@ -1,0 +1,37 @@
+{
+  "schema_version": "prompt-semantics/v1",
+  "prompt_id": "P07",
+  "goal": "complete bounded repository work through evidence-defined fixed point",
+  "obligations": [
+    {
+      "id": "parallel_dispatch",
+      "when": "dependency_ready_width >= 2 && safe_capacity >= 2",
+      "modality": "MUST",
+      "action": "dispatch_independent_lanes",
+      "proof": "observed_parallel_dispatch_receipt",
+      "failure_state": "AUTONOMY_GAP"
+    },
+    {
+      "id": "repository_local_proof_continuity",
+      "when": "always",
+      "modality": "MUST",
+      "action": "establish_repository_local_proof_path",
+      "proof": "repository_action_receipt_or_typed_hosted_only_gate",
+      "failure_state": "LOCAL_PROOF_GAP"
+    },
+    {
+      "id": "boundary_to_sprint_continuation",
+      "when": "always",
+      "modality": "MUST",
+      "action": "convert_nonterminal_boundaries_to_sprints",
+      "proof": "boundary_transition_receipt_or_typed_terminal_gate",
+      "failure_state": "PREMATURE_TERMINATION_GAP"
+    }
+  ],
+  "invariants": [
+    "scope_preservation",
+    "evidence_honesty",
+    "mainline_convergence",
+    "nonterminal_boundary_liveness"
+  ]
+}

@@ -1,0 +1,19 @@
+{
+  "candidate_id": "CANDIDATE-001",
+  "candidate_title": "Mobile Stability Prompt (proposed)",
+  "nearest_owner": "P105",
+  "scores": { "semantic": 0.961, "role": 0.917, "metadata": 0.883, "composite": 0.951 },
+  "recommendation": "STRENGTHEN",
+  "confidence": 0.932,
+  "likely_family": "Build & Repair",
+  "likely_family_id": "build-repair",
+  "likely_cluster": "C-18C5A7",
+  "evidence": ["same sprint-path role (BUILD)", "same declared family", "acceptance gates substantially overlap (remote truth + validation)", "top-3 neighbors all in C-18C5A7"],
+  "top_neighbors": [
+    { "prompt_id": "P105", "score": 0.951, "semantic": 0.961, "role": 0.917, "metadata": 0.883 },
+    { "prompt_id": "P117", "score": 0.87, "semantic": 0.881, "role": 0.842, "metadata": 0.801 },
+    { "prompt_id": "P091", "score": 0.864, "semantic": 0.87, "role": 0.84, "metadata": 0.82 }
+  ],
+  "disposition_required": "P79 or capability owner must record STRENGTHEN P105 vs CREATE_NEW with distinct residual proof before registry mutation is allowed.",
+  "rendered_preview": "PROMPT TOPOLOGY REVIEW\n\nCandidate:\n  Mobile Stability Prompt (proposed)\n\nLikely family:\n  Build & Repair\n\nLikely cluster:\n  C-18C5A7 (Repository Execution core)\n\nNearest:\n  P105  0.951\n  P117  0.870\n  P091  0.864\n\nDisposition:\n  STRENGTHEN P105\n\nReason:\n  Same workflow position and overlapping acceptance contract.\n\nConfidence:\n  HIGH (0.932)"
+}

@@ -1,0 +1,71 @@
+{
+  "schema_version": "nw_prj_dashboard_v6",
+  "status": "active",
+  "output_name_pattern": "NW_PRJ_Tech_Roster_Dashboard_v6_{minor}_{descriptor}_WEBSAFE.xlsx",
+  "required_sheets": [
+    "Start Here",
+    "Dashboard_Tool_v6",
+    "Active_Admin_Targets",
+    "Partial_Hours_Active",
+    "Review_Guardrails",
+    "Quiet_Queues",
+    "Resolved_Archive",
+    "Tech_Summary",
+    "CF_Dictionary",
+    "Definitions_Current",
+    "Visual_System_v6",
+    "Dropdown_Values",
+    "Repo_Automation_Notes"
+  ],
+  "sheet_name_aliases": {
+    "Dashboard_Tool_v6": "Dashboard_Tool_v6_x",
+    "Visual_System_v6": "Visual_System_v6_x"
+  },
+  "required_active_columns": [
+    "Review Status",
+    "Work Queue Status",
+    "Target Type",
+    "Action Needed",
+    "Target Workbook",
+    "Edit Sheet",
+    "Edit Row",
+    "Edit In Cell",
+    "Proposed In",
+    "Edit Out Cell",
+    "Proposed Out",
+    "Total Cell",
+    "Expected Total",
+    "Tech",
+    "Date",
+    "Team Scope",
+    "Current Admin Value",
+    "Roster Latest In",
+    "Roster Latest Out",
+    "Roster Latest Hours",
+    "Roster Check",
+    "Roster Check Notes",
+    "Reason Code",
+    "Confidence",
+    "Submission Blocker",
+    "Manual Note / Resolution Note"
+  ],
+  "review_status_column": "Review Status",
+  "active_queue_sheets": [
+    "Active_Admin_Targets",
+    "Partial_Hours_Active",
+    "Review_Guardrails"
+  ],
+  "archive_sheet": "Resolved_Archive",
+  "cf_dictionary_sheet": "CF_Dictionary",
+  "input_hierarchy": [
+    "manual_admin_scratch",
+    "official_admin_workbook",
+    "roster_log",
+    "prior_dashboard"
+  ],
+  "layout_fingerprint_headers": [
+    "Review Status",
+    "Tech",
+    "Date"
+  ]
+}

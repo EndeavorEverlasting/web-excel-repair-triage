@@ -1,0 +1,40 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/EndeavorEverlasting/FUN/schemas/nth-validation-result.schema.json",
+  "title": "NTH Artifact Validation Result",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema", "status", "artifact", "checks", "errors", "warnings", "proof_level", "proof_ceiling"],
+  "properties": {
+    "schema": {"const": "fun-nth-validation-result/v1"},
+    "status": {"enum": ["PASS", "FAIL"]},
+    "artifact": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path", "filename", "size", "sha256"],
+      "properties": {
+        "path": {"type": "string"},
+        "filename": {"type": "string"},
+        "size": {"type": "integer", "minimum": 0},
+        "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"}
+      }
+    },
+    "checks": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["name", "status", "detail"],
+        "properties": {
+          "name": {"type": "string", "minLength": 1},
+          "status": {"enum": ["PASS", "FAIL", "SKIP"]},
+          "detail": {"type": "string"}
+        }
+      }
+    },
+    "errors": {"type": "array", "items": {"type": "string"}},
+    "warnings": {"type": "array", "items": {"type": "string"}},
+    "proof_level": {"type": "string", "minLength": 1},
+    "proof_ceiling": {"type": "string", "minLength": 1}
+  }
+}
