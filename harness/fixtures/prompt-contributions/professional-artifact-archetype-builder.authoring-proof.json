@@ -1,0 +1,74 @@
+{
+  "schema_version": "professional-artifact-builder-authoring-proof/v1",
+  "issue": "#644",
+  "proof_scope": "AUTHORING_STATIC_ASSERTIONS_ONLY",
+  "note": "These checks prove candidate prompt content coverage and contribution-size constraints only. They do not replace prompt_registry_ops.py prior-art/add/validate, semantic topology, tutorial coverage, generated-site parity, repository tests, or runtime artifact acceptance.",
+  "prototypes": [
+    {
+      "id": "V1",
+      "decision": "REVISE",
+      "checks": {
+        "classifies_medium": "PASS",
+        "classifies_archetype": "PASS",
+        "prototype_loop": "PASS",
+        "actual_artifact_required": "PASS",
+        "canonical_generator_reuse": "PASS"
+      },
+      "defects": [
+        "reference lineage too weak",
+        "missing control-lock-brand separation",
+        "missing artifact-specific structures",
+        "missing theme-inversion precedence",
+        "missing medium-native acceptance",
+        "missing reusable backport-before-propagation rule"
+      ]
+    },
+    {
+      "id": "V2",
+      "decision": "REVISE",
+      "checks": {
+        "design_mode": "PASS",
+        "exemplar_provenance_mirror_lineage": "PASS",
+        "rendered_authority_precedence": "PASS",
+        "control_lock_brand": "PASS",
+        "signoff_structure": "PASS",
+        "sop_structure": "PASS",
+        "ledger_structure": "PASS",
+        "ticket_tracker_structure": "PASS",
+        "meeting_notes_structure": "PASS",
+        "prototype_pass_fail_ledger": "PASS",
+        "durability_rule": "PASS",
+        "artifact_link_first": "PASS"
+      },
+      "defects": [
+        "semantic-before-aesthetic boundary needed strengthening",
+        "medium adapters needed for document/spreadsheet/presentation/web",
+        "hybrid primary/secondary archetype behavior missing",
+        "fixed rubric dimensions needed",
+        "reverse-context second pass needed",
+        "routing boundaries needed"
+      ]
+    },
+    {
+      "id": "V3",
+      "decision": "PROMOTE_TO_P79_ADD_CANDIDATE",
+      "checks": {
+        "contribution_size_300_to_12000": "PASS",
+        "three_axis_classification": "PASS",
+        "user_requested_archetypes_plus_other": "PASS",
+        "control_lock_brand": "PASS",
+        "reference_lineage": "PASS",
+        "authoritative_render_precedence": "PASS",
+        "prototype_render_retest_loop": "PASS",
+        "deliberate_second_pass": "PASS",
+        "looks_close_forbidden": "PASS",
+        "artifact_native_acceptance": "PASS",
+        "reusable_owner_backport": "PASS",
+        "artifact_link_first": "PASS",
+        "P56_routing_boundary": "PASS"
+      },
+      "copy_content_length": 10863,
+      "repository_acceptance": "PENDING_P79_HELPER"
+    }
+  ]
+}

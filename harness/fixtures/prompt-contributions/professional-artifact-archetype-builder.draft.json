@@ -1,0 +1,140 @@
+{
+  "registry_id": "spec-architecture-prompts",
+  "profile": "spec-architecture",
+  "color": "Cyan",
+  "category": "standard",
+  "name": "Professional Artifact Archetype + Design-System Builder",
+  "type": "BUILD + ARTIFACT",
+  "class": "ARTIFACT / PROFESSIONAL DESIGN SYSTEM",
+  "sprintRole": "Classify a requested artifact by medium and operational archetype, resolve its canonical content and visual authorities, iteratively build and render tested candidates, and deliver a durable professional artifact whose shared aesthetic adapts correctly across documents, spreadsheets, presentations, and analogous media without collapsing distinct artifact structures.",
+  "useWhen": "A user wants a polished real artifact such as a sign-off, SOP, ledger, ticket tracker, meeting-notes packet, tutorial, field reference, report, checklist, dashboard, spreadsheet, presentation, or other professional deliverable; especially when a concrete reference/favorite artifact, reusable design language, cross-platform formatting, repeated visual rework, or deterministic prototype-to-final acceptance is part of the problem.",
+  "inspectFirst": "The current request plus relevant earlier conversation/corrections; named existing target and reference artifacts; actual visual exemplar rather than only its index/summary/mirror; source/provenance identities; canonical generator/template/spec/profile; artifact medium and functional semantics; applicable delivery/rendering surfaces; prior failed prototypes and user feedback; current repository/provider truth when available; P56/P82/P107/P109/P93/P137 overlap boundaries; and registered upstream prior-art evidence required by P79.",
+  "expectedOutput": "The actual professional artifact at its canonical link/path plus a compact receipt: medium, primary/secondary archetype, design mode, content owner, visual authority, update/create mode, prototype graduation ledger, artifact-native validation results, intentional deviations, reusable generator/template/spec/profile changes, proof ceiling, and exact remaining blocker. When repeatability is expected, the durable rules are backported before batch propagation.",
+  "nextStep": "Resolve the artifact identity and three-axis classification, pin the visual authority and fixed acceptance rubric, build the smallest real candidate, render/open and compare it, iterate through explicit PASS/FAIL prototype gates, repair the reusable owner when the behavior should persist, and promote only the exact candidate that passes all required artifact-native acceptance surfaces.",
+  "proofGate": "The final artifact exists and is linked first; medium and archetype are explicit; source/content semantics are preserved; reference lineage and renderer precedence are correct; each material prototype has tests and PASS/FAIL evidence; required visual/function/platform gates are all passed or explicitly bounded as unavailable; reference-control work precedes generic-aesthetic locking and optional branding; palette changes cannot alter locked non-color/pagination fingerprints; reusable behavior is owned by a canonical generator/template/spec/profile where possible; and no completion claim relies on 'looks close', API success, or unrendered source alone.",
+  "copyContent": "BUILD THE ACTUAL PROFESSIONAL ARTIFACT AND PROVE ITS QUALITY. THE CURRENT REQUEST IS THE ANCHOR, NOT THE CONTEXT BOUNDARY. DO NOT STOP AT AN OUTLINE, STYLE DESCRIPTION, OR FIRST PLAUSIBLE DRAFT WHEN THE ENVIRONMENT CAN CREATE AND INSPECT THE ARTIFACT.\n\nArtifact target / existing identity: xyz_artifact_or_resolve_from_context\nReference / design authority: xyz_reference_or_resolve_from_context\nDestination / medium: xyz_destination_or_resolve_from_context\nBrand/palette overlay: xyz_brand_or_NONE\n\nMISSION\nTurn the user's content and purpose into a real, polished, durable artifact. Classify what the artifact IS separately from its medium. Resolve the strongest structural/visual authority, build tested candidates, and iterate until the actual artifact passes its gates. Shared visual language does not mean identical structure.\n\n1. RECOVER CONTEXT + IDENTITY\n- Recover relevant earlier conversation, files, screenshots, corrections, rejected attempts, existing artifacts, repository/provider evidence, and user feedback. Do not make the user repeat recoverable facts.\n- Resolve CREATE_NEW, UPDATE_EXISTING, REPAIR_EXISTING, or EXPORT/PUBLISH. Similar artifacts are references, not overwrite permission.\n- Resolve canonical content owner, stable provider/file identity, generator/template/spec/profile, and validators when they exist.\n- If the user points to an index, \"favorite document,\" formatting standard, mirror, or locator, trace it to the actual visual exemplar. Distinguish provenance/content source, convenience mirror, visual exemplar, and target. Do not style from a summary when the exemplar is reachable.\n\n2. CLASSIFY BEFORE AUTHORING\nClassify three independent axes. Infer when evidence is strong; ask only for consequential unresolved choices.\n\nMEDIUM\nDOCUMENT | SPREADSHEET | PRESENTATION | WEB_OR_STATIC | DATABASE_OR_LEDGER | OTHER\n\nARCHETYPE\nSIGN_OFF_OR_ACCEPTANCE | SOP_OR_RUNBOOK | LEDGER_OR_REGISTER | TICKET_TRACKER | MEETING_NOTES | TECHNICIAN_TUTORIAL_OR_START_HERE | FIELD_REFERENCE | REPORT | CHECKLIST_OR_FORM | DASHBOARD | OTHER\n\nDESIGN MODE\nREFERENCE_CONTROL | GENERIC_AESTHETIC | BRAND_OVERLAY\n\nFor hybrids, name one PRIMARY archetype plus SECONDARY archetype(s). OTHER is valid: derive structure from purpose instead of forcing a bad class.\n\n3. PRESERVE SEMANTICS BEFORE AESTHETICS\nExtract functional obligations first: facts, fields/schema, formulas, signatures, workflow states, evidence/provenance, commands, navigation, filters, validation, or actions. Styling must not change source authority, IDs, facts, formulas, barcode quiet zones, signature behavior, validation, or workflow semantics. Unknown stays unknown.\n\n4. RESOLVE VISUAL AUTHORITY\nUnless the user establishes another order:\n1. explicit current operator correction;\n2. operator-verified live/rendered appearance or screenshot on the target platform;\n3. canonical exemplar's visible appearance/structure;\n4. exact non-inverting source measurements;\n5. approved generic design-system contract;\n6. target-platform compatibility;\n7. headless/alternate renderer for layout QA only.\n\nTheme-aware source values can render differently across apps. Do not let raw OOXML/theme colors or headless theme interpretation override the verified visible reference. Separate OBSERVED / MEASURED / INFERRED / TARGET-SPECIFIC / INTENTIONAL-DEVIATION facts when useful.\n\n5. REFERENCE FIDELITY BEFORE BRANDING\nWhen a concrete reference exists, use CONTROL -> LOCK -> BRAND.\n\nREFERENCE_CONTROL\nReproduce the reference palette and measurable mechanics: page/sheet/slide geometry, typography, spacing, hierarchy, rules/borders, indentation, navigation, table/component geometry, wrapping, page breaks, pagination, and relevant states. Compare to the reference, not the previous prototype. When multiple delivery renderers matter, require REFERENCE_FIDELITY_CROSS_PLATFORM_ACCEPTED.\n\nGENERIC_AESTHETIC\nAfter reference fidelity passes, freeze the non-color fingerprint: typography, dimensions, spacing, hierarchy, navigation, component/table geometry, archetype structure, wrapping, pagination, signature placement, barcode geometry, and other medium-native mechanics. Record GENERIC_AESTHETIC_LOCKED only when testable.\n\nBRAND_OVERLAY\nApply brand/theme colors only after the generic aesthetic is locked unless the reference is already the final brand. Palette changes may change semantic colors/fills only; they must not silently change fonts, sizes, spacing, wrapping, page count, page breaks, component dimensions, table geometry, signature placement, or barcode sizing/quiet zones.\n\n6. MAP ONE DESIGN LANGUAGE TO THE MEDIUM\nUse semantic roles, implemented natively:\nidentity (title/subtitle/metadata); hierarchy (H1/H2/group labels); content (body/bullets/labels); navigation; warnings/status/exceptions; structured data; technical content; footer/approval/signature/version.\n\nDOCUMENT: real headings/lists/links/tables, deliberate whitespace, quiet footer identity, keep headings/signatures with content.\nSPREADSHEET: native tables/ranges, stable schema, filters/freeze panes, readable widths, input-vs-derived distinction, validation/formulas, restrained conditional formatting.\nPRESENTATION: consistent grid/master, title/section/body roles, readable density, source-safe visuals, notes when required.\nWEB_OR_STATIC: semantic accessible structure, responsive tokens/components, real states/actions, print/PDF when required.\nOTHER: define an equivalent role map before styling.\n\n7. APPLY ARCHETYPE STRUCTURE\nSIGN_OFF_OR_ACCEPTANCE: scope/delivery summary; checklist/items; exceptions if needed; explicit acceptance statement; print name/signature/date or equivalent approval; keep approval block intact.\nSOP_OR_RUNBOOK: purpose/scope; prerequisites/safety/authority; ordered procedure; decisions/exceptions; expected evidence/result; troubleshooting; related owners/docs; version history when durable.\nLEDGER_OR_REGISTER: stable record schema/identity; append/update rules; provenance; required status/date/owner fields; filters/views; raw/source vs derived distinction; no duplicate CURRENT truth.\nTICKET_TRACKER: ticket identity/status/owner/priority; lifecycle dates; required site/category/workstream fields; evidence/description; next action/blocker; useful validation/dropdowns/dedup warnings; filter/sort/lifecycle semantics survive styling.\nMEETING_NOTES: title/type/date/facilitator/owner metadata; agenda; quick navigation when repeated sections warrant it; decisions/actions/schedule/resources as needed; stable repeated-section schema; return navigation for long documents.\nTECHNICIAN_TUTORIAL_OR_START_HERE: goal; what you need; stop conditions; shortest executable pass; already-tried/do-not-repeat discoveries when relevant; success state; next step/evidence. Keep it field-executable.\nFIELD_REFERENCE: navigation when multi-page; specimen/current values; exact commands/cards/steps; interpretation/evidence expectations; return navigation; scan/print constraints.\nOTHER: state the derived minimal repeatable schema before styling.\n\n8. LOCK THE ACCEPTANCE RUBRIC\nBefore prototype work, define applicable gates:\nCONTENT — source/facts correct.\nFUNCTION — formulas/links/filters/signatures/commands/states/validation/actions work.\nARCHETYPE — job-specific structure is complete.\nVISUAL — hierarchy/density/alignment/spacing/type/components match authority.\nREFERENCE — controlled features match or deviations are logged.\nPLATFORM — required target apps/renderers are faithful.\nUSABILITY — intended reader/operator can find the next action quickly.\nDURABILITY — reusable rules live in the canonical generator/template/spec/profile when repository capability exists.\nDELIVERY — canonical destination/identity/link is correct.\nDo not move the rubric silently between prototypes.\n\n9. PROTOTYPE -> TEST -> GRADUATE\nRun:\nPROTOTYPE -> RENDER/OPEN -> COMPARE -> CRITIQUE -> REVISE -> RETEST.\n\nFor every material prototype record:\nhypothesis/gap | artifact/version | checks actually run | PASS/FAIL by rubric | defects | KEEP/REVISE/DISCARD.\n\n- Preserve last-known-good.\n- Fix structural/functional mismatches before cosmetic micro-tuning.\n- When visual/reference uncertainty is material, run at least two deliberate candidate passes before final promotion.\n- Re-open/render the ACTUAL produced artifact after every material formatting change; source/API success is not visual proof.\n- No candidate is FINAL while a required gate is FAIL, UNKNOWN, or untested.\n- \"Looks close\", \"seems polished\", and \"API succeeded\" are not proof states.\n\n10. USE ARTIFACT-NATIVE ACCEPTANCE\nDocuments: Word/Office and Google Docs when both are delivery surfaces.\nSpreadsheets: Excel desktop/Web; Sheets only when it is an actual target/contrast requirement.\nPresentations: PowerPoint/Slides according to delivery requirements.\nWeb/static: real target browsers/viewports/input modes; print/PDF when required.\nDatabase/ledger-backed: schema/record validation plus the real operator-facing projection.\nHeadless rendering may prove clipping/overflow/missing objects/page breaks; it does not override authoritative appearance when theme interpretation differs.\nUnavailable required surfaces remain explicit proof gaps.\n\n11. MAKE SUCCESS REUSABLE\n- Reuse canonical generator/template/spec/profile/design system when one exists.\n- If a repeatable correction is discovered and repository capability exists, repair/backport the reusable owner and tests BEFORE batch-restyling sibling artifacts.\n- A manually formatted live artifact is input evidence/prototype, not durable completion when behavior should recur.\n- Do not create duplicate generators, templates, CURRENT files, workspaces, or parallel truth.\n- Keep brand/theme tokens separate from generic non-color mechanics.\n\nROUTING\nUse the generic context-to-artifact owner when target recovery/create-vs-update/canonical ownership is the hard part but professional visual/archetype fidelity is not. Use the generic prototype-loop owner for standalone experiments. Use reference-UX/design-system prompts for interactive product UI. Use synchronization owners for publication/sync mechanics.\n\n12. SECOND PASS + HANDOFF\nBefore final promotion, traverse relevant context again from the opposite direction for missed corrections, \"also\"/\"we skipped\" constraints, rejected aesthetics, source/reference identities, prior user frustration, and proof requirements. Repair safe omissions and rerun affected gates.\n\nDELIVER\nLead with the canonical artifact link/path or exact produced file. Then report:\nMEDIUM / PRIMARY ARCHETYPE / SECONDARY ARCHETYPE(s) / DESIGN MODE; canonical content owner; visual/reference authority; create/update mode; prototype ledger; acceptance results; reusable owner changes; intentional deviations; proof ceiling; exact blocker and next executable action.\n\nThe artifact is the primary deliverable. The explanation is its receipt.",
+  "keywords": [
+    "professional artifact",
+    "artifact archetype",
+    "artifact design system",
+    "document formatting",
+    "professional formatting",
+    "sign off form",
+    "signoff artifact",
+    "SOP artifact",
+    "ledger artifact",
+    "ticket tracker artifact",
+    "meeting notes format",
+    "technician tutorial",
+    "field reference",
+    "reference document fidelity",
+    "favorite document formatting",
+    "reference control",
+    "generic aesthetic lock",
+    "brand palette overlay",
+    "prototype render compare refine",
+    "cross platform artifact",
+    "Word Google Docs formatting",
+    "Excel artifact formatting",
+    "artifact generator"
+  ],
+  "semantic_profile": {
+    "direct_assignments": [
+      {
+        "capability_id": "strength.canonical_identity",
+        "presence": "SUPPORT",
+        "ownership": "SECONDARY",
+        "capability_relation": "IMPLEMENTS",
+        "delivery_source": "CANONICAL_BODY",
+        "evidence_refs": [
+          "issue:#644",
+          "harness/fixtures/prompt-contributions/professional-artifact-archetype-builder.draft.json"
+        ],
+        "rationale": "The prompt resolves stable target/reference identities and preserves canonical artifact owners rather than creating parallel truth."
+      },
+      {
+        "capability_id": "strength.fixed_point_continuation",
+        "presence": "REQUIRED",
+        "ownership": "SECONDARY",
+        "capability_relation": "IMPLEMENTS",
+        "delivery_source": "CANONICAL_BODY",
+        "evidence_refs": [
+          "issue:#644",
+          "harness/fixtures/prompt-contributions/professional-artifact-archetype-builder.draft.json"
+        ],
+        "rationale": "Prototype candidates must continue through render/compare/revise/retest until the fixed acceptance rubric passes or an exact unavailable proof surface blocks progress."
+      },
+      {
+        "capability_id": "strength.evidence_state_integrity",
+        "presence": "REQUIRED",
+        "ownership": "SECONDARY",
+        "capability_relation": "IMPLEMENTS",
+        "delivery_source": "CANONICAL_BODY",
+        "evidence_refs": [
+          "issue:#644",
+          "harness/fixtures/prompt-contributions/professional-artifact-archetype-builder.draft.json"
+        ],
+        "rationale": "The prompt distinguishes prototype, tested candidate, final artifact, skipped proof, and cross-platform visual acceptance rather than inflating API/source evidence."
+      },
+      {
+        "capability_id": "strength.before_state_evidence",
+        "presence": "SUPPORT",
+        "ownership": "SECONDARY",
+        "capability_relation": "IMPLEMENTS",
+        "delivery_source": "CANONICAL_BODY",
+        "evidence_refs": [
+          "issue:#644",
+          "harness/fixtures/prompt-contributions/professional-artifact-archetype-builder.draft.json"
+        ],
+        "rationale": "Existing artifact/reference state and prior failed prototypes are preserved as comparison evidence before a repair or restyle."
+      },
+      {
+        "capability_id": "strength.proof_relevance_freshness",
+        "presence": "SUPPORT",
+        "ownership": "SECONDARY",
+        "capability_relation": "IMPLEMENTS",
+        "delivery_source": "CANONICAL_BODY",
+        "evidence_refs": [
+          "issue:#644",
+          "harness/fixtures/prompt-contributions/professional-artifact-archetype-builder.draft.json"
+        ],
+        "rationale": "Material formatting changes require reopening/rendering the actual current candidate rather than relying on stale visual proof."
+      },
+      {
+        "capability_id": "strength.plan_durability",
+        "presence": "SUPPORT",
+        "ownership": "SECONDARY",
+        "capability_relation": "IMPLEMENTS",
+        "delivery_source": "CANONICAL_BODY",
+        "evidence_refs": [
+          "issue:#644",
+          "harness/fixtures/prompt-contributions/professional-artifact-archetype-builder.draft.json"
+        ],
+        "rationale": "When a professional artifact rule should recur, the prompt requires durable backport to the canonical generator/template/spec/profile and leaves a resumable handoff when stronger repository proof is unavailable."
+      }
+    ],
+    "inherited_sources": [],
+    "evidence_refs": [
+      "issue:#644",
+      "harness/prompt-topology/PROFESSIONAL_ARTIFACT_ARCHETYPE_BUILDER_CANDIDATE.md"
+    ],
+    "distinct_residual": {
+      "summary": "Adds a medium-plus-archetype professional artifact production workflow with reference-control fidelity, generic non-color aesthetic locking, optional color-only brand overlays, artifact-native render acceptance, tested prototype graduation, and reusable-generator backport. P56 owns generic context-to-artifact derivation; P82 owns generic prototyping; P107/P109 own interactive UX reference/design-system work rather than cross-medium professional artifacts.",
+      "evidence_refs": [
+        "issue:#644",
+        "docs/prompts.json:P56",
+        "registry/prompts/spec-architecture-prompts.v1.json:P82",
+        "registry/prompts/spec-architecture-prompts.v1.json:P107",
+        "registry/prompts/spec-architecture-prompts.v1.json:P109"
+      ],
+      "reviewed_against": [
+        "P56",
+        "P82",
+        "P93",
+        "P107",
+        "P109",
+        "P137"
+      ]
+    }
+  }
+}
