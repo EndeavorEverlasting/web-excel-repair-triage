@@ -103,12 +103,105 @@ jobs:
           print("P56 protected routing edit: PASS")
           PY
 
+      - name: Write focused professional-artifact regression test
+        shell: bash
+        run: |
+          cat > tests/test_professional_artifact_builder_prompt.py <<'PY'
+          import unittest
+
+          from scripts import build_prompt_kit_registry as registry
+
+
+          class ProfessionalArtifactBuilderPromptTests(unittest.TestCase):
+              @classmethod
+              def setUpClass(cls):
+                  cls.prompts = registry.load_prompt_kit_registry()
+                  matches = [
+                      p for p in cls.prompts
+                      if p.get("name") == "Professional Artifact Archetype + Design-System Builder"
+                  ]
+                  if len(matches) != 1:
+                      raise AssertionError(
+                          f"expected one professional artifact builder prompt, found {len(matches)}"
+                      )
+                  cls.prompt = matches[0]
+                  cls.copy = cls.prompt["copyContent"]
+                  cls.p56 = next(p for p in cls.prompts if p.get("id") == "P56")
+
+              def test_three_axis_classification(self):
+                  for phrase in ("MEDIUM", "ARCHETYPE", "DESIGN MODE"):
+                      self.assertIn(phrase, self.copy)
+
+              def test_user_requested_archetypes_and_other(self):
+                  for phrase in (
+                      "SIGN_OFF_OR_ACCEPTANCE",
+                      "SOP_OR_RUNBOOK",
+                      "LEDGER_OR_REGISTER",
+                      "TICKET_TRACKER",
+                      "MEETING_NOTES",
+                      "OTHER",
+                  ):
+                      self.assertIn(phrase, self.copy)
+
+              def test_reference_control_lock_brand_order(self):
+                  control = self.copy.index("REFERENCE_CONTROL")
+                  lock = self.copy.index("GENERIC_AESTHETIC")
+                  brand = self.copy.index("BRAND_OVERLAY")
+                  self.assertLess(control, lock)
+                  self.assertLess(lock, brand)
+                  self.assertIn("REFERENCE_FIDELITY_CROSS_PLATFORM_ACCEPTED", self.copy)
+                  self.assertIn("GENERIC_AESTHETIC_LOCKED", self.copy)
+
+              def test_reference_lineage_and_renderer_precedence(self):
+                  self.assertIn("convenience mirror", self.copy)
+                  self.assertIn("actual visual exemplar", self.copy)
+                  self.assertIn("operator-verified live/rendered appearance", self.copy)
+                  self.assertIn("raw OOXML/theme colors", self.copy)
+
+              def test_prototype_graduation_is_render_backed(self):
+                  self.assertIn(
+                      "PROTOTYPE -> RENDER/OPEN -> COMPARE -> CRITIQUE -> REVISE -> RETEST",
+                      self.copy,
+                  )
+                  self.assertIn("at least two deliberate candidate passes", self.copy)
+                  self.assertIn('"Looks close"', self.copy)
+                  self.assertIn("No candidate is FINAL", self.copy)
+
+              def test_medium_native_acceptance(self):
+                  for phrase in (
+                      "Word/Office",
+                      "Excel desktop/Web",
+                      "PowerPoint/Slides",
+                      "real target browsers/viewports/input modes",
+                  ):
+                      self.assertIn(phrase, self.copy)
+
+              def test_durability_and_artifact_first_handoff(self):
+                  self.assertIn(
+                      "repair/backport the reusable owner and tests BEFORE batch-restyling",
+                      self.copy,
+                  )
+                  self.assertIn("Lead with the canonical artifact link/path", self.copy)
+
+              def test_p56_routes_specialist_without_losing_generic_owner(self):
+                  self.assertIn(
+                      "Professional Artifact Archetype + Design-System Builder",
+                      self.p56["useWhen"],
+                  )
+                  self.assertIn("P56 retains generic artifact-target and ownership resolution", self.p56["useWhen"])
+
+
+          if __name__ == "__main__":
+              unittest.main()
+          PY
+
       - name: Validate Prompt Kit lifecycle
         shell: bash
         run: |
           set -euo pipefail
           python scripts/prompt_registry_ops.py validate > /tmp/professional-artifact-validate.json
           python -m unittest \
+            tests.test_professional_artifact_builder_prompt \
             tests.test_spec_architecture_prompt_registry \
             tests.test_prompt_semantic_coverage \
             tests.test_operant_external_resources \
@@ -161,7 +254,8 @@ jobs:
             harness/prompt-topology/prompt-capability-migrations.v1.json \
             harness/prompt-compilation/prompt-semantic-migrations.v1.json \
             web/prompt-kit/index.html \
-            harness/fixtures/prompt-contributions/professional-artifact-archetype-builder.p79-execution-receipt.json
+            harness/fixtures/prompt-contributions/professional-artifact-archetype-builder.p79-execution-receipt.json \
+            tests/test_professional_artifact_builder_prompt.py
           python -m triage.gitignore_hygiene
           git diff --cached --check
 
