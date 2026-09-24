@@ -139,12 +139,12 @@ class GovernanceContractTests(unittest.TestCase):
             "`EndeavorEverlasting/TokenCorridor`",
             "unproven",
             "operator-approved product identity",
-            "legacy `operant` / `prompt-kit` paths remain authoritative compatibility surfaces",
+            "legacy `operant` / `prompt-kit` paths remain compatibility authority",
             "must not be silently moved",
             "current donor authority",
             "convergence/destination authority",
             "compatibility/consumer seams",
-            "cross-repo dependencies remain versioned",
+            "dependencies remain versioned",
         ):
             self.assertIn(phrase, section)
 
