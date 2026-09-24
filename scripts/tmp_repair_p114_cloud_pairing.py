@@ -32,7 +32,7 @@ Trigger for artifact work, an imminent user-facing local/download artifact, or s
 DELIVERY DECISION TABLE
 - `MAPPED_CLOUD_VERIFIED + LOCAL_SURFACED => PAIR_REQUIRED`: surface both together: usable canonical provider link plus local/download reference.
 - `LOCAL_ONLY_VERIFIED => LOCAL_ONLY_ALLOWED`: require explicit local-only/private/do-not-sync authority or synchronizer proof.
-- `CLOUD_RELEVANCE_UNKNOWN => CLOUD_CLOSURE_BLOCKED`: resolve through P111/provider owner before local fallback; if blocked, name the exact identity/access/write/readback gate; never claim sync succeeded.
+- `CLOUD_RELEVANCE_UNKNOWN => CLOUD_CLOSURE_BLOCKED`: name the exact identity, access, write, or readback gate before local fallback; never claim sync succeeded.
 3. Before claiming synchronized/current, require provider-owner identity/readback evidence. Reuse the stable provider identity; never create a second CURRENT artifact just to get a link.
 4. Google Drive uses `P111 Repository + Google Drive Artifact Synchronizer` and `harness/artifact-handoff/WORKFLOW.md`; other providers use their owner or remain UNKNOWN/BLOCKED.
 P114 detects and routes; it does not become the sync engine. Offering a local artifact without the mapped cloud link is a Canary/closure failure when a healthy verified cloud counterpart exists.
@@ -95,7 +95,6 @@ new_test = '''    def test_bound_cloud_workspace_requires_resolution_before_loca
             "A project/workspace cloud binding with unresolved mapping is `CLOUD_RELEVANCE_UNKNOWN`, not `LOCAL_ONLY_VERIFIED`",
             "route through P111/provider owner before closeout",
             "`LOCAL_ONLY_VERIFIED` requires explicit local-only/private/do-not-sync authority or synchronizer proof",
-            "resolve through P111/provider owner before local fallback",
         ):
             self.assertIn(phrase, cloud)
         self.assertNotIn(
