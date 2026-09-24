@@ -31,8 +31,8 @@ Actions minute/billing exhaustion, never-started checks, review-bot/CI limits ar
 
 ## 6. Repository identity and product boundary
 The core product domain is **spreadsheet intelligence**. Web Excel compatibility, billing, roster/time evidence, triage are first-class.
-**AFK Agent Flow** is the operator-approved product identity, formerly Operant / Prompt Kit. Target: `UnderDeskDev/AFK-Agent-Flow`; unproven.
-Until cutover, legacy `operant` / `prompt-kit` paths remain authoritative compatibility surfaces and must not be silently moved. This repo may consume AFK Agent Flow through historical Operant release seams but must not become a competing authority; cross-repo dependencies explicit and versioned.
+**AFK Agent Flow** is the operator-approved product identity, formerly Operant / Prompt Kit. Destination/convergence repository: `EndeavorEverlasting/TokenCorridor`; repository exists, capability cutover remains unproven.
+Until per-capability cutover gates pass, legacy `operant` / `prompt-kit` paths in this repository remain authoritative compatibility surfaces and must not be silently moved. This repository is the current AFK Agent Flow donor authority; TokenCorridor is the cross-repository convergence/destination authority. After proven cutover, migrated surfaces may reduce this repository to an explicit versioned compatibility/consumer role; cross-repo dependencies remain explicit and versioned.
 
 ## 7. Progressive disclosure and binding domain law
 Orient: `AGENTS.md` → `harness/CONTEXT.md` → selected domain. Do **not** preload full harness/skills/history. Escalate context only for evidence.
