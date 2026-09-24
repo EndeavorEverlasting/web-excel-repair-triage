@@ -1,0 +1,57 @@
+name: Temporary P114 cloud pairing carrier
+
+on:
+  push:
+    branches:
+      - feat/p114-cloud-artifact-pairing-20260924
+    paths:
+      - .github/workflows/tmp-p114-cloud-pairing-carrier.yml
+      - scripts/tmp_repair_p114_cloud_pairing.py
+
+permissions:
+  contents: write
+
+concurrency:
+  group: p114-cloud-pairing-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  reconcile-repair-prove:
+    if: github.repository == 'EndeavorEverlasting/web-excel-repair-triage'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: feat/p114-cloud-artifact-pairing-20260924
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Reconcile current main, repair P114 through lifecycle helper, prove, and push
+        shell: bash
+        run: |
+          set -euo pipefail
+          export PYTHONPATH="$PWD${PYTHONPATH:+:$PYTHONPATH}"
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git fetch origin main feat/p114-cloud-artifact-pairing-20260924 --prune
+          remote_head="$(git rev-parse origin/feat/p114-cloud-artifact-pairing-20260924)"
+          if [ "$remote_head" != "$GITHUB_SHA" ]; then
+            echo "Feature branch moved after carrier dispatch: event=$GITHUB_SHA remote=$remote_head" >&2
+            exit 86
+          fi
+          git merge --no-edit origin/main
+          python scripts/tmp_repair_p114_cloud_pairing.py
+          git rm -f .github/workflows/tmp-p114-cloud-pairing-carrier.yml scripts/tmp_repair_p114_cloud_pairing.py
+          python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html
+          python -m unittest             tests.test_conversation_context_canary_prompt             tests.test_sysadminsuite_prompt_registry             tests.test_google_drive_handoff_prompt_strengthening             tests.test_repository_drive_artifact_synchronizer_prompt -v
+          python scripts/prompt_registry_ops.py validate
+          python scripts/evaluate_prompt_language.py --summary
+          python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html --check
+          python scripts/run_local_required_checks.py --report Outputs/p114-cloud-pairing-required-checks.json
+          git diff --check
+          git add             docs/plans/CLOUD_PAIRED_ARTIFACT_HANDOFF_SPRINT_MAP.md             harness/prompt-compilation/prompt-semantic-migrations.v1.json             harness/prompt-topology/prompt-capability-migrations.v1.json             harness/prompt-topology/prompt-capability-profiles.v1.json             registry/prompts/spec-architecture-prompts.v1.json             tests/test_conversation_context_canary_prompt.py             tests/test_sysadminsuite_prompt_registry.py             web/prompt-kit/index.html
+          git diff --cached --check
+          git status --short
+          git commit -m "fix(prompt-kit): close P114 cloud relevance gap"
+          git push origin HEAD:feat/p114-cloud-artifact-pairing-20260924
