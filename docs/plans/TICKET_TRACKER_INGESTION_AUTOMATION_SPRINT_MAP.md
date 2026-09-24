@@ -1,15 +1,15 @@
 # Ticket Tracker Ingestion Automation Sprint Map
 
-**Status:** TRACKED PLAN / IMPLEMENTATION NOT YET STARTED  
-**Repository:** `EndeavorEverlasting/web-excel-repair-triage`  
-**Planning floor:** `main@d0ff35ea4ff4be9bd23cda016e0044849d84e2cd`  
-**Planning branch:** `plan/ticket-tracker-ingestion-automation-20260924`  
-**Primary Prompt Kit owner:** P125 · Health + Hospitals Ticket Discovery & Tracking Harvester  
-**Artifact mutation owner:** P56 · Context-to-Artifact Generator  
-**Google Drive sync owner:** P111 · Repository + Google Drive Artifact Synchronizer  
-**Prompt identity/admission owner:** P79 · Prompt Registry Prompt Adder  
-**Recurring-defect / retained-regression owners:** P13 / P94  
-**Implementation owner:** Triage ticket-ingestion capability under the existing repository harness; exact module path is intentionally deferred until implementation inspection resolves the narrowest existing code owner  
+**Status:** TRACKED PLAN / IMPLEMENTATION NOT YET STARTED
+**Repository:** `EndeavorEverlasting/web-excel-repair-triage`
+**Planning floor:** `main@d0ff35ea4ff4be9bd23cda016e0044849d84e2cd`
+**Planning branch:** `plan/ticket-tracker-ingestion-automation-20260924`
+**Primary Prompt Kit owner:** P125 · Health + Hospitals Ticket Discovery & Tracking Harvester
+**Artifact mutation owner:** P56 · Context-to-Artifact Generator
+**Google Drive sync owner:** P111 · Repository + Google Drive Artifact Synchronizer
+**Prompt identity/admission owner:** P79 · Prompt Registry Prompt Adder
+**Recurring-defect / retained-regression owners:** P13 / P94
+**Implementation owner:** Triage ticket-ingestion capability under the existing repository harness; exact module path is intentionally deferred until implementation inspection resolves the narrowest existing code owner
 **Proof ceiling:** this file is a repository-grounded execution plan. It does not prove screenshot parsing, workbook mutation, website mutation, Drive synchronization, Copilot behavior, ServiceNow truth, or field/runtime acceptance until those stages are separately implemented and observed.
 
 ---
@@ -797,12 +797,12 @@ If another repository later becomes the actual H&H runtime/data owner, add a thi
 
 ## 18. First executable successor sprint
 
-**Owner:** TTI-1 repository implementation agent  
-**Base:** refresh current `main`; do not assume this planning SHA remains the implementation floor  
-**Dependency:** this plan integrated or otherwise accepted as canonical planning authority  
-**First action:** inspect current schema/contract/validator naming conventions and create the smallest versioned `ticket-observation`, `ticket-update-batch`, and `ticket-merge-receipt` contracts plus sanitized positive/negative fixtures and validators.  
-**Forbidden:** P125 canonical mutation, private H&H bytes, workbook mutation, Drive mutation.  
-**Expected proof:** schema validators reject duplicate strong IDs, unsupported promoted values, malformed provenance/conflict state, and incomplete per-column dispositions while accepting representative screenshot/list/P125 normalized batches.  
+**Owner:** TTI-1 repository implementation agent
+**Base:** refresh current `main`; do not assume this planning SHA remains the implementation floor
+**Dependency:** this plan integrated or otherwise accepted as canonical planning authority
+**First action:** inspect current schema/contract/validator naming conventions and create the smallest versioned `ticket-observation`, `ticket-update-batch`, and `ticket-merge-receipt` contracts plus sanitized positive/negative fixtures and validators.
+**Forbidden:** P125 canonical mutation, private H&H bytes, workbook mutation, Drive mutation.
+**Expected proof:** schema validators reject duplicate strong IDs, unsupported promoted values, malformed provenance/conflict state, and incomplete per-column dispositions while accepting representative screenshot/list/P125 normalized batches.
 **Completion gate:** TTI-1 contracts and fixtures pass focused tests and are registered in repository discovery/harness; then TTI-2 may implement the pure reconciliation kernel.
 
 ---
