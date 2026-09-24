@@ -40,9 +40,12 @@
   },
   "authority": {
     "current_repository": "EndeavorEverlasting/web-excel-repair-triage",
-    "target_repository": "UnderDeskDev/AFK-Agent-Flow",
-    "target_repository_state": "not-created-or-unproven",
-    "cutover_rule": "Current repository remains authoritative until the dedicated repository passes source, build, evidence, consumer, and release-identity parity and the old repository is reduced to an explicit versioned consumer."
+    "target_repository": "EndeavorEverlasting/TokenCorridor",
+    "target_repository_state": "created-convergence-authority-cutover-unproven",
+    "cutover_rule": "Current repository remains authoritative for AFK Agent Flow capabilities until TokenCorridor passes source, build, evidence, consumer, release-identity, and per-capability authority-transfer gates. Only then may migrated surfaces downgrade this repository to an explicit versioned compatibility/consumer role.",
+    "convergence_plan_repository": "EndeavorEverlasting/TokenCorridor",
+    "convergence_plan_path": "plans/active/AFK-FACTORY-CONVERGENCE.plan.json",
+    "convergence_material_floor": "afbc796f6292d13888975699329ad188b86d3ee5"
   },
   "compatibility": {
     "visible_brand": "AFK Agent Flow",

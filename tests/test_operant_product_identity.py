@@ -35,8 +35,11 @@ class OperantProductIdentityTests(unittest.TestCase):
             payload["release_versioning"]["bootstrap"]["identity_merge_sha"],
             "781616a1a42893fb5b521e41b217f5cef04b2701",
         )
-        self.assertEqual(payload["authority"]["target_repository"], "UnderDeskDev/AFK-Agent-Flow")
-        self.assertEqual(payload["authority"]["target_repository_state"], "not-created-or-unproven")
+        self.assertEqual(payload["authority"]["target_repository"], "EndeavorEverlasting/TokenCorridor")
+        self.assertEqual(payload["authority"]["target_repository_state"], "created-convergence-authority-cutover-unproven")
+        self.assertEqual(payload["authority"]["convergence_plan_repository"], "EndeavorEverlasting/TokenCorridor")
+        self.assertEqual(payload["authority"]["convergence_plan_path"], "plans/active/AFK-FACTORY-CONVERGENCE.plan.json")
+        self.assertEqual(payload["authority"]["convergence_material_floor"], "afbc796f6292d13888975699329ad188b86d3ee5")
         self.assertTrue(payload["compatibility"]["internal_path_renames_deferred"])
         self.assertIn("web/prompt-kit/index.html", payload["compatibility"]["preserve_paths"])
         self.assertIn("Prompt Kit", payload["legacy_identity"]["names"])
@@ -55,7 +58,7 @@ class OperantProductIdentityTests(unittest.TestCase):
         governance = (ROOT / "AGENTS.md").read_text(encoding="utf-8")
         access = (ROOT / "PROMPT_KIT_ACCESS.md").read_text(encoding="utf-8")
         self.assertIn("**AFK Agent Flow** is the operator-approved product identity", governance)
-        self.assertIn("`UnderDeskDev/AFK-Agent-Flow`", governance)
+        self.assertIn("`EndeavorEverlasting/TokenCorridor`", governance)
         self.assertIn("legacy `operant` / `prompt-kit` paths", governance)
         self.assertTrue(access.startswith("# Get AFK Agent Flow"))
         self.assertIn("compatibility and historical release identifiers", access)

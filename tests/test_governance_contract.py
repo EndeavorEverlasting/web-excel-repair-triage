@@ -136,14 +136,15 @@ class GovernanceContractTests(unittest.TestCase):
             "## 6. Repository identity and product boundary", "## 7."
         )
         for phrase in (
-            "`UnderDeskDev/AFK-Agent-Flow`",
+            "`EndeavorEverlasting/TokenCorridor`",
             "unproven",
             "operator-approved product identity",
-            "legacy `operant` / `prompt-kit` paths remain authoritative compatibility surfaces",
+            "legacy `operant` / `prompt-kit` paths remain compatibility authority",
             "must not be silently moved",
-            "consume AFK Agent Flow through historical Operant release seams",
-            "must not become a competing authority",
-            "cross-repo dependencies explicit and versioned",
+            "current donor authority",
+            "convergence/destination authority",
+            "compatibility/consumer seams",
+            "dependencies remain versioned",
         ):
             self.assertIn(phrase, section)
 
