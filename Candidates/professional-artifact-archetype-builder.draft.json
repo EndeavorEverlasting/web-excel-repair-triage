@@ -101,16 +101,16 @@
         "rationale": "Material formatting changes require reopening/rendering the actual current candidate rather than relying on stale visual proof."
       },
       {
-        "capability_id": "execution.implementation",
-        "presence": "AWARE",
-        "ownership": "NONE",
-        "capability_relation": "ROUTES_TO",
-        "delivery_source": "ROUTED_OWNER",
+        "capability_id": "strength.plan_durability",
+        "presence": "SUPPORT",
+        "ownership": "SECONDARY",
+        "capability_relation": "IMPLEMENTS",
+        "delivery_source": "CANONICAL_BODY",
         "evidence_refs": [
-          "docs/prompts.json:P56",
-          "docs/prompts.json:P07"
+          "issue:#644",
+          "Candidates/professional-artifact-archetype-builder.draft.json"
         ],
-        "rationale": "Repository implementation or generator repair remains routed to the canonical implementation owner when the artifact workflow requires code changes."
+        "rationale": "When a professional artifact rule should recur, the prompt requires durable backport to the canonical generator/template/spec/profile and leaves a resumable handoff when stronger repository proof is unavailable."
       }
     ],
     "inherited_sources": [],
