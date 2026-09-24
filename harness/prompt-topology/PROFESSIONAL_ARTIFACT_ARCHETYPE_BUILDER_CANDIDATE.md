@@ -1,7 +1,7 @@
 # Professional Artifact Archetype + Design-System Builder — candidate
 
-Status: **P79 PRE-ADD CANDIDATE / PROTECTED MUTATION NOT YET EXECUTED**  
-Issue: #644  
+Status: **P79 PRE-ADD CANDIDATE / PROTECTED MUTATION NOT YET EXECUTED**
+Issue: #644
 Branch: `feat/professional-artifact-archetype-builder`
 
 ## Sprint declaration
@@ -151,7 +151,7 @@ Decision: **REVISE**.
 
 Canonical candidate file:
 
-`Candidates/professional-artifact-archetype-builder.draft.json`
+`harness/fixtures/prompt-contributions/professional-artifact-archetype-builder.draft.json`
 
 Authoring-time static assertions: **PASS 13/13**, including:
 - copyContent within 300–12000 contribution ceiling;
@@ -195,7 +195,7 @@ Use `NO_CAPABILITY_CHANGE` unless the helper/semantic review demonstrates that r
 
 See:
 
-`Candidates/professional-artifact-archetype-builder.regression-cases.json`
+`harness/fixtures/prompt-contributions/professional-artifact-archetype-builder.regression-cases.json`
 
 The cases are designed to falsify:
 - index mistaken for exemplar;
@@ -223,20 +223,20 @@ python scripts/prompt_registry_ops.py prior-art \
   --query "professional artifact archetype design system sign-off SOP ledger ticket tracker meeting notes reference fidelity prototype render cross-platform"
 
 python scripts/prompt_registry_ops.py add \
-  --input Candidates/professional-artifact-archetype-builder.draft.json \
+  --input harness/fixtures/prompt-contributions/professional-artifact-archetype-builder.draft.json \
   --registry spec-architecture-prompts \
   --dry-run
 
 # Inspect the allocated identity/tutorial route in the dry-run receipt, then run the real ADD.
 python scripts/prompt_registry_ops.py add \
-  --input Candidates/professional-artifact-archetype-builder.draft.json \
+  --input harness/fixtures/prompt-contributions/professional-artifact-archetype-builder.draft.json \
   --registry spec-architecture-prompts
 
 # After the new ID is known, apply the prepared P56 routing strengthen through the helper.
 # Do not directly edit docs/prompts.json.
 python scripts/prompt_registry_ops.py edit \
   --prompt-id P56 \
-  --input Candidates/P56-professional-artifact-routing.patch.json \
+  --input harness/fixtures/prompt-contributions/P56-professional-artifact-routing.patch.json \
   --disposition NO_CAPABILITY_CHANGE \
   --evidence-ref issue:#644 \
   --rationale "Route professional artifact archetype/design-system fidelity to the new specialist while preserving P56 generic artifact ownership."
