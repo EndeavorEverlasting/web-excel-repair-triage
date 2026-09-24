@@ -30,6 +30,7 @@ Human-facing Operant releases. Git commit/artifact identity remains the forensic
 - fix(p143): converge reviewed repository planner contracts (`09f1d675`)
 - fix(prompt-kit): harden P114 review invariants (`3facb90e`)
 - fix(prompt-kit): close P114 cloud relevance gap (`c4117aeb`)
+- fix(plan): restore full tree after provider merge reconciliation (`6919be00`)
 
 ## 0.10.1 - 2026-09-19
 
