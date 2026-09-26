@@ -48,12 +48,14 @@ Strengthen the smallest existing Prompt Kit owners so:
 3. applicable evaluation/validation/retrospective matrices can represent the merit `INVOCATION_FIDELITY`;
 4. the defect is protected by one reproducing negative fixture plus positive controls;
 5. the integrated donor SHA becomes the source floor for TokenCorridor PK-B01A;
-6. P04 performs a first-class runtime partition before dependency graph and adapter selection, preserving ChatGPT/provider-capable work separately from local-agent-only work.
+6. P04 performs a first-class runtime partition before dependency graph and adapter selection, preserving ChatGPT/provider-capable work separately from local-agent-only work;
+7. P05 applies the same shared runtime-partition capability before it serializes work into ordered sprint panels, so sequential planning cannot punt current-runtime/provider work to local agents or assign local-only work to the web runtime.
 
 ### Read first
 
 - `docs/prompts.json`:
   - P04 — Repo-Aware Sprint + Harness Factoring Distributor
+  - P05 — Ordered Sprint Plan Pack Generator
   - P11 — End-to-End Harness Validator
   - P13 — Self-Improving Rules Review
   - neighboring planning/evaluation owners discovered from refreshed main
@@ -97,7 +99,7 @@ Expected:
 ### Owned scope
 
 Resolve from refreshed main before mutation. Expected owner families:
-- `docs/prompts.json` P04/shared metadata;
+- `docs/prompts.json` P04 + P05/shared planning metadata;
 - smallest existing shared actionability/invocation-intent policy if one exists;
 - existing matrix/evaluation owner;
 - focused tests/fixtures;
@@ -118,6 +120,7 @@ Resolve from refreshed main before mutation. Expected owner families:
 At minimum:
 - focused invocation-fidelity regression;
 - existing P04 parallel-execution contract tests;
+- focused P05 ordered-plan/runtime-partition regressions;
 - affected shared policy/matrix tests;
 - canonical Prompt Kit build/parity checks;
 - patch hygiene;
@@ -129,7 +132,8 @@ UF-1A closes only when the exact merged Triage main:
 - enforces invocation-vs-mutation intent;
 - carries the matrix merit in the canonical owner;
 - passes negative + positive controls;
-- preserves P04 durability/dispatch behavior;
+- preserves P04 durability/dispatch behavior and P05 ordered-pack behavior;
+- proves P04 + P05 inherit the same runtime-partition semantic without duplicating doctrine;
 - provides the exact source SHA to TokenCorridor PK-B01A.
 
 ## Ubiquitous downstream rule
@@ -225,6 +229,79 @@ The local Cursor lane fails if it:
 - leaves PS-0004 as a Drive-only idea with no repository enforcement.
 
 Completion requires canonical registry + internal typed mechanism + focused regression + generated/public Prompt Kit parity, with exact donor/destination SHAs and proof ceiling recorded.
+
+## P05 serialized-planner runtime partition — same shared capability, serialized projection
+
+P05 is a second required consumer of PS-0004. The runtime taxonomy and ownership rule must have one shared semantic owner; P04 and P05 project that shared capability differently:
+
+- **P04:** partition runtime ownership before dependency graph width, adapter selection, and parallel dispatch manifest generation.
+- **P05:** partition runtime ownership before ordered launch-pack construction, then carry the placement through each serialized sprint panel and handoff.
+
+### Exact P05 draft insertion — preserve ordered-pack semantics
+
+Insert after P05's repository/context preflight and before its factoring/launch-order construction (or the nearest semantically equivalent location if the canonical prompt moves):
+
+```text
+RUNTIME PARTITION / EXECUTION PLACEMENT — REQUIRED
+Before building the serialized sprint pack, classify every material work unit by the runtime that can actually perform it. Use the shared planning runtime classes:
+
+- CURRENT_CHAT_RUNTIME
+- CONNECTED_PROVIDER
+- LOCAL_AGENT_RUNTIME
+- CI_OR_REMOTE_RUNNER
+- OPERATOR_OR_PHYSICAL_RUNTIME
+- UNKNOWN_RUNTIME
+
+Do not treat "serialized" as "local." Sequence and execution environment are separate dimensions.
+
+PLACEMENT RULES
+- Complete safe dependency-ready CURRENT_CHAT_RUNTIME and CONNECTED_PROVIDER planning/evidence/durability work that P05 is authorized to perform when doing so closes a dependency, establishes current provider truth, or prevents downstream rediscovery.
+- Do not manufacture a local-agent sprint for work already completed in the current runtime; instead pass its exact artifact/evidence forward as an input to the next serialized lane.
+- Do not assign filesystem/shell/toolchain-only work to CURRENT_CHAT_RUNTIME merely because the current agent can describe the commands.
+- P05 remains PLAN / PACK. It does not become the implementation owner; executable repository/product work remains assigned to P07 or the canonical implementation owner.
+- UNKNOWN_RUNTIME is a bounded owner-resolution gate, not a guess.
+- Preserve exact provider/repository/Drive evidence across the serialized chain so later panels consume prior proof instead of restarting discovery.
+
+SERIALIZED RUNTIME OUTPUT
+Before LAUNCH ORDER, emit:
+Work unit | Execution environment | Required capability | Evidence | Already executed here? | Ordered dependency/output seam
+
+Every sprint panel that still represents executable successor work must include:
+EXECUTION ENVIRONMENT
+REQUIRED CAPABILITIES
+INHERITED EVIDENCE
+RUNTIME HANDOFF
+
+The final ordered pack must distinguish:
+1. work already completed by the current ChatGPT/provider runtime;
+2. work that remains for local agents or CI;
+3. work blocked on operator/physical access;
+4. unresolved runtime ownership.
+
+Never turn already-completed current-runtime work into a fake future sprint merely to preserve panel count.
+```
+
+### P05 non-weakening gates
+
+The local implementation must preserve P05's existing:
+- exact launch-order / display-order identity;
+- self-contained one-panel-per-sprint contract;
+- serialized dependency and collision semantics;
+- proof taxonomy;
+- dirty-worktree preservation;
+- execution requirement for successor panels;
+- final handoff and exact-next-command requirements.
+
+Add focused cases:
+- negative: P05 creates a local sprint for provider/Drive evidence that the active runtime could and should have established before pack emission;
+- negative: P05 labels a local-toolchain task CURRENT_CHAT_RUNTIME;
+- positive: P05 records a provider-side step as already executed and feeds its exact evidence into the next local serialized panel;
+- positive: two sequential local sprints retain distinct runtime ownership and inherited evidence without becoming parallel;
+- positive: P05 runtime partition does not weaken ordered panel identity or P07 execution ownership.
+
+### Shared mechanism rule
+
+Do not create a P05-specific runtime taxonomy. Add/protect one semantic capability, preferably `planning.runtime_partition` if current naming conventions permit, and assign it to both P04 and P05 through the existing capability catalog/profile/migration machinery. Prompt-specific text may differ, but the runtime classes and placement invariants must come from the same canonical contract/semantic owner.
 
 ## Proof ceiling
 
