@@ -1,8 +1,8 @@
 # Triage P66 owner reconciliation handoff (TokenCorridor S2 gate)
 
-**Issued:** 2026-09-26  
-**Owner PR:** [#626](https://github.com/EndeavorEverlasting/web-excel-repair-triage/pull/626) `feat/issue-centered-afkaf-progression-reconcile-20260922`  
-**Default branch floor at reconciliation:** `origin/main@f2289974a54b9bc5b4ca251a0b3c919d4e7ae1cb`  
+**Issued:** 2026-09-26
+**Owner PR:** [#626](https://github.com/EndeavorEverlasting/web-excel-repair-triage/pull/626) `feat/issue-centered-afkaf-progression-reconcile-20260922`
+**Default branch floor at reconciliation:** `origin/main@f2289974a54b9bc5b4ca251a0b3c919d4e7ae1cb`
 **Gate for Agent Work Graph S2:** `TRIAGE_P66_OWNER_RECONCILED` (any of `TRIAGE_PR_626_RECONCILED` | `P66_OWNERSHIP_MOVED_OFF_TRIAGE_626`)
 
 ## Program seam (executable, not diagram-only)
@@ -65,3 +65,4 @@ Do **not** close #626 merely to clear the floor. Do **not** relaunch superseded 
 2. Merge #626 when authorized → mark `TRIAGE_PR_626_RECONCILED` satisfied.
 3. Agent Work Graph S2 may then mutate work-item/lane relation contracts **without** rewriting P66 ledger authority.
 4. TC continues W1 PRAM/GHCLI/PMG; LM2 remains TC-owned and out of this lane.
+
