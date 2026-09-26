@@ -18,6 +18,11 @@ from pathlib import Path
 from typing import Any, Callable
 
 ROOT = Path(__file__).resolve().parents[1]
+SCRIPTS_DIR = Path(__file__).resolve().parent
+if str(SCRIPTS_DIR) not in sys.path:
+    sys.path.insert(0, str(SCRIPTS_DIR))
+import prompt_runtime_partition as runtime_partition
+
 CONTRACT_PATH = ROOT / "harness/contracts/prompt-parallel-dispatch.v1.json"
 DEFAULT_MANIFEST = ROOT / "Outputs/prompt-parallel-dispatch/manifest.json"
 DEFAULT_RECEIPT = ROOT / "Outputs/prompt-parallel-dispatch/receipt.json"
@@ -67,6 +72,27 @@ def _safe_repo_path(value: str, label: str) -> Path:
     except ValueError as exc:
         raise DispatchError(f"{label} escapes repository: {value}") from exc
     return candidate
+
+
+def _validated_runtime_partition(lane_id: str, lane: dict[str, Any]) -> dict[str, Any]:
+    work_unit = lane.get("runtime_partition_input")
+    if not isinstance(work_unit, dict):
+        raise DispatchError(f"lane {lane_id} runtime_partition_input must be an object")
+    if work_unit.get("work_unit_id") != lane_id:
+        raise DispatchError(f"lane {lane_id} runtime work_unit_id must equal lane_id")
+    try:
+        decision = runtime_partition.partition_work_unit(work_unit)
+    except runtime_partition.RuntimePartitionError as exc:
+        raise DispatchError(f"lane {lane_id} runtime partition invalid: {exc}") from exc
+    expected = runtime_partition.project_p04(decision)
+    declared = lane.get("runtime_partition")
+    if not isinstance(declared, dict):
+        raise DispatchError(f"lane {lane_id} runtime_partition must be an object")
+    if declared != expected:
+        raise DispatchError(
+            f"lane {lane_id} runtime_partition does not match planning.runtime_partition projection"
+        )
+    return expected
 
 
 def _topological_waves(lanes: dict[str, dict[str, Any]]) -> list[list[str]]:
@@ -142,6 +168,7 @@ def validate_manifest(manifest: dict[str, Any]) -> dict[str, Any]:
         _nonempty(lane.get("convergence_owner"), f"lane {lane_id} convergence_owner")
         if lane.get("status") not in allowed_statuses:
             raise DispatchError(f"lane {lane_id} has invalid status: {lane.get('status')!r}")
+        projected_partition = _validated_runtime_partition(lane_id, lane)
 
         adapter = lane.get("adapter")
         if not isinstance(adapter, dict):
@@ -173,7 +200,11 @@ def validate_manifest(manifest: dict[str, Any]) -> dict[str, Any]:
             _nonempty(launch.get("operation"), f"lane {lane_id} runtime operation")
             if not isinstance(launch.get("arguments"), dict):
                 raise DispatchError(f"lane {lane_id} runtime arguments must be an object")
-        lanes[lane_id] = {**lane, "dependencies": dependencies}
+        lanes[lane_id] = {
+            **lane,
+            "dependencies": dependencies,
+            "runtime_partition": projected_partition,
+        }
 
     known = set(lanes)
     for lane_id, lane in lanes.items():
