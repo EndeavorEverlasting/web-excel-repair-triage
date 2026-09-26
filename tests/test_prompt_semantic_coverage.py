@@ -716,5 +716,40 @@ class Sprint2LifecycleGateTests(unittest.TestCase):
             )
 
 
+    def test_psc018_validator_rejects_growth_receipt_without_rationale(self) -> None:
+        contract = json.loads(
+            (ROOT / "harness" / "contracts" / "prompt-semantic-coverage.v1.json").read_text(
+                encoding="utf-8"
+            )
+        )
+        lifecycle = contract["mutation_lifecycle"]
+        receipt = {
+            field: "proof"
+            for field in lifecycle["required_receipt_fields"]
+        }
+        receipt.update(
+            {
+                "operation": "STRENGTHEN",
+                "compression_disposition": "GROWTH_JUSTIFIED",
+                "compression_rationale": "   ",
+                "portfolio_coverage_preserved": True,
+                "lost_protected_capabilities": [],
+            }
+        )
+        migration = {
+            "migration_id": "PSC018-NEGATIVE-GROWTH-NO-RATIONALE",
+            "migration_kind": "STRENGTHEN",
+            "mutation_lifecycle": receipt,
+        }
+        errors = semantic_validator.check_psc018_mutation_receipt(
+            migration,
+            contract,
+            lifecycle["legacy_migration_count_before_psc018"],
+        )
+        self.assertTrue(any("PSC018-NEGATIVE-GROWTH-NO-RATIONALE" in error for error in errors))
+        self.assertTrue(any("compression rationale" in error for error in errors))
+
+
+
 if __name__ == "__main__":
     unittest.main()
