@@ -408,17 +408,17 @@ Canonical terminal action: none; no safe actionable work remains
 
 ## TRQ-024 — AFKAF donor closeout + TokenCorridor transplant packets
 
-- **Status:** VERIFY
+- **Status:** MERGE
 - **Priority:** P1
 - **Owner:** triage-afkaf-donor-closeout-20260926
 - **Work item:** ledger:TRQ-024
-- **Branch / PR:** `sprint/triage-afkaf-donor-closeout-20260926` + integration PR #651 `feat/operator-state-presentation-20260926`
+- **Branch / PR:** sprint/triage-afkaf-donor-closeout-20260926 / #653; #651+#652 integrated
 - **Scope:** finish Triage-side convergence floor clearing: integrate #651 typed operator-state presentation; classify open Prompt Kit/AFKAF PRs; emit exact TokenCorridor transplant packets for PK-B01A/B02A/B02B/B02C; reconcile this ledger as a continuity index; recenter governance language without claiming M4 cutover; keep compatibility routes explicit
 - **Forbidden:** TokenCorridor destination module mutation; premature M4 authority-cutover claims; removing donor authority before TokenCorridor containment; merging Prompt Kit donor PRs merely to tidy Triage; hand-editing generated Prompt Kit HTML; weakening Operant refresh validators
-- **Dependencies:** `main@0fd4c578610f1c3ae81fadd795ace3bb97d7ebc3` (#650 integrated); TokenCorridor canonical plans remain destination authority
+- **Dependencies:** none
 - **References:** `harness/reports/TRIAGE_AFKAF_DONOR_CLOSEOUT_20260926.md`, `harness/reports/TRIAGE_OPEN_PR_DISPOSITION_20260926.md`, `harness/reports/packets/`, `docs/plans/AFK_FACTORY_INTERFACE_CONVERGENCE_SPRINT_MAP.md`, TokenCorridor remote canonical AFK-FACTORY-CONVERGENCE and M2-PROMPT-KIT-MIGRATION-STATE-PRESENTATION plans
 - **Acceptance gate:** #651 integrated or exact blocker recorded; every open Prompt Kit/AFKAF PR classified; B02 chains have exact packets; ledger validator passes; compatibility obligations explicit; no M4 cutover claim; Sync A handoff deterministic for TokenCorridor PK-B01A
-- **Gate:** PR #652 appendix follow-up merge + closeout docs PR merge
-- **Last proof:** #651 merged as main@e46499fe (head 362f920c); appendix upgrade follow-up PR #652 opened from cherry-pick 5e9cbcba; donor packets on sprint branch
-- **Next action:** Merge PR #652 after required checks are green, then merge the donor-closeout docs PR and stamp PK-B01A with final appendix-containing main SHA
-- **Updated:** 2026-09-26T16:10:00Z
+- **Gate:** none
+- **Last proof:** merge:#651→main@e46499fe; merge:#652→main@c6b6765e contains appendix upgrade 5e9cbcba; ledger validator PASS; packets emitted
+- **Next action:** Merge PR #653 donor-closeout docs/packets into main, then stamp TokenCorridor Sync A complete with main@c6b6765e+
+- **Updated:** 2026-09-26T16:25:00Z

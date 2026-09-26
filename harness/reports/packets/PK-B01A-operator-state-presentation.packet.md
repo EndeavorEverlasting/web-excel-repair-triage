@@ -3,7 +3,7 @@
 **packet_id:** `PK-B01A-operator-state-presentation`  
 **destination:** TokenCorridor M2 / `plans/active/M2-PROMPT-KIT-MIGRATION-STATE-PRESENTATION.*` → PK-B01A  
 **donor_prs:** `#651`  
-**status:** PARTIAL Sync A — #651 on main@e46499fe; appendix upgrade via #652 still required for CodeRabbit gate
+**status:** Sync A COMPLETE — #651+#652 on main@c6b6765e
 
 ## Donor identity
 
