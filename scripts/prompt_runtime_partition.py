@@ -84,6 +84,16 @@ def _validate_provider_access(records: Any) -> tuple[dict[str, Any], ...]:
     return tuple(out)
 
 
+def _reject_transport_url(value: str, field: str) -> None:
+    lowered = value.lower()
+    provider_markers = GOOGLE_PROVIDER_URL_MARKERS + GITHUB_PROVIDER_URL_MARKERS
+    if "://" in lowered or any(marker in lowered for marker in provider_markers):
+        raise RuntimePartitionError(
+            f"{field} is descriptive transport metadata and may not contain a provider URL; "
+            "put provider identity in sanitized_ref under its visibility rules"
+        )
+
+
 def _validate_evidence(records: Any) -> tuple[dict[str, Any], ...]:
     if not isinstance(records, list):
         raise RuntimePartitionError("inherited_evidence must be an array")
@@ -95,10 +105,13 @@ def _validate_evidence(records: Any) -> tuple[dict[str, Any], ...]:
         source_owner = _nonempty(record.get("source_owner"), f"inherited_evidence[{index}].source_owner")
         sanitized_ref = _nonempty(record.get("sanitized_ref"), f"inherited_evidence[{index}].sanitized_ref")
         revision = _nonempty(record.get("revision_or_freshness"), f"inherited_evidence[{index}].revision_or_freshness")
+        _reject_transport_url(source_owner, f"inherited_evidence[{index}].source_owner")
+        _reject_transport_url(revision, f"inherited_evidence[{index}].revision_or_freshness")
         visibility = record.get("visibility")
         if not isinstance(visibility, str) or visibility not in VISIBILITY:
             raise RuntimePartitionError(f"inherited_evidence[{index}].visibility is invalid")
         proof_ceiling = _nonempty(record.get("proof_ceiling"), f"inherited_evidence[{index}].proof_ceiling")
+        _reject_transport_url(proof_ceiling, f"inherited_evidence[{index}].proof_ceiling")
         public_provider_ref_verified = record.get("public_provider_ref_verified", False)
         if not isinstance(public_provider_ref_verified, bool):
             raise RuntimePartitionError(
@@ -218,7 +231,7 @@ def project_p05(decision: PartitionDecision) -> dict[str, Any]:
 def _read_work_unit(location: str) -> dict[str, Any]:
     try:
         raw = sys.stdin.read() if location == "-" else Path(location).read_text(encoding="utf-8")
-    except OSError as exc:
+    except (OSError, UnicodeError) as exc:
         raise RuntimePartitionError(f"unable to read work unit input: {exc}") from exc
     try:
         value = json.loads(raw)
