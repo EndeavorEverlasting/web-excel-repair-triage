@@ -59,6 +59,7 @@
     "tests/test_prompt_runtime_compliance_runner.py",
     "tests/test_prompt_runtime_compliance_validator.py",
     "tests/test_prompt_runtime_compliance_validator_hardening.py",
+    "tests/test_prompt_runtime_partition_prompt.py",
     "tests/test_prompt_strength_contract_prompt.py",
     "tests/test_repository_local_proof_continuity_prompt.py",
     "tests/test_repository_versioning_system_prompt.py",
