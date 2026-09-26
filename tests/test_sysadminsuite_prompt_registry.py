@@ -255,6 +255,8 @@ class SysAdminSuitePromptRegistryTests(unittest.TestCase):
                     "tests/test_sysadminsuite_prompt_registry.py",
                     "--rationale",
                     "Synthetic lifecycle edit proves PSC009 disposition and atomic persistence.",
+                    "--compression-disposition",
+                    "PRESERVE",
                 ],
                 cwd=sandbox,
                 text=True,

@@ -47,6 +47,7 @@ class SemanticCoverageContractTests(unittest.TestCase):
             "PSC013",  # SOURCE_HISTORY_COMPLETE
             "PSC014",  # LIFECYCLE_TRANSITION_ATOMIC
             "PSC015",  # SOURCE_AND_CAPABILITY_MIGRATION_LINK
+            "PSC018",  # HOLISTIC_NON_WEAKENING_MUTATION_LIFECYCLE
         }
         self.assertTrue(required_rules.issubset(psc_ids))
 
@@ -635,6 +636,119 @@ class Sprint2LifecycleGateTests(unittest.TestCase):
         )
         self.assertTrue(errors)
         self.assertTrue(any("PSC009" in error for error in errors))
+
+
+    def test_psc018_contract_binds_nonweakening_compression_to_mutation_lifecycle(self) -> None:
+        contract = json.loads(
+            (ROOT / "harness" / "contracts" / "prompt-semantic-coverage.v1.json").read_text(
+                encoding="utf-8"
+            )
+        )
+        lifecycle = contract["mutation_lifecycle"]
+        self.assertEqual(lifecycle["canonical_mutator"], "scripts/prompt_registry_ops.py")
+        self.assertEqual(lifecycle["legacy_migration_count_before_psc018"], 13)
+        self.assertEqual(
+            set(lifecycle["edit_compression_dispositions"]),
+            {"COMPRESS", "PRESERVE", "GROWTH_JUSTIFIED"},
+        )
+        self.assertTrue(any(row["id"] == "PSC018" for row in contract["invariants"]))
+
+    def test_psc018_rejects_nonrequired_cell_weakening_during_strengthen(self) -> None:
+        before = {
+            "prompt_id": "P999",
+            "direct_assignments": [
+                {
+                    "capability_id": "TEST_CAP_018",
+                    "presence": "SUPPORT",
+                    "ownership": "SECONDARY",
+                    "capability_relation": "IMPLEMENTS",
+                    "delivery_source": "CANONICAL_BODY",
+                }
+            ],
+        }
+        after = {
+            "prompt_id": "P999",
+            "direct_assignments": [
+                {
+                    "capability_id": "TEST_CAP_018",
+                    "presence": "AWARE",
+                    "ownership": "NONE",
+                    "capability_relation": "IMPLEMENTS",
+                    "delivery_source": "CANONICAL_BODY",
+                }
+            ],
+        }
+        errors = semantic_validator.check_psc018_holistic_non_weakening_mutation_lifecycle(
+            before,
+            after,
+            {"migration_kind": "STRENGTHEN"},
+        )
+        self.assertTrue(any("weakened presence" in error for error in errors))
+        self.assertTrue(any("weakened ownership" in error for error in errors))
+
+    def test_psc018_compression_receipt_is_deliberate_and_portfolio_preserving(self) -> None:
+        receipt = prompt_registry_ops._build_mutation_lifecycle_receipt(
+            "NO_CAPABILITY_CHANGE",
+            before_record={"copyContent": "x" * 1000},
+            after_record={"copyContent": "x" * 800},
+            compression_disposition="COMPRESS",
+            compression_rationale="Remove repeated wording while preserving the accepted semantic profile.",
+            semantic_rationale="Semantic-preserving compaction.",
+            coverage_before={"TEST_CAP_018": ["P999"]},
+            coverage_after={"TEST_CAP_018": ["P999"]},
+        )
+        self.assertEqual(receipt["char_delta"], -200)
+        self.assertEqual(receipt["compression_disposition"], "COMPRESS")
+        self.assertTrue(receipt["portfolio_coverage_preserved"])
+        self.assertEqual(receipt["lost_protected_capabilities"], [])
+
+    def test_psc018_growth_requires_explicit_compression_rationale(self) -> None:
+        with self.assertRaisesRegex(SystemExit, "compression-rationale"):
+            prompt_registry_ops._build_mutation_lifecycle_receipt(
+                "STRENGTHEN",
+                before_record={"copyContent": "x" * 800},
+                after_record={"copyContent": "x" * 900},
+                compression_disposition="GROWTH_JUSTIFIED",
+                compression_rationale="",
+                semantic_rationale="Add a unique failure contract.",
+                coverage_before={"TEST_CAP_018": ["P999"]},
+                coverage_after={"TEST_CAP_018": ["P999"]},
+            )
+
+
+    def test_psc018_validator_rejects_growth_receipt_without_rationale(self) -> None:
+        contract = json.loads(
+            (ROOT / "harness" / "contracts" / "prompt-semantic-coverage.v1.json").read_text(
+                encoding="utf-8"
+            )
+        )
+        lifecycle = contract["mutation_lifecycle"]
+        receipt = {
+            field: "proof"
+            for field in lifecycle["required_receipt_fields"]
+        }
+        receipt.update(
+            {
+                "operation": "STRENGTHEN",
+                "compression_disposition": "GROWTH_JUSTIFIED",
+                "compression_rationale": "   ",
+                "portfolio_coverage_preserved": True,
+                "lost_protected_capabilities": [],
+            }
+        )
+        migration = {
+            "migration_id": "PSC018-NEGATIVE-GROWTH-NO-RATIONALE",
+            "migration_kind": "STRENGTHEN",
+            "mutation_lifecycle": receipt,
+        }
+        errors = semantic_validator.check_psc018_mutation_receipt(
+            migration,
+            contract,
+            lifecycle["legacy_migration_count_before_psc018"],
+        )
+        self.assertTrue(any("PSC018-NEGATIVE-GROWTH-NO-RATIONALE" in error for error in errors))
+        self.assertTrue(any("compression rationale" in error for error in errors))
+
 
 
 if __name__ == "__main__":

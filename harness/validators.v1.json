@@ -423,7 +423,7 @@
       "command": "python3 scripts/validate_prompt_semantic_coverage.py",
       "blocking": true,
       "output": "process log",
-      "proof_ceiling": "Static semantic coverage PSC001-PSC016 enforcement, profile integrity, capability catalog consistency, and migration chain proof."
+      "proof_ceiling": "Static semantic coverage PSC001-PSC018 enforcement, profile integrity, capability catalog consistency, and migration chain proof."
     },
     {
       "id": "prompt-semantic-coverage-tests",
@@ -431,7 +431,7 @@
       "command": "python3 -m unittest tests.test_prompt_semantic_coverage tests.test_prompt_semantic_validator_1b -v",
       "blocking": true,
       "output": "process log",
-      "proof_ceiling": "Executable semantic coverage validator regression proof with positive and negative lifecycle fixtures."
+      "proof_ceiling": "Executable semantic coverage validator regression proof with positive/negative lifecycle fixtures including PSC018 non-weakening and compression behavior."
     }
   ],
   "profiles": {

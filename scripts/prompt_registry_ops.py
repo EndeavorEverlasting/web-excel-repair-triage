@@ -44,6 +44,7 @@ SEMANTIC_MIGRATIONS_PATH = REPO_ROOT / "harness" / "prompt-topology" / "prompt-c
 SEMANTIC_CATALOG_PATH = REPO_ROOT / "harness" / "prompt-topology" / "semantic-capability-catalog.v1.json"
 QUALITY_MIGRATIONS_PATH = REPO_ROOT / "harness" / "prompt-compilation" / "prompt-semantic-migrations.v1.json"
 PROMPT_STRENGTH_PATH = REPO_ROOT / "harness" / "contracts" / "prompt-strength.v1.json"
+SEMANTIC_CONTRACT_PATH = REPO_ROOT / "harness" / "contracts" / "prompt-semantic-coverage.v1.json"
 BACKUP_ROOT = REPO_ROOT / "Outputs" / "backups"
 
 PRESENCE_ORDER = ["NONE", "AWARE", "SUPPORT", "REQUIRED"]
@@ -465,6 +466,16 @@ def add_prompt(
         coverage_before=simulate_global_coverage(profiles_data.get("profiles", [])),
         coverage_after=simulate_global_coverage(prospective_profiles),
     )
+    capability_migration["mutation_lifecycle"] = _build_mutation_lifecycle_receipt(
+        "ADD",
+        before_record=None,
+        after_record=record,
+        compression_disposition=None,
+        compression_rationale="",
+        semantic_rationale=_distinct_residual_rationale(draft["semantic_profile"]),
+        coverage_before=simulate_global_coverage(profiles_data.get("profiles", [])),
+        coverage_after=simulate_global_coverage(prospective_profiles),
+    )
     new_capability_data = _clone_json(capability_data)
     new_capability_data.setdefault("migrations", []).append(capability_migration)
 
@@ -559,6 +570,112 @@ def _load_semantic_profiles() -> dict[str, Any]:
 
 def _load_semantic_catalog() -> dict[str, Any]:
     return json.loads(SEMANTIC_CATALOG_PATH.read_text(encoding="utf-8"))
+
+
+def _load_semantic_contract() -> dict[str, Any]:
+    return json.loads(SEMANTIC_CONTRACT_PATH.read_text(encoding="utf-8"))
+
+
+def _build_mutation_lifecycle_receipt(
+    operation: str,
+    *,
+    before_record: dict[str, Any] | None,
+    after_record: dict[str, Any] | None,
+    compression_disposition: str | None,
+    compression_rationale: str,
+    semantic_rationale: str,
+    coverage_before: dict[str, list[str]],
+    coverage_after: dict[str, list[str]],
+) -> dict[str, Any]:
+    """PSC018: bind semantic non-weakening and deliberate compression to each mutation."""
+    lifecycle = _load_semantic_contract().get("mutation_lifecycle", {})
+    allowed = set(lifecycle.get("edit_compression_dispositions", []))
+
+    before_chars = (
+        len(str(before_record.get("copyContent", "")).strip())
+        if before_record is not None
+        else None
+    )
+    after_chars = (
+        len(str(after_record.get("copyContent", "")).strip())
+        if after_record is not None
+        else None
+    )
+    char_delta = (
+        after_chars - before_chars
+        if before_chars is not None and after_chars is not None
+        else None
+    )
+
+    if operation == "ADD":
+        resolved_compression = "NEW_IDENTITY_COMPACT"
+        resolved_compression_rationale = (
+            compression_rationale.strip()
+            or "New identities have no prior body to compress; distinct-residual and contribution ceilings bound initial size."
+        )
+    elif operation == "RETIRE":
+        resolved_compression = "RETIRE_WITH_COVERAGE"
+        resolved_compression_rationale = (
+            compression_rationale.strip()
+            or "Retirement removes an identity only after equal-or-stronger protected coverage remains and history is retained."
+        )
+    else:
+        resolved_compression = str(compression_disposition or "").strip().upper()
+        if resolved_compression not in allowed:
+            raise SystemExit(
+                "PSC018 HOLISTIC_NON_WEAKENING_MUTATION_LIFECYCLE: "
+                f"edit requires --compression-disposition in {sorted(allowed)}"
+            )
+        if resolved_compression == "COMPRESS" and not (char_delta is not None and char_delta < 0):
+            raise SystemExit(
+                "PSC018 HOLISTIC_NON_WEAKENING_MUTATION_LIFECYCLE: "
+                "COMPRESS requires the canonical copyContent to become shorter"
+            )
+        if resolved_compression == "PRESERVE" and char_delta != 0:
+            raise SystemExit(
+                "PSC018 HOLISTIC_NON_WEAKENING_MUTATION_LIFECYCLE: "
+                "PRESERVE requires copyContent character count to remain unchanged; "
+                "use COMPRESS or GROWTH_JUSTIFIED for a size change"
+            )
+        if resolved_compression == "GROWTH_JUSTIFIED":
+            if not (char_delta is not None and char_delta > 0):
+                raise SystemExit(
+                    "PSC018 HOLISTIC_NON_WEAKENING_MUTATION_LIFECYCLE: "
+                    "GROWTH_JUSTIFIED requires copyContent to grow"
+                )
+            if not compression_rationale.strip():
+                raise SystemExit(
+                    "PSC018 HOLISTIC_NON_WEAKENING_MUTATION_LIFECYCLE: "
+                    "GROWTH_JUSTIFIED requires --compression-rationale explaining why "
+                    "the added semantics cannot be safely recovered through compression"
+                )
+        resolved_compression_rationale = compression_rationale.strip()
+
+    lost = sorted(set(coverage_before) - set(coverage_after))
+    if lost:
+        raise SystemExit(
+            "PSC018 HOLISTIC_NON_WEAKENING_MUTATION_LIFECYCLE: "
+            "protected portfolio coverage would be lost: " + ", ".join(lost)
+        )
+
+    return {
+        "contract_id": "prompt-semantic-coverage#PSC018",
+        "operation": operation,
+        "before_chars": before_chars,
+        "after_chars": after_chars,
+        "char_delta": char_delta,
+        "compression_disposition": resolved_compression,
+        "compression_rationale": resolved_compression_rationale,
+        "semantic_rationale": semantic_rationale.strip(),
+        "coverage_before_fingerprint": _sha256_json(coverage_before),
+        "coverage_after_fingerprint": _sha256_json(coverage_after),
+        "portfolio_coverage_preserved": True,
+        "lost_protected_capabilities": [],
+        "proof_ceiling": (
+            "Canonical/profile/history and protected portfolio coverage only; "
+            "does not prove downstream model obedience or runtime behavior."
+        ),
+    }
 
 
 def _load_semantic_migrations() -> dict[str, Any]:
@@ -1454,6 +1571,16 @@ def retire_prompt(
         coverage_after=simulate_global_coverage(prospective_profiles),
         transfers=transfers,
     )
+    capability_migration["mutation_lifecycle"] = _build_mutation_lifecycle_receipt(
+        "RETIRE",
+        before_record=record,
+        after_record=None,
+        compression_disposition=None,
+        compression_rationale="",
+        semantic_rationale=rationale,
+        coverage_before=simulate_global_coverage(profiles_data.get("profiles", [])),
+        coverage_after=simulate_global_coverage(prospective_profiles),
+    )
     new_capability_data = _clone_json(capability_data)
     new_capability_data.setdefault("migrations", []).append(capability_migration)
 
@@ -1520,6 +1647,8 @@ def edit_prompt(
     disposition: str,
     evidence_refs: list[str],
     rationale: str,
+    compression_disposition: str | None = None,
+    compression_rationale: str = "",
     dry_run: bool = False,
 ) -> dict[str, Any]:
     prompt_id = prompt_id.strip().upper()
@@ -1648,6 +1777,17 @@ def edit_prompt(
         transfers=transfers,
     )
 
+    capability_migration["mutation_lifecycle"] = _build_mutation_lifecycle_receipt(
+        disposition,
+        before_record=record,
+        after_record=new_record,
+        compression_disposition=compression_disposition,
+        compression_rationale=compression_rationale,
+        semantic_rationale=rationale,
+        coverage_before=simulate_global_coverage(profiles_data.get("profiles", [])),
+        coverage_after=simulate_global_coverage(prospective_profiles),
+    )
+
     semantic_errors = semantic_validator.validate_profile_change(
         before_profile,
         after_profile,
@@ -1771,6 +1911,23 @@ def main(argv: list[str] | None = None) -> int:
         help="Focused proof reference; repeat for multiple refs.",
     )
     edit.add_argument("--rationale", required=True, help="Reviewed reason for the body/profile transition.")
+    edit.add_argument(
+        "--compression-disposition",
+        required=True,
+        choices=["COMPRESS", "PRESERVE", "GROWTH_JUSTIFIED"],
+        help=(
+            "PSC018 representation decision: COMPRESS removes redundant body text, "
+            "PRESERVE keeps body size stable, GROWTH_JUSTIFIED requires a reason."
+        ),
+    )
+    edit.add_argument(
+        "--compression-rationale",
+        default="",
+        help=(
+            "Required for GROWTH_JUSTIFIED; explain why the added unique semantics "
+            "cannot be safely recovered through compression."
+        ),
+    )
     edit.add_argument("--dry-run", action="store_true", help="Validate the transition without writing files.")
 
     retire = sub.add_parser(
@@ -1814,6 +1971,8 @@ def main(argv: list[str] | None = None) -> int:
             args.disposition,
             args.evidence_ref,
             args.rationale,
+            args.compression_disposition,
+            args.compression_rationale,
             args.dry_run,
         )
     elif args.command == "retire":
