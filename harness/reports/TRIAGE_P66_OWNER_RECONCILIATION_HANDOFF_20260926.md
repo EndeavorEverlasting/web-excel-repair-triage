@@ -65,4 +65,3 @@ Do **not** close #626 merely to clear the floor. Do **not** relaunch superseded 
 2. Merge #626 when authorized → mark `TRIAGE_PR_626_RECONCILED` satisfied.
 3. Agent Work Graph S2 may then mutate work-item/lane relation contracts **without** rewriting P66 ledger authority.
 4. TC continues W1 PRAM/GHCLI/PMG; LM2 remains TC-owned and out of this lane.
-
