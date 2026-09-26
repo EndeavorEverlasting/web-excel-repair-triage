@@ -269,6 +269,16 @@ process.stdout.write(JSON.stringify(groups.map(function(g){return {name:g.name,i
         self.assertIn("copyContent", confirmation)
         self.assertIn("data-prompt-id", confirmation)
 
+    def test_reduced_motion_forces_immediate_snap_instead_of_css_auto(self) -> None:
+        polish = POLISH_JS.read_text(encoding="utf-8")
+        helper = polish[
+            polish.index("function hotkeyScrollBehavior") :
+            polish.index("function scrollPromptKitTo")
+        ]
+        self.assertIn("prefers-reduced-motion: reduce", helper)
+        self.assertIn("matches)return 'instant'", helper)
+        self.assertNotIn("matches)return 'auto'", helper)
+
     def test_snap_to_prompt_hides_filters_and_prioritizes_prompt_header(self) -> None:
         base = JS.read_text(encoding="utf-8")
         polish = POLISH_JS.read_text(encoding="utf-8")
@@ -276,22 +286,27 @@ process.stdout.write(JSON.stringify(groups.map(function(g){return {name:g.name,i
             polish.index("function promptHasViewportOccludingHeader") : polish.index("function revealPromptShortcutTarget")
         ]
         for marker in (
+            "function focusSelectedPromptContent(card,options)",
             "hideCompactFilters();",
+            "PromptKitInteractionLanguage.focusSelectedContent=focusSelectedPromptContent",
             "function promptHasViewportOccludingHeader()",
             "function promptSnapViewportOffset()",
             "function snapRenderedPromptCardHeader(card,behavior)",
             "window.getComputedStyle(header).position",
             "window.scrollTo({top:top,behavior:scrollBehavior})",
             "root.style.scrollBehavior='auto'",
-            "return snapRenderedPromptCardHeader(card,behavior||hotkeyScrollBehavior())",
+            "return snapRenderedPromptCardHeader(card,hotkeyScrollBehavior(opts.behavior))",
         ):
             self.assertIn(marker, center)
         self.assertNotIn("block:'center'", center)
         self.assertIn("var shouldScroll=!(opts&&typeof opts==='object'&&opts.scroll===false)", base)
+        focus = base[base.index("function focusPromptSelectionElement(el,source)") : base.index("function selectPrompt(id,opts)")]
         selection = base[base.index("function selectPrompt(id,opts)") : base.index("function clearSelectionState()")]
-        self.assertIn("window.positionSelectedPromptBelowChrome(el,'smooth')", selection)
-        self.assertIn("scrollIntoView({behavior:'smooth',block:'nearest'})", selection)
-        self.assertLess(selection.index("positionSelectedPromptBelowChrome"), selection.index("scrollIntoView"))
+        self.assertIn("window.PromptKitInteractionLanguage.focusSelectedContent", focus)
+        self.assertIn("scrollIntoView({behavior:promptMotionScrollBehavior(),block:'nearest'})", focus)
+        self.assertIn("focusPromptSelectionElement(el,source)", selection)
+        self.assertNotIn("behavior:'smooth'", selection)
+        self.assertIn("PromptKitInteractionLanguage.focusSelectedContent=focusSelectedPromptContent", center)
         self.assertIn("window.positionSelectedPromptBelowChrome=positionSelectedPromptBelowChrome", center)
         reveal = polish[
             polish.index("function revealPromptShortcutTarget") : polish.index("function activatePromptShortcutTarget")

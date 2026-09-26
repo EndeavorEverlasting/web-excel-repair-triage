@@ -42,7 +42,8 @@ class PromptKitInteractionHarnessTests(unittest.TestCase):
             interactions.REQUIRED_REQUIREMENT_IDS,
         )
         self.assertIn("implementation_ready", report)
-        self.assertIn("missing_static_markers", report)
+        self.assertTrue(report["implementation_ready"], report["missing_static_markers"])
+        self.assertEqual(report["missing_static_markers"], [])
         self.assertIn("does not prove", report["proof_ceiling"].lower())
 
     def test_synthetic_compliant_source_satisfies_static_gate(self) -> None:
@@ -66,6 +67,19 @@ class PromptKitInteractionHarnessTests(unittest.TestCase):
         checks = interactions.evaluate_source(js)
         self.assertEqual(set(checks), interactions.REQUIRED_REQUIREMENT_IDS)
         self.assertTrue(all(checks.values()), checks)
+
+    def test_deferred_single_click_and_object_literal_double_click_are_recognized(self) -> None:
+        js = """
+        function schedulePromptCardSingleClick(card,id){
+          selectPrompt(id,{source:'pointer',scroll:false});
+          card._copyTimer=setTimeout(function(){copyPrompt(id)},350)
+        }
+        card.onclick=function(e){schedulePromptCardSingleClick(card,p.id)};
+        card.ondblclick=function(e){selectPrompt(p.id,{source:'pointer',scroll:true});showPromptDetail(p.id,card)};
+        """
+        checks = interactions.evaluate_source(js)
+        self.assertTrue(checks["single_click_copy"])
+        self.assertTrue(checks["double_click_expand"])
 
     def test_legacy_single_click_expand_is_detected_as_gap(self) -> None:
         js = """

@@ -48,71 +48,119 @@ def observe(port: int, screenshot: Path):
             page.goto(f"http://127.0.0.1:{port}/web/prompt-kit/index.html", wait_until="domcontentloaded")
             expected = page.evaluate("PROMPTS.find(p => p.id === 'P126').copyContent")
 
-            # Regression: a desktop mouse click on a layout-visible card whose title is
-            # underneath sticky chrome must reposition the title below that chrome.
-            page.evaluate("() => { if(typeof hideCompactFilters==='function')hideCompactFilters(); }")
-            page.wait_for_timeout(100)
-            pointer_positioned = page.evaluate(
-                """() => {
-                  const header=document.querySelector('.header');
-                  const card=document.querySelector('[data-prompt-id="P07"]');
-                  if(!header||!card)return false;
-                  const position=getComputedStyle(header).position;
-                  if(position!=='sticky'&&position!=='fixed')return false;
-                  const hr=header.getBoundingClientRect();
-                  const chromeBottom=Math.max(0,Math.min(innerHeight,hr.bottom));
-                  const cr=card.getBoundingClientRect();
-                  const absoluteTop=(scrollY||pageYOffset||0)+cr.top;
-                  const root=document.documentElement;
-                  const previous=root&&root.style?root.style.scrollBehavior:'';
-                  if(root&&root.style)root.style.scrollBehavior='auto';
-                  try{scrollTo(0,Math.max(0,absoluteTop-Math.max(8,chromeBottom-24)))}
-                  finally{if(root&&root.style)root.style.scrollBehavior=previous}
-                  return true;
-                }"""
-            )
-            page.wait_for_timeout(100)
-            pointer_before = page.evaluate(
-                """() => {
-                  const header=document.querySelector('.header');
-                  const card=document.querySelector('[data-prompt-id="P07"]');
-                  const title=card && card.querySelector('.prompt-header');
-                  const hr=header.getBoundingClientRect(),cr=card.getBoundingClientRect(),tr=title.getBoundingClientRect();
-                  const position=getComputedStyle(header).position;
-                  const chromeBottom=(position==='sticky'||position==='fixed')?Math.max(0,Math.min(innerHeight,hr.bottom)):0;
-                  return {headerPosition:position,chromeBottom:chromeBottom,cardTop:cr.top,cardBottom:cr.bottom,titleTop:tr.top,titleBottom:tr.bottom,viewportHeight:innerHeight};
-                }"""
-            ) if pointer_positioned else {}
-            pointer_target = page.locator('[data-prompt-id="P07"] .prompt-desc')
-            pointer_box = pointer_target.bounding_box() or {}
-            if pointer_box:
-                page.mouse.click(
-                    pointer_box['x'] + min(16, pointer_box['width'] / 2),
-                    pointer_box['y'] + min(12, pointer_box['height'] / 2),
+            # Regression: selecting prompt content is a shared DISCOVERY -> FOCUS action.
+            # Each cycle starts from explicitly expanded discovery chrome and must
+            # succeed on the first real mouse click, not a retry.
+            pointer_cycles = []
+            for prompt_id in ("P07", "P109"):
+                header = page.locator(".header")
+                if "filters-collapsed" in (header.get_attribute("class") or ""):
+                    page.locator("#filterPanelToggle").click()
+                    page.wait_for_timeout(100)
+                card = page.locator(f'[data-prompt-id="{prompt_id}"]')
+                card.scroll_into_view_if_needed()
+                page.wait_for_timeout(100)
+                pointer_target = card.locator(".prompt-desc")
+                pointer_box = pointer_target.bounding_box() or {}
+                if pointer_box:
+                    page.mouse.click(
+                        pointer_box["x"] + min(16, pointer_box["width"] / 2),
+                        pointer_box["y"] + min(12, pointer_box["height"] / 2),
+                    )
+                    page.wait_for_timeout(900)
+                pointer_cycles.append(page.evaluate(
+                    """id => {
+                      const header=document.querySelector('.header');
+                      const toggle=document.getElementById('filterPanelToggle');
+                      const card=document.querySelector('[data-prompt-id="'+id+'"]');
+                      const title=card && card.querySelector('.prompt-header');
+                      const search=document.querySelector('.search-container');
+                      const controls=document.querySelector('.header-controls');
+                      if(!header||!toggle||!card||!title)return {};
+                      const hr=header.getBoundingClientRect(),cr=card.getBoundingClientRect(),tr=title.getBoundingClientRect();
+                      const chromeBottom=Math.max(0,Math.min(innerHeight,hr.bottom));
+                      return {
+                        promptId:id,
+                        collapsed:header.classList.contains('filters-collapsed'),
+                        expandedAttr:toggle.getAttribute('aria-expanded'),
+                        searchDisplay:search?getComputedStyle(search).display:null,
+                        controlsDisplay:controls?getComputedStyle(controls).display:null,
+                        chromeBottom:chromeBottom,
+                        cardTop:cr.top,
+                        titleTop:tr.top,
+                        titleBottom:tr.bottom,
+                        selected:card.getAttribute('data-selected')==='true'
+                      };
+                    }""",
+                    prompt_id,
+                ))
+            pointer_focus_first = bool(
+                len(pointer_cycles) == 2
+                and all(
+                    state.get("collapsed")
+                    and state.get("expandedAttr") == "false"
+                    and state.get("searchDisplay") == "none"
+                    and state.get("controlsDisplay") == "none"
+                    and state.get("selected")
+                    and state.get("cardTop", -999) >= state.get("chromeBottom", 0) + 6
+                    and state.get("cardTop", 9999) <= state.get("chromeBottom", 0) + 28
+                    and state.get("titleTop", -999) >= state.get("chromeBottom", 0) + 6
+                    for state in pointer_cycles
                 )
-                page.wait_for_timeout(900)
-            pointer_after = page.evaluate(
+            )
+            page.locator("#filterPanelToggle").click()
+            page.wait_for_timeout(100)
+            discovery_revealed_after_focus = page.evaluate(
                 """() => {
                   const header=document.querySelector('.header');
-                  const card=document.querySelector('[data-prompt-id="P07"]');
-                  const title=card && card.querySelector('.prompt-header');
-                  const hr=header.getBoundingClientRect(),cr=card.getBoundingClientRect(),tr=title.getBoundingClientRect();
-                  const position=getComputedStyle(header).position;
-                  const chromeBottom=(position==='sticky'||position==='fixed')?Math.max(0,Math.min(innerHeight,hr.bottom)):0;
-                  return {headerPosition:position,chromeBottom:chromeBottom,cardTop:cr.top,titleTop:tr.top,titleBottom:tr.bottom,viewportHeight:innerHeight,selected:card.getAttribute('data-selected')==='true'};
+                  const toggle=document.getElementById('filterPanelToggle');
+                  const search=document.querySelector('.search-container');
+                  const controls=document.querySelector('.header-controls');
+                  const selected=document.querySelector('[data-selected="true"]');
+                  return !!header && !header.classList.contains('filters-collapsed')
+                    && !!toggle && toggle.getAttribute('aria-expanded')==='true'
+                    && !!search && getComputedStyle(search).display!=='none'
+                    && !!controls && getComputedStyle(controls).display!=='none'
+                    && !!selected;
                 }"""
-            ) if pointer_box else {}
-            pointer_header_first = bool(
-                pointer_before
-                and pointer_after
-                and pointer_before['titleTop'] < pointer_before['chromeBottom']
-                and pointer_before['cardBottom'] < pointer_before['viewportHeight']
-                and pointer_after['selected']
-                and pointer_after['cardTop'] >= pointer_after['chromeBottom'] + 6
-                and pointer_after['cardTop'] <= pointer_after['chromeBottom'] + 24
-                and pointer_after['titleTop'] >= pointer_after['chromeBottom'] + 6
-                and pointer_after['titleBottom'] <= pointer_after['viewportHeight']
             )
+            # Double-click must resolve before focus movement so the second click cannot lose its target.
+            double_card = page.locator('[data-prompt-id="P07"]')
+            double_card.scroll_into_view_if_needed()
+            page.wait_for_timeout(100)
+            double_card.locator(".prompt-desc").dblclick()
+            page.wait_for_timeout(250)
+            double_click_detail_open = page.evaluate("""() => {
+              const overlay=document.getElementById('promptDetailOverlay');
+              const card=document.querySelector('[data-prompt-id="P07"]');
+              return !!overlay && overlay.classList.contains('open')
+                && !!card && card.getAttribute('data-selected')==='true';
+            }""")
+            if double_click_detail_open:
+                page.locator(".prompt-detail-close").click()
+                page.wait_for_timeout(100)
+
+            # Slash is a discovery action: it restores hidden chrome before focusing search.
+            focus_card = page.locator('[data-prompt-id="P109"]')
+            focus_card.locator(".prompt-desc").click()
+            page.wait_for_timeout(500)
+            page.keyboard.press("/")
+            page.wait_for_timeout(100)
+            slash_revealed_search = page.evaluate("""() => {
+              const header=document.querySelector('.header');
+              const toggle=document.getElementById('filterPanelToggle');
+              const search=document.getElementById('search');
+              const controls=document.querySelector('.header-controls');
+              const container=search && search.closest('.search-container');
+              return !!header && !header.classList.contains('filters-collapsed')
+                && !!toggle && toggle.getAttribute('aria-expanded')==='true'
+                && !!search && document.activeElement===search
+                && !!container && getComputedStyle(container).display!=='none'
+                && !!controls && getComputedStyle(controls).display!=='none';
+            }""")
+            page.keyboard.press("Escape")
+            page.wait_for_timeout(100)
+
             page.reload(wait_until="domcontentloaded")
             page.wait_for_timeout(100)
 
@@ -270,7 +318,10 @@ def observe(port: int, screenshot: Path):
             screenshot.parent.mkdir(parents=True, exist_ok=True)
             page.screenshot(path=str(screenshot), full_page=False)
             observations = [
-                {"id": "desktop_pointer_selected_header_first", "event": "Desktop mouse selection repositions a selected prompt title below visible sticky chrome instead of accepting layout-visible overlap", "occurred": True, "passed": bool(pointer_header_first), "before": pointer_before, "after": pointer_after},
+                {"id": "desktop_pointer_focus_first_click", "event": "Desktop mouse selection enters shared focus mode on the first click, hides discovery chrome, and positions prompt identity below persistent chrome", "occurred": True, "passed": bool(pointer_focus_first), "cycles": pointer_cycles},
+                {"id": "desktop_pointer_focus_recovery", "event": "Explicit Show filters restores discovery chrome after focus without clearing selection", "occurred": True, "passed": bool(discovery_revealed_after_focus)},
+                {"id": "desktop_double_click_open_stable", "event": "Double-click resolves before focus movement and opens the intended prompt detail", "occurred": True, "passed": bool(double_click_detail_open)},
+                {"id": "slash_reveals_discovery_before_search_focus", "event": "Slash restores discovery chrome before focusing the search input", "occurred": True, "passed": bool(slash_revealed_search)},
                 {"id": "search_escape_recovery", "event": "Slash focuses search; Escape clears and releases populated or empty search and restores global hotkeys", "occurred": True, "passed": bool(all((search_escape["slash_focused"], search_escape["typed_value"] == "P79", search_escape["clear_visible_before"], search_escape["cleared"], search_escape["focus_released"], search_escape["clear_hidden_after"], search_escape["empty_refocused"], search_escape["empty_focus_released"], search_escape["global_hotkey_restored"]))), **search_escape},
                 {"id": "profile_header_hotkeys_a_to_e", "event": "A-E header hotkeys activate their matching profile slots", "occurred": True, "passed": bool(set(profile_hotkeys) == set("ABCDE") and all(profile_hotkeys.values())), "slots": profile_hotkeys},
                 {"id": "hotkey_click_exposes_numeric_route", "event": "Hotkeys button opens the panel, focuses its close control, and exposes the natural numeric route", "occurred": True, "passed": bool(click_focus and click_visible and natural_help_visible), "focused": bool(click_focus), "visible": bool(click_visible)},
@@ -480,6 +531,12 @@ def observe(port: int, screenshot: Path):
                     )
                     quick = mobile_page.locator("#mobileFavoritesQuick")
                     quick.click()
+                    mobile_page.wait_for_timeout(100)
+                    # Focus mode intentionally hides discovery chrome. Re-enter search
+                    # through the phone-native More -> Search adapter before filtering.
+                    mobile_page.locator("#hotkeyHelpToggle").click()
+                    mobile_page.wait_for_timeout(50)
+                    mobile_page.locator('[data-mobile-quick-action="search"]').click()
                     mobile_page.wait_for_timeout(100)
                     mobile_page.locator("#search").fill("definitely-no-favorite-match-xyz")
                     mobile_page.wait_for_timeout(100)

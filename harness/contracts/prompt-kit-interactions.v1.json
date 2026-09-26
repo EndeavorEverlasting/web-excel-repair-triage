@@ -23,13 +23,13 @@
     {
       "id": "single_click_copy",
       "event": "single pointer click or touch tap on any non-control area of a prompt card",
-      "expected": "Treat the whole non-control prompt-card surface as the primary copy target: copy the selected prompt's exact copyContent to the clipboard and show copy acknowledgement without opening detail. This must hold for coarse-pointer/touch tap as well as mouse click; users must not have to scroll through a detail modal to reach Copy.",
+      "expected": "Treat the whole non-control prompt-card surface as the primary copy target: commit canonical selection immediately without viewport movement, then after the gesture is resolved as a single click, focus the selected prompt, copy its exact copyContent to the clipboard, and show copy acknowledgement without opening detail. This must hold for coarse-pointer/touch tap as well as mouse click; users must not have to scroll through a detail modal to reach Copy.",
       "forbidden": "Opening/expanding prompt detail from a card tap/click, or requiring the explicit Copy button before the card can perform its terminal copy action."
     },
     {
       "id": "double_click_expand",
       "event": "double-click on a prompt card",
-      "expected": "Open or expand the selected prompt detail panel exactly once.",
+      "expected": "Open or expand the selected prompt detail panel exactly once. The first click of the gesture must remain stationary long enough for the second click to reach the same card; cancel deferred single-click copy/focus work before opening detail.",
       "forbidden": "Leaving duplicate copy acknowledgements or other duplicate single-click side effects from the double-click gesture."
     },
     {

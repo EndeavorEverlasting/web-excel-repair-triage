@@ -66,6 +66,20 @@ def main() -> int:
                 assert form.is_visible()
                 assert inp.get_attribute('inputmode') == 'numeric'
                 assert page.evaluate("document.activeElement && document.activeElement.id") == 'mobilePromptJumpInput'
+                page.evaluate("""() => {
+                  const original=window.scrollTo.bind(window);
+                  window.__promptKitScrollTrace=[];
+                  window.scrollTo=function(){
+                    const args=Array.from(arguments).map(function(value){
+                      if(value && typeof value==='object')return {top:value.top,behavior:value.behavior,left:value.left};
+                      return value;
+                    });
+                    const before=window.scrollY;
+                    let result;
+                    try{return result=original.apply(window,arguments)}
+                    finally{window.__promptKitScrollTrace.push({args:args,before:before,after:window.scrollY})}
+                  };
+                }""")
                 inp.press_sequentially('111')
                 page.wait_for_timeout(80)
                 assert_detail_closed(page, 'Go to P# must not auto-open the space-heavy detail panel')
@@ -80,7 +94,25 @@ def main() -> int:
                   const hr=header.getBoundingClientRect(),cr=card.getBoundingClientRect(),tr=title.getBoundingClientRect();
                   const position=getComputedStyle(header).position;
                   const chromeBottom=(position==='sticky'||position==='fixed')?Math.max(0,Math.min(innerHeight,hr.bottom)):0;
-                  return {headerPosition:position,chromeBottom:chromeBottom,cardTop:cr.top,titleTop:tr.top,titleBottom:tr.bottom,viewportHeight:innerHeight};
+                  const scrolling=document.scrollingElement;
+                  return {
+                    headerPosition:position,
+                    chromeBottom:chromeBottom,
+                    cardTop:cr.top,
+                    titleTop:tr.top,
+                    titleBottom:tr.bottom,
+                    viewportHeight:innerHeight,
+                    scrollY:window.scrollY,
+                    pageYOffset:window.pageYOffset,
+                    scrollingTag:scrolling&&scrolling.tagName,
+                    scrollingTop:scrolling&&scrolling.scrollTop,
+                    scrollHeight:scrolling&&scrolling.scrollHeight,
+                    clientHeight:scrolling&&scrolling.clientHeight,
+                    htmlOverflow:getComputedStyle(document.documentElement).overflowY,
+                    bodyOverflow:getComputedStyle(document.body).overflowY,
+                    cardConnected:!!card&&card.isConnected,
+                    trace:window.__promptKitScrollTrace||[]
+                  };
                 }""")
                 assert snap_geometry['cardTop'] >= snap_geometry['chromeBottom'] + 6, snap_geometry
                 assert snap_geometry['cardTop'] <= snap_geometry['chromeBottom'] + 24, snap_geometry

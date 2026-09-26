@@ -18,6 +18,7 @@ REQUIRED_CAPABILITY_IDS = {
     "copy_act",
     "locate_known_id",
     "copy_known_id",
+    "focus_selected_content",
     "filters",
     "reference",
     "scroll_edges",
@@ -64,9 +65,23 @@ class PromptKitCrossInputModalityTests(unittest.TestCase):
             "phone_guide",
             "mobile_contract",
             "interaction_contract",
+            "shared_interaction_language_contract",
         ):
             rel = payload["surface"][path_key]
             self.assertTrue((ROOT / rel).is_file(), msg=f"missing surface {rel}")
+
+    def test_focus_selection_converges_on_shared_semantic_action(self) -> None:
+        payload = json.loads(CONTRACT.read_text(encoding="utf-8"))
+        by_id = {item["id"]: item for item in payload["capabilities"]}
+        focus = by_id["focus_selected_content"]
+        self.assertEqual(focus["semantic_action"], "PromptKitInteractionLanguage.focusSelectedContent")
+        self.assertIn("first click", focus["mouse"])
+        self.assertIn("Go to P#", focus["phone"])
+        self.assertIn("DISCOVERY -> FOCUS", " ".join(payload["semantic_convergence_rules"]))
+        shared = json.loads((ROOT / payload["surface"]["shared_interaction_language_contract"]).read_text(encoding="utf-8"))
+        self.assertEqual(shared["contract_id"], "shared-ux-interaction-language")
+        self.assertIn("focus_selected_content", shared["patterns"])
+        self.assertIn("action.focus_selected_content", shared["semantic_tokens"])
 
     def test_phone_reference_converges_on_toggle_ref_not_click_synthesis(self) -> None:
         polish = POLISH.read_text(encoding="utf-8")
