@@ -419,4 +419,6 @@ Canonical terminal action: none; no safe actionable work remains
 - **References:** `harness/reports/TRIAGE_AFKAF_DONOR_CLOSEOUT_20260926.md`, `harness/reports/TRIAGE_OPEN_PR_DISPOSITION_20260926.md`, `harness/reports/packets/`, `docs/plans/AFK_FACTORY_INTERFACE_CONVERGENCE_SPRINT_MAP.md`, TokenCorridor remote canonical AFK-FACTORY-CONVERGENCE and M2-PROMPT-KIT-MIGRATION-STATE-PRESENTATION plans
 - **Acceptance gate:** #651 integrated or exact blocker recorded; every open Prompt Kit/AFKAF PR classified; B02 chains have exact packets; ledger validator passes; compatibility obligations explicit; no M4 cutover claim; Sync A handoff deterministic for TokenCorridor PK-B01A
 - **Gate:** PR #652 appendix follow-up merge + closeout docs PR merge
-- **Last proof:** #651 merged as main@e46499fe (head 362f920c); appendix upgrade follow-up PR #652 opened from cherry-pick 5e9cbcba; donor packets on sprint branch\n- **Next action:** Merge PR #652 after required checks are green, then merge the donor-closeout docs PR and stamp PK-B01A with final appendix-containing main SHA\n- **Updated:** 2026-09-26T16:10:00Z\n
+- **Last proof:** #651 merged as main@e46499fe (head 362f920c); appendix upgrade follow-up PR #652 opened from cherry-pick 5e9cbcba; donor packets on sprint branch
+- **Next action:** Merge PR #652 after required checks are green, then merge the donor-closeout docs PR and stamp PK-B01A with final appendix-containing main SHA
+- **Updated:** 2026-09-26T16:10:00Z
