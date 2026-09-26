@@ -3,7 +3,7 @@
 **packet_id:** `PK-B01A-operator-state-presentation`
 **destination:** TokenCorridor M2 / `plans/active/M2-PROMPT-KIT-MIGRATION-STATE-PRESENTATION.*` → PK-B01A
 **donor_prs:** `#651`
-**status:** Sync A COMPLETE — typed-state code on main@c6b6765e; packets/ledger on main@0a7f1fa6
+**status:** Sync A COMPLETE — typed-state + appendix on main (contains #651/#652); packets/ledger integrated via #653/#656; anatomy amendment via follow-up PR
 
 ## Donor identity
 
@@ -15,8 +15,8 @@
 | prior_head_observed | `fc9da406bffa73c030660d49d3fd7c63c07a244e` |
 | operant_projection_refresh_on_branch | `362f920c` |
 | main_comparison_floor | `0fd4c578610f1c3ae81fadd795ace3bb97d7ebc3` (#650 merged) |
-| integrated_main_sha | `e46499fe` (contains #651 merge of 362f920c; appendix follow-up #652 pending) |
-| merge_sha | provider merge of #651 into main as `e46499fe`; appendix repair PR #652 |
+| integrated_main_sha | `e46499fe` (#651) then `5e9cbcba` lineage (#652 appendix); refreshed main after #653/#656 contains Sync A floor |
+| merge_sha | #651 → `e46499fe`; #652 appendix repair merged after |
 
 ## Exact unique source paths
 

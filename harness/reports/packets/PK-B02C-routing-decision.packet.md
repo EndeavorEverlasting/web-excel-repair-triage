@@ -38,16 +38,19 @@ TokenCorridor PK-B02C routing-decision / Evidence Spine continuation owner.
 
 - Evidence Spine architecture already on main from prior P95 work — port only the **routing-decision compiler/runtime delta** and associated focused tests/map edits unique to #600
 - Do not re-litigate closed Evidence Spine plan history already contained on main
+- **`harness/test-floor.v1.json` tip blob** — tip↔main noise includes reorder/removals vs current main. **Do not transplant tip blob.** Take the **three-dot unique hunk only**: register `tests/test_prompt_routing_decision_prompt.py`. Apply evidence-spine **correlation hunks** (`routing_request_event_id`) only.
 
 ## Forbidden Triage-domain paths
 
 - Excel/OOXML, billing, roster, attendance
 - Unrelated Prompt Kit website chrome
+- Private-input / `Outputs/` triage product surfaces
 
 ## Compatibility obligations
 
 - Routing decisions must consume current registry authority
 - Do not invent a second Evidence Spine ledger
+- Serialize with other active `harness/test-floor.v1.json` writers (`#399`/`#606`/`#629`)
 
 ## Generation rules
 
@@ -62,7 +65,7 @@ git diff --check origin/main...4f5ee2372ed4135238de17c7146b3074a1151757
 
 ## Parity acceptance gate
 
-Current-registry prompt decisions compile deterministically; Evidence Spine runtime continuation behavior covered by focused tests; test-floor registration present without weakening unrelated floor entries.
+Current-registry prompt decisions compile deterministically (`prompt-kit.routing-decision/v1`); Evidence Spine runtime continuation/correlation covered by focused tests; test-floor gains the routing-decision suite entry without dropping unrelated main-registered members.
 
 ## Donor closure gate
 
@@ -72,6 +75,8 @@ Keep #600 open until TokenCorridor Sync C B02C containment; then close as CLOSE_
 
 - Resolving conflicts by dropping unique routing tests
 - Merging into Triage solely to reduce open-PR count
+- Transplanting tip `harness/test-floor.v1.json` and dropping main-registered suite members
+- Inventing parallel authority over registry / `build_prompt_kit_registry`
 - Colliding with active `harness/test-floor.v1.json` writers without serialize
 
 ## Proof ceiling

@@ -1,46 +1,49 @@
 # Open PR disposition — Prompt Kit / AFKAF / retained Triage
 
-**Floor:** `origin/main@0fd4c578610f1c3ae81fadd795ace3bb97d7ebc3`
-**Method:** refreshed `gh pr list`; unique deltas via `git diff --name-only origin/main...<head>`; known donor chains preserved.
+**Classification floor:** `origin/main@0fd4c578610f1c3ae81fadd795ace3bb97d7ebc3`
+**Post-Sync-A note:** `#651`/`#652`/`#653`/`#656` later integrated; re-verify three-dot unique paths before closing any PORT row.
+**Method:** refreshed `gh pr list`; unique deltas via `git diff --name-only origin/main...<head>` + NEW/DIFF blob presence; known donor chains preserved as **intent chains** (not git-stacked).
+**Classifier evidence:** [Classify open Prompt Kit PRs](de1fe02b-0809-4383-bc58-931f5295fe23); [Extract known donor deltas](cda084bb-3dfd-4464-ad65-93e6c0117b11).
+**Amendment 2026-09-26:** corrected under-classified PORT rows and explicit intent-chain anatomy after classifier/donor-delta rejoin.
 
 ## Prompt Kit / AFKAF dispositions
 
 | PR | Disposition | Unique behavior | Destination/owner | Gate |
 | --- | --- | --- | --- | --- |
-| 651 | ACTIVE_COLLISION → integrate then PORT floor | typed operator-state presentation; appendix upgrade; Operant projection refresh on branch | TokenCorridor PK-B01A after merge | merge #651; Sync A handoff |
-| 650 | SUPERSEDED_CONTAINED | mutation non-weakening lifecycle | main@0fd4c578 | already merged; do not redo |
-| 600 | PORT_TO_TOKENCORRIDOR / CLOSE_AFTER_TOKENCORRIDOR_CONTAINMENT | routing-decision compiler; Evidence Spine runtime/tests; test-floor entry | TokenCorridor PK-B02C | destination containment + conflict reconcile |
-| 619 | PORT_TO_TOKENCORRIDOR / CLOSE_AFTER_TOKENCORRIDOR_CONTAINMENT | upstream capability-watch contract/runtime/validator/tests; impact edges; refresh workflow wiring | TokenCorridor PK-B02A (predecessor) | chain with #631; do not flatten |
-| 631 | PORT_TO_TOKENCORRIDOR / CLOSE_AFTER_TOKENCORRIDOR_CONTAINMENT | upstream source-floor freshness/recovery sprint-map extension | TokenCorridor PK-B02A (successor) | preserve #619→#631 semantics |
-| 630 | PORT_TO_TOKENCORRIDOR / CLOSE_AFTER_TOKENCORRIDOR_CONTAINMENT | findability/agent-readability design intent | TokenCorridor PK-B02B (predecessor) | preserve when extracting #636 |
-| 636 | PORT_TO_TOKENCORRIDOR / CLOSE_AFTER_TOKENCORRIDOR_CONTAINMENT | F0 wayfinding baseline + A1 donor prior-art route; evals/fixtures; CONTEXT tests | TokenCorridor PK-B02B (successor) | consume #630 intent |
-| 629 | STALE_NO_UNIQUE_DELTA or SUPERSEDED_CONTAINED (CONFLICTING) | repository organization auditor remnant | n/a unless unique delta survives rebase | proof unique delta before port |
-| 625 | RETAIN_IN_TRIAGE or SUPERSEDED_CONTAINED | deterministic prompt focus UX | Triage Prompt Kit UX until M2 UI packet | refresh vs main UX owners |
-| 606 | ACTIVE_COLLISION / CONFLICTING | S1A Repository SSH Setup re-admit | Triage harness/prompt until resolved | conflict + PSC001 reconcile |
-| 561 | SUPERSEDED_CONTAINED / CONFLICTING | context-to-artifact recovery strengthening | later main/P56 owners | close only after unique-delta proof empty |
-| 491 | SUPERSEDED_CONTAINED / CONFLICTING | P13 writer retirement on displacement | main regression-safety owners | close after empty unique delta |
-| 431 | CLOSE_AFTER_TOKENCORRIDOR_CONTAINMENT | classifier observation mining | TokenCorridor / P141 scout consumers | do not merge merely to clean Triage |
-| 399 | SUPERSEDED_CONTAINED / CONFLICTING | SSH setup completer | superseded by later SSH/bootstrap work | unique-delta proof before close |
-| 393 | SUPERSEDED_CONTAINED / CONFLICTING | tutorial gaps → external resources | operant intake on main | close after empty unique delta |
-| 324 | STALE_NO_UNIQUE_DELTA / CONFLICTING | private feedback transport bridge | n/a | close after empty unique delta |
-| 317 | SUPERSEDED_CONTAINED / CONFLICTING | tutorial outcome-driven | later tutorial owners on main | close after empty unique delta |
-| 313 | STALE_NO_UNIQUE_DELTA / CONFLICTING | P114 network posture | later P114 main | close after empty unique delta |
-| 284 | STALE_NO_UNIQUE_DELTA / CONFLICTING | profile/modality prototype | later modality work on main | close after empty unique delta |
-| 274 | STALE_NO_UNIQUE_DELTA / CONFLICTING | canonical path seam | harness spine on main | close after empty unique delta |
-| 263 | SUPERSEDED_CONTAINED / CONFLICTING | route coverage tutorial | later tutorial/route owners | close after empty unique delta |
-| 260 | STALE_NO_UNIQUE_DELTA | hierarchy state-transition trigger | historical trigger only | close after empty unique delta |
-| 259 | SUPERSEDED_CONTAINED / CONFLICTING | tutorial routing coverage | later tutorial owners | close after empty unique delta |
-| 257 | SUPERSEDED_CONTAINED / CONFLICTING | P77 operator closeout requirement | closeout contract on main | close after empty unique delta |
-| 245 | STALE_NO_UNIQUE_DELTA | favorite gameplay review closeout | stacked on stale #242 | close with #242 chain |
-| 243 | STALE_NO_UNIQUE_DELTA / CLOSE_AFTER_TOKENCORRIDOR_CONTAINMENT | creative workflows + P79 harden | TokenCorridor P79 product if unique | unique-delta scan required |
-| 242 | SUPERSEDED_CONTAINED / CONFLICTING | favorite gameplay dashboard | later UX on main | close after empty unique delta |
-| 240 | SUPERSEDED_CONTAINED / CONFLICTING | registry grounding gate | registry ops on main | close after empty unique delta |
-| 156 | SUPERSEDED_CONTAINED / CONFLICTING | profile-qualified routing | harness routing on main | close after empty unique delta |
-| 119 | STALE_NO_UNIQUE_DELTA (draft) | preservation closeout prompt | n/a | draft close after empty unique delta |
-| 113 | STALE_NO_UNIQUE_DELTA (draft) | prompt passage/canary evals | later eval harness | draft close after empty unique delta |
-| 87 | STALE_NO_UNIQUE_DELTA (draft) | V38 machine-readable registry | superseded by current registry | draft close |
-| 66 | STALE_NO_UNIQUE_DELTA (draft) | V33 GNHF generator | historical | draft close |
-| 57 | STALE_NO_UNIQUE_DELTA (draft) | V21 consolidator | historical | draft close |
+| 651 | SUPERSEDED_CONTAINED (was ACTIVE) | typed operator-state presentation + Operant projection; appendix upgrade via #652 | TokenCorridor PK-B01A floor on Triage main | Sync A done; TC consumes PK-B01A packet |
+| 650 | SUPERSEDED_CONTAINED | mutation non-weakening lifecycle | main (pre-floor) | already merged; do not redo |
+| 600 | PORT_TO_TOKENCORRIDOR / CLOSE_AFTER_TOKENCORRIDOR_CONTAINMENT | routing-decision compiler; Evidence Spine correlation; test-floor +1 entry | TokenCorridor PK-B02C | destination containment; CONFLICTING — replay; tip test-floor exclude |
+| 619 | PORT_TO_TOKENCORRIDOR / CLOSE_AFTER_TOKENCORRIDOR_CONTAINMENT | upstream capability-watch contract/runtime/validator/tests; impact edges; refresh workflow wiring | TokenCorridor PK-B02A Slice A | intent chain with #631; **not** git ancestor of #631 |
+| 631 | PORT_TO_TOKENCORRIDOR / CLOSE_AFTER_TOKENCORRIDOR_CONTAINMENT | source-floor freshness/recovery F0–F6 sprint-map sections only | TokenCorridor PK-B02A Slice B | docs-only; does **not** carry #619 code |
+| 630 | PORT_TO_TOKENCORRIDOR / CLOSE_AFTER_TOKENCORRIDOR_CONTAINMENT | findability/agent-readability design intent (plan) | TokenCorridor PK-B02B Slice A | intent chain; **not** git ancestor of #636 |
+| 636 | PORT_TO_TOKENCORRIDOR / CLOSE_AFTER_TOKENCORRIDOR_CONTAINMENT | F0 wayfinding baseline + A1 donor prior-art route; evals/fixtures; CONTEXT tests | TokenCorridor PK-B02B Slice B | F0+A1 only; preserve #630 intent |
+| 629 | PORT_TO_TOKENCORRIDOR / ACTIVE_COLLISION | **NEW** `tests/test_repository_organization_prompt.py`; DIFF capability migrations + test-floor | TokenCorridor registry (P144) | collide #399/#606 on test-floor/P143 |
+| 625 | PORT_TO_TOKENCORRIDOR | **NEW** `harness/contracts/ux-interaction-language.v1.json` + interaction/discovery validator deltas | TokenCorridor interface UX | collide on shared prompt-kit.js/contracts |
+| 606 | PORT_TO_TOKENCORRIDOR / ACTIVE_COLLISION | P143 SSH setup re-admit; **NEW** ssh setup test; DIFF capability migrations + test-floor | TokenCorridor registry; Triage owns test-floor until split | collide #399/#629/#600 |
+| 561 | SUPERSEDED_CONTAINED | context-to-artifact recovery | floor already has P56 + `tests/test_context_to_artifact_prompt.py` | close after empty unique-delta re-proof |
+| 491 | PORT_TO_TOKENCORRIDOR | **NEW** `tests/test_p13_owner_displacement.py` (+ tmp proof workflow) | TokenCorridor registry ops | PK-B01 displacement proof |
+| 431 | PORT_TO_TOKENCORRIDOR / CLOSE_AFTER_TOKENCORRIDOR_CONTAINMENT | **NEW** `tests/test_prompt_finder_observation_pipeline.py` + feedback-hook deltas | TokenCorridor / P141 scout consumers | do not merge merely to clean Triage |
+| 399 | PORT_TO_TOKENCORRIDOR / ACTIVE_COLLISION | **NEW** `tests/test_repository_ssh_setup_prompt.py`; P143 registry delta; shares test-floor | TokenCorridor registry + Triage test-floor until split | collide #606/#629/#600 |
+| 393 | SUPERSEDED_CONTAINED | tutorial gaps → external resources | operant intake on main | close after empty unique delta |
+| 324 | SUPERSEDED_CONTAINED | private feedback transport bridge | floor AFK router + validate owners | close after empty unique delta |
+| 317 | SUPERSEDED_CONTAINED | tutorial outcome-driven | floor discovery/tutorial owners | close after empty unique delta |
+| 313 | SUPERSEDED_CONTAINED | P114 network posture | floor canary/registry owners | close after empty unique delta |
+| 284 | PORT_TO_TOKENCORRIDOR | profile/modality prototype + design docs/workflows | TokenCorridor interface | design→impl gate |
+| 274 | RETAIN_IN_TRIAGE | canonical path seam / Triage harness | Triage harness | not AFKAF product port |
+| 263 | SUPERSEDED_CONTAINED | route coverage tutorial | floor discovery owners | close after empty unique delta |
+| 260 | STALE_NO_UNIQUE_DELTA | hierarchy state-transition trigger file only | n/a | safe close |
+| 259 | SUPERSEDED_CONTAINED | tutorial routing coverage | floor discovery owners | close after empty unique delta |
+| 257 | SUPERSEDED_CONTAINED | P77 operator closeout requirement | closeout contract on main | close after empty unique delta |
+| 245 | PORT_TO_TOKENCORRIDOR | unique `docs/prompt-kit-preference-gameplay.js` + related UI/tests | TokenCorridor interface/promptkit UX | PK-B01/B02 UX packet |
+| 243 | STALE_NO_UNIQUE_DELTA | only tmp carrier scripts (`.github/workflows/tmp-creative-*`, `scripts/tmp_*`) | n/a | safe close |
+| 242 | SUPERSEDED_CONTAINED | favorite gameplay dashboard | superseded by #245 / floor favorites | close after #245 disposition |
+| 240 | PORT_TO_TOKENCORRIDOR | **NEW** `scripts/prompt_registry_grounding.py` + test | TokenCorridor promptkit builders | collide w/ #629 on ops surfaces |
+| 156 | PORT_TO_TOKENCORRIDOR | **NEW** profile-qualified routing contract/scripts/tests | TokenCorridor interface/harness | active-writer scan before port |
+| 119 | PORT_TO_TOKENCORRIDOR | **NEW** `registry/prompts/preservation-closeout-prompts.v1.json` | TokenCorridor interface/promptkit/registry | PK-B01 registry packet |
+| 113 | PORT_TO_TOKENCORRIDOR | prompt passage/canary/efficiency eval skills + harness eval surface | TokenCorridor harness / interface evals | PK-B04 validator split |
+| 87 | SUPERSEDED_CONTAINED (draft) | V38 machine-readable registry | current registry builders | draft close |
+| 66 | SUPERSEDED_CONTAINED (draft) | V33 GNHF generator | current Prompt Kit registry/site | draft close |
+| 57 | SUPERSEDED_CONTAINED (draft) | V21 consolidator | current registry pipeline | draft close |
 
 ## Retained Triage-domain (non-AFKAF product)
 
@@ -54,7 +57,7 @@
 | 110 | RETAIN_IN_TRIAGE (draft) | NTH monthly artifact harness | Triage billing/artifacts | draft |
 | 89 | RETAIN_IN_TRIAGE (draft) | accessible dark theme | Triage UI | draft |
 | 65 | RETAIN_IN_TRIAGE (draft) | neuron-hours billing evidence | Triage billing | draft |
-| 59 | RETAIN_IN_TRIAGE (draft) | run-context artifact registry spine | Triage harness (may already be on main) | unique-delta proof |
+| 59 | RETAIN_IN_TRIAGE | run-context artifact registry spine | Triage harness | not AFKAF port |
 | 55 | RETAIN_IN_TRIAGE (draft) | Bonita Neuron Track Hours rules | Triage billing | draft |
 | 50 | RETAIN_IN_TRIAGE (draft) | NW PRJ admin log generator | Triage roster/ops | draft |
 | 48 | RETAIN_IN_TRIAGE (draft) | Neuron Track Hours golden profile | Triage billing | draft |
@@ -62,11 +65,17 @@
 | 40 | RETAIN_IN_TRIAGE (draft) | client coordination roles docs | Triage ops docs | draft |
 | 34 | RETAIN_IN_TRIAGE (draft) | April/May billing summary engines | Triage billing | draft |
 
+## ACTIVE_COLLISION evidence
+
+1. **test-floor / P143 cluster** — Shared `harness/test-floor.v1.json` writers: **#399, #600, #606, #629**. Shared P143/ssh test + capability migration/profile files: **#399 ↔ #606 ↔ #629**.
+2. **UI/contract swarm** — `web/prompt-kit/index.html` / shared JS-contracts touched by multiple PORT UX PRs (`#245`, `#625`, historical #651 floor). Treat generated site as builder-owned.
+3. **#651** — was ACTIVE during sprint; now SUPERSEDED_CONTAINED on main after merge + #652 appendix.
+
 ## Count by disposition (Prompt Kit/AFKAF focus)
 
-- PORT_TO_TOKENCORRIDOR / CLOSE_AFTER_TOKENCORRIDOR_CONTAINMENT: #600, #619, #631, #630, #636, (#431/#243 if unique)
-- ACTIVE_COLLISION (integration now): #651
-- SUPERSEDED_CONTAINED / STALE_NO_UNIQUE_DELTA: majority of older CONFLICTING/draft Prompt Kit PRs pending empty unique-delta close
-- RETAIN_IN_TRIAGE: billing/roster/Excel/harness drafts listed above
+- PORT_TO_TOKENCORRIDOR / CLOSE_AFTER_TOKENCORRIDOR_CONTAINMENT: #600, #619, #631, #630, #636, #113, #119, #156, #240, #245, #284, #399, #431, #491, #606, #625, #629
+- ACTIVE_COLLISION (serialize writers): #399, #606, #629 (+ #600 test-floor)
+- SUPERSEDED_CONTAINED / STALE_NO_UNIQUE_DELTA: older consolidators, discovery/P77/P56/AFK-router equivalents, #243 tmp-only, #260 trigger-only
+- RETAIN_IN_TRIAGE: billing/roster/Excel/harness drafts + #59/#274
 
-**Rule:** do not merge Prompt Kit branches merely to clean Triage. Close STALE/SUPERSEDED only after `git diff --name-only origin/main...<head>` proves empty unique behavior or destination containment.
+**Rule:** do not merge Prompt Kit branches merely to clean Triage. Close STALE/SUPERSEDED only after `git diff --name-only origin/main...<head>` proves empty unique behavior or destination containment. Do not treat `#619→#631` or `#630→#636` as git-stacked cherry-pick chains.
