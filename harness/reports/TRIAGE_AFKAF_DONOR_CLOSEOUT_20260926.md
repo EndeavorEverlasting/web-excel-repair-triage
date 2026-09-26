@@ -10,12 +10,12 @@
 
 | Owner | Current state | Unique work | Collision | Exact next action |
 | --- | --- | --- | --- | --- |
-| PR #651 typed operator-state presentation | OPEN MERGEABLE; repair head pushed | shared actionability policy + builder appendix upgrade + closeout tests | Operant refresh path-triggers on builder/index; projection already refreshed on branch | wait required checks; merge; emit Sync A PK-B01A handoff |
-| PR #650 mutation non-weakening lifecycle | MERGED into main@0fd4c578 | none remaining | none | do not redo |
-| PR #600 PK-B02C routing-decision | OPEN CONFLICTING | routing compiler/runtime + Evidence Spine tests | test-floor / Evidence Spine writers | emit packet; TokenCorridor PK-B02C containment |
-| PR #619→#631 PK-B02A capability-watch | OPEN MERGEABLE chain | #619 contract/runtime/validator/tests; #631 freshness recovery plan | intake contract / refresh workflow | emit chain packet; preserve predecessor→successor |
-| PR #630→#636 PK-B02B findability | OPEN MERGEABLE chain | #630 plan; #636 F0+A1 wayfinding evals/context | CONTEXT.md / operant intake skill | emit chain packet; preserve #630 intent with #636 impl |
-| P66 ledger `.ai/WORK_QUEUE.md` | continuity index; stale PK refs possible | Triage-domain TRQ-023 READY; TRQ-007 OPERATOR; TRQ-020 BLOCKED | none for ledger write after #651 | reconcile against current PRs/packets |
+| PR #651 typed operator-state presentation | MERGED on Triage main@f395a5b4 | Sync A / PK-B01A floor | none | TC consumes PK-B01A packet |
+| PR #650 mutation non-weakening lifecycle | MERGED | none remaining | none | do not redo |
+| PR #600 PK-B02C routing-decision | CLOSED_UNMERGED after TC #42 | contained | none | receipt `pk-b02c-containment.v1.json` |
+| PR #619→#631 PK-B02A capability-watch | CLOSED_UNMERGED after TC #41 | contained (intent chain) | none | receipt `pk-b02a-containment.v1.json` |
+| PR #630→#636 PK-B02B findability | CLOSED_UNMERGED after TC #43 | contained (intent chain) | none | receipt `pk-b02b-containment.v1.json` |
+| P66 ledger `.ai/WORK_QUEUE.md` | continuity index refreshed | TRQ-023 READY; TRQ-007 OPERATOR; TRQ-020 DONE; TRQ-025 READY | none | merge floor-clear ledger PR |
 | Generated Prompt Kit site | builder-owned | none for this sprint beyond #651 regen | one writer: `scripts/build_prompt_kit_registry.py` | never hand-edit `web/prompt-kit/index.html` |
 | Operant external resources | tracked projection refreshed on #651 | donor pin drift detector | scheduled refresh vs PR path trigger | keep sync via `scripts/sync_operant_external_resources.py` |
 
@@ -49,8 +49,9 @@ See `harness/reports/TRIAGE_OPEN_PR_DISPOSITION_20260926.md`.
 
 ## Sync events
 
-- **Sync A:** #651 merges → refresh PK-B01A packet with integrated main SHA + merge SHA.
-- **Sync B/C/D:** owned by TokenCorridor containment evidence; Triage closes corresponding donors only after destination proof.
+- **Sync A:** #651 merges → refresh PK-B01A packet with integrated main SHA + merge SHA. **Done** on Triage `main@f395a5b4` (merge `e46499fe` + #652/#653/#656/#657).
+- **Sync B/C/D:** TokenCorridor B02 containment **proven** — TC PR #41 (B02A / #619→#631), #42 (B02C / #600), #43 (B02B / #630→#636) with receipts `artifacts/convergence/pk-b02{a,b,c}-containment.v1.json` on TC main ≥ `9295edd2`. Triage donors CLOSED_UNMERGED 2026-09-26.
+- **Floor-clear continuation 2026-09-26:** STALE #260/#243; SUPERSEDED NEW=0 #561/#393/#313/#257; finish-pass: all 38 remaining opens classified (PORT=21 / RETAIN=17); no further NEW=0 PK closes; no Prompt Kit donor merges; site mirror ≠ M4; TC floor `5691e887`.
 
 ## Amendment — classifier rejoin (2026-09-26)
 

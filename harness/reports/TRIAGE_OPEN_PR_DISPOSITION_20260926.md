@@ -1,81 +1,86 @@
 # Open PR disposition — Prompt Kit / AFKAF / retained Triage
 
-**Classification floor:** `origin/main@0fd4c578610f1c3ae81fadd795ace3bb97d7ebc3`
-**Post-Sync-A note:** `#651`/`#652`/`#653`/`#656` later integrated; re-verify three-dot unique paths before closing any PORT row.
-**Method:** refreshed `gh pr list`; unique deltas via `git diff --name-only origin/main...<head>` + NEW/DIFF blob presence; known donor chains preserved as **intent chains** (not git-stacked).
-**Classifier evidence:** [Classify open Prompt Kit PRs](de1fe02b-0809-4383-bc58-931f5295fe23); [Extract known donor deltas](cda084bb-3dfd-4464-ad65-93e6c0117b11).
-**Amendment 2026-09-26:** corrected under-classified PORT rows and explicit intent-chain anatomy after classifier/donor-delta rejoin.
+**Triage classification floor:** `origin/main@f395a5b485acbf0eff2a6d34576ef4ecd6721bf6` (post-#651/#652/#653/#656/#657)
+**TokenCorridor floor (operator):** `5691e887855eb24021197da0d745496cab3939b5` (includes B02 + AWG-S3 + PK-WEB-FAST plan receipt)
+**B02 containment receipts (TC):** `artifacts/convergence/pk-b02a-containment.v1.json` (PR #41), `pk-b02c-containment.v1.json` (PR #42), `pk-b02b-containment.v1.json` (PR #43)
+**Public site mirror (≠ M4):** https://endeavoreverlasting.github.io/TokenCorridor-prompt-kit-site/
+**Method:** `gh pr list` + `git diff --name-only origin/main...<head>` NEW vs DIFF blob presence.
+**Snapshot open count:** **38** (2026-09-26 finish pass). Cumulative closes this day without Triage merges: STALE #260/#243; B02 donors #600/#619/#631/#630/#636; SUPERSEDED NEW=0 #561/#393/#313/#257.
+**Finish-pass note:** re-scan of remaining Prompt Kit open PRs found **zero** NEW=0 candidates; no additional STALE/SUPERSEDED closes in this bounded batch.
 
-## Prompt Kit / AFKAF dispositions
+## Closed this wave (do not reopen without new unique delta)
 
-| PR | Disposition | Unique behavior | Destination/owner | Gate |
-| --- | --- | --- | --- | --- |
-| 651 | SUPERSEDED_CONTAINED (was ACTIVE) | typed operator-state presentation + Operant projection; appendix upgrade via #652 | TokenCorridor PK-B01A floor on Triage main | Sync A done; TC consumes PK-B01A packet |
-| 650 | SUPERSEDED_CONTAINED | mutation non-weakening lifecycle | main (pre-floor) | already merged; do not redo |
-| 600 | PORT_TO_TOKENCORRIDOR / CLOSE_AFTER_TOKENCORRIDOR_CONTAINMENT | routing-decision compiler; Evidence Spine correlation; test-floor +1 entry | TokenCorridor PK-B02C | destination containment; CONFLICTING — replay; tip test-floor exclude |
-| 619 | PORT_TO_TOKENCORRIDOR / CLOSE_AFTER_TOKENCORRIDOR_CONTAINMENT | upstream capability-watch contract/runtime/validator/tests; impact edges; refresh workflow wiring | TokenCorridor PK-B02A Slice A | intent chain with #631; **not** git ancestor of #631 |
-| 631 | PORT_TO_TOKENCORRIDOR / CLOSE_AFTER_TOKENCORRIDOR_CONTAINMENT | source-floor freshness/recovery F0–F6 sprint-map sections only | TokenCorridor PK-B02A Slice B | docs-only; does **not** carry #619 code |
-| 630 | PORT_TO_TOKENCORRIDOR / CLOSE_AFTER_TOKENCORRIDOR_CONTAINMENT | findability/agent-readability design intent (plan) | TokenCorridor PK-B02B Slice A | intent chain; **not** git ancestor of #636 |
-| 636 | PORT_TO_TOKENCORRIDOR / CLOSE_AFTER_TOKENCORRIDOR_CONTAINMENT | F0 wayfinding baseline + A1 donor prior-art route; evals/fixtures; CONTEXT tests | TokenCorridor PK-B02B Slice B | F0+A1 only; preserve #630 intent |
-| 629 | PORT_TO_TOKENCORRIDOR / ACTIVE_COLLISION | **NEW** `tests/test_repository_organization_prompt.py`; DIFF capability migrations + test-floor | TokenCorridor registry (P144) | collide #399/#606 on test-floor/P143 |
-| 625 | PORT_TO_TOKENCORRIDOR | **NEW** `harness/contracts/ux-interaction-language.v1.json` + interaction/discovery validator deltas | TokenCorridor interface UX | collide on shared prompt-kit.js/contracts |
-| 606 | PORT_TO_TOKENCORRIDOR / ACTIVE_COLLISION | P143 SSH setup re-admit; **NEW** ssh setup test; DIFF capability migrations + test-floor | TokenCorridor registry; Triage owns test-floor until split | collide #399/#629/#600 |
-| 561 | SUPERSEDED_CONTAINED | context-to-artifact recovery | floor already has P56 + `tests/test_context_to_artifact_prompt.py` | close after empty unique-delta re-proof |
-| 491 | PORT_TO_TOKENCORRIDOR | **NEW** `tests/test_p13_owner_displacement.py` (+ tmp proof workflow) | TokenCorridor registry ops | PK-B01 displacement proof |
-| 431 | PORT_TO_TOKENCORRIDOR / CLOSE_AFTER_TOKENCORRIDOR_CONTAINMENT | **NEW** `tests/test_prompt_finder_observation_pipeline.py` + feedback-hook deltas | TokenCorridor / P141 scout consumers | do not merge merely to clean Triage |
-| 399 | PORT_TO_TOKENCORRIDOR / ACTIVE_COLLISION | **NEW** `tests/test_repository_ssh_setup_prompt.py`; P143 registry delta; shares test-floor | TokenCorridor registry + Triage test-floor until split | collide #606/#629/#600 |
-| 393 | SUPERSEDED_CONTAINED | tutorial gaps → external resources | operant intake on main | close after empty unique delta |
-| 324 | SUPERSEDED_CONTAINED | private feedback transport bridge | floor AFK router + validate owners | close after empty unique delta |
-| 317 | SUPERSEDED_CONTAINED | tutorial outcome-driven | floor discovery/tutorial owners | close after empty unique delta |
-| 313 | SUPERSEDED_CONTAINED | P114 network posture | floor canary/registry owners | close after empty unique delta |
-| 284 | PORT_TO_TOKENCORRIDOR | profile/modality prototype + design docs/workflows | TokenCorridor interface | design→impl gate |
-| 274 | RETAIN_IN_TRIAGE | canonical path seam / Triage harness | Triage harness | not AFKAF product port |
-| 263 | SUPERSEDED_CONTAINED | route coverage tutorial | floor discovery owners | close after empty unique delta |
-| 260 | STALE_NO_UNIQUE_DELTA | hierarchy state-transition trigger file only | n/a | safe close |
-| 259 | SUPERSEDED_CONTAINED | tutorial routing coverage | floor discovery owners | close after empty unique delta |
-| 257 | SUPERSEDED_CONTAINED | P77 operator closeout requirement | closeout contract on main | close after empty unique delta |
-| 245 | PORT_TO_TOKENCORRIDOR | unique `docs/prompt-kit-preference-gameplay.js` + related UI/tests | TokenCorridor interface/promptkit UX | PK-B01/B02 UX packet |
-| 243 | STALE_NO_UNIQUE_DELTA | only tmp carrier scripts (`.github/workflows/tmp-creative-*`, `scripts/tmp_*`) | n/a | safe close |
-| 242 | SUPERSEDED_CONTAINED | favorite gameplay dashboard | superseded by #245 / floor favorites | close after #245 disposition |
-| 240 | PORT_TO_TOKENCORRIDOR | **NEW** `scripts/prompt_registry_grounding.py` + test | TokenCorridor promptkit builders | collide w/ #629 on ops surfaces |
-| 156 | PORT_TO_TOKENCORRIDOR | **NEW** profile-qualified routing contract/scripts/tests | TokenCorridor interface/harness | active-writer scan before port |
-| 119 | PORT_TO_TOKENCORRIDOR | **NEW** `registry/prompts/preservation-closeout-prompts.v1.json` | TokenCorridor interface/promptkit/registry | PK-B01 registry packet |
-| 113 | PORT_TO_TOKENCORRIDOR | prompt passage/canary/efficiency eval skills + harness eval surface | TokenCorridor harness / interface evals | PK-B04 validator split |
-| 87 | SUPERSEDED_CONTAINED (draft) | V38 machine-readable registry | current registry builders | draft close |
-| 66 | SUPERSEDED_CONTAINED (draft) | V33 GNHF generator | current Prompt Kit registry/site | draft close |
-| 57 | SUPERSEDED_CONTAINED (draft) | V21 consolidator | current registry pipeline | draft close |
+| PR | Class | Evidence |
+| --- | --- | --- |
+| 600 | CLOSE_AFTER_TOKENCORRIDOR_CONTAINMENT | TC #42 + `pk-b02c-containment.v1.json` |
+| 619, 631 | CLOSE_AFTER_TOKENCORRIDOR_CONTAINMENT | TC #41 + `pk-b02a-containment.v1.json` (intent chain) |
+| 630, 636 | CLOSE_AFTER_TOKENCORRIDOR_CONTAINMENT | TC #43 + `pk-b02b-containment.v1.json` (intent chain) |
+| 260, 243 | STALE_NO_UNIQUE_DELTA | trigger/tmp carriers only |
+| 561, 393, 313, 257 | SUPERSEDED_CONTAINED | NEW=0 vs Triage main; feature on floor |
 
-## Retained Triage-domain (non-AFKAF product)
+## Remaining open — Prompt Kit / AFKAF
 
-| PR | Disposition | Unique behavior | Destination/owner | Gate |
-| --- | --- | --- | --- | --- |
-| 217 | RETAIN_IN_TRIAGE / CONFLICTING | roster ledger range validation | Triage attendance/roster | rebase/reconcile on Excel domain |
-| 146 | RETAIN_IN_TRIAGE (draft) | crash-safe PowerShell runner | Triage harness | draft until Excel/ops need |
-| 140 | RETAIN_IN_TRIAGE (draft) | workbook visual integrity | Triage Excel/OOXML | draft until domain need |
-| 135 | RETAIN_IN_TRIAGE (draft) | delivery sign-off packages | Triage ops | draft |
-| 118 | RETAIN_IN_TRIAGE (draft) | device transfer sign-off | Triage ops | draft |
-| 110 | RETAIN_IN_TRIAGE (draft) | NTH monthly artifact harness | Triage billing/artifacts | draft |
-| 89 | RETAIN_IN_TRIAGE (draft) | accessible dark theme | Triage UI | draft |
-| 65 | RETAIN_IN_TRIAGE (draft) | neuron-hours billing evidence | Triage billing | draft |
-| 59 | RETAIN_IN_TRIAGE | run-context artifact registry spine | Triage harness | not AFKAF port |
-| 55 | RETAIN_IN_TRIAGE (draft) | Bonita Neuron Track Hours rules | Triage billing | draft |
-| 50 | RETAIN_IN_TRIAGE (draft) | NW PRJ admin log generator | Triage roster/ops | draft |
-| 48 | RETAIN_IN_TRIAGE (draft) | Neuron Track Hours golden profile | Triage billing | draft |
-| 45 | RETAIN_IN_TRIAGE (draft) | Candidate Neuron Track Hours | Triage billing | draft |
-| 40 | RETAIN_IN_TRIAGE (draft) | client coordination roles docs | Triage ops docs | draft |
-| 34 | RETAIN_IN_TRIAGE (draft) | April/May billing summary engines | Triage billing | draft |
+| PR | Class | NEW | Evidence / next |
+| --- | --- | --- | --- |
+| 629 | PORT_TO_TOKENCORRIDOR / ACTIVE_COLLISION | 3 | org-auditor + ssh test; collide #399/#606 |
+| 625 | PORT_TO_TOKENCORRIDOR | 1 | `ux-interaction-language.v1.json` |
+| 606 | PORT_TO_TOKENCORRIDOR / ACTIVE_COLLISION | 1 | P143 SSH re-admit test; collide #399/#629 |
+| 544 | PORT_TO_TOKENCORRIDOR | 3 | Cursor failure observatory install |
+| 491 | PORT_TO_TOKENCORRIDOR | 2 | P13 displacement test (+ tmp workflow) |
+| 431 | PORT_TO_TOKENCORRIDOR | 2 | observation pipeline test (+ tmp workflow) |
+| 399 | PORT_TO_TOKENCORRIDOR / ACTIVE_COLLISION | 1 | ssh setup test; collide #606/#629 |
+| 324 | PORT_TO_TOKENCORRIDOR | 2 | feedback bridge script+test |
+| 317 | PORT_TO_TOKENCORRIDOR | 1 | `validate_prompt_finder_outcomes.js` |
+| 284 | PORT_TO_TOKENCORRIDOR | 5 | profile/modality prototype design+tests |
+| 263 | PORT_TO_TOKENCORRIDOR | 2 | route analysis scripts |
+| 259 | PORT_TO_TOKENCORRIDOR | 2 | tutorial-route validator+tests |
+| 245 | PORT_TO_TOKENCORRIDOR | 3 | preference gameplay JS+tests; stacked on #242 |
+| 242 | ACTIVE_COLLISION / PORT survivor=#245 | 3 | favorite dashboard; keep until #245 ported |
+| 240 | PORT_TO_TOKENCORRIDOR | 3 | `prompt_registry_grounding.py`+test |
+| 156 | PORT_TO_TOKENCORRIDOR | 6 | profile-qualified routing |
+| 119 | PORT_TO_TOKENCORRIDOR | 1 | preservation-closeout prompts registry |
+| 113 | PORT_TO_TOKENCORRIDOR | 29 | passage/canary/efficiency eval surface |
+| 87 | PORT_TO_TOKENCORRIDOR (legacy draft) | 83 | V38 registry tree — unique; do not STALE-close |
+| 66 | PORT_TO_TOKENCORRIDOR (legacy draft) | 52 | V33 GNHF — unique; do not STALE-close |
+| 57 | PORT_TO_TOKENCORRIDOR (legacy draft) | 36 | V21 consolidator — unique; do not STALE-close |
 
-## ACTIVE_COLLISION evidence
+## Remaining open — RETAIN_IN_TRIAGE (spreadsheet / ops / harness)
 
-1. **test-floor / P143 cluster** — Shared `harness/test-floor.v1.json` writers: **#399, #600, #606, #629**. Shared P143/ssh test + capability migration/profile files: **#399 ↔ #606 ↔ #629**.
-2. **UI/contract swarm** — `web/prompt-kit/index.html` / shared JS-contracts touched by multiple PORT UX PRs (`#245`, `#625`, historical #651 floor). Treat generated site as builder-owned.
-3. **#651** — was ACTIVE during sprint; now SUPERSEDED_CONTAINED on main after merge + #652 appendix.
+| PR | Class | Domain note |
+| --- | --- | --- |
+| 331 | RETAIN_IN_TRIAGE / CONFLICTING | billing hygiene |
+| 274 | RETAIN_IN_TRIAGE | canonical path seam (Triage harness) |
+| 217 | RETAIN_IN_TRIAGE / CONFLICTING | roster ledger range validation |
+| 146 | RETAIN_IN_TRIAGE (draft) | crash-safe PowerShell runner |
+| 140 | RETAIN_IN_TRIAGE (draft) | workbook visual integrity |
+| 135 | RETAIN_IN_TRIAGE (draft) | delivery sign-off packages |
+| 118 | RETAIN_IN_TRIAGE (draft) | device transfer sign-off |
+| 110 | RETAIN_IN_TRIAGE (draft) | NTH monthly artifact harness |
+| 89 | RETAIN_IN_TRIAGE (draft) | accessible dark theme |
+| 65 | RETAIN_IN_TRIAGE (draft) | neuron-hours billing evidence |
+| 59 | RETAIN_IN_TRIAGE | run-context / artifact registry spine |
+| 55 | RETAIN_IN_TRIAGE (draft) | Bonita Neuron Track Hours rules |
+| 50 | RETAIN_IN_TRIAGE (draft) | NW PRJ admin log generator |
+| 48 | RETAIN_IN_TRIAGE (draft) | Neuron Track Hours golden profile |
+| 45 | RETAIN_IN_TRIAGE (draft) | Candidate Neuron Track Hours |
+| 40 | RETAIN_IN_TRIAGE (draft) | client coordination roles docs |
+| 34 | RETAIN_IN_TRIAGE (draft) | April/May billing summary engines |
 
-## Count by disposition (Prompt Kit/AFKAF focus)
+## Summary counts (open only, n=38)
 
-- PORT_TO_TOKENCORRIDOR / CLOSE_AFTER_TOKENCORRIDOR_CONTAINMENT: #600, #619, #631, #630, #636, #113, #119, #156, #240, #245, #284, #399, #431, #491, #606, #625, #629
-- ACTIVE_COLLISION (serialize writers): #399, #606, #629 (+ #600 test-floor)
-- SUPERSEDED_CONTAINED / STALE_NO_UNIQUE_DELTA: older consolidators, discovery/P77/P56/AFK-router equivalents, #243 tmp-only, #260 trigger-only
-- RETAIN_IN_TRIAGE: billing/roster/Excel/harness drafts + #59/#274
+| Class (mutually exclusive) | Count |
+| --- | --- |
+| PORT_TO_TOKENCORRIDOR (incl. legacy drafts #57/#66/#87 and #242/#245) | 21 |
+| RETAIN_IN_TRIAGE | 17 |
+| **Open total** | **38** |
 
-**Rule:** do not merge Prompt Kit branches merely to clean Triage. Close STALE/SUPERSEDED only after `git diff --name-only origin/main...<head>` proves empty unique behavior or destination containment. Do not treat `#619→#631` or `#630→#636` as git-stacked cherry-pick chains.
+ACTIVE_COLLISION overlays (subset of PORT, not extra opens): #399, #606, #629 (P143/test-floor); #242↔#245 stack.
+
+Closed earlier today (not open): 11 — STALE #260/#243; B02 donors #600/#619/#631/#630/#636; SUPERSEDED #561/#393/#313/#257.
+
+## Rules
+
+1. Do **not** merge Prompt Kit donors into Triage merely to reduce open count.
+2. Close STALE/SUPERSEDED only when NEW-file unique delta is 0 or destination containment is proven.
+3. Leave RETAIN spreadsheet/ops/harness PRs open.
+4. Site mirror ≠ M4 authority cutover.
