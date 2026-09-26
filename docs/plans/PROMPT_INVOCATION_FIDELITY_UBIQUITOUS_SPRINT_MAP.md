@@ -5,7 +5,7 @@
 **Observed donor floor:** `main@c6b6765e640205d7df33b349d5aee133aafbc1ec` (#652 integrated)  
 **Destination authority:** `EndeavorEverlasting/TokenCorridor`  
 **Canonical cross-repository plan:** `plans/active/PROMPT-SCRATCH-UBIQUITOUS-SPRINT-MAP.md` in TokenCorridor  
-**State:** UF-1 READY / donor implementation not yet performed by this planning artifact
+**State:** UF-1A READY / donor implementation not yet performed; TokenCorridor PK-B01A already integrated early and requires UF-1B after this lane
 
 ## Why this donor handoff exists
 
@@ -15,7 +15,29 @@ Prompt Scratch simultaneously established a second planning requirement: the `Ub
 
 This Triage artifact exists so donor-side agents cannot miss the requirement while Prompt Kit authority is still in Triage. TokenCorridor remains the canonical cross-repository planning owner.
 
-## UF-1 — Invocation Fidelity + Matrix Quality
+## Matrix authority map — do not create a generic fourth matrix
+
+Invocation fidelity is one quality projected into three existing matrix families:
+
+| Matrix family | Existing owner | Required UF-1A change |
+| --- | --- | --- |
+| Retrospective prompt-use | `harness/contracts/prompt-retrospective-evaluation.v1.json` + `harness/evals/prompt-retrospective/recent-candidates.v1.json` | Add an invocation-fidelity judgment for a prompt-use event: requested operational execution was honored vs substituted with prompt rewriting. |
+| Semantic capability coverage | prompt-topology semantic capability/profile owners; derived `artifacts/prompt-semantic-coverage/matrix.v1.json` | Represent invocation-execution fidelity as protected operational capability inherited from the canonical shared owner; non-weakening rules must catch loss. |
+| Runtime compliance / P67 | P67 / `harness/evals/repository-ai-evals.v1.json` + runtime-compliance contracts/fixtures | Add an observable invoked-P04 vs explicit-rewrite-intent scenario with typed PASS/FAIL/NOT_APPLICABLE/UNKNOWN outcomes. |
+
+Regression safety (`docs/PROMPT_REGRESSION_SAFETY.md` + `harness/evals/prompt-regression/defect-families.v1.json`) remains the prevention/retention loop and may consume this incident; it is not a duplicate matrix authority.
+
+Current P07 already contains the narrower guard `EXECUTE THE REPO SPRINT. DO NOT REWRITE THIS PROMPT.`. Preserve that as prior local mitigation evidence, but do not mistake it for shared inherited coverage.
+
+## Destination race / recovery
+
+TokenCorridor PR #35 integrated PK-B01A at `cd69f04a001ee0d164c950a1ab80e304b1ca660d` after the UF plan landed. Its containment receipt pins donor main to `e46499fe...`, so it did not consume #652/current donor state or UF-1A.
+
+Do not roll #35 back. UF-1A now produces an exact donor SHA for a new **UF-1B destination delta reconciliation**. UF-2 stays blocked on UF-1B.
+
+The ordering incident itself is a regression case: plan presence on the branch base is not proof that a declared predecessor was executed. Successor gates must bind exact predecessor evidence/identity.
+
+## UF-1A — Invocation Fidelity + Matrix Quality
 
 ### Mission
 
@@ -102,7 +124,7 @@ At minimum:
 
 ### Completion gate
 
-UF-1 closes only when the exact merged Triage main:
+UF-1A closes only when the exact merged Triage main:
 - enforces invocation-vs-mutation intent;
 - carries the matrix merit in the canonical owner;
 - passes negative + positive controls;
@@ -122,7 +144,7 @@ The destination implementation is owned by TokenCorridor after PK-B01A.
 - #652 is integrated; its shared-policy/builder collision is cleared.
 - #653 is a separate docs/ledger/packet writer and remains read-only to UF-1.
 - UF-1 must integrate before the next PK-B01A donor source freeze.
-- After UF-1 merges, TokenCorridor refreshes the donor packet and advances PK-B01A.
+- After UF-1A merges, TokenCorridor performs UF-1B delta reconciliation against the already-integrated PK-B01A destination before UF-2.
 
 ## Proof ceiling
 
