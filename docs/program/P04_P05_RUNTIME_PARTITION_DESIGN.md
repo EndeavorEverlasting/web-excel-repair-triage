@@ -3,7 +3,7 @@
 **Status:** PROTOTYPE / pre-broad-implementation design gate
 **Shared contract:** `harness/contracts/planning-runtime-partition.v1.json`
 **Executable seam:** `scripts/prompt_runtime_partition.py`
-**Focused tests:** `tests/test_prompt_runtime_partition.py`
+**Focused tests:** `tests/test_prompt_runtime_partition_prompt.py`
 
 ## User outcomes
 
