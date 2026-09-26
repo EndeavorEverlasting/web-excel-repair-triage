@@ -1,0 +1,116 @@
+{
+  "schema_version": "issue-centered-work-progression/v1",
+  "contract_id": "web-excel-repair-triage.issue-centered-work-progression.v1",
+  "owner": ".ai/WORK_QUEUE.md",
+  "purpose": "Keep AFK work lifecycle truth on a stable issue, ticket, or repository work item while treating branches, worktrees, pull requests, commits, checks, reviews, and merges as execution-attempt evidence.",
+  "work_identity": {
+    "canonical_unit": "work_item",
+    "preferred_anchor": "issue",
+    "allowed_anchor_patterns": [
+      "^issue:#\\d+$",
+      "^ticket:[A-Za-z0-9._/-]+$",
+      "^ledger:TRQ-\\d{3,}$"
+    ],
+    "forbidden_anchor_prefixes": [
+      "pr:",
+      "branch:",
+      "worktree:",
+      "commit:",
+      "workflow:",
+      "run:",
+      "artifact:",
+      "merge:"
+    ],
+    "rules": [
+      "The work item owns lifecycle state; an execution artifact never becomes the work identity.",
+      "A work item may survive multiple branches, worktrees, pull requests, commits, reviews, failed attempts, or retries.",
+      "Closing or merging an execution artifact does not close the work item unless the DONE gate is independently satisfied.",
+      "In a GitHub-backed repository, use an issue anchor for new substantial work when issue mutation is available; ledger anchors remain valid for legacy/local-only continuity."
+    ]
+  },
+  "execution_evidence": {
+    "ledger_field": "Branch / PR",
+    "role": "attempt_evidence_only",
+    "may_change_without_changing_work_identity": true,
+    "examples": [
+      "branch:feat/example",
+      "worktree:/isolated/path",
+      "pr:#123",
+      "commit:0123456789abcdef0123456789abcdef01234567",
+      "workflow:123456789",
+      "merge:0123456789abcdef0123456789abcdef01234567"
+    ]
+  },
+  "afk_states": [
+    {
+      "id": "READY",
+      "terminal": false,
+      "afk_dispatchable": true,
+      "meaning": "The work item is sufficiently specified, dependencies are satisfied, and an autonomous agent may claim it without asking the operator to reconstruct intent."
+    },
+    {
+      "id": "CLAIMED",
+      "terminal": false,
+      "afk_dispatchable": false,
+      "meaning": "One concrete executor owns the current mutation attempt; the work item remains the lifecycle anchor."
+    },
+    {
+      "id": "VERIFY",
+      "terminal": false,
+      "afk_dispatchable": false,
+      "meaning": "Implementation evidence exists and validation/proof must continue."
+    },
+    {
+      "id": "REVIEW",
+      "terminal": false,
+      "afk_dispatchable": false,
+      "meaning": "Validation evidence exists and review, critique, or repair remains."
+    },
+    {
+      "id": "MERGE",
+      "terminal": false,
+      "afk_dispatchable": false,
+      "meaning": "The exact candidate is ready for integration or an integration gate remains; a PR may be evidence for this state but is not the state owner."
+    },
+    {
+      "id": "OPERATOR",
+      "terminal": false,
+      "afk_dispatchable": false,
+      "meaning": "Progress requires an explicitly human-controlled credential, approval, protected runtime, or other operator-only action."
+    },
+    {
+      "id": "BLOCKED",
+      "terminal": false,
+      "afk_dispatchable": false,
+      "meaning": "A concrete dependency, collision, external failure, or forbidden boundary prevents the next transition."
+    },
+    {
+      "id": "DONE",
+      "terminal": true,
+      "afk_dispatchable": false,
+      "meaning": "The whole work-item acceptance gate is satisfied, durable validation/acceptance proof and durable merge integration proof exist, Gate is none, and no safe actionable work remains."
+    }
+  ],
+  "transition_rules": [
+    "READY may transition to CLAIMED only with a concrete executor and executable next action.",
+    "CLAIMED may advance through VERIFY, REVIEW, and MERGE as evidence strengthens; attempts may be replaced without changing work-item identity.",
+    "BLOCKED and OPERATOR preserve the same work-item identity and exact gate until the dependency changes.",
+    "DONE is a work-item conclusion, not a pull-request conclusion."
+  ],
+  "done_gate": {
+    "merged_pr_alone_sufficient": false,
+    "required": [
+      "acceptance_gate_non_placeholder",
+      "durable_non_merge_validation_or_acceptance_proof",
+      "durable_merge_integration_proof",
+      "gate_none",
+      "canonical_terminal_next_action"
+    ]
+  },
+  "proof_ceiling": "Static repository coordination semantics only. This contract proves issue/ticket-versus-execution-evidence separation, AFK state meaning, gate-state consistency, and durable proof-shape requirements. It does not prove that Acceptance gate prose is semantically satisfied, a live scheduler exists, GitHub Projects is configured, autonomous dispatch occurred, or external runtime behavior succeeded.",
+  "ready_gate": {
+    "gate_must_equal": "none",
+    "unresolved_dependency_rule": "Any unresolved dependency or operator-only prerequisite must be represented by a non-none Dependencies or Gate field and a BLOCKED or OPERATOR state rather than READY. Resolved dependency evidence belongs in References or Last proof before the work item returns to READY.",
+    "dependencies_must_equal": "none"
+  }
+}
