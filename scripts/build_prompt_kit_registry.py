@@ -443,6 +443,10 @@ def apply_actionability_policy(
     has_current_closeout = not closeout_marker or closeout_marker in copy_content
     disposition_marker = str(policy.get("disposition_marker", "")).strip()
     has_current_disposition = not disposition_marker or disposition_marker in copy_content
+    state_presentation_marker = str(policy.get("state_presentation_marker", "")).strip()
+    has_current_state_presentation = (
+        not state_presentation_marker or state_presentation_marker in copy_content
+    )
     if marker not in copy_content:
         strengthened["copyContent"] = f"{copy_content}\n\n{appendix}"
     elif (
@@ -450,6 +454,7 @@ def apply_actionability_policy(
         or not has_current_freshness
         or not has_current_closeout
         or not has_current_disposition
+        or not has_current_state_presentation
     ):
         legacy_start = _policy_section_start(copy_content, marker)
         if legacy_start < 0:
