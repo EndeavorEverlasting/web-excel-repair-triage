@@ -62,7 +62,7 @@
       "proof_ceiling"
     ],
     "rules": [
-      "Tracked evidence may not require a raw private provider URL or identifier.",
+      "Tracked evidence must not contain raw private provider URLs or identifiers; sanitize them regardless of the claimed visibility label.",
       "PROTECTED_EXTERNAL evidence must use an opaque tracked alias and keep the private identity in protected provider transport.",
       "Freshness/revision and proof ceiling travel with the evidence reference."
     ]
@@ -80,9 +80,14 @@
     "P05": "Partition before ordered pack construction; LAUNCH ORDER remains first; already-completed current-runtime work becomes inherited evidence rather than a fake successor sprint."
   },
   "privacy_rules": [
-    "Reject tracked evidence refs containing raw http(s) URLs when visibility is PROTECTED_EXTERNAL.",
-    "Reject obvious Google Drive/Docs URL fragments in PROTECTED_EXTERNAL tracked refs.",
-    "Use opaque aliases such as opaque:prompt-scratch/live-workbook for protected external identities."
+    "Reject raw Google Workspace URLs from tracked evidence regardless of the submitted visibility label.",
+    "PROTECTED_EXTERNAL evidence must use an opaque alias such as opaque:prompt-scratch/live-workbook.",
+    "Visibility metadata never declassifies a private provider identity; provider-private identity remains in protected external transport."
   ],
-  "proof_ceiling": "Prototype/static contract. It proves deterministic placement and projection semantics only; it does not prove provider authentication, prompt-model obedience, local runner availability, or live dispatch."
+  "proof_ceiling": "Prototype/static contract. It proves deterministic placement and projection semantics only; it does not prove provider authentication, prompt-model obedience, local runner availability, or live dispatch.",
+  "already_executed_here": {
+    "type": "boolean",
+    "optional": true,
+    "rule": "May be true only when the selected host is CURRENT_CHAT_RUNTIME; it means the active runtime has already completed the work and P05 must preserve its evidence without emitting a fake successor handoff."
+  }
 }
