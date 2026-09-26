@@ -1,12 +1,12 @@
 name: Temporary S0 state presentation builder
 
 on:
-  pull_request:
-    branches: [main]
-  workflow_dispatch:
+  push:
+    branches:
+      - feat/operator-state-presentation-20260926
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
   build:
@@ -14,8 +14,8 @@ jobs:
     steps:
       - uses: actions/checkout@v7
         with:
-          ref: ${{ github.event.pull_request.head.sha || github.sha }}
-          persist-credentials: false
+          ref: ${{ github.sha }}
+          persist-credentials: true
       - uses: actions/setup-python@v7
         with:
           python-version: "3.11"
@@ -23,17 +23,22 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           python -m pip install -r requirements-test-floor.txt
-      - name: Run S0 focused tests and build canonical Prompt Kit
+      - name: Build canonical Prompt Kit and run S0 focused tests
         run: |
           set -euo pipefail
           python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html
           python -m unittest tests.test_operational_closeout_contract -v
           python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html --check
           git diff --check
-      - name: Upload generated Prompt Kit
-        uses: actions/upload-artifact@v7
-        with:
-          name: s0-state-presentation-generated-${{ github.sha }}
-          path: web/prompt-kit/index.html
-          if-no-files-found: error
-          retention-days: 7
+      - name: Commit generated Prompt Kit when changed
+        run: |
+          set -euo pipefail
+          if git diff --quiet -- web/prompt-kit/index.html; then
+            echo "Generated Prompt Kit already current."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add web/prompt-kit/index.html
+          git commit -m "build(prompt-kit): regenerate operator state presentation"
+          git push origin HEAD:feat/operator-state-presentation-20260926
