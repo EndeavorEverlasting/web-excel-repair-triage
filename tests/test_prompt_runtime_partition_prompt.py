@@ -98,7 +98,7 @@ class RuntimePartitionPrototypeTests(unittest.TestCase):
         payload["inherited_evidence"] = [
             evidence(visibility="PUBLIC_TRACKED", ref="https://drive.google.com/file/d/private-id")
         ]
-        with self.assertRaisesRegex(MOD.RuntimePartitionError, "raw private provider URL"):
+        with self.assertRaisesRegex(MOD.RuntimePartitionError, "raw Google Workspace URL"):
             MOD.partition_work_unit(payload)
 
     def test_private_external_opaque_alias_passes(self) -> None:
