@@ -15,6 +15,19 @@ PR opened is not completion.
 DONE is strict.
 Canonical terminal action: none; no safe actionable work remains
 
+## Continuity index (post-#651 / M2) — compact
+
+| Pointer | State | Authority |
+| --- | --- | --- |
+| Triage `main` | `f395a5b4` (contains #650/#651/#652/#653/#656/#657) | provider default |
+| Disposition table (all open PRs classified) | open=38 → PORT=21 / RETAIN=17 | `harness/reports/TRIAGE_OPEN_PR_DISPOSITION_20260926.md` |
+| Donor closeout + packets | PK-B01A / B02A / B02B / B02C | `harness/reports/TRIAGE_AFKAF_DONOR_CLOSEOUT_20260926.md`, `harness/reports/packets/` |
+| TokenCorridor floor | 5691e887 (B02 + AWG-S3 + PK-WEB-FAST); B02 receipts via TC PRs #41/#42/#43 | remote TokenCorridor |
+| Closed donors (no Triage merge) | #600/#619/#631/#630/#636; STALE #260/#243; SUPERSEDED #561/#393/#313/#257 | no further NEW=0 PK closes this batch |
+| Site mirror (≠ M4) | https://endeavoreverlasting.github.io/TokenCorridor-prompt-kit-site/ | compatibility only |
+| Active Triage READY | TRQ-023 TTI-1 | domain ticket ingestion |
+| Active OPERATOR | TRQ-007 observed pilot | provider auth / workstation |
+
 ## TRQ-001 — Initial repository work ledger adoption
 
 - **Status:** DONE
@@ -340,20 +353,20 @@ Canonical terminal action: none; no safe actionable work remains
 
 ## TRQ-020 — Upstream capability watch + prompt impact sprint map
 
-- **Status:** BLOCKED
+- **Status:** DONE
 - **Priority:** P1
 - **Owner:** upstream-capability-watch-20260920
 - **Work item:** ledger:TRQ-020
-- **Branch / PR:** donor chain `#619` → `#631` (TokenCorridor PK-B02A); historical plan branch `#611` superseded as continuity pointer only
+- **Branch / PR:** historical plan `#611` merged; donors `#619`/`#631` CLOSED_UNMERGED after TokenCorridor PK-B02A
 - **Scope:** classify the missed Matt Pocock `teach` signal; add capability-level identity and observed-vs-processed watch state; preserve external-resource intake as donor discovery authority; add deduped source-change events, impact edges, review-required promotion policy, and P115 visibility routing; reconcile P96/P98/P65 only from evidence; research and then admit authoritative design/skill-authoring donor surfaces; expose receipt-derived capability status; prove synthetic A→B routing and dedupe
-- **Forbidden:** second donor registry; browser telemetry as provider polling; raw donor-body persistence; automatic prompt rewrite/promotion; P79 bypass; human scheduling as the primary parallel-dispatch path; claiming due-time AFK observation from schedule configuration; overwriting open PR #431/#561/#600/#606 owned surfaces without refresh/reconciliation; merging #619/#631 into Triage merely to tidy open PRs
-- **Dependencies:** TokenCorridor PK-B02A containment; donor packets `harness/reports/packets/PK-B02A-upstream-capability-watch.packet.md`; `harness/contracts/operant-external-resource-intake.v1.json`; `.github/workflows/operant-external-resource-refresh.yml`; P102 polling semantics; P115 AFK coordinator; P79 upstream prior-art gate
-- **References:** `docs/plans/UPSTREAM_CAPABILITY_WATCH_SPRINT_MAP.md`, `harness/reports/packets/PK-B02A-upstream-capability-watch.packet.md`, TokenCorridor plans/active/AFK-FACTORY-CONVERGENCE.plan.json (remote canonical), `Outputs/prompt-parallel-dispatch/manifest.json`, `scripts/prompt_kit_afk_signal_router.py`, `registry/prompts/tutorial-discovery-prompts.v1.json`, `web/prompt-kit/resources.v1.json`
-- **Acceptance gate:** five forensic dispositions evidence-typed; per-capability immutable identity tracked separately from repository revision; `last_observed_identity` cannot advance `last_processed_identity` before durable routing; one A→B transition yields one event; zero-impact retains a diagnosable event; P115 receives bounded actionable change evidence; promotion remains review-required; teaching/design changes require owner/semantic proof; user-visible status reads canonical watch/review state; TokenCorridor PK-B02A containment proven before donor PR closure
-- **Gate:** TokenCorridor Sync C B02A containment unproven; donor PRs remain open as CLOSE_AFTER_TOKENCORRIDOR_CONTAINMENT
-- **Last proof:** donor heads #619 `ab35d72f7149e79fcd15cabd5f65ec8081a3470c` and #631 `fb730893b9e73bd06729f4ab8dffed5852ae47c0` inventoried vs main@0fd4c578; transplant packet emitted 2026-09-26
-- **Next action:** TokenCorridor executes PK-B02A from `harness/reports/packets/PK-B02A-upstream-capability-watch.packet.md` without flattening #619→#631; Triage closes donors only after Sync C containment proof
-- **Updated:** 2026-09-26T15:30:00Z
+- **Forbidden:** second donor registry; browser telemetry as provider polling; raw donor-body persistence; automatic prompt rewrite/promotion; P79 bypass; human scheduling as the primary parallel-dispatch path; claiming due-time AFK observation from schedule configuration; merging #619/#631 into Triage merely to tidy open PRs
+- **Dependencies:** none
+- **References:** `docs/plans/UPSTREAM_CAPABILITY_WATCH_SPRINT_MAP.md`, `harness/reports/packets/PK-B02A-upstream-capability-watch.packet.md`, `harness/reports/TRIAGE_OPEN_PR_DISPOSITION_20260926.md`, `harness/contracts/operant-external-resource-intake.v1.json`, `.github/workflows/operant-external-resource-refresh.yml`; remote TokenCorridor PR https://github.com/EndeavorEverlasting/TokenCorridor/pull/41
+- **Acceptance gate:** TokenCorridor PK-B02A containment proven remotely; Triage donor PRs #619/#631 closed without merge; Triage retains operant intake compatibility until named M4/M5 gates
+- **Gate:** none
+- **Last proof:** merge:f395a5b485acbf0eff2a6d34576ef4ecd6721bf6; artifact:harness/reports/packets/PK-B02A-upstream-capability-watch.packet.md; Triage #619/#631 CLOSED_UNMERGED citing TokenCorridor PR #41
+- **Next action:** none; no safe actionable work remains
+- **Updated:** 2026-09-26T20:35:00Z
 
 ## TRQ-021 — P55 repository bootstrap recovery and mainline convergence
 
@@ -419,6 +432,23 @@ Canonical terminal action: none; no safe actionable work remains
 - **References:** `harness/reports/TRIAGE_AFKAF_DONOR_CLOSEOUT_20260926.md`, `harness/reports/TRIAGE_OPEN_PR_DISPOSITION_20260926.md`, `harness/reports/packets/`, `docs/plans/AFK_FACTORY_INTERFACE_CONVERGENCE_SPRINT_MAP.md`, TokenCorridor remote canonical AFK-FACTORY-CONVERGENCE and M2-PROMPT-KIT-MIGRATION-STATE-PRESENTATION plans
 - **Acceptance gate:** #651 integrated or exact blocker recorded; every open Prompt Kit/AFKAF PR classified; B02 chains have exact packets; ledger validator passes; compatibility obligations explicit; no M4 cutover claim; Sync A handoff deterministic for TokenCorridor PK-B01A
 - **Gate:** none
-- **Last proof:** workflow:36242583046 contract PASS; workflow:36242583136 deterministic-test-floor PASS; workflow:36242583033 operational-harness PASS; artifact:harness/reports/packets/PK-B01A-operator-state-presentation.packet.md; merge:0a7f1fa6163b5d36970d139695f94aa0af335dc4; merge:#652→c6b6765e; merge:#651→e46499fe
+- **Last proof:** workflow:36242583046 contract PASS; workflow:36242583136 deterministic-test-floor PASS; workflow:36242583033 operational-harness PASS; artifact:harness/reports/packets/PK-B01A-operator-state-presentation.packet.md; merge:0a7f1fa6163b5d36970d139695f94aa0af335dc4; merge:#652→c6b6765e; merge:#651→e46499fe; merge:#657→f395a5b4 intent-chain/PORT amendment
 - **Next action:** none; no safe actionable work remains
-- **Updated:** 2026-09-26T16:55:00Z
+- **Updated:** 2026-09-26T19:20:00Z
+
+## TRQ-025 — Post-#651 floor-clear + B02 donor closeout
+
+- **Status:** READY
+- **Priority:** P1
+- **Owner:** floor-clear-post651-20260926
+- **Work item:** ledger:TRQ-025
+- **Branch / PR:** `chore/floor-clear-post651-20260926` / PR pending
+- **Scope:** refresh open-PR dispositions against `main@f395a5b4`; close STALE #260/#243; after TokenCorridor B02 containment, close donors #600/#619/#631/#630/#636 without Triage merge; close SUPERSEDED_CONTAINED NEW=0 PRs #561/#393/#313/#257; refresh disposition + continuity index; validate ledger; merge this repair
+- **Forbidden:** merging Prompt Kit donor PRs into Triage to reduce open count; deleting Prompt Kit source; spreadsheet/domain product mutation; new AFK product features in Triage; claiming M4 cutover
+- **Dependencies:** none
+- **References:** `harness/reports/TRIAGE_OPEN_PR_DISPOSITION_20260926.md`, `harness/reports/TRIAGE_AFKAF_DONOR_CLOSEOUT_20260926.md`, `harness/reports/packets/PK-B02A-upstream-capability-watch.packet.md`, `harness/reports/packets/PK-B02B-prompt-findability.packet.md`, `harness/reports/packets/PK-B02C-routing-decision.packet.md`; closed Triage PRs #260 #243 #600 #619 #631 #630 #636 #561 #393 #313 #257; remote TokenCorridor https://github.com/EndeavorEverlasting/TokenCorridor/pull/41 https://github.com/EndeavorEverlasting/TokenCorridor/pull/42 https://github.com/EndeavorEverlasting/TokenCorridor/pull/43
+- **Acceptance gate:** disposition table refreshed for all open PRs; B02 donors closed with TC PR citations; SUPERSEDED/STALE closes evidenced; ledger validator PASS on PR head; this TRQ reaches DONE only after merge integration proof
+- **Gate:** none
+- **Last proof:** Triage main@f395a5b4; open=38 classified PORT=21 RETAIN=17; finish-pass NEW≥1 on remaining PK opens (0 additional closes); artifact:harness/reports/TRIAGE_OPEN_PR_DISPOSITION_20260926.md
+- **Next action:** merge this ledger/disposition repair PR; after merge integration, mark DONE with merge SHA
+- **Updated:** 2026-09-26T20:35:00Z
