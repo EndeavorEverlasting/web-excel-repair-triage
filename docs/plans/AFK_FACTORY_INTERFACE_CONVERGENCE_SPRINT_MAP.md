@@ -1,5 +1,15 @@
 # AFK Factory Interface Convergence Sprint Map
 
+## Provider-truth synchronization — 2026-09-26 (TRIAGE-AFKAF-DONOR-CLOSEOUT)
+
+**Current floors:** Triage `main@0fd4c578` (contains #650); AgentSwitchboard / TokenCorridor floors require provider refresh before use.
+**Donor closeout sprint:** `TRIAGE-AFKAF-DONOR-CLOSEOUT-20260926` — Triage-owned classification, transplant packets, and #651 integration; TokenCorridor remains canonical convergence authority.
+**Immediate shared Prompt Kit floor:** PR #651 typed operator-state presentation (head repair `c638fbc7…`; Operant projection refresh already on branch).
+**Exact transplant packets:** `harness/reports/packets/PK-B01A-*.packet.md`, `PK-B02A-*.packet.md`, `PK-B02B-*.packet.md`, `PK-B02C-*.packet.md`.
+**Open-PR disposition ledger:** `harness/reports/TRIAGE_OPEN_PR_DISPOSITION_20260926.md`.
+**Still-open donor owners:** #600 (B02C), #619→#631 (B02A), #630→#636 (B02B). Do not merge them merely to tidy Triage; TokenCorridor Sync C closes them after containment.
+**No M2/M4 authority cutover is claimed.** Compatibility routes `/prompt-kit/` and `/operant/` remain explicit until M5.
+
 ## Provider-truth synchronization — 2026-09-26
 
 **Current floors:** Triage `main@246739c9`; AgentSwitchboard `main@3348a069`; TokenCorridor `main@e6872144`.
