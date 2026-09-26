@@ -41,10 +41,14 @@ class PromptKitMobileQuickControlsTests(unittest.TestCase):
         self.assertNotIn("window.showPromptDetail(promptId,toggle||null)", jump)
         self.assertIn("document.querySelector('[data-prompt-id=\"'+promptId+'\"]')", jump)
         self.assertIn("card.focus({preventScroll:true})", jump)
+        focus = source[
+            source.index("function focusSelectedPromptContent") : source.index("function centerRenderedPromptCard")
+        ]
         center = source[
             source.index("function centerRenderedPromptCard") : source.index("function revealPromptShortcutTarget")
         ]
-        self.assertIn("hideCompactFilters();", center)
+        self.assertIn("hideCompactFilters();", focus)
+        self.assertIn("PromptKitInteractionLanguage.focusSelectedContent", center)
 
     def test_prefix_collision_requires_explicit_exact_confirmation_without_timing_race(self) -> None:
         source = POLISH.read_text(encoding="utf-8")

@@ -148,15 +148,19 @@ class PromptKitHotkeyCompletionTests(unittest.TestCase):
             "prompt-detail-favorite-btn",
             "type '+promptId.slice(1)+' anytime",
             "shortcut '+promptId.slice(1)+' still available",
-            "centerRenderedPromptCard(id,'instant');",
+            "selectPrompt(id,{source:'detail',scroll:true})",
             "toggleFavoritePromptAndRefreshShortcut(p.id)",
         ):
             self.assertIn(marker, source)
             self.assertIn(marker, deployed)
+        focus = source[
+            source.index("function focusSelectedPromptContent") : source.index("function centerRenderedPromptCard")
+        ]
         center = source[
             source.index("function centerRenderedPromptCard") : source.index("function revealPromptShortcutTarget")
         ]
-        self.assertIn("hideCompactFilters();", center)
+        self.assertIn("hideCompactFilters();", focus)
+        self.assertIn("PromptKitInteractionLanguage.focusSelectedContent", center)
         self.assertIn("return catalogPromptShortcutBindings()", source)
 
     def test_keyboard_digit_grammar_does_not_require_leading_p(self) -> None:

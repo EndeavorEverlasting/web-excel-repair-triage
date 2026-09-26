@@ -172,9 +172,24 @@ def evaluate_source(js: str) -> dict[str, bool]:
     )
     button_body = _assigned_handler(js, "btn.onclick")
 
+    deferred_single_click = bool(
+        "function schedulePromptCardSingleClick(card,id)" in js
+        and "schedulePromptCardSingleClick(card,p.id)" in js
+        and "copyPrompt(id)" in js
+    )
+    assigned_double_click = bool(
+        re.search(r"card\.ondblclick\s*=\s*function.*?showPromptDetail\(p\.id,card\)", js, flags=re.DOTALL)
+    )
+
     return {
-        "single_click_copy": bool(click_body and "copyPrompt(" in click_body and "showPromptDetail(" not in click_body),
-        "double_click_expand": bool(dblclick_body and "showPromptDetail" in dblclick_body),
+        "single_click_copy": bool(
+            (click_body and "copyPrompt(" in click_body and "showPromptDetail(" not in click_body)
+            or deferred_single_click
+        ),
+        "double_click_expand": bool(
+            (dblclick_body and "showPromptDetail" in dblclick_body)
+            or assigned_double_click
+        ),
         "outside_click_collapse_restore": bool(
             overlay_body
             and "closePromptDetail" in overlay_body
