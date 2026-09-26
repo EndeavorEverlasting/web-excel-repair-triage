@@ -4,23 +4,18 @@ on:
   pull_request:
     paths:
       - '.github/workflows/prompt-kit-regenerate-artifact.yml'
-      - 'harness/capabilities.v1.json'
-      - '.ai/skills/prompt-semantic-coverage/SKILL.md'
-      - 'scripts/build_prompt_kit_registry.py'
-      - 'registry/prompts/**'
-      - 'docs/**'
-      - 'harness/prompt-compilation/**'
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout exact candidate
+      - name: Checkout PR head
         uses: actions/checkout@v7
         with:
+          ref: ${{ github.event.pull_request.head.ref }}
           fetch-depth: 0
       - name: Set up Python
         uses: actions/setup-python@v7
@@ -28,13 +23,16 @@ jobs:
           python-version: '3.11'
       - name: Build canonical Prompt Kit through registered generator
         run: |
-          mkdir -p Outputs/generated-prompt-kit
-          python scripts/build_prompt_kit_registry.py --output Outputs/generated-prompt-kit/index.html
-          python scripts/build_prompt_kit_registry.py --output Outputs/generated-prompt-kit/index.html --check
-      - name: Upload exact generated artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: canonical-prompt-kit-regenerated
-          path: Outputs/generated-prompt-kit/index.html
-          if-no-files-found: error
-          retention-days: 1
+          python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html
+          python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html --check
+      - name: Commit generator-owned artifact to PR head
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add web/prompt-kit/index.html
+          if git diff --cached --quiet; then
+            echo "Canonical generated site already current"
+            exit 0
+          fi
+          git commit -m "chore(prompt-kit): regenerate canonical site"
+          git push origin HEAD:${{ github.event.pull_request.head.ref }}
