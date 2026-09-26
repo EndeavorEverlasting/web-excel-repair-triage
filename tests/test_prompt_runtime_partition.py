@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import importlib.util
+import sys
 import unittest
 from pathlib import Path
 
@@ -11,6 +12,7 @@ SPEC = importlib.util.spec_from_file_location(
 )
 MOD = importlib.util.module_from_spec(SPEC)
 assert SPEC.loader is not None
+sys.modules[SPEC.name] = MOD
 SPEC.loader.exec_module(MOD)
 
 
@@ -85,6 +87,14 @@ class RuntimePartitionPrototypeTests(unittest.TestCase):
         with self.assertRaisesRegex(MOD.RuntimePartitionError, "opaque"):
             MOD.partition_work_unit(payload)
 
+    def test_raw_google_url_is_rejected_even_if_mislabeled_public(self) -> None:
+        payload = unit(current_runtime_available=True, current_runtime_authorized=True)
+        payload["inherited_evidence"] = [
+            evidence(visibility="PUBLIC_TRACKED", ref="https://drive.google.com/file/d/private-id")
+        ]
+        with self.assertRaisesRegex(MOD.RuntimePartitionError, "raw private provider URL"):
+            MOD.partition_work_unit(payload)
+
     def test_private_external_opaque_alias_passes(self) -> None:
         payload = unit(current_runtime_available=True, current_runtime_authorized=True)
         payload["inherited_evidence"] = [
@@ -100,6 +110,18 @@ class RuntimePartitionPrototypeTests(unittest.TestCase):
         p05 = MOD.project_p05(decision)
         self.assertEqual(p04["execution_environment"], p05["EXECUTION ENVIRONMENT"])
         self.assertEqual(p04["evidence_inputs"], p05["INHERITED EVIDENCE"])
+
+    def test_already_executed_here_requires_boolean(self) -> None:
+        payload = unit(current_runtime_available=True, current_runtime_authorized=True)
+        payload["already_executed_here"] = "false"
+        with self.assertRaisesRegex(MOD.RuntimePartitionError, "must be boolean"):
+            MOD.partition_work_unit(payload)
+
+    def test_already_executed_here_is_rejected_for_local_work(self) -> None:
+        payload = unit(local_runtime_required=True)
+        payload["already_executed_here"] = True
+        with self.assertRaisesRegex(MOD.RuntimePartitionError, "CURRENT_CHAT_RUNTIME"):
+            MOD.partition_work_unit(payload)
 
     def test_p05_completed_current_runtime_step_is_not_fake_handoff(self) -> None:
         payload = unit(current_runtime_available=True, current_runtime_authorized=True)
