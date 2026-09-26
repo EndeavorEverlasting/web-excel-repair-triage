@@ -1,5 +1,17 @@
 # AFK Factory Interface Convergence Sprint Map
 
+## Provider-truth synchronization — 2026-09-26
+
+**Current floors:** Triage `main@246739c9`; AgentSwitchboard `main@3348a069`; TokenCorridor `main@e6872144`.
+
+- **PR #626 is integrated** and `TRIAGE_P66_OWNER_RECONCILED` is satisfied by `TRIAGE_PR_626_RECONCILED`. P66 work identity/READY-gate authority remains in Triage until an explicit M4-era authority transfer; TokenCorridor must consume it, not rewrite it.
+- The #626 handoff's “next S2” language means **S2's external P66 gate is cleared**. It does **not** remove TokenCorridor Agent Work Graph S2's dependency on S1.
+- Triage's next shared-program contribution is therefore **Agent Work Graph S1 — shared underway-work semantic capability / prompt specializations**, parallel-safe with ASB S3 when it avoids or explicitly reconciles active owners.
+- **Still-open donor owners:** #630 (findability plan), #631 (upstream freshness plan), #636 (wayfinding/context implementation). They are inputs/collision owners, not reasons to fork duplicate semantics.
+- Prompt Kit LM2 remains donor-authoritative here until an exact TokenCorridor transplant packet + active-writer collision scan proves a safe batch. No M2/M4 authority cutover is claimed.
+
+Current shared launch order: **S1 || S3 → S2 → S4 → S5**.
+
 **Shared convergence ID:** `AFK-FACTORY-CONVERGENCE-2026-09-22`
 **Repository:** `EndeavorEverlasting/web-excel-repair-triage`
 **Repository role:** Prompt Kit / AFK Agent Flow — human↔AFK interface foundation
