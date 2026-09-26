@@ -1,0 +1,88 @@
+{
+  "schema_version": "planning-runtime-partition/v1",
+  "contract_id": "planning-runtime-partition",
+  "status": "PROTOTYPE",
+  "purpose": "Provide one executable planning seam shared by P04 and P05 that separates host execution runtime from provider/external access, preserves sanitized inherited evidence, and prevents already-completed current-runtime work from being re-planned as local work.",
+  "owner": "Prompt Kit planning semantics",
+  "consumers": [
+    "P04",
+    "P05"
+  ],
+  "host_execution_environments": [
+    "CURRENT_CHAT_RUNTIME",
+    "LOCAL_AGENT_RUNTIME",
+    "CI_OR_REMOTE_RUNNER",
+    "OPERATOR_OR_PHYSICAL_RUNTIME",
+    "UNKNOWN_RUNTIME"
+  ],
+  "provider_authority_states": [
+    "VERIFIED",
+    "AVAILABLE_UNVERIFIED",
+    "BLOCKED",
+    "UNKNOWN"
+  ],
+  "evidence_visibility": [
+    "PUBLIC_TRACKED",
+    "SANITIZED_OPAQUE",
+    "PROTECTED_EXTERNAL"
+  ],
+  "required_work_unit_fields": [
+    "work_unit_id",
+    "required_capabilities",
+    "capability_facts",
+    "provider_access",
+    "inherited_evidence"
+  ],
+  "capability_facts": {
+    "required_fields": [
+      "current_runtime_available",
+      "current_runtime_authorized",
+      "local_runtime_required",
+      "ci_remote_required",
+      "operator_physical_required"
+    ],
+    "rule": "At most one hard host requirement may be true. Conflicting hard requirements mean the work unit is not atomic and must be split before placement."
+  },
+  "provider_access_record": {
+    "required_fields": [
+      "provider_family",
+      "operation",
+      "authority_state",
+      "mutation_authority"
+    ],
+    "rule": "Provider access is composable metadata and never substitutes for host execution environment."
+  },
+  "evidence_record": {
+    "required_fields": [
+      "evidence_type",
+      "source_owner",
+      "sanitized_ref",
+      "revision_or_freshness",
+      "visibility",
+      "proof_ceiling"
+    ],
+    "rules": [
+      "Tracked evidence may not require a raw private provider URL or identifier.",
+      "PROTECTED_EXTERNAL evidence must use an opaque tracked alias and keep the private identity in protected provider transport.",
+      "Freshness/revision and proof ceiling travel with the evidence reference."
+    ]
+  },
+  "placement_precedence": [
+    "OPERATOR_OR_PHYSICAL_RUNTIME when operator_physical_required is true.",
+    "LOCAL_AGENT_RUNTIME when local_runtime_required is true.",
+    "CI_OR_REMOTE_RUNNER when ci_remote_required is true.",
+    "CURRENT_CHAT_RUNTIME when current_runtime_available and current_runtime_authorized are both true.",
+    "UNKNOWN_RUNTIME otherwise."
+  ],
+  "execution_rule": "CURRENT_CHAT_RUNTIME is executable-now only when both current_runtime_available and current_runtime_authorized are true. All other host placements are handoffs or blocked/owner-resolution states for the active chat.",
+  "projection_rules": {
+    "P04": "Partition before dependency graph and adapter selection; emit placement after LAUNCH ORDER and preserve the typed fields in the dispatch manifest.",
+    "P05": "Partition before ordered pack construction; LAUNCH ORDER remains first; already-completed current-runtime work becomes inherited evidence rather than a fake successor sprint."
+  },
+  "privacy_rules": [
+    "Reject tracked evidence refs containing raw http(s) URLs when visibility is PROTECTED_EXTERNAL.",
+    "Reject obvious Google Drive/Docs URL fragments in PROTECTED_EXTERNAL tracked refs.",
+    "Use opaque aliases such as opaque:prompt-scratch/live-workbook for protected external identities."
+  ],
+  "proof_ceiling": "Prototype/static contract. It proves deterministic placement and projection semantics only; it does not prove provider authentication, prompt-model obedience, local runner availability, or live dispatch."
+}
