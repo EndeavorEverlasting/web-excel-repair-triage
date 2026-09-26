@@ -3,7 +3,11 @@
 
 from __future__ import annotations
 
+import argparse
+import json
+import sys
 from dataclasses import dataclass
+from pathlib import Path
 from typing import Any
 
 
@@ -80,6 +84,16 @@ def _validate_provider_access(records: Any) -> tuple[dict[str, Any], ...]:
     return tuple(out)
 
 
+def _reject_transport_url(value: str, field: str) -> None:
+    lowered = value.lower()
+    provider_markers = GOOGLE_PROVIDER_URL_MARKERS + GITHUB_PROVIDER_URL_MARKERS
+    if "://" in lowered or any(marker in lowered for marker in provider_markers):
+        raise RuntimePartitionError(
+            f"{field} is descriptive transport metadata and may not contain a provider URL; "
+            "put provider identity in sanitized_ref under its visibility rules"
+        )
+
+
 def _validate_evidence(records: Any) -> tuple[dict[str, Any], ...]:
     if not isinstance(records, list):
         raise RuntimePartitionError("inherited_evidence must be an array")
@@ -91,10 +105,13 @@ def _validate_evidence(records: Any) -> tuple[dict[str, Any], ...]:
         source_owner = _nonempty(record.get("source_owner"), f"inherited_evidence[{index}].source_owner")
         sanitized_ref = _nonempty(record.get("sanitized_ref"), f"inherited_evidence[{index}].sanitized_ref")
         revision = _nonempty(record.get("revision_or_freshness"), f"inherited_evidence[{index}].revision_or_freshness")
+        _reject_transport_url(source_owner, f"inherited_evidence[{index}].source_owner")
+        _reject_transport_url(revision, f"inherited_evidence[{index}].revision_or_freshness")
         visibility = record.get("visibility")
         if not isinstance(visibility, str) or visibility not in VISIBILITY:
             raise RuntimePartitionError(f"inherited_evidence[{index}].visibility is invalid")
         proof_ceiling = _nonempty(record.get("proof_ceiling"), f"inherited_evidence[{index}].proof_ceiling")
+        _reject_transport_url(proof_ceiling, f"inherited_evidence[{index}].proof_ceiling")
         public_provider_ref_verified = record.get("public_provider_ref_verified", False)
         if not isinstance(public_provider_ref_verified, bool):
             raise RuntimePartitionError(
@@ -209,3 +226,61 @@ def project_p05(decision: PartitionDecision) -> dict[str, Any]:
         "ALREADY EXECUTED HERE": decision.already_executed_here,
         "RUNTIME HANDOFF": "none" if decision.already_executed_here else decision.execution_environment,
     }
+
+
+def _read_work_unit(location: str) -> dict[str, Any]:
+    try:
+        raw = sys.stdin.read() if location == "-" else Path(location).read_text(encoding="utf-8")
+    except (OSError, UnicodeError) as exc:
+        raise RuntimePartitionError(f"unable to read work unit input: {exc}") from exc
+    try:
+        value = json.loads(raw)
+    except json.JSONDecodeError as exc:
+        raise RuntimePartitionError(f"invalid work unit JSON: {exc}") from exc
+    if not isinstance(value, dict):
+        raise RuntimePartitionError("work unit input must be a JSON object")
+    return value
+
+
+def _decision_projection(decision: PartitionDecision) -> dict[str, Any]:
+    return {
+        "work_unit_id": decision.work_unit_id,
+        "execution_environment": decision.execution_environment,
+        "provider_access": [dict(record) for record in decision.provider_access],
+        "required_capabilities": list(decision.required_capabilities),
+        "evidence_inputs": [dict(record) for record in decision.evidence_inputs],
+        "execute_now": decision.execute_now,
+        "already_executed_here": decision.already_executed_here,
+    }
+
+
+def main(argv: list[str] | None = None) -> int:
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("surface", choices=["decision", "p04", "p05"])
+    parser.add_argument("--input", required=True, help="WorkUnit JSON path, or - for stdin.")
+    args = parser.parse_args(argv)
+    try:
+        decision = partition_work_unit(_read_work_unit(args.input))
+        if args.surface == "p04":
+            projection = project_p04(decision)
+            surface = "P04"
+        elif args.surface == "p05":
+            projection = project_p05(decision)
+            surface = "P05"
+        else:
+            projection = _decision_projection(decision)
+            surface = "DECISION"
+        print(json.dumps({
+            "schema_version": "planning-runtime-partition-cli/v1",
+            "surface": surface,
+            "work_unit_id": decision.work_unit_id,
+            "projection": projection,
+        }, indent=2, sort_keys=True))
+        return 0
+    except RuntimePartitionError as exc:
+        print(f"runtime-partition error: {exc}", file=sys.stderr)
+        return 2
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

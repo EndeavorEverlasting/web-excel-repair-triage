@@ -61,7 +61,47 @@
         "git diff --check"
       ],
       "convergence_owner": "mainline-integration",
-      "status": "PASS"
+      "status": "PASS",
+      "runtime_partition_input": {
+        "work_unit_id": "lane-p537-prompt-strength",
+        "required_capabilities": [
+          "github.provider",
+          "repository.mutation"
+        ],
+        "capability_facts": {
+          "current_runtime_available": true,
+          "current_runtime_authorized": true,
+          "local_runtime_required": false,
+          "ci_remote_required": false,
+          "operator_physical_required": false
+        },
+        "provider_access": [
+          {
+            "provider_family": "github",
+            "operation": "isolated_branch_convergence",
+            "authority_state": "VERIFIED",
+            "mutation_authority": true
+          }
+        ],
+        "inherited_evidence": []
+      },
+      "runtime_partition": {
+        "execution_environment": "CURRENT_CHAT_RUNTIME",
+        "provider_access": [
+          {
+            "provider_family": "github",
+            "operation": "isolated_branch_convergence",
+            "authority_state": "VERIFIED",
+            "mutation_authority": true
+          }
+        ],
+        "required_capabilities": [
+          "github.provider",
+          "repository.mutation"
+        ],
+        "evidence_inputs": [],
+        "execute_now": true
+      }
     }
   ]
 }

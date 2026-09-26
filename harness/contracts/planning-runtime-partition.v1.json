@@ -93,10 +93,21 @@
       "rule": "May be true only with PUBLIC_TRACKED visibility and only when the planner has independently verified that the provider reference is public."
     }
   },
-  "proof_ceiling": "Prototype/static contract. It proves deterministic placement and projection semantics only; it does not prove provider authentication, prompt-model obedience, local runner availability, or live dispatch.",
+  "proof_ceiling": "Deterministic repository implementation and shared P04/P05 projection contract. P04 dispatch can recompute the projection before launch; provider authentication, prompt-model obedience, local runner availability, live runtime-tool dispatch, and P05 canonical-body adoption remain separately proven states.",
   "already_executed_here": {
     "type": "boolean",
     "optional": true,
     "rule": "May be true only when the selected host is CURRENT_CHAT_RUNTIME and inherited_evidence is non-empty; it means the active runtime has already completed the work and P04/P05 must preserve its evidence without emitting repeat execution or a fake successor handoff."
+  },
+  "canonical_implementation": "scripts/prompt_runtime_partition.py",
+  "cli_surface": {
+    "schema_version": "planning-runtime-partition-cli/v1",
+    "commands": [
+      "python scripts/prompt_runtime_partition.py decision --input <work-unit.json>",
+      "python scripts/prompt_runtime_partition.py p04 --input <work-unit.json>",
+      "python scripts/prompt_runtime_partition.py p05 --input <work-unit.json>"
+    ],
+    "stdin_rule": "Use --input - to read one WorkUnit JSON object from stdin.",
+    "nonzero_exit_rule": "Malformed, conflicting, privacy-unsafe, or unsupported WorkUnits exit 2 and must not be projected."
   }
 }
