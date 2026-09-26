@@ -16,6 +16,17 @@ HOSTS = {
 }
 AUTHORITY_STATES = {"VERIFIED", "AVAILABLE_UNVERIFIED", "BLOCKED", "UNKNOWN"}
 VISIBILITY = {"PUBLIC_TRACKED", "SANITIZED_OPAQUE", "PROTECTED_EXTERNAL"}
+GOOGLE_PROVIDER_URL_MARKERS = (
+    "docs.google.com/",
+    "drive.google.com/",
+    "mail.google.com/",
+    "calendar.google.com/",
+)
+GITHUB_PROVIDER_URL_MARKERS = (
+    "github.com/",
+    "api.github.com/",
+    "raw.githubusercontent.com/",
+)
 
 
 class RuntimePartitionError(ValueError):
@@ -55,7 +66,7 @@ def _validate_provider_access(records: Any) -> tuple[dict[str, Any], ...]:
         provider_family = _nonempty(record.get("provider_family"), f"provider_access[{index}].provider_family")
         operation = _nonempty(record.get("operation"), f"provider_access[{index}].operation")
         authority_state = record.get("authority_state")
-        if authority_state not in AUTHORITY_STATES:
+        if not isinstance(authority_state, str) or authority_state not in AUTHORITY_STATES:
             raise RuntimePartitionError(f"provider_access[{index}].authority_state is invalid")
         mutation_authority = record.get("mutation_authority")
         if not isinstance(mutation_authority, bool):
@@ -81,19 +92,30 @@ def _validate_evidence(records: Any) -> tuple[dict[str, Any], ...]:
         sanitized_ref = _nonempty(record.get("sanitized_ref"), f"inherited_evidence[{index}].sanitized_ref")
         revision = _nonempty(record.get("revision_or_freshness"), f"inherited_evidence[{index}].revision_or_freshness")
         visibility = record.get("visibility")
-        if visibility not in VISIBILITY:
+        if not isinstance(visibility, str) or visibility not in VISIBILITY:
             raise RuntimePartitionError(f"inherited_evidence[{index}].visibility is invalid")
         proof_ceiling = _nonempty(record.get("proof_ceiling"), f"inherited_evidence[{index}].proof_ceiling")
-        lowered = sanitized_ref.lower()
-        private_provider_url = (
-            "docs.google.com/" in lowered
-            or "drive.google.com/" in lowered
-            or "mail.google.com/" in lowered
-            or "calendar.google.com/" in lowered
-        )
-        if private_provider_url:
+        public_provider_ref_verified = record.get("public_provider_ref_verified", False)
+        if not isinstance(public_provider_ref_verified, bool):
             raise RuntimePartitionError(
-                "tracked evidence may not expose a raw private provider URL; use a sanitized or opaque reference"
+                f"inherited_evidence[{index}].public_provider_ref_verified must be boolean when supplied"
+            )
+        lowered = sanitized_ref.lower()
+        google_provider_url = any(marker in lowered for marker in GOOGLE_PROVIDER_URL_MARKERS)
+        github_provider_url = any(marker in lowered for marker in GITHUB_PROVIDER_URL_MARKERS)
+        if google_provider_url:
+            raise RuntimePartitionError(
+                "tracked evidence may not expose a raw Google Workspace URL; use a sanitized or opaque reference"
+            )
+        if github_provider_url and not (
+            visibility == "PUBLIC_TRACKED" and public_provider_ref_verified
+        ):
+            raise RuntimePartitionError(
+                "raw GitHub provider URLs require verified public status; otherwise use an opaque reference"
+            )
+        if public_provider_ref_verified and visibility != "PUBLIC_TRACKED":
+            raise RuntimePartitionError(
+                "public_provider_ref_verified=true requires PUBLIC_TRACKED visibility"
             )
         if visibility == "PROTECTED_EXTERNAL" and not sanitized_ref.startswith("opaque:"):
             raise RuntimePartitionError("PROTECTED_EXTERNAL evidence must use an opaque: tracked alias")
@@ -104,6 +126,7 @@ def _validate_evidence(records: Any) -> tuple[dict[str, Any], ...]:
             "revision_or_freshness": revision,
             "visibility": visibility,
             "proof_ceiling": proof_ceiling,
+            "public_provider_ref_verified": public_provider_ref_verified,
         })
     return tuple(out)
 
@@ -152,6 +175,10 @@ def partition_work_unit(work_unit: dict[str, Any]) -> PartitionDecision:
         raise RuntimePartitionError(
             "already_executed_here=true is valid only for CURRENT_CHAT_RUNTIME work"
         )
+    if already_executed and not evidence_inputs:
+        raise RuntimePartitionError(
+            "already_executed_here=true requires inherited_evidence proving the completed work"
+        )
     return PartitionDecision(
         work_unit_id=work_unit_id,
         execution_environment=host,
@@ -166,9 +193,9 @@ def partition_work_unit(work_unit: dict[str, Any]) -> PartitionDecision:
 def project_p04(decision: PartitionDecision) -> dict[str, Any]:
     return {
         "execution_environment": decision.execution_environment,
-        "provider_access": list(decision.provider_access),
+        "provider_access": [dict(record) for record in decision.provider_access],
         "required_capabilities": list(decision.required_capabilities),
-        "evidence_inputs": list(decision.evidence_inputs),
+        "evidence_inputs": [dict(record) for record in decision.evidence_inputs],
         "execute_now": decision.execute_now,
     }
 
@@ -176,9 +203,9 @@ def project_p04(decision: PartitionDecision) -> dict[str, Any]:
 def project_p05(decision: PartitionDecision) -> dict[str, Any]:
     return {
         "EXECUTION ENVIRONMENT": decision.execution_environment,
-        "PROVIDER / ACCESS ROUTE": list(decision.provider_access),
+        "PROVIDER / ACCESS ROUTE": [dict(record) for record in decision.provider_access],
         "REQUIRED CAPABILITIES": list(decision.required_capabilities),
-        "INHERITED EVIDENCE": list(decision.evidence_inputs),
+        "INHERITED EVIDENCE": [dict(record) for record in decision.evidence_inputs],
         "ALREADY EXECUTED HERE": decision.already_executed_here,
         "RUNTIME HANDOFF": "none" if decision.already_executed_here else decision.execution_environment,
     }
