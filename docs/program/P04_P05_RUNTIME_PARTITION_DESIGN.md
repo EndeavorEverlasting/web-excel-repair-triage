@@ -1,8 +1,8 @@
 # P04/P05 Runtime Partition Program Design
 
-**Status:** PROTOTYPE / pre-broad-implementation design gate  
-**Shared contract:** `harness/contracts/planning-runtime-partition.v1.json`  
-**Executable seam:** `scripts/prompt_runtime_partition.py`  
+**Status:** PROTOTYPE / pre-broad-implementation design gate
+**Shared contract:** `harness/contracts/planning-runtime-partition.v1.json`
+**Executable seam:** `scripts/prompt_runtime_partition.py`
 **Focused tests:** `tests/test_prompt_runtime_partition.py`
 
 ## User outcomes
@@ -138,8 +138,9 @@ The focused test suite covers:
 - provider presence without host proof;
 - local-only placement;
 - conflicting host requirements;
-- protected private-evidence rejection;
+- raw private-provider URL rejection regardless of claimed visibility;
 - opaque protected evidence;
+- strict `already_executed_here` boolean validation and current-runtime-only completion;
 - shared P04/P05 decision projection;
 - already-completed P05 current-runtime work.
 
