@@ -71,6 +71,8 @@
     "dependencies",
     "owned_mutation_surfaces",
     "forbidden_surfaces",
+    "runtime_partition_input",
+    "runtime_partition",
     "adapter",
     "launch",
     "expected_artifacts",
@@ -114,7 +116,15 @@
     "executable_manifest_lane_status": "PLANNED",
     "blocked_manifest_lane_rule": "Preserve BLOCKED in the dispatch receipt without invoking its launch action.",
     "terminal_manifest_lane_rule": "DISPATCHED, PASS, and FAIL are evidence states, not fresh launch instructions; run must reject them and require a refreshed manifest.",
-    "panel_transport_rule": "Portability/copy panels are machine transport for lane prompts. Agents must ingest panels and dispatch via the first available adapter (AgentSwitchboard, native subagents, argv runners, MCP surfaces). Human paste is incidental compatibility, not the primary path. Report AUTONOMY_GAP when all adapters are unavailable, do not idle waiting."
+    "panel_transport_rule": "Portability/copy panels are machine transport for lane prompts. Agents must ingest panels and dispatch via the first available adapter (AgentSwitchboard, native subagents, argv runners, MCP surfaces). Human paste is incidental compatibility, not the primary path. Report AUTONOMY_GAP when all adapters are unavailable, do not idle waiting.",
+    "runtime_partition_projection_required": true
   },
-  "proof_ceiling": "Validates a machine-readable dependency/collision/adapter/launch contract and can execute argv-addressable lanes in concurrent dependency waves. Runtime-tool adapters remain externally dispatched by the active agent runtime and require separate evidence receipts."
+  "proof_ceiling": "Validates a machine-readable dependency/collision/adapter/launch contract, recomputes each lane's host/provider/evidence placement through planning.runtime_partition, and can execute argv-addressable lanes in concurrent dependency waves. Runtime-tool adapters remain externally dispatched by the active agent runtime and require separate evidence receipts.",
+  "runtime_partition": {
+    "contract": "harness/contracts/planning-runtime-partition.v1.json",
+    "implementation": "scripts/prompt_runtime_partition.py",
+    "rule": "Every lane carries the raw WorkUnit and its P04 projection. The validator recomputes the projection through planning.runtime_partition and rejects drift before dependency/adapter dispatch.",
+    "identity_rule": "runtime_partition_input.work_unit_id must equal lane_id.",
+    "privacy_rule": "Inherited evidence/provider references are validated by planning.runtime_partition before they may enter the dispatch manifest."
+  }
 }
