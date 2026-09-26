@@ -34,6 +34,7 @@ Human-facing Operant releases. Git commit/artifact identity remains the forensic
 - fix(prompt-kit): close P114 cloud relevance gap (`c4117aeb`)
 - fix(plan): restore full tree after provider merge reconciliation (`6919be00`)
 - fix(operant): refresh external resource projection for deepseek-harness drift (`362f920c`)
+- fix(prompt-kit): upgrade appendices missing state presentation (`5e9cbcba`)
 
 ## 0.10.1 - 2026-09-19
 
