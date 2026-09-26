@@ -609,6 +609,14 @@ def check_psc018_mutation_receipt(
             "PSC018 HOLISTIC_NON_WEAKENING_MUTATION_LIFECYCLE: "
             f"{migration.get('migration_id')} has invalid compression disposition"
         )
+    if receipt.get("compression_disposition") == "GROWTH_JUSTIFIED":
+        rationale = receipt.get("compression_rationale")
+        if not isinstance(rationale, str) or not rationale.strip():
+            errors.append(
+                "PSC018 HOLISTIC_NON_WEAKENING_MUTATION_LIFECYCLE: "
+                f"{migration.get('migration_id')} GROWTH_JUSTIFIED receipt requires "
+                "non-blank compression rationale"
+            )
     if receipt.get("portfolio_coverage_preserved") is not True:
         errors.append(
             "PSC018 HOLISTIC_NON_WEAKENING_MUTATION_LIFECYCLE: "
