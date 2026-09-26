@@ -198,7 +198,7 @@ def validate(ledger_path, adoption_path=ADOPTION):
 
     local = adoption.get('local', {})
     issue_progression_ref = local.get('issueProgressionContract')
-    expected_issue_progression = str(ISSUE_PROGRESSION.relative_to(ROOT))
+    expected_issue_progression = ISSUE_PROGRESSION.relative_to(ROOT).as_posix()
     if issue_progression_ref != expected_issue_progression:
         errors.append('local issueProgressionContract path drifted')
     errors.extend(validate_issue_progression_contract(ISSUE_PROGRESSION))

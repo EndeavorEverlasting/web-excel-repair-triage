@@ -1,6 +1,7 @@
 import json
 import pathlib
 import subprocess
+import sys
 import tempfile
 import unittest
 
@@ -11,7 +12,7 @@ PORTABLE_COMMIT = '429237aa41d8712d71859865c9be407ca23d8580'
 
 
 def run_validator(path=None, adoption=None):
-    command = ['python3', str(VALIDATOR)]
+    command = [sys.executable, str(VALIDATOR)]
     if path:
         command += ['--file', str(path)]
     if adoption:
@@ -223,6 +224,12 @@ class RepositoryWorkLedgerTests(unittest.TestCase):
         result = self.run_temp(task(Status='READY', Gate='operator authentication required'))
         self.assertNotEqual(result.returncode, 0)
         self.assertIn('READY is AFK-dispatchable only with Gate: none', result.stderr)
+
+    def test_ready_rejects_non_none_dependencies(self):
+        result = self.run_temp(task(Status='READY', Dependencies='ASB #320 merged; planning floor main@abc'))
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn('READY is AFK-dispatchable only with Dependencies: none', result.stderr)
+
     def test_operator_requires_gate(self):
         result = self.run_temp(task(Status='OPERATOR', Owner='operator', Gate='none'))
         self.assertNotEqual(result.returncode, 0)

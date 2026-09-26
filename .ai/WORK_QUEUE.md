@@ -323,20 +323,20 @@ Canonical terminal action: none; no safe actionable work remains
 
 ## TRQ-019 — FirstMate + AgentSwitchboard + Prompt Kit durable vision & owner map
 
-- **Status:** READY
+- **Status:** DONE
 - **Priority:** P1
 - **Owner:** vision-map-firstmate-asb-prompt-kit-20260919
 - **Work item:** ledger:TRQ-019
-- **Branch / PR:** `cursor/firstmate-asb-prompt-kit-vision-map-5b39` / PR pending
+- **Branch / PR:** `cursor/firstmate-asb-prompt-kit-vision-map-5b39` / #604 merged
 - **Scope:** persist canonical one-page vision + owner/phase map under Triage plan conventions so Agent Flow family and peers share one durable authority surface; state completion definition (FirstMate parallel with ASB consuming Prompt Kit panels/manifests as machine inputs); paint proven/unproven boundaries; map authority (Triage doctrine, ASB consumer, FirstMate crew runtime); index collision ledger and phase ladder with honest gates
 - **Forbidden:** claiming live dual-path complete or live lane dispatch PASS without observed runtime evidence; mutating ASB repo, FirstMate product, g3 live-dispatch surfaces, generated Prompt Kit HTML, SSH sprint map, or #320 deliverables
-- **Dependencies:** ASB #320 merged @ `a483853d`; ADP-01/02/03 INTEGRATED; planning floor `main@b87ad29ea0e78fddb1f26b1f0a10b6efd2c94adb`
-- **References:** `docs/plans/FIRSTMATE_ASB_PROMPT_KIT_VISION_OWNER_MAP.md`, `docs/plans/SSH_LOCAL_EXECUTION_BRIDGE_SPRINT_MAP.md`, `harness/evals/COMPUTE_AUTHORITY_EVALUATION_SPRINT_PLAN.md`, ASB-ADR-2026-09-FIRSTMATE-CREW-RUNTIME
+- **Dependencies:** none
+- **References:** `docs/plans/FIRSTMATE_ASB_PROMPT_KIT_VISION_OWNER_MAP.md`, `docs/plans/SSH_LOCAL_EXECUTION_BRIDGE_SPRINT_MAP.md`, `harness/evals/COMPUTE_AUTHORITY_EVALUATION_SPRINT_PLAN.md`, ASB-ADR-2026-09-FIRSTMATE-CREW-RUNTIME; resolved floor evidence: ASB #320 merged at a483853d; ADP-01/02/03 INTEGRATED; planning floor main@b87ad29ea0e78fddb1f26b1f0a10b6efd2c94adb
 - **Acceptance gate:** vision map tracked under `docs/plans/`; states NOT complete and no live dual-dual claim; owner/phase map separates g3 ASB-link mutation lane from FirstMate-parallel and vision-map; collision ledger explicit; phase ladder honest (TRACKED PLAN current state); PR opened with exact planning-floor SHA; local proof + merge-gate pass; merge when gates allow
 - **Gate:** none
-- **Last proof:** artifact:`docs/plans/FIRSTMATE_ASB_PROMPT_KIT_VISION_OWNER_MAP.md` created on branch; planning floor pinned; awaiting commit/push/PR
-- **Next action:** commit, push, open PR, run local proof, merge if gates pass
-- **Updated:** 2026-09-19T21:54:00Z
+- **Last proof:** merge:b1aedae6842e1b54e00981875ffe3b06f586d8eb integrated PR #604; artifact:docs/plans/FIRSTMATE_ASB_PROMPT_KIT_VISION_OWNER_MAP.md present on refreshed default branch with NOT-complete / no live dual-path claim; commit:7afe7ea167bee2a54ab56823315fba2d9b0f3580
+- **Next action:** none; no safe actionable work remains
+- **Updated:** 2026-09-26T03:10:00Z
 
 ## TRQ-020 — Upstream capability watch + prompt impact sprint map
 
@@ -360,6 +360,7 @@ Canonical terminal action: none; no safe actionable work remains
 - **Status:** DONE
 - **Priority:** P1
 - **Owner:** p55-repository-bootstrap-recovery-20260922
+- **Work item:** ledger:TRQ-021
 - **Branch / PR:** `feat/p55-provider-neutral-repo-bootstrap-20260920` / #623 merged as `5e129012221f3108e03bda129084b616e8ffd50b`
 - **Scope:** reconcile the existing P55 provider-neutral repository bootstrap strengthening onto current main; repair REMOTE_ONLY continuation and identity-manifest status vocabulary; regenerate P55 lifecycle/profile/history state from current canonical authority; preserve current P65/test-floor/generated-site state; run exact-head deterministic/provider proof; integrate the exact green result; then close stale donor PR #367
 - **Forbidden:** new P55 prompt identity; overwriting current P65 migration/test-floor/site state; hand-editing generated Prompt Kit as source; weakening lifecycle/test-floor validators; overwriting TRQ-020 `Outputs/prompt-parallel-dispatch/manifest.json`; force-reset/force-push; closing #367 before replacement integration; claiming runtime GitHub/Entire field proof from repository CI
@@ -376,6 +377,7 @@ Canonical terminal action: none; no safe actionable work remains
 - **Status:** DONE
 - **Priority:** P1
 - **Owner:** p143-review-contract-convergence-20260923
+- **Work item:** ledger:TRQ-022
 - **Branch / PR:** `converge/p143-review-contracts-20260923` / #640 merged as `6835ed4b2d0278798323e2b0eceff0f52dd0326f`
 - **Scope:** converge the reviewed P143 Repository Convergence Planner onto current main; preserve integrated provider-neutral P55; close P143 search/routing, durable-plan authority, typed P55 handoff, provider-state, capability-ownership, deterministic-regression, generated-site, review, and integration gates
 - **Forbidden:** roll back or semantically weaken integrated P55; create or mutate a destination repository; execute donor convergence; modify unrelated donor-resource projections; hand-edit generated Prompt Kit HTML as canonical source; force-push/reset; weaken semantic/test-floor validators
@@ -392,13 +394,14 @@ Canonical terminal action: none; no safe actionable work remains
 - **Status:** READY
 - **Priority:** P1
 - **Owner:** P125 + Triage ticket-ingestion capability; P56 artifact mutation; P111 Drive sync; P79 prompt strengthening
+- **Work item:** ledger:TRQ-023
 - **Branch / PR:** `plan/ticket-tracker-ingestion-automation-20260924` / #648 merged as `ebd9aaa24027992b48dc98c391366e0bc59ac540`
 - **Scope:** turn recurring H&H ticket intake into a deterministic pipeline from screenshot/pasted-list/P125 evidence through versioned observation/update/merge contracts, explicit incident identity + dedupe/non-conflation kernel, tracker-schema-aware per-column merge dispositions, Excel-first mutation, shared CLI/library + local website projection, post-write readback, stable Drive handoff, and protected P125 strengthening after the implementation seam exists
 - **Forbidden:** new prompt ID at the planning floor; raw/private H&H screenshots or workbook bytes in Git; invented missing ticket fields; same-site/same-day conflation; ServiceNow authority/credentials assumed without proof; duplicate CURRENT Drive artifacts; UI-specific duplicate merge logic; P125 prompt mutation before the deterministic engine contract exists
-- **Dependencies:** current P125 on main (PR #343 + #377 history); P56 Context-to-Artifact Generator; P111 Repository + Google Drive Artifact Synchronizer; P79 protected prompt lifecycle; P13/P94 recurring-regression contract; P114 cloud-artifact handoff integrated via PR #641; existing Triage workbook/artifact-engine safety contracts; planning floor `main@c7c5a029d92c81a100abc9cde9477ae39a3379e9`
-- **References:** `docs/plans/TICKET_TRACKER_INGESTION_AUTOMATION_SPRINT_MAP.md`, `registry/prompts/management-operations-prompts.v1.json` (P125), `tests/test_hh_ticket_tracking_prompt.py`, `docs/prompts.json` (P56), `registry/prompts/repository-work-ledger-prompts.v1.json` (P111), `harness/contracts/prompt-regression-safety.v1.json`, `ARTIFACT_REGISTRY.md`
+- **Dependencies:** none
+- **References:** `docs/plans/TICKET_TRACKER_INGESTION_AUTOMATION_SPRINT_MAP.md`, `registry/prompts/management-operations-prompts.v1.json` (P125), `tests/test_hh_ticket_tracking_prompt.py`, `docs/prompts.json` (P56), `registry/prompts/repository-work-ledger-prompts.v1.json` (P111), `harness/contracts/prompt-regression-safety.v1.json`, `ARTIFACT_REGISTRY.md`; resolved floor evidence: current P125 on main (PR #343 + #377 history); P56 Context-to-Artifact Generator; P111 Repository + Google Drive Artifact Synchronizer; P79 protected prompt lifecycle; P13/P94 recurring-regression contract; P114 cloud-artifact handoff integrated via PR #641; existing Triage workbook/artifact-engine safety contracts; planning floor main@c7c5a029d92c81a100abc9cde9477ae39a3379e9
 - **Acceptance gate:** TTI-1..TTI-9 program completes; versioned ticket observation/update/merge contracts + validators exist; screenshot/pasted-text/P125 adapters converge on one observation model; explicit-ID dedupe and non-conflation are deterministic/idempotent; every current tracker column gets an explicit set/derive/preserve/blank/conflict/N-A disposition; workbook structure is preserved; CLI/UI share one merge kernel; P125 is strengthened through `prompt_registry_ops.py` without new identity; stable Drive tracker identity is updated/read back through P111; sanitized regression matrix is retained; one real H&H batch is observed end-to-end with zero duplicate tracker IDs
-- **Gate:** planning is integrated on main; implementation is not started; first safe implementation slice is TTI-1 contracts/fixtures/validators only from refreshed main
-- **Last proof:** exact reconciled PR head `6919be004a728daac0a9dad2f607572603d205a0` passed Repository work ledger, App Harness, Artifact engine, Prompt Kit Pages, and deterministic repository floor workflows with zero unresolved review threads; PR #648 merged as `ebd9aaa24027992b48dc98c391366e0bc59ac540`; mainline plan readback PASS; no current `ticket_update`/screenshot-ingestion engine is implemented
+- **Gate:** none
+- **Last proof:** exact reconciled PR head `6919be004a728daac0a9dad2f607572603d205a0` passed Repository work ledger, App Harness, Artifact engine, Prompt Kit Pages, and deterministic repository floor workflows with zero unresolved review threads; merge:ebd9aaa24027992b48dc98c391366e0bc59ac540 integrated PR #648 plan floor; mainline plan readback PASS; no current `ticket_update`/screenshot-ingestion engine is implemented; next slice is TTI-1 contracts/fixtures/validators only
 - **Next action:** Execute TTI-1 from refreshed main: create the smallest versioned ticket-observation, ticket-update-batch, and ticket-merge-receipt contracts plus sanitized positive/negative fixtures and validators; do not mutate P125, private H&H artifacts, workbooks, or Drive in that slice
-- **Updated:** 2026-09-24T19:42:46-04:00
+- **Updated:** 2026-09-26T03:10:00Z
