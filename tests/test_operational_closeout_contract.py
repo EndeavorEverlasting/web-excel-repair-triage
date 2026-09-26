@@ -141,6 +141,30 @@ class OperationalCloseoutContractTests(unittest.TestCase):
         self.assertEqual(upgraded["copyContent"].count(MARKER), 1)
         self.assertIn("EVIDENCE-BEARING CLOSEOUT", upgraded["copyContent"])
 
+    def test_builder_upgrades_legacy_appendix_missing_state_presentation(self) -> None:
+        prompt = dict(self.base["P07"])
+        marker = self.policy["marker"]
+        state_marker = self.policy["state_presentation_marker"]
+        prompt["copyContent"] = (
+            "BASE\n\n"
+            + marker
+            + "\n- Do not leave NEXT COMMAND blank.\n\n"
+            + self.policy["integration_marker"]
+            + "\n- merge.\n\n"
+            + self.policy["freshness_marker"]
+            + "\n- fetch.\n\n"
+            + self.policy["closeout_marker"]
+            + "\n- closeout.\n\n"
+            + self.policy["disposition_marker"]
+            + "\n- disposition."
+        )
+        self.assertNotIn(state_marker, prompt["copyContent"])
+        upgraded = build_prompt_kit_registry.apply_actionability_policy(prompt, self.policy)
+        self.assertEqual(upgraded["copyContent"].count(marker), 1)
+        self.assertEqual(upgraded["copyContent"].count(state_marker), 1)
+        self.assertIn("typed state text remains authoritative", upgraded["copyContent"])
+        self.assertIn("Item | State | Meaning | Exact next transition", upgraded["copyContent"])
+
     def test_scope_exhaustion_requires_supported_residual_classification(self) -> None:
         appendix = self.policy["copy_content_appendix"]
         for phrase in (
