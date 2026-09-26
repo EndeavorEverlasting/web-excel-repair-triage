@@ -13,6 +13,8 @@ Human-facing Operant releases. Git commit/artifact identity remains the forensic
 - feat(prompt-kit): strengthen P02 continuity alignment (#613) (`3defbc21`)
 - feat(prompt-kit): strengthen P55 repository bootstrap (`112881c3`)
 - feat(prompt-kit): pair Canary local and cloud artifacts (`fa2ee183`)
+- feat(prompt-kit): add shared operator state presentation contract (`95b67123`)
+- feat(prompt-kit): validate operator state presentation policy (`9878637b`)
 
 ### Fixes / performance
 
@@ -31,6 +33,7 @@ Human-facing Operant releases. Git commit/artifact identity remains the forensic
 - fix(prompt-kit): harden P114 review invariants (`3facb90e`)
 - fix(prompt-kit): close P114 cloud relevance gap (`c4117aeb`)
 - fix(plan): restore full tree after provider merge reconciliation (`6919be00`)
+- fix(operant): refresh external resource projection for deepseek-harness drift (`362f920c`)
 
 ## 0.10.1 - 2026-09-19
 
