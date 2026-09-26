@@ -334,23 +334,27 @@ class Sprint1ABaselineAcceptanceTests(unittest.TestCase):
 
         profiles = profiles_data["profiles"]
 
-        # Count must match
-        self.assertEqual(len(prompts), len(profiles), "Profile count must equal prompt count")
-        self.assertEqual(len(prompts), 62, "Expected 62 canonical prompts")
+        # The Sprint 1A base floor remains 62 prompts, while later extension prompts may
+        # graduate into ACCEPTED coverage without rebuilding the historical base.
+        self.assertEqual(len(prompts), 62, "Expected 62 Sprint 1A base prompts")
+        self.assertGreaterEqual(len(profiles), len(prompts))
+        self.assertEqual(profiles_data["profile_count"], len(profiles))
 
-        # Every profile must be ACCEPTED
+        # Every tracked profile must be ACCEPTED.
         for profile in profiles:
             self.assertEqual(profile["profile_status"], "ACCEPTED",
                            f"Profile {profile['prompt_id']} must be ACCEPTED")
 
-        # Completeness flag must be true
+        # Completeness flag refers to the immutable Sprint 1A base floor.
         self.assertEqual(profiles_data["baseline"]["completeness"], "complete")
         self.assertTrue(profiles_data["baseline"]["strict_enforcement_active"])
 
-        # Every prompt ID must have exactly one profile
+        # Every base prompt has exactly one accepted profile; later extension prompts may add
+        # additional accepted profiles through ADOPT_PROFILE.
         prompt_ids = {p["id"] for p in prompts}
         profile_ids = {p["prompt_id"] for p in profiles}
-        self.assertEqual(prompt_ids, profile_ids, "Profile IDs must match prompt IDs exactly")
+        self.assertTrue(prompt_ids.issubset(profile_ids))
+        self.assertEqual(len(profile_ids), len(profiles), "Accepted prompt profiles must be unique")
 
     def test_psc002_profile_binds_canonical_prompt(self) -> None:
         """PSC002: Accepted profile binds to exact prompt identity and canonical hash."""
@@ -578,6 +582,35 @@ class Sprint2LifecycleGateTests(unittest.TestCase):
         self.assertTrue(result["distinct_residual"])
         self.assertEqual(result["mode"], "reviewed_residual")
         self.assertIn("P07", result["reviewed_existing_owners"])
+
+    def test_existing_prompt_profile_adoption_is_a_first_class_lifecycle(self) -> None:
+        contract = json.loads(
+            (ROOT / "harness" / "contracts" / "prompt-semantic-coverage.v1.json").read_text(
+                encoding="utf-8"
+            )
+        )
+        self.assertIn("ADOPT_PROFILE", contract["lifecycle_operations"])
+        self.assertTrue(any(row["id"] == "PSC017" for row in contract["invariants"]))
+        self.assertTrue(callable(prompt_registry_ops.adopt_profile))
+
+        profiles = json.loads(
+            (ROOT / "harness" / "prompt-topology" / "prompt-capability-profiles.v1.json").read_text(
+                encoding="utf-8"
+            )
+        )["profiles"]
+        accepted = next(row for row in profiles if row["prompt_id"] == "P07")
+        with self.assertRaisesRegex(SystemExit, "already has an ACCEPTED semantic profile"):
+            prompt_registry_ops.adopt_profile(
+                "P07",
+                {
+                    "direct_assignments": accepted["direct_assignments"],
+                    "inherited_sources": accepted["inherited_sources"],
+                    "evidence_refs": ["tests/test_prompt_semantic_coverage.py"],
+                },
+                ["tests/test_prompt_semantic_coverage.py"],
+                "negative control",
+                dry_run=True,
+            )
 
     def test_direct_body_drift_breaks_accepted_profile_binding(self) -> None:
         profiles = json.loads(

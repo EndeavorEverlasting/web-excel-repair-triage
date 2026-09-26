@@ -162,6 +162,7 @@ class ConversationContextCanaryPromptTests(unittest.TestCase):
             "NETWORK=<WAB|Guest|Hardwire|Local|Arbitrary/N/A>",
             "Arbitrary/N/A` means the task has no specific network requirement",
             "NETWORK=UNKNOWN",
+            "If observed live connectivity is available and differs from the required network, preserve the required NETWORK value and surface the mismatch; do not redefine the requirement to match observation.",
             "EXEC=<shell>@<kernel/runtime>",
             "EXEC=UNKNOWN",
             "P92 owns canonical path",
@@ -217,6 +218,112 @@ class ConversationContextCanaryPromptTests(unittest.TestCase):
         self.assertEqual(html, build_prompt_kit_registry.render())
         self.assertIn(self.target["id"], html)
         self.assertIn(TARGET_NAME, html)
+
+    def test_cloud_artifact_relevance_pairs_local_and_provider_handoff(self) -> None:
+        content = self.target["copyContent"]
+        cloud = content.split("CLOUD ARTIFACT RELEVANCE / PAIRED HANDOFF", 1)[1].split(
+            "AUTHORITATIVE CONTEXT RULE", 1
+        )[0]
+        for phrase in (
+            "artifact manifest, registry, mapping, sync receipt, or workspace binding",
+            "Do not sweep unrelated cloud files",
+            "DELIVERY DECISION TABLE",
+            "`MAPPED_CLOUD_VERIFIED + LOCAL_SURFACED => PAIR_REQUIRED`: surface both together: usable canonical provider link plus local/download reference.",
+            "P111 Repository + Google Drive Artifact Synchronizer",
+            "harness/artifact-handoff/WORKFLOW.md",
+            "Reuse the stable provider identity",
+            "P114 detects and routes; it does not become the sync engine",
+            "Offering a local artifact without the mapped cloud link is a Canary/closure failure",
+        ):
+            self.assertIn(phrase, cloud)
+
+    def test_cloud_artifact_gate_has_negative_and_positive_controls(self) -> None:
+        content = self.target["copyContent"]
+        cloud = content.split("CLOUD ARTIFACT RELEVANCE / PAIRED HANDOFF", 1)[1].split(
+            "AUTHORITATIVE CONTEXT RULE", 1
+        )[0]
+        pair = "`MAPPED_CLOUD_VERIFIED + LOCAL_SURFACED => PAIR_REQUIRED`"
+        local = "`LOCAL_ONLY_VERIFIED => LOCAL_ONLY_ALLOWED`"
+        blocked = "`CLOUD_RELEVANCE_UNKNOWN => CLOUD_CLOSURE_BLOCKED`"
+        self.assertIn(
+            "`CLOUD=NONE` is valid only when scoped current evidence establishes no relevant cloud counterpart",
+            cloud,
+        )
+        self.assertIn("lack of an obvious connector/file is not proof of NONE", cloud)
+        self.assertIn(
+            f"{local}: require explicit local-only/private/do-not-sync authority or synchronizer proof.",
+            cloud,
+        )
+        self.assertIn(
+            f"{blocked}: name the exact identity, access, write, or readback gate before local fallback; never claim sync succeeded.",
+            cloud,
+        )
+
+        decision_map: dict[str, str] = {}
+        for line in cloud.splitlines():
+            if not line.startswith("- `") or " => " not in line:
+                continue
+            selector = line.split("`", 2)[1]
+            state, outcome = selector.split(" => ", 1)
+            decision_map[state] = outcome
+        scenarios = {
+            "MAPPED_CLOUD_VERIFIED + LOCAL_SURFACED": "PAIR_REQUIRED",
+            "LOCAL_ONLY_VERIFIED": "LOCAL_ONLY_ALLOWED",
+            "CLOUD_RELEVANCE_UNKNOWN": "CLOUD_CLOSURE_BLOCKED",
+        }
+        self.assertEqual(
+            {state: decision_map.get(state) for state in scenarios},
+            scenarios,
+        )
+        self.assertEqual(len(set(scenarios.values())), len(scenarios))
+        self.assertLess(cloud.index(pair), cloud.index(local))
+        self.assertLess(cloud.index(local), cloud.index(blocked))
+        self.assertIn(
+            "Never let local/download silently replace a healthy mapped cloud artifact",
+            content,
+        )
+
+    def test_bound_cloud_workspace_requires_resolution_before_local_handoff(self) -> None:
+        content = self.target["copyContent"]
+        cloud = content.split("CLOUD ARTIFACT RELEVANCE / PAIRED HANDOFF", 1)[1].split(
+            "AUTHORITATIVE CONTEXT RULE", 1
+        )[0]
+        for phrase in (
+            "an imminent user-facing local/download artifact",
+            "A project/workspace cloud binding with unresolved mapping is `CLOUD_RELEVANCE_UNKNOWN`, not `LOCAL_ONLY_VERIFIED`",
+            "route through P111/provider owner before closeout",
+            "`LOCAL_ONLY_VERIFIED` requires explicit local-only/private/do-not-sync authority or synchronizer proof",
+        ):
+            self.assertIn(phrase, cloud)
+        self.assertNotIn(
+            "`LOCAL_ONLY_VERIFIED => LOCAL_ONLY_ALLOWED`: A verified local-only artifact remains valid when scoped evidence proves no relevant cloud mapping exists.",
+            cloud,
+        )
+
+    def test_p114_has_accepted_semantic_profile_after_adoption(self) -> None:
+        profile_path = REPO_ROOT / "harness" / "prompt-topology" / "prompt-capability-profiles.v1.json"
+        profiles = json.loads(profile_path.read_text(encoding="utf-8"))["profiles"]
+        matches = [row for row in profiles if row.get("prompt_id") == self.target["id"]]
+        self.assertEqual(len(matches), 1)
+        self.assertEqual(matches[0]["profile_status"], "ACCEPTED")
+        assignments = {
+            row["capability_id"]: (row["presence"], row["ownership"], row["capability_relation"])
+            for row in matches[0]["direct_assignments"]
+        }
+        self.assertEqual(
+            assignments["strength.fresh_evidence_floor"],
+            ("REQUIRED", "SECONDARY", "GUARDS"),
+        )
+        self.assertEqual(
+            assignments["strength.proof_relevance_freshness"],
+            ("REQUIRED", "SECONDARY", "GUARDS"),
+        )
+        self.assertEqual(
+            assignments["strength.evidence_state_integrity"],
+            ("REQUIRED", "SECONDARY", "GUARDS"),
+        )
+        self.assertEqual(assignments["execution.implementation"][1], "NONE")
+        self.assertEqual(assignments["process.recurring"][1], "NONE")
 
 
 if __name__ == "__main__":

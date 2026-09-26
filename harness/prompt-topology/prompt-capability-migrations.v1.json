@@ -4,7 +4,15 @@
   "purpose": "Append-only ledger of semantic capability transitions across prompt ADD, STRENGTHEN, CHANGE, TRANSFER, and RETIRE lifecycle operations.",
   "established_at": "2026-09-19",
   "status": "sprint0_floor",
-  "migration_kinds": ["ADD", "STRENGTHEN", "NO_CAPABILITY_CHANGE", "INTENTIONAL_CHANGE", "TRANSFER", "RETIRE", "RESTORE"],
+  "migration_kinds": [
+    "ADD",
+    "STRENGTHEN",
+    "NO_CAPABILITY_CHANGE",
+    "INTENTIONAL_CHANGE",
+    "TRANSFER",
+    "RETIRE",
+    "RESTORE"
+  ],
   "migrations": [
     {
       "migration_id": "2026-09-19-agent-transport-panels-p02",
@@ -49,6 +57,1460 @@
       "rationale": "Strengthen P59 to make explicit that copyable panels are machine-readable transport that agents must ingest and dispatch",
       "semantic_diff": "No capability changes",
       "effective_identity_change": "preserve_canonical"
+    },
+    {
+      "migration_id": "STRENGTHEN_P111_005",
+      "migration_kind": "STRENGTHEN",
+      "prompt_id": "P111",
+      "old_canonical_prompt_hash": "0a60e8721bef5ef20891068cbdef0695bb9e6da4dc84b52aeb087c51cc955f9d",
+      "new_canonical_prompt_hash": "18213ea37928708561d25b89434636c9bc3c36aeb88ed8d33ae739024b6fed3f",
+      "from_profile_version": 1,
+      "to_profile_version": 2,
+      "from_profile_sha256": "f599093ce6e5689cacdb240cc77b656e1f80b4cae5cf1a5696aef595e3b6129a",
+      "to_profile_sha256": "14de21d511042fe2d414bf399b65c18230f121a081e249fb4ffb3d502a4ace46",
+      "capability_deltas": [
+        {
+          "capability_id": "strength.actionable_continuation",
+          "before": {
+            "presence": "SUPPORT",
+            "ownership": "SECONDARY"
+          },
+          "after": {
+            "presence": "SUPPORT",
+            "ownership": "SECONDARY"
+          }
+        },
+        {
+          "capability_id": "strength.evidence_state_integrity",
+          "before": {
+            "presence": "SUPPORT",
+            "ownership": "SECONDARY"
+          },
+          "after": {
+            "presence": "SUPPORT",
+            "ownership": "SECONDARY"
+          }
+        },
+        {
+          "capability_id": "strength.fixed_point_continuation",
+          "before": {
+            "presence": "SUPPORT",
+            "ownership": "SECONDARY"
+          },
+          "after": {
+            "presence": "SUPPORT",
+            "ownership": "SECONDARY"
+          }
+        },
+        {
+          "capability_id": "strength.fresh_evidence_floor",
+          "before": {
+            "presence": "SUPPORT",
+            "ownership": "SECONDARY"
+          },
+          "after": {
+            "presence": "SUPPORT",
+            "ownership": "SECONDARY"
+          }
+        },
+        {
+          "capability_id": "strength.proof_relevance_freshness",
+          "before": {
+            "presence": "SUPPORT",
+            "ownership": "SECONDARY"
+          },
+          "after": {
+            "presence": "SUPPORT",
+            "ownership": "SECONDARY"
+          }
+        },
+        {
+          "capability_id": "strength.scope_ownership",
+          "before": {
+            "presence": "SUPPORT",
+            "ownership": "SECONDARY"
+          },
+          "after": {
+            "presence": "SUPPORT",
+            "ownership": "SECONDARY"
+          }
+        }
+      ],
+      "rationale": "Close P111's deferred-evidence gap: material referenced private/specialized artifacts remain in the dependency graph and must be persisted/read back through their canonical owner or retained as an exact BLOCKED dependency.",
+      "evidence_refs": [
+        "registry/prompts/management-operations-prompts.v1.json",
+        "registry/prompts/repository-work-ledger-prompts.v1.json",
+        "tests/test_google_drive_workspace_organizer_prompt.py",
+        "tests/test_repository_drive_artifact_synchronizer_prompt.py"
+      ],
+      "focused_tests": [
+        "tests/test_prompt_semantic_coverage.py",
+        "tests/test_prompt_semantic_validator_1b.py"
+      ],
+      "source_history_migration_id": "p79-strengthen-p111-006",
+      "source_history_from_git_blob_sha1": "583edc4fdd2c973eef8aa89b55dc053889e2e156",
+      "source_history_to_git_blob_sha1": "6a5b324c52814abab944cd106360d6ab55ea3d93",
+      "coverage_before_fingerprint": "a73eb32987243e2e9697c6d04f6321a449453d2c8224a3160d7fd42a8fd8cbec",
+      "coverage_after_fingerprint": "a73eb32987243e2e9697c6d04f6321a449453d2c8224a3160d7fd42a8fd8cbec",
+      "acceptance_state": "ACCEPTED",
+      "prior_profile_snapshot": {
+        "prompt_id": "P111",
+        "profile_version": 1,
+        "canonical_prompt_hash": "0a60e8721bef5ef20891068cbdef0695bb9e6da4dc84b52aeb087c51cc955f9d",
+        "acceptance_commit": "91ec4beac93b000f63482f480ae7e4efa519a517",
+        "direct_assignments": [
+          {
+            "capability_id": "strength.fresh_evidence_floor",
+            "presence": "SUPPORT",
+            "ownership": "SECONDARY",
+            "capability_relation": "IMPLEMENTS",
+            "delivery_source": "CANONICAL_BODY",
+            "evidence_refs": [
+              "registry/prompts/repository-work-ledger-prompts.v1.json",
+              "registry/prompts/management-operations-prompts.v1.json",
+              "tests/test_repository_drive_artifact_synchronizer_prompt.py",
+              "tests/test_google_drive_workspace_organizer_prompt.py"
+            ],
+            "rationale": "P111 applies this shared execution-quality behavior inside repository-to-Drive artifact synchronization without claiming global primary ownership."
+          },
+          {
+            "capability_id": "strength.scope_ownership",
+            "presence": "SUPPORT",
+            "ownership": "SECONDARY",
+            "capability_relation": "IMPLEMENTS",
+            "delivery_source": "CANONICAL_BODY",
+            "evidence_refs": [
+              "registry/prompts/repository-work-ledger-prompts.v1.json",
+              "registry/prompts/management-operations-prompts.v1.json",
+              "tests/test_repository_drive_artifact_synchronizer_prompt.py",
+              "tests/test_google_drive_workspace_organizer_prompt.py"
+            ],
+            "rationale": "P111 applies this shared execution-quality behavior inside repository-to-Drive artifact synchronization without claiming global primary ownership."
+          },
+          {
+            "capability_id": "strength.fixed_point_continuation",
+            "presence": "SUPPORT",
+            "ownership": "SECONDARY",
+            "capability_relation": "IMPLEMENTS",
+            "delivery_source": "CANONICAL_BODY",
+            "evidence_refs": [
+              "registry/prompts/repository-work-ledger-prompts.v1.json",
+              "registry/prompts/management-operations-prompts.v1.json",
+              "tests/test_repository_drive_artifact_synchronizer_prompt.py",
+              "tests/test_google_drive_workspace_organizer_prompt.py"
+            ],
+            "rationale": "P111 applies this shared execution-quality behavior inside repository-to-Drive artifact synchronization without claiming global primary ownership."
+          },
+          {
+            "capability_id": "strength.evidence_state_integrity",
+            "presence": "SUPPORT",
+            "ownership": "SECONDARY",
+            "capability_relation": "IMPLEMENTS",
+            "delivery_source": "CANONICAL_BODY",
+            "evidence_refs": [
+              "registry/prompts/repository-work-ledger-prompts.v1.json",
+              "registry/prompts/management-operations-prompts.v1.json",
+              "tests/test_repository_drive_artifact_synchronizer_prompt.py",
+              "tests/test_google_drive_workspace_organizer_prompt.py"
+            ],
+            "rationale": "P111 applies this shared execution-quality behavior inside repository-to-Drive artifact synchronization without claiming global primary ownership."
+          },
+          {
+            "capability_id": "strength.proof_relevance_freshness",
+            "presence": "SUPPORT",
+            "ownership": "SECONDARY",
+            "capability_relation": "IMPLEMENTS",
+            "delivery_source": "CANONICAL_BODY",
+            "evidence_refs": [
+              "registry/prompts/repository-work-ledger-prompts.v1.json",
+              "registry/prompts/management-operations-prompts.v1.json",
+              "tests/test_repository_drive_artifact_synchronizer_prompt.py",
+              "tests/test_google_drive_workspace_organizer_prompt.py"
+            ],
+            "rationale": "P111 applies this shared execution-quality behavior inside repository-to-Drive artifact synchronization without claiming global primary ownership."
+          },
+          {
+            "capability_id": "strength.actionable_continuation",
+            "presence": "SUPPORT",
+            "ownership": "SECONDARY",
+            "capability_relation": "IMPLEMENTS",
+            "delivery_source": "CANONICAL_BODY",
+            "evidence_refs": [
+              "registry/prompts/repository-work-ledger-prompts.v1.json",
+              "registry/prompts/management-operations-prompts.v1.json",
+              "tests/test_repository_drive_artifact_synchronizer_prompt.py",
+              "tests/test_google_drive_workspace_organizer_prompt.py"
+            ],
+            "rationale": "P111 applies this shared execution-quality behavior inside repository-to-Drive artifact synchronization without claiming global primary ownership."
+          }
+        ],
+        "inherited_sources": [
+          {
+            "source_id": "prompt-strength-shared-policy",
+            "source_version": "v1",
+            "source_hash": "e249da6706d86733cd03a046ef9e16552a3ae87dc8cc644281c5c1fd9c08c796"
+          }
+        ],
+        "semantic_dependency_fingerprint": "1fe2e2cb1af21b8edcf37e2c36184aca4d3396196b349b9c2d0c3259dc5f8538",
+        "evidence_refs": [
+          "registry/prompts/management-operations-prompts.v1.json",
+          "registry/prompts/repository-work-ledger-prompts.v1.json",
+          "tests/test_google_drive_workspace_organizer_prompt.py",
+          "tests/test_repository_drive_artifact_synchronizer_prompt.py"
+        ],
+        "profile_status": "ACCEPTED",
+        "profile_sha256": "f599093ce6e5689cacdb240cc77b656e1f80b4cae5cf1a5696aef595e3b6129a"
+      }
+    },
+    {
+      "migration_id": "NO_CAPABILITY_CHANGE_P111_006",
+      "migration_kind": "NO_CAPABILITY_CHANGE",
+      "prompt_id": "P111",
+      "old_canonical_prompt_hash": "18213ea37928708561d25b89434636c9bc3c36aeb88ed8d33ae739024b6fed3f",
+      "new_canonical_prompt_hash": "6e3147f29b8e52395393a1cd34a95b85d2ac55de1fb34eec6a8e6e082c62184e",
+      "from_profile_version": 2,
+      "to_profile_version": 3,
+      "from_profile_sha256": "14de21d511042fe2d414bf399b65c18230f121a081e249fb4ffb3d502a4ace46",
+      "to_profile_sha256": "ea1c3a78fa3511ca5dc951dd7b0d53dfa49a5a86927103f9a734b7e07c7cf8b1",
+      "capability_deltas": [
+        {
+          "capability_id": "strength.actionable_continuation",
+          "before": {
+            "presence": "SUPPORT",
+            "ownership": "SECONDARY"
+          },
+          "after": {
+            "presence": "SUPPORT",
+            "ownership": "SECONDARY"
+          }
+        },
+        {
+          "capability_id": "strength.evidence_state_integrity",
+          "before": {
+            "presence": "SUPPORT",
+            "ownership": "SECONDARY"
+          },
+          "after": {
+            "presence": "SUPPORT",
+            "ownership": "SECONDARY"
+          }
+        },
+        {
+          "capability_id": "strength.fixed_point_continuation",
+          "before": {
+            "presence": "SUPPORT",
+            "ownership": "SECONDARY"
+          },
+          "after": {
+            "presence": "SUPPORT",
+            "ownership": "SECONDARY"
+          }
+        },
+        {
+          "capability_id": "strength.fresh_evidence_floor",
+          "before": {
+            "presence": "SUPPORT",
+            "ownership": "SECONDARY"
+          },
+          "after": {
+            "presence": "SUPPORT",
+            "ownership": "SECONDARY"
+          }
+        },
+        {
+          "capability_id": "strength.proof_relevance_freshness",
+          "before": {
+            "presence": "SUPPORT",
+            "ownership": "SECONDARY"
+          },
+          "after": {
+            "presence": "SUPPORT",
+            "ownership": "SECONDARY"
+          }
+        },
+        {
+          "capability_id": "strength.scope_ownership",
+          "before": {
+            "presence": "SUPPORT",
+            "ownership": "SECONDARY"
+          },
+          "after": {
+            "presence": "SUPPORT",
+            "ownership": "SECONDARY"
+          }
+        }
+      ],
+      "rationale": "Compact the strengthened P111 canonical body below its existing 8000-character bounded-copy contract without changing capability ownership or specialized evidence-closure semantics.",
+      "evidence_refs": [
+        "registry/prompts/management-operations-prompts.v1.json",
+        "registry/prompts/repository-work-ledger-prompts.v1.json",
+        "tests/test_google_drive_workspace_organizer_prompt.py",
+        "tests/test_repository_drive_artifact_synchronizer_prompt.py",
+        "tests/test_repository_work_ledger_prompt.py"
+      ],
+      "focused_tests": [
+        "tests/test_prompt_semantic_coverage.py",
+        "tests/test_prompt_semantic_validator_1b.py"
+      ],
+      "source_history_migration_id": "p79-no-capability-change-p111-007",
+      "source_history_from_git_blob_sha1": "6a5b324c52814abab944cd106360d6ab55ea3d93",
+      "source_history_to_git_blob_sha1": "1c2efa7a40fec62ca8eb00327e2ea318fc81ef15",
+      "coverage_before_fingerprint": "a73eb32987243e2e9697c6d04f6321a449453d2c8224a3160d7fd42a8fd8cbec",
+      "coverage_after_fingerprint": "a73eb32987243e2e9697c6d04f6321a449453d2c8224a3160d7fd42a8fd8cbec",
+      "acceptance_state": "ACCEPTED",
+      "prior_profile_snapshot": {
+        "prompt_id": "P111",
+        "profile_version": 2,
+        "canonical_prompt_hash": "18213ea37928708561d25b89434636c9bc3c36aeb88ed8d33ae739024b6fed3f",
+        "acceptance_commit": "91ec4beac93b000f63482f480ae7e4efa519a517",
+        "direct_assignments": [
+          {
+            "capability_id": "strength.fresh_evidence_floor",
+            "presence": "SUPPORT",
+            "ownership": "SECONDARY",
+            "capability_relation": "IMPLEMENTS",
+            "delivery_source": "CANONICAL_BODY",
+            "evidence_refs": [
+              "registry/prompts/repository-work-ledger-prompts.v1.json",
+              "registry/prompts/management-operations-prompts.v1.json",
+              "tests/test_repository_drive_artifact_synchronizer_prompt.py",
+              "tests/test_google_drive_workspace_organizer_prompt.py"
+            ],
+            "rationale": "P111 applies this shared execution-quality behavior inside repository-to-Drive artifact synchronization without claiming global primary ownership."
+          },
+          {
+            "capability_id": "strength.scope_ownership",
+            "presence": "SUPPORT",
+            "ownership": "SECONDARY",
+            "capability_relation": "IMPLEMENTS",
+            "delivery_source": "CANONICAL_BODY",
+            "evidence_refs": [
+              "registry/prompts/repository-work-ledger-prompts.v1.json",
+              "registry/prompts/management-operations-prompts.v1.json",
+              "tests/test_repository_drive_artifact_synchronizer_prompt.py",
+              "tests/test_google_drive_workspace_organizer_prompt.py"
+            ],
+            "rationale": "P111 applies this shared execution-quality behavior inside repository-to-Drive artifact synchronization without claiming global primary ownership."
+          },
+          {
+            "capability_id": "strength.fixed_point_continuation",
+            "presence": "SUPPORT",
+            "ownership": "SECONDARY",
+            "capability_relation": "IMPLEMENTS",
+            "delivery_source": "CANONICAL_BODY",
+            "evidence_refs": [
+              "registry/prompts/repository-work-ledger-prompts.v1.json",
+              "registry/prompts/management-operations-prompts.v1.json",
+              "tests/test_repository_drive_artifact_synchronizer_prompt.py",
+              "tests/test_google_drive_workspace_organizer_prompt.py"
+            ],
+            "rationale": "P111 applies this shared execution-quality behavior inside repository-to-Drive artifact synchronization without claiming global primary ownership."
+          },
+          {
+            "capability_id": "strength.evidence_state_integrity",
+            "presence": "SUPPORT",
+            "ownership": "SECONDARY",
+            "capability_relation": "IMPLEMENTS",
+            "delivery_source": "CANONICAL_BODY",
+            "evidence_refs": [
+              "registry/prompts/repository-work-ledger-prompts.v1.json",
+              "registry/prompts/management-operations-prompts.v1.json",
+              "tests/test_repository_drive_artifact_synchronizer_prompt.py",
+              "tests/test_google_drive_workspace_organizer_prompt.py"
+            ],
+            "rationale": "P111 applies this shared execution-quality behavior inside repository-to-Drive artifact synchronization without claiming global primary ownership."
+          },
+          {
+            "capability_id": "strength.proof_relevance_freshness",
+            "presence": "SUPPORT",
+            "ownership": "SECONDARY",
+            "capability_relation": "IMPLEMENTS",
+            "delivery_source": "CANONICAL_BODY",
+            "evidence_refs": [
+              "registry/prompts/repository-work-ledger-prompts.v1.json",
+              "registry/prompts/management-operations-prompts.v1.json",
+              "tests/test_repository_drive_artifact_synchronizer_prompt.py",
+              "tests/test_google_drive_workspace_organizer_prompt.py"
+            ],
+            "rationale": "P111 applies this shared execution-quality behavior inside repository-to-Drive artifact synchronization without claiming global primary ownership."
+          },
+          {
+            "capability_id": "strength.actionable_continuation",
+            "presence": "SUPPORT",
+            "ownership": "SECONDARY",
+            "capability_relation": "IMPLEMENTS",
+            "delivery_source": "CANONICAL_BODY",
+            "evidence_refs": [
+              "registry/prompts/repository-work-ledger-prompts.v1.json",
+              "registry/prompts/management-operations-prompts.v1.json",
+              "tests/test_repository_drive_artifact_synchronizer_prompt.py",
+              "tests/test_google_drive_workspace_organizer_prompt.py"
+            ],
+            "rationale": "P111 applies this shared execution-quality behavior inside repository-to-Drive artifact synchronization without claiming global primary ownership."
+          }
+        ],
+        "inherited_sources": [
+          {
+            "source_id": "prompt-strength-shared-policy",
+            "source_version": "v1",
+            "source_hash": "e249da6706d86733cd03a046ef9e16552a3ae87dc8cc644281c5c1fd9c08c796"
+          }
+        ],
+        "semantic_dependency_fingerprint": "1fe2e2cb1af21b8edcf37e2c36184aca4d3396196b349b9c2d0c3259dc5f8538",
+        "evidence_refs": [
+          "registry/prompts/management-operations-prompts.v1.json",
+          "registry/prompts/repository-work-ledger-prompts.v1.json",
+          "tests/test_google_drive_workspace_organizer_prompt.py",
+          "tests/test_repository_drive_artifact_synchronizer_prompt.py"
+        ],
+        "profile_status": "ACCEPTED",
+        "prior_profile_ref": {
+          "profile_version": 1,
+          "profile_sha256": "f599093ce6e5689cacdb240cc77b656e1f80b4cae5cf1a5696aef595e3b6129a"
+        },
+        "profile_sha256": "14de21d511042fe2d414bf399b65c18230f121a081e249fb4ffb3d502a4ace46"
+      }
+    },
+    {
+      "migration_id": "NO_CAPABILITY_CHANGE_P55_007",
+      "migration_kind": "NO_CAPABILITY_CHANGE",
+      "prompt_id": "P55",
+      "old_canonical_prompt_hash": "d904065dcd12ba1c556e3441049d980d1677385740a78c56a00db2fde8a03fe8",
+      "new_canonical_prompt_hash": "b357b8d400b3e29fe0748ee18a0a9f6fce77e8bf677009ff706e43786b2de2f2",
+      "from_profile_version": 1,
+      "to_profile_version": 2,
+      "from_profile_sha256": "c2433cff44ed6cf27510cb584a56f8b25e4a7a0aadd9ac571f7d8c69293ac29e",
+      "to_profile_sha256": "44948aa6b4a6d48d2efc52859fc8462332f72ff8af30eb5754f8cf4e4b67d594",
+      "capability_deltas": [
+        {
+          "capability_id": "execution.implementation",
+          "before": {
+            "presence": "AWARE",
+            "ownership": "NONE"
+          },
+          "after": {
+            "presence": "AWARE",
+            "ownership": "NONE"
+          }
+        }
+      ],
+      "rationale": "Strengthen the existing P55 repository bootstrap owner for context recovery, provider-neutral execution, one manifest-status vocabulary, explicit pre-mutation writer isolation, and execution-surface-aware continuation without changing capability ownership.",
+      "evidence_refs": [
+        "docs/plans/P55_REPOSITORY_BOOTSTRAP_RECOVERY_SPRINT_MAP.md",
+        "docs/prompts.json:P55",
+        "harness/contracts/prompt-strength.v1.json",
+        "tests/test_p55_repository_bootstrap.py"
+      ],
+      "focused_tests": [
+        "tests/test_prompt_semantic_coverage.py",
+        "tests/test_prompt_semantic_validator_1b.py"
+      ],
+      "source_history_migration_id": "p79-no-capability-change-p55-008",
+      "source_history_from_git_blob_sha1": "aa4dd85a41f374db82d7800bc0ecdf78f62803cd",
+      "source_history_to_git_blob_sha1": "c963a857a8dc72ab5df8c99c2b3524c737271206",
+      "coverage_before_fingerprint": "a73eb32987243e2e9697c6d04f6321a449453d2c8224a3160d7fd42a8fd8cbec",
+      "coverage_after_fingerprint": "a73eb32987243e2e9697c6d04f6321a449453d2c8224a3160d7fd42a8fd8cbec",
+      "acceptance_state": "ACCEPTED",
+      "prior_profile_snapshot": {
+        "prompt_id": "P55",
+        "profile_version": 1,
+        "canonical_prompt_hash": "d904065dcd12ba1c556e3441049d980d1677385740a78c56a00db2fde8a03fe8",
+        "acceptance_commit": "55148914364e2988bc6096b7c8d142eca3f62c28",
+        "direct_assignments": [
+          {
+            "capability_id": "execution.implementation",
+            "presence": "AWARE",
+            "ownership": "NONE",
+            "capability_relation": "ROUTES_TO",
+            "delivery_source": "ROUTED_OWNER",
+            "evidence_refs": [
+              "docs/prompts.json:P55"
+            ],
+            "rationale": "P55 routes to P07 for implementation execution"
+          }
+        ],
+        "inherited_sources": [
+          {
+            "source_id": "prompt-strength-shared-policy",
+            "source_version": "v1",
+            "source_hash": "e249da6706d86733cd03a046ef9e16552a3ae87dc8cc644281c5c1fd9c08c796"
+          }
+        ],
+        "semantic_dependency_fingerprint": "c61fe644e2c4c8d6be4601c5be31e5ee1250c7dfa0dcf4284e000cb1f6c7de20",
+        "evidence_refs": [
+          "docs/prompts.json:P55",
+          "harness/contracts/prompt-strength.v1.json"
+        ],
+        "profile_status": "ACCEPTED",
+        "profile_sha256": "c2433cff44ed6cf27510cb584a56f8b25e4a7a0aadd9ac571f7d8c69293ac29e"
+      }
+    },
+    {
+      "migration_id": "ADD_P143_007",
+      "migration_kind": "ADD",
+      "prompt_id": "P143",
+      "old_canonical_prompt_hash": null,
+      "new_canonical_prompt_hash": "ceb5bdaaf22a53a745b20090072b88aeda2f6501760d3986b0fdc30bfb60f945",
+      "from_profile_version": null,
+      "to_profile_version": 1,
+      "from_profile_sha256": null,
+      "to_profile_sha256": "cd3bc4031c94093af9830c9dad0b4daf10980551ab236accd179e359140ee27e",
+      "capability_deltas": [
+        {
+          "capability_id": "execution.implementation",
+          "before": null,
+          "after": {
+            "presence": "AWARE",
+            "ownership": "NONE"
+          }
+        },
+        {
+          "capability_id": "process.recurring",
+          "before": null,
+          "after": {
+            "presence": "AWARE",
+            "ownership": "NONE"
+          }
+        },
+        {
+          "capability_id": "prompt.identity",
+          "before": null,
+          "after": {
+            "presence": "SUPPORT",
+            "ownership": "SECONDARY"
+          }
+        },
+        {
+          "capability_id": "strength.evidence_state_integrity",
+          "before": null,
+          "after": {
+            "presence": "REQUIRED",
+            "ownership": "SECONDARY"
+          }
+        },
+        {
+          "capability_id": "strength.lane_isolation",
+          "before": null,
+          "after": {
+            "presence": "SUPPORT",
+            "ownership": "SECONDARY"
+          }
+        },
+        {
+          "capability_id": "strength.mainline_convergence",
+          "before": null,
+          "after": {
+            "presence": "REQUIRED",
+            "ownership": "PRIMARY"
+          }
+        },
+        {
+          "capability_id": "strength.plan_durability",
+          "before": null,
+          "after": {
+            "presence": "REQUIRED",
+            "ownership": "PRIMARY"
+          }
+        },
+        {
+          "capability_id": "strength.upstream_provenance",
+          "before": null,
+          "after": {
+            "presence": "SUPPORT",
+            "ownership": "SECONDARY"
+          }
+        }
+      ],
+      "rationale": "P143 owns multi-repository A+B→C convergence planning and typed P55 bootstrap handoff. Existing owners cover single-repo bootstrap (P55), single-repo integration/mainline (P16/P21/P07), and artifact sync (P111)—none own donor-floor inventory with capability dispositions, collision/phase maps, destination evidence-state ladders, or the pre-create convergence plan artifact.",
+      "evidence_refs": [
+        "build_prompt_kit.py",
+        "harness/contracts/prompt-strength.v1.json",
+        "harness/prompt-topology/prompt-capability-profiles.v1.json",
+        "harness/prompt-topology/semantic-capability-catalog.v1.json",
+        "registry/prompts/repository-work-ledger-prompts.v1.json"
+      ],
+      "focused_tests": [
+        "tests/test_prompt_semantic_coverage.py",
+        "tests/test_prompt_semantic_validator_1b.py"
+      ],
+      "source_history_migration_id": "p79-add-p143-008",
+      "source_history_from_git_blob_sha1": "1c2efa7a40fec62ca8eb00327e2ea318fc81ef15",
+      "source_history_to_git_blob_sha1": "3bdad1e03b1ddf1ce55ad1e936e4e3775a4d26d7",
+      "coverage_before_fingerprint": "a73eb32987243e2e9697c6d04f6321a449453d2c8224a3160d7fd42a8fd8cbec",
+      "coverage_after_fingerprint": "91d508484b91fc32fb30b0917904336557395914025b32fdb8cd3f089be773e6",
+      "acceptance_state": "ACCEPTED"
+    },
+    {
+      "migration_id": "TRANSFER_P143_009",
+      "migration_kind": "TRANSFER",
+      "prompt_id": "P143",
+      "old_canonical_prompt_hash": "ceb5bdaaf22a53a745b20090072b88aeda2f6501760d3986b0fdc30bfb60f945",
+      "new_canonical_prompt_hash": "97dbd7437c9a3d44013c4b4a3b87236b1336c159b7911e1c3dc71f089bf8c1b4",
+      "from_profile_version": 1,
+      "to_profile_version": 2,
+      "from_profile_sha256": "cd3bc4031c94093af9830c9dad0b4daf10980551ab236accd179e359140ee27e",
+      "to_profile_sha256": "a9ae6be8f2b8e5224a5cbb4df23e9a6ae3f4db3174466c86e5ff7f69d1dc4a14",
+      "capability_deltas": [
+        {
+          "capability_id": "strength.mainline_convergence",
+          "before": {
+            "presence": "REQUIRED",
+            "ownership": "PRIMARY"
+          },
+          "after": {
+            "presence": "REQUIRED",
+            "ownership": "SECONDARY"
+          },
+          "transfer_target": "P07"
+        }
+      ],
+      "rationale": "Repair P143 review defects while transferring primary ownership of actual default-branch mainline convergence to P07. P143 remains REQUIRED/SECONDARY as the planning guard; P07 is REQUIRED/PRIMARY for execution and integration.",
+      "evidence_refs": [
+        "AGENTS.md",
+        "build_prompt_kit.py",
+        "docs/prompts.json:P07",
+        "harness/contracts/p55-bootstrap-handoff.v1.json",
+        "harness/contracts/prompt-strength.v1.json",
+        "harness/prompt-topology/prompt-capability-profiles.v1.json",
+        "harness/prompt-topology/semantic-capability-catalog.v1.json",
+        "registry/prompts/repository-work-ledger-prompts.v1.json",
+        "scripts/p55_bootstrap_handoff.py",
+        "tests/test_p07_effective_prompt_identity.py",
+        "tests/test_p143_repository_convergence_prompt.py",
+        "tests/test_p55_bootstrap_handoff.py"
+      ],
+      "focused_tests": [
+        "tests/test_prompt_semantic_coverage.py",
+        "tests/test_prompt_semantic_validator_1b.py"
+      ],
+      "source_history_migration_id": "p79-intentional-change-p143-010",
+      "source_history_from_git_blob_sha1": "3bdad1e03b1ddf1ce55ad1e936e4e3775a4d26d7",
+      "source_history_to_git_blob_sha1": "e1d571b5490a68292c1953dd7b1ecf6ee28fe96c",
+      "coverage_before_fingerprint": "91d508484b91fc32fb30b0917904336557395914025b32fdb8cd3f089be773e6",
+      "coverage_after_fingerprint": "bb925aa8aa4fe6cb0961b94ee2c065dc1754b1954bffb9a3639d0c3bfaff22a1",
+      "acceptance_state": "ACCEPTED",
+      "prior_profile_snapshot": {
+        "prompt_id": "P143",
+        "profile_version": 1,
+        "canonical_prompt_hash": "ceb5bdaaf22a53a745b20090072b88aeda2f6501760d3986b0fdc30bfb60f945",
+        "acceptance_commit": "c97718247e7b14544d198035dd3cdc07725545a8",
+        "direct_assignments": [
+          {
+            "capability_id": "strength.mainline_convergence",
+            "presence": "REQUIRED",
+            "ownership": "PRIMARY",
+            "capability_relation": "IMPLEMENTS",
+            "delivery_source": "CANONICAL_BODY",
+            "evidence_refs": [
+              "registry/prompts/repository-work-ledger-prompts.v1.json",
+              "harness/contracts/prompt-strength.v1.json",
+              "harness/prompt-topology/semantic-capability-catalog.v1.json"
+            ],
+            "rationale": "P143 is the canonical owner of planning multi-source A+B→C repository convergence: donor floors, capability dispositions, dependency/collision/phase maps, and the typed handoff that lets mainline convergence execute later under P07 without creating the destination here."
+          },
+          {
+            "capability_id": "strength.plan_durability",
+            "presence": "REQUIRED",
+            "ownership": "PRIMARY",
+            "capability_relation": "IMPLEMENTS",
+            "delivery_source": "CANONICAL_BODY",
+            "evidence_refs": [
+              "registry/prompts/repository-work-ledger-prompts.v1.json",
+              "harness/prompt-topology/semantic-capability-catalog.v1.json"
+            ],
+            "rationale": "P143 must persist a durable convergence plan artifact with dispositions, evidence states, and successor handoff so later sessions resume without reconstruction; plan durability is load-bearing for the P55/P07 sequence."
+          },
+          {
+            "capability_id": "strength.upstream_provenance",
+            "presence": "SUPPORT",
+            "ownership": "SECONDARY",
+            "capability_relation": "IMPLEMENTS",
+            "delivery_source": "CANONICAL_BODY",
+            "evidence_refs": [
+              "registry/prompts/repository-work-ledger-prompts.v1.json"
+            ],
+            "rationale": "P143 records donor floors and pinned donor identity as provenance inputs to C without claiming global primary ownership of provenance."
+          },
+          {
+            "capability_id": "strength.lane_isolation",
+            "presence": "SUPPORT",
+            "ownership": "SECONDARY",
+            "capability_relation": "IMPLEMENTS",
+            "delivery_source": "CANONICAL_BODY",
+            "evidence_refs": [
+              "registry/prompts/repository-work-ledger-prompts.v1.json"
+            ],
+            "rationale": "P143 plans phases and the first vertical slice in isolation from donor mutation and from P55 creation, keeping planning a non-mutating lane."
+          },
+          {
+            "capability_id": "strength.evidence_state_integrity",
+            "presence": "REQUIRED",
+            "ownership": "SECONDARY",
+            "capability_relation": "GUARDS",
+            "delivery_source": "CANONICAL_BODY",
+            "evidence_refs": [
+              "harness/prompt-topology/prompt-capability-profiles.v1.json",
+              "registry/prompts/repository-work-ledger-prompts.v1.json"
+            ],
+            "rationale": "P143 guards the operator_proposed→provider_verified→operator_approved→execution_authorization ladder and destination visibility as separate evidence states; P111 remains an overlapping owner reviewed for residual."
+          },
+          {
+            "capability_id": "prompt.identity",
+            "presence": "SUPPORT",
+            "ownership": "SECONDARY",
+            "capability_relation": "ROUTES_TO",
+            "delivery_source": "CANONICAL_BODY",
+            "evidence_refs": [
+              "harness/prompt-topology/semantic-capability-catalog.v1.json",
+              "build_prompt_kit.py"
+            ],
+            "rationale": "P143 advertises a distinct prompt identity and routes convergence terms to itself while routing simple bootstrap to P55 without absorbing those identities."
+          },
+          {
+            "capability_id": "execution.implementation",
+            "presence": "AWARE",
+            "ownership": "NONE",
+            "capability_relation": "ROUTES_TO",
+            "delivery_source": "ROUTED_OWNER",
+            "evidence_refs": [
+              "harness/prompt-topology/prompt-capability-profiles.v1.json"
+            ],
+            "rationale": "P143 does not execute implementation; it is aware of and routes creation to P55 and post-create convergence to P07."
+          },
+          {
+            "capability_id": "process.recurring",
+            "presence": "AWARE",
+            "ownership": "NONE",
+            "capability_relation": "ROUTES_TO",
+            "delivery_source": "ROUTED_OWNER",
+            "evidence_refs": [
+              "harness/prompt-topology/prompt-capability-profiles.v1.json"
+            ],
+            "rationale": "Recurring process hardening remains owned elsewhere; P143 only surfaces recurrence risks discovered during dispositioning."
+          }
+        ],
+        "inherited_sources": [
+          {
+            "source_id": "prompt-strength-shared-policy",
+            "source_version": "v1",
+            "source_hash": "e249da6706d86733cd03a046ef9e16552a3ae87dc8cc644281c5c1fd9c08c796"
+          }
+        ],
+        "semantic_dependency_fingerprint": "9a323e31a079a12acf94a97fe3d8883eb3f502658b0aed08c354d4841175ac51",
+        "evidence_refs": [
+          "build_prompt_kit.py",
+          "harness/contracts/prompt-strength.v1.json",
+          "harness/prompt-topology/prompt-capability-profiles.v1.json",
+          "harness/prompt-topology/semantic-capability-catalog.v1.json",
+          "registry/prompts/repository-work-ledger-prompts.v1.json"
+        ],
+        "profile_status": "ACCEPTED",
+        "profile_sha256": "cd3bc4031c94093af9830c9dad0b4daf10980551ab236accd179e359140ee27e"
+      }
+    },
+    {
+      "migration_id": "STRENGTHEN_P07_010",
+      "migration_kind": "STRENGTHEN",
+      "prompt_id": "P07",
+      "old_canonical_prompt_hash": "57bb9e948da82e27bc55d7fcc163522bbfd81c0ac352e7ec476554308b5f4f49",
+      "new_canonical_prompt_hash": "57bb9e948da82e27bc55d7fcc163522bbfd81c0ac352e7ec476554308b5f4f49",
+      "from_profile_version": 1,
+      "to_profile_version": 2,
+      "from_profile_sha256": "b9718c90d7634b35bb351b669f1e61413085cf66442ff00178dc804f251bc74b",
+      "to_profile_sha256": "d8031112a1039a4e19dc627d056c7fada4d004e8aea45595acd5f1598d8ae774",
+      "capability_deltas": [
+        {
+          "capability_id": "execution.implementation",
+          "before": {
+            "presence": "REQUIRED",
+            "ownership": "PRIMARY"
+          },
+          "after": {
+            "presence": "REQUIRED",
+            "ownership": "PRIMARY"
+          }
+        },
+        {
+          "capability_id": "strength.mainline_convergence",
+          "before": null,
+          "after": {
+            "presence": "REQUIRED",
+            "ownership": "PRIMARY"
+          }
+        }
+      ],
+      "rationale": "Make P07 the accepted primary owner of the shared mainline-convergence capability already required by the Green Branch Integration and P07 Mainline Convergence contracts; canonical P07 prompt text is unchanged.",
+      "evidence_refs": [
+        "AGENTS.md",
+        "docs/prompts.json:P07",
+        "harness/contracts/prompt-strength.v1.json",
+        "harness/prompt-topology/semantic-capability-catalog.v1.json",
+        "tests/test_p07_effective_prompt_identity.py",
+        "tests/test_p143_repository_convergence_prompt.py"
+      ],
+      "focused_tests": [
+        "tests/test_prompt_semantic_coverage.py",
+        "tests/test_prompt_semantic_validator_1b.py",
+        "tests/test_p143_repository_convergence_prompt.py"
+      ],
+      "source_history_migration_id": "p79-strengthen-p07-011",
+      "source_history_from_git_blob_sha1": "c963a857a8dc72ab5df8c99c2b3524c737271206",
+      "source_history_to_git_blob_sha1": "c963a857a8dc72ab5df8c99c2b3524c737271206",
+      "coverage_before_fingerprint": "91d508484b91fc32fb30b0917904336557395914025b32fdb8cd3f089be773e6",
+      "coverage_after_fingerprint": "bb925aa8aa4fe6cb0961b94ee2c065dc1754b1954bffb9a3639d0c3bfaff22a1",
+      "acceptance_state": "ACCEPTED",
+      "prior_profile_snapshot": {
+        "prompt_id": "P07",
+        "profile_version": 1,
+        "canonical_prompt_hash": "57bb9e948da82e27bc55d7fcc163522bbfd81c0ac352e7ec476554308b5f4f49",
+        "acceptance_commit": "55148914364e2988bc6096b7c8d142eca3f62c28",
+        "direct_assignments": [
+          {
+            "capability_id": "execution.implementation",
+            "presence": "REQUIRED",
+            "ownership": "PRIMARY",
+            "capability_relation": "IMPLEMENTS",
+            "delivery_source": "CANONICAL_BODY",
+            "evidence_refs": [
+              "harness/contracts/prompt-strength.v1.json:supporting_owners.implementation_execution",
+              "tests/test_p07_effective_prompt_identity.py",
+              "docs/prompts.json:P07"
+            ],
+            "rationale": "P07 is the canonical implementation execution owner per Prompt Strength contract"
+          }
+        ],
+        "inherited_sources": [
+          {
+            "source_id": "prompt-strength-shared-policy",
+            "source_version": "v1",
+            "source_hash": "e249da6706d86733cd03a046ef9e16552a3ae87dc8cc644281c5c1fd9c08c796"
+          }
+        ],
+        "semantic_dependency_fingerprint": "f320f90b491e8fb9684d575d8d25676d2c625fbddc697cde0206c596a1a48279",
+        "evidence_refs": [
+          "docs/prompts.json:P07",
+          "harness/contracts/prompt-strength.v1.json"
+        ],
+        "profile_status": "ACCEPTED",
+        "profile_sha256": "b9718c90d7634b35bb351b669f1e61413085cf66442ff00178dc804f251bc74b"
+      }
+    },
+    {
+      "migration_id": "STRENGTHEN_P114_011",
+      "migration_kind": "STRENGTHEN",
+      "prompt_id": "P114",
+      "old_canonical_prompt_hash": "e4bff97a41895d7078e18006fac168ba50a520268b009fd31367a4ee44eaae9e",
+      "new_canonical_prompt_hash": "643b9fa110ffef688f7e33d439da7dbae179ec0b698157c9f66cd25b2626778a",
+      "from_profile_version": 1,
+      "to_profile_version": 2,
+      "from_profile_sha256": "3dab4dbf77340db696fa24601cb0665055846fef009a402d04393b1ca7959e06",
+      "to_profile_sha256": "f5af4567229acb4c9b5aca2af1aab45734b63d0de943e3585d374e9038ce4989",
+      "capability_deltas": [
+        {
+          "capability_id": "execution.implementation",
+          "before": {
+            "presence": "AWARE",
+            "ownership": "NONE"
+          },
+          "after": {
+            "presence": "AWARE",
+            "ownership": "NONE"
+          }
+        },
+        {
+          "capability_id": "process.recurring",
+          "before": {
+            "presence": "AWARE",
+            "ownership": "NONE"
+          },
+          "after": {
+            "presence": "AWARE",
+            "ownership": "NONE"
+          }
+        },
+        {
+          "capability_id": "strength.actionable_continuation",
+          "before": {
+            "presence": "SUPPORT",
+            "ownership": "SECONDARY"
+          },
+          "after": {
+            "presence": "SUPPORT",
+            "ownership": "SECONDARY"
+          }
+        },
+        {
+          "capability_id": "strength.evidence_state_integrity",
+          "before": {
+            "presence": "REQUIRED",
+            "ownership": "SECONDARY"
+          },
+          "after": {
+            "presence": "REQUIRED",
+            "ownership": "SECONDARY"
+          }
+        },
+        {
+          "capability_id": "strength.fresh_evidence_floor",
+          "before": {
+            "presence": "REQUIRED",
+            "ownership": "SECONDARY"
+          },
+          "after": {
+            "presence": "REQUIRED",
+            "ownership": "SECONDARY"
+          }
+        },
+        {
+          "capability_id": "strength.proof_relevance_freshness",
+          "before": {
+            "presence": "REQUIRED",
+            "ownership": "SECONDARY"
+          },
+          "after": {
+            "presence": "REQUIRED",
+            "ownership": "SECONDARY"
+          }
+        }
+      ],
+      "rationale": "Repeated operator-visible artifact handoff failures show P114 must detect scoped cloud relevance and require paired canonical cloud plus local/download delivery without duplicating P111 or artifact-handoff authority.",
+      "evidence_refs": [
+        "harness/artifact-handoff/WORKFLOW.md",
+        "harness/artifact-handoff/contracts/share-alias-download.v1.json",
+        "harness/contracts/prompt-regression-safety.v1.json",
+        "harness/contracts/prompt-strength.v1.json",
+        "harness/prompt-topology/semantic-capability-catalog.v1.json",
+        "registry/prompts/repository-work-ledger-prompts.v1.json",
+        "registry/prompts/spec-architecture-prompts.v1.json",
+        "tests/test_conversation_context_canary_prompt.py",
+        "tests/test_google_drive_handoff_prompt_strengthening.py",
+        "tests/test_repository_drive_artifact_synchronizer_prompt.py"
+      ],
+      "focused_tests": [
+        "tests/test_prompt_semantic_coverage.py",
+        "tests/test_prompt_semantic_validator_1b.py"
+      ],
+      "source_history_migration_id": "p79-strengthen-p114-012",
+      "source_history_from_git_blob_sha1": "a3fdb112ffd593a0d6545bafe8e01ee823dad2b8",
+      "source_history_to_git_blob_sha1": "d6a9ffe14f2b9630758244068657ba542429f4c0",
+      "coverage_before_fingerprint": "9332c858d6ec669db6b70847a9d0acc950e830e4648de446fd81e6d2ae84d19b",
+      "coverage_after_fingerprint": "9332c858d6ec669db6b70847a9d0acc950e830e4648de446fd81e6d2ae84d19b",
+      "acceptance_state": "ACCEPTED",
+      "prior_profile_snapshot": {
+        "prompt_id": "P114",
+        "profile_version": 1,
+        "canonical_prompt_hash": "e4bff97a41895d7078e18006fac168ba50a520268b009fd31367a4ee44eaae9e",
+        "acceptance_commit": "c1b772e56df3429de9a466344952ed9a0ef94fe4",
+        "direct_assignments": [
+          {
+            "capability_id": "strength.fresh_evidence_floor",
+            "presence": "REQUIRED",
+            "ownership": "SECONDARY",
+            "capability_relation": "GUARDS",
+            "delivery_source": "CANONICAL_BODY",
+            "evidence_refs": [
+              "registry/prompts/spec-architecture-prompts.v1.json",
+              "tests/test_conversation_context_canary_prompt.py",
+              "harness/contracts/prompt-strength.v1.json"
+            ],
+            "rationale": "P114 requires current scoped evidence before reusing freshness-bounded repository/provider context while leaving the underlying evidence owners authoritative."
+          },
+          {
+            "capability_id": "strength.proof_relevance_freshness",
+            "presence": "REQUIRED",
+            "ownership": "SECONDARY",
+            "capability_relation": "GUARDS",
+            "delivery_source": "CANONICAL_BODY",
+            "evidence_refs": [
+              "registry/prompts/spec-architecture-prompts.v1.json",
+              "tests/test_conversation_context_canary_prompt.py"
+            ],
+            "rationale": "P114 uses query-issued temporal provenance and targeted refresh to prevent stale proof from being silently promoted across later turns."
+          },
+          {
+            "capability_id": "strength.evidence_state_integrity",
+            "presence": "REQUIRED",
+            "ownership": "SECONDARY",
+            "capability_relation": "GUARDS",
+            "delivery_source": "CANONICAL_BODY",
+            "evidence_refs": [
+              "registry/prompts/spec-architecture-prompts.v1.json",
+              "tests/test_conversation_context_canary_prompt.py"
+            ],
+            "rationale": "P114 fails closed on unknown profile, network, execution, account, and material provider state instead of inventing execution truth."
+          },
+          {
+            "capability_id": "strength.actionable_continuation",
+            "presence": "SUPPORT",
+            "ownership": "SECONDARY",
+            "capability_relation": "IMPLEMENTS",
+            "delivery_source": "CANONICAL_BODY",
+            "evidence_refs": [
+              "registry/prompts/spec-architecture-prompts.v1.json",
+              "tests/test_conversation_context_canary_prompt.py"
+            ],
+            "rationale": "P114's repeated-drift handoff preserves the first executable next action without taking ownership of the resumed implementation."
+          },
+          {
+            "capability_id": "execution.implementation",
+            "presence": "AWARE",
+            "ownership": "NONE",
+            "capability_relation": "ROUTES_TO",
+            "delivery_source": "ROUTED_OWNER",
+            "evidence_refs": [
+              "registry/prompts/spec-architecture-prompts.v1.json"
+            ],
+            "rationale": "P114 observes context and routes resumed execution; it does not own repository implementation."
+          },
+          {
+            "capability_id": "process.recurring",
+            "presence": "AWARE",
+            "ownership": "NONE",
+            "capability_relation": "ROUTES_TO",
+            "delivery_source": "ROUTED_OWNER",
+            "evidence_refs": [
+              "harness/contracts/prompt-regression-safety.v1.json"
+            ],
+            "rationale": "Repeated Canary or artifact-handoff failures route to P13/P94; P114 does not absorb recurrence ownership."
+          }
+        ],
+        "inherited_sources": [
+          {
+            "source_id": "prompt-strength-shared-policy",
+            "source_version": "v1",
+            "source_hash": "e249da6706d86733cd03a046ef9e16552a3ae87dc8cc644281c5c1fd9c08c796"
+          }
+        ],
+        "semantic_dependency_fingerprint": "81cd582c5b84f9f13b1325a37aa7cd954751575625d058640d7d4e00c6f7cf7f",
+        "evidence_refs": [
+          "harness/contracts/prompt-regression-safety.v1.json",
+          "harness/contracts/prompt-strength.v1.json",
+          "harness/prompt-topology/semantic-capability-catalog.v1.json",
+          "registry/prompts/spec-architecture-prompts.v1.json",
+          "tests/test_conversation_context_canary_prompt.py"
+        ],
+        "profile_status": "ACCEPTED",
+        "profile_sha256": "3dab4dbf77340db696fa24601cb0665055846fef009a402d04393b1ca7959e06"
+      }
+    },
+    {
+      "migration_id": "NO_CAPABILITY_CHANGE_P114_012",
+      "migration_kind": "NO_CAPABILITY_CHANGE",
+      "prompt_id": "P114",
+      "old_canonical_prompt_hash": "643b9fa110ffef688f7e33d439da7dbae179ec0b698157c9f66cd25b2626778a",
+      "new_canonical_prompt_hash": "ee8d4673d7e57dada35e21ce06a2a33a9a9c466b7dc79eacb5a6bfa63194a9ad",
+      "from_profile_version": 2,
+      "to_profile_version": 3,
+      "from_profile_sha256": "f5af4567229acb4c9b5aca2af1aab45734b63d0de943e3585d374e9038ce4989",
+      "to_profile_sha256": "4365a2c5e5a001f2479e0bb7fa549002baed65b241f3b09be4bcbb2cda943ade",
+      "capability_deltas": [
+        {
+          "capability_id": "execution.implementation",
+          "before": {
+            "presence": "AWARE",
+            "ownership": "NONE"
+          },
+          "after": {
+            "presence": "AWARE",
+            "ownership": "NONE"
+          }
+        },
+        {
+          "capability_id": "process.recurring",
+          "before": {
+            "presence": "AWARE",
+            "ownership": "NONE"
+          },
+          "after": {
+            "presence": "AWARE",
+            "ownership": "NONE"
+          }
+        },
+        {
+          "capability_id": "strength.actionable_continuation",
+          "before": {
+            "presence": "SUPPORT",
+            "ownership": "SECONDARY"
+          },
+          "after": {
+            "presence": "SUPPORT",
+            "ownership": "SECONDARY"
+          }
+        },
+        {
+          "capability_id": "strength.evidence_state_integrity",
+          "before": {
+            "presence": "REQUIRED",
+            "ownership": "SECONDARY"
+          },
+          "after": {
+            "presence": "REQUIRED",
+            "ownership": "SECONDARY"
+          }
+        },
+        {
+          "capability_id": "strength.fresh_evidence_floor",
+          "before": {
+            "presence": "REQUIRED",
+            "ownership": "SECONDARY"
+          },
+          "after": {
+            "presence": "REQUIRED",
+            "ownership": "SECONDARY"
+          }
+        },
+        {
+          "capability_id": "strength.proof_relevance_freshness",
+          "before": {
+            "presence": "REQUIRED",
+            "ownership": "SECONDARY"
+          },
+          "after": {
+            "presence": "REQUIRED",
+            "ownership": "SECONDARY"
+          }
+        }
+      ],
+      "rationale": "Review hardening restores observed-network mismatch semantics and makes local/cloud delivery branches explicit without changing P114 capability ownership.",
+      "evidence_refs": [
+        "harness/artifact-handoff/WORKFLOW.md",
+        "harness/artifact-handoff/contracts/share-alias-download.v1.json",
+        "harness/contracts/prompt-regression-safety.v1.json",
+        "harness/contracts/prompt-strength.v1.json",
+        "harness/prompt-topology/semantic-capability-catalog.v1.json",
+        "registry/prompts/repository-work-ledger-prompts.v1.json",
+        "registry/prompts/spec-architecture-prompts.v1.json",
+        "tests/test_conversation_context_canary_prompt.py",
+        "tests/test_google_drive_handoff_prompt_strengthening.py",
+        "tests/test_repository_drive_artifact_synchronizer_prompt.py"
+      ],
+      "focused_tests": [
+        "tests/test_prompt_semantic_coverage.py",
+        "tests/test_prompt_semantic_validator_1b.py"
+      ],
+      "source_history_migration_id": "p79-no-capability-change-p114-013",
+      "source_history_from_git_blob_sha1": "d6a9ffe14f2b9630758244068657ba542429f4c0",
+      "source_history_to_git_blob_sha1": "b150cb00c26a2ac49114426082edce339ae050ca",
+      "coverage_before_fingerprint": "9332c858d6ec669db6b70847a9d0acc950e830e4648de446fd81e6d2ae84d19b",
+      "coverage_after_fingerprint": "9332c858d6ec669db6b70847a9d0acc950e830e4648de446fd81e6d2ae84d19b",
+      "acceptance_state": "ACCEPTED",
+      "prior_profile_snapshot": {
+        "prompt_id": "P114",
+        "profile_version": 2,
+        "canonical_prompt_hash": "643b9fa110ffef688f7e33d439da7dbae179ec0b698157c9f66cd25b2626778a",
+        "acceptance_commit": "c1b772e56df3429de9a466344952ed9a0ef94fe4",
+        "direct_assignments": [
+          {
+            "capability_id": "strength.fresh_evidence_floor",
+            "presence": "REQUIRED",
+            "ownership": "SECONDARY",
+            "capability_relation": "GUARDS",
+            "delivery_source": "CANONICAL_BODY",
+            "evidence_refs": [
+              "registry/prompts/spec-architecture-prompts.v1.json",
+              "tests/test_conversation_context_canary_prompt.py",
+              "harness/contracts/prompt-strength.v1.json"
+            ],
+            "rationale": "P114 requires current scoped evidence before reusing freshness-bounded repository/provider context while leaving the underlying evidence owners authoritative."
+          },
+          {
+            "capability_id": "strength.proof_relevance_freshness",
+            "presence": "REQUIRED",
+            "ownership": "SECONDARY",
+            "capability_relation": "GUARDS",
+            "delivery_source": "CANONICAL_BODY",
+            "evidence_refs": [
+              "registry/prompts/spec-architecture-prompts.v1.json",
+              "tests/test_conversation_context_canary_prompt.py"
+            ],
+            "rationale": "P114 uses query-issued temporal provenance and targeted refresh to prevent stale proof from being silently promoted across later turns."
+          },
+          {
+            "capability_id": "strength.evidence_state_integrity",
+            "presence": "REQUIRED",
+            "ownership": "SECONDARY",
+            "capability_relation": "GUARDS",
+            "delivery_source": "CANONICAL_BODY",
+            "evidence_refs": [
+              "harness/artifact-handoff/WORKFLOW.md",
+              "registry/prompts/spec-architecture-prompts.v1.json",
+              "tests/test_conversation_context_canary_prompt.py"
+            ],
+            "rationale": "P114 fails closed on unknown profile, network, execution, account, and material provider state instead of inventing execution truth."
+          },
+          {
+            "capability_id": "strength.actionable_continuation",
+            "presence": "SUPPORT",
+            "ownership": "SECONDARY",
+            "capability_relation": "IMPLEMENTS",
+            "delivery_source": "CANONICAL_BODY",
+            "evidence_refs": [
+              "harness/artifact-handoff/WORKFLOW.md",
+              "registry/prompts/spec-architecture-prompts.v1.json",
+              "tests/test_conversation_context_canary_prompt.py"
+            ],
+            "rationale": "P114's repeated-drift handoff preserves the first executable next action without taking ownership of the resumed implementation."
+          },
+          {
+            "capability_id": "execution.implementation",
+            "presence": "AWARE",
+            "ownership": "NONE",
+            "capability_relation": "ROUTES_TO",
+            "delivery_source": "ROUTED_OWNER",
+            "evidence_refs": [
+              "registry/prompts/spec-architecture-prompts.v1.json"
+            ],
+            "rationale": "P114 observes context and routes resumed execution; it does not own repository implementation."
+          },
+          {
+            "capability_id": "process.recurring",
+            "presence": "AWARE",
+            "ownership": "NONE",
+            "capability_relation": "ROUTES_TO",
+            "delivery_source": "ROUTED_OWNER",
+            "evidence_refs": [
+              "harness/contracts/prompt-regression-safety.v1.json"
+            ],
+            "rationale": "Repeated Canary or artifact-handoff failures route to P13/P94; P114 does not absorb recurrence ownership."
+          }
+        ],
+        "inherited_sources": [
+          {
+            "source_id": "prompt-strength-shared-policy",
+            "source_version": "v1",
+            "source_hash": "e249da6706d86733cd03a046ef9e16552a3ae87dc8cc644281c5c1fd9c08c796"
+          }
+        ],
+        "semantic_dependency_fingerprint": "023a8eb908ddae244516d34740902f07e778ec38a71c993515856ef19bc5d4f4",
+        "evidence_refs": [
+          "harness/artifact-handoff/WORKFLOW.md",
+          "harness/artifact-handoff/contracts/share-alias-download.v1.json",
+          "harness/contracts/prompt-regression-safety.v1.json",
+          "harness/contracts/prompt-strength.v1.json",
+          "harness/prompt-topology/semantic-capability-catalog.v1.json",
+          "registry/prompts/repository-work-ledger-prompts.v1.json",
+          "registry/prompts/spec-architecture-prompts.v1.json",
+          "tests/test_conversation_context_canary_prompt.py",
+          "tests/test_google_drive_handoff_prompt_strengthening.py",
+          "tests/test_repository_drive_artifact_synchronizer_prompt.py"
+        ],
+        "profile_status": "ACCEPTED",
+        "prior_profile_ref": {
+          "profile_version": 1,
+          "profile_sha256": "3dab4dbf77340db696fa24601cb0665055846fef009a402d04393b1ca7959e06"
+        },
+        "profile_sha256": "f5af4567229acb4c9b5aca2af1aab45734b63d0de943e3585d374e9038ce4989"
+      }
+    },
+    {
+      "migration_id": "NO_CAPABILITY_CHANGE_P114_013",
+      "migration_kind": "NO_CAPABILITY_CHANGE",
+      "prompt_id": "P114",
+      "old_canonical_prompt_hash": "ee8d4673d7e57dada35e21ce06a2a33a9a9c466b7dc79eacb5a6bfa63194a9ad",
+      "new_canonical_prompt_hash": "d47379d6ae44d154fc745d15317149ac8d31a7c50051d709f4fe15dcabbc5c79",
+      "from_profile_version": 3,
+      "to_profile_version": 4,
+      "from_profile_sha256": "4365a2c5e5a001f2479e0bb7fa549002baed65b241f3b09be4bcbb2cda943ade",
+      "to_profile_sha256": "c2f515883f0dc840f9a3bc6c41f7b669502f576fd926f261d28bedeb764bd547",
+      "capability_deltas": [
+        {
+          "capability_id": "execution.implementation",
+          "before": {
+            "presence": "AWARE",
+            "ownership": "NONE"
+          },
+          "after": {
+            "presence": "AWARE",
+            "ownership": "NONE"
+          }
+        },
+        {
+          "capability_id": "process.recurring",
+          "before": {
+            "presence": "AWARE",
+            "ownership": "NONE"
+          },
+          "after": {
+            "presence": "AWARE",
+            "ownership": "NONE"
+          }
+        },
+        {
+          "capability_id": "strength.actionable_continuation",
+          "before": {
+            "presence": "SUPPORT",
+            "ownership": "SECONDARY"
+          },
+          "after": {
+            "presence": "SUPPORT",
+            "ownership": "SECONDARY"
+          }
+        },
+        {
+          "capability_id": "strength.evidence_state_integrity",
+          "before": {
+            "presence": "REQUIRED",
+            "ownership": "SECONDARY"
+          },
+          "after": {
+            "presence": "REQUIRED",
+            "ownership": "SECONDARY"
+          }
+        },
+        {
+          "capability_id": "strength.fresh_evidence_floor",
+          "before": {
+            "presence": "REQUIRED",
+            "ownership": "SECONDARY"
+          },
+          "after": {
+            "presence": "REQUIRED",
+            "ownership": "SECONDARY"
+          }
+        },
+        {
+          "capability_id": "strength.proof_relevance_freshness",
+          "before": {
+            "presence": "REQUIRED",
+            "ownership": "SECONDARY"
+          },
+          "after": {
+            "presence": "REQUIRED",
+            "ownership": "SECONDARY"
+          }
+        }
+      ],
+      "rationale": "Close the project-cloud binding ambiguity so unresolved artifact mapping cannot be treated as local-only; route through the existing provider owner while preserving P114 capability ownership.",
+      "evidence_refs": [
+        "docs/plans/CLOUD_PAIRED_ARTIFACT_HANDOFF_SPRINT_MAP.md",
+        "harness/artifact-handoff/WORKFLOW.md",
+        "harness/artifact-handoff/contracts/share-alias-download.v1.json",
+        "harness/contracts/prompt-regression-safety.v1.json",
+        "harness/contracts/prompt-strength.v1.json",
+        "harness/prompt-topology/semantic-capability-catalog.v1.json",
+        "registry/prompts/repository-work-ledger-prompts.v1.json",
+        "registry/prompts/spec-architecture-prompts.v1.json",
+        "tests/test_conversation_context_canary_prompt.py",
+        "tests/test_google_drive_handoff_prompt_strengthening.py",
+        "tests/test_repository_drive_artifact_synchronizer_prompt.py"
+      ],
+      "focused_tests": [
+        "tests/test_prompt_semantic_coverage.py",
+        "tests/test_prompt_semantic_validator_1b.py"
+      ],
+      "source_history_migration_id": "p79-no-capability-change-p114-014",
+      "source_history_from_git_blob_sha1": "b150cb00c26a2ac49114426082edce339ae050ca",
+      "source_history_to_git_blob_sha1": "5926a198a14567de55110ed19e922fc444b4dec7",
+      "coverage_before_fingerprint": "9332c858d6ec669db6b70847a9d0acc950e830e4648de446fd81e6d2ae84d19b",
+      "coverage_after_fingerprint": "9332c858d6ec669db6b70847a9d0acc950e830e4648de446fd81e6d2ae84d19b",
+      "acceptance_state": "ACCEPTED",
+      "prior_profile_snapshot": {
+        "prompt_id": "P114",
+        "profile_version": 3,
+        "canonical_prompt_hash": "ee8d4673d7e57dada35e21ce06a2a33a9a9c466b7dc79eacb5a6bfa63194a9ad",
+        "acceptance_commit": "2ef2e9f3f1a5a2364025b16a6abf3adc0ec4826b",
+        "direct_assignments": [
+          {
+            "capability_id": "strength.fresh_evidence_floor",
+            "presence": "REQUIRED",
+            "ownership": "SECONDARY",
+            "capability_relation": "GUARDS",
+            "delivery_source": "CANONICAL_BODY",
+            "evidence_refs": [
+              "registry/prompts/spec-architecture-prompts.v1.json",
+              "tests/test_conversation_context_canary_prompt.py",
+              "harness/contracts/prompt-strength.v1.json"
+            ],
+            "rationale": "P114 requires current scoped evidence before reusing freshness-bounded repository/provider context while leaving the underlying evidence owners authoritative."
+          },
+          {
+            "capability_id": "strength.proof_relevance_freshness",
+            "presence": "REQUIRED",
+            "ownership": "SECONDARY",
+            "capability_relation": "GUARDS",
+            "delivery_source": "CANONICAL_BODY",
+            "evidence_refs": [
+              "registry/prompts/spec-architecture-prompts.v1.json",
+              "tests/test_conversation_context_canary_prompt.py"
+            ],
+            "rationale": "P114 uses query-issued temporal provenance and targeted refresh to prevent stale proof from being silently promoted across later turns."
+          },
+          {
+            "capability_id": "strength.evidence_state_integrity",
+            "presence": "REQUIRED",
+            "ownership": "SECONDARY",
+            "capability_relation": "GUARDS",
+            "delivery_source": "CANONICAL_BODY",
+            "evidence_refs": [
+              "harness/artifact-handoff/WORKFLOW.md",
+              "registry/prompts/spec-architecture-prompts.v1.json",
+              "tests/test_conversation_context_canary_prompt.py"
+            ],
+            "rationale": "P114 fails closed on unknown profile, network, execution, account, and material provider state instead of inventing execution truth."
+          },
+          {
+            "capability_id": "strength.actionable_continuation",
+            "presence": "SUPPORT",
+            "ownership": "SECONDARY",
+            "capability_relation": "IMPLEMENTS",
+            "delivery_source": "CANONICAL_BODY",
+            "evidence_refs": [
+              "harness/artifact-handoff/WORKFLOW.md",
+              "registry/prompts/spec-architecture-prompts.v1.json",
+              "tests/test_conversation_context_canary_prompt.py"
+            ],
+            "rationale": "P114's repeated-drift handoff preserves the first executable next action without taking ownership of the resumed implementation."
+          },
+          {
+            "capability_id": "execution.implementation",
+            "presence": "AWARE",
+            "ownership": "NONE",
+            "capability_relation": "ROUTES_TO",
+            "delivery_source": "ROUTED_OWNER",
+            "evidence_refs": [
+              "registry/prompts/spec-architecture-prompts.v1.json"
+            ],
+            "rationale": "P114 observes context and routes resumed execution; it does not own repository implementation."
+          },
+          {
+            "capability_id": "process.recurring",
+            "presence": "AWARE",
+            "ownership": "NONE",
+            "capability_relation": "ROUTES_TO",
+            "delivery_source": "ROUTED_OWNER",
+            "evidence_refs": [
+              "harness/contracts/prompt-regression-safety.v1.json"
+            ],
+            "rationale": "Repeated Canary or artifact-handoff failures route to P13/P94; P114 does not absorb recurrence ownership."
+          }
+        ],
+        "inherited_sources": [
+          {
+            "source_id": "prompt-strength-shared-policy",
+            "source_version": "v1",
+            "source_hash": "e249da6706d86733cd03a046ef9e16552a3ae87dc8cc644281c5c1fd9c08c796"
+          }
+        ],
+        "semantic_dependency_fingerprint": "023a8eb908ddae244516d34740902f07e778ec38a71c993515856ef19bc5d4f4",
+        "evidence_refs": [
+          "harness/artifact-handoff/WORKFLOW.md",
+          "harness/artifact-handoff/contracts/share-alias-download.v1.json",
+          "harness/contracts/prompt-regression-safety.v1.json",
+          "harness/contracts/prompt-strength.v1.json",
+          "harness/prompt-topology/semantic-capability-catalog.v1.json",
+          "registry/prompts/repository-work-ledger-prompts.v1.json",
+          "registry/prompts/spec-architecture-prompts.v1.json",
+          "tests/test_conversation_context_canary_prompt.py",
+          "tests/test_google_drive_handoff_prompt_strengthening.py",
+          "tests/test_repository_drive_artifact_synchronizer_prompt.py"
+        ],
+        "profile_status": "ACCEPTED",
+        "prior_profile_ref": {
+          "profile_version": 2,
+          "profile_sha256": "f5af4567229acb4c9b5aca2af1aab45734b63d0de943e3585d374e9038ce4989"
+        },
+        "profile_sha256": "4365a2c5e5a001f2479e0bb7fa549002baed65b241f3b09be4bcbb2cda943ade"
+      }
     }
   ],
   "note": "Migrations recorded after Sprint 1A baseline. Every lifecycle transition after baseline acceptance must be explicit and recorded here."

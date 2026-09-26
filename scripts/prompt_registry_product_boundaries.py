@@ -21,7 +21,7 @@ CONTRACT = ROOT / "registry" / "prompts" / "product-boundaries.v1.json"
 SCHEMA_VERSION = "prompt-registry-product-boundaries/v1"
 AFK_PRODUCT = "afk-agent-flow"
 TRIAGE_PRODUCT = "triage-local-operations"
-AFK_TARGET_REPOSITORY = "UnderDeskDev/AFK-Agent-Flow"
+AFK_TARGET_REPOSITORY = "EndeavorEverlasting/TokenCorridor"
 TRIAGE_TARGET_REPOSITORY = "EndeavorEverlasting/web-excel-repair-triage"
 MANAGEMENT_REGISTRY = "registry/prompts/management-operations-prompts.v1.json"
 

@@ -354,3 +354,51 @@ Canonical terminal action: none; no safe actionable work remains
 - **Last proof:** plan:78809b8cb264715731d4dbb57824385566ce0ece; dispatch-manifest:74d9196c3f88f5f81f5607d3a9871a758d3f6903; provider evidence confirms registered Matt donor, daily drift-proof schedule, current `teach` resource with null local target, and read-only workflow with no P115 routing
 - **Next action:** Execute U0A's evidence-backed missed-`teach` forensic lane and write `harness/reports/UPSTREAM_CAPABILITY_WATCH_FORENSICS.md`; dispatch U0B authoritative design/skill-authoring source research in parallel when an autonomous adapter is available; start U1 only after U0A establishes the exact failure boundary
 - **Updated:** 2026-09-20T20:00:00Z
+
+## TRQ-021 — P55 repository bootstrap recovery and mainline convergence
+
+- **Status:** DONE
+- **Priority:** P1
+- **Owner:** p55-repository-bootstrap-recovery-20260922
+- **Branch / PR:** `feat/p55-provider-neutral-repo-bootstrap-20260920` / #623 merged as `5e129012221f3108e03bda129084b616e8ffd50b`
+- **Scope:** reconcile the existing P55 provider-neutral repository bootstrap strengthening onto current main; repair REMOTE_ONLY continuation and identity-manifest status vocabulary; regenerate P55 lifecycle/profile/history state from current canonical authority; preserve current P65/test-floor/generated-site state; run exact-head deterministic/provider proof; integrate the exact green result; then close stale donor PR #367
+- **Forbidden:** new P55 prompt identity; overwriting current P65 migration/test-floor/site state; hand-editing generated Prompt Kit as source; weakening lifecycle/test-floor validators; overwriting TRQ-020 `Outputs/prompt-parallel-dispatch/manifest.json`; force-reset/force-push; closing #367 before replacement integration; claiming runtime GitHub/Entire field proof from repository CI
+- **Dependencies:** canonical plan `docs/plans/P55_REPOSITORY_BOOTSTRAP_RECOVERY_SPRINT_MAP.md`; planning floor `main@bd5136561466b31f8623ca3f9a61020cb9ced5f7`; PR #623 donor head `373019f33b0ef577443f7e56bdd441c06c203814` before plan synchronization; prompt-semantic lifecycle owner; deterministic test floor; current Prompt Kit builder
+- **References:** `docs/plans/P55_REPOSITORY_BOOTSTRAP_RECOVERY_SPRINT_MAP.md`, `docs/plans/P55_REPOSITORY_BOOTSTRAP_RECOVERY_SPRINT_PACK.md`, PR #623, PR #367, `docs/prompts.json`, `scripts/prompt_registry_ops.py`, `tests/test_p55_repository_bootstrap.py`, `harness/prompt-compilation/prompt-semantic-migrations.v1.json`, `harness/prompt-topology/prompt-capability-migrations.v1.json`, `harness/prompt-topology/prompt-capability-profiles.v1.json`, `harness/test-floor.v1.json`, `web/prompt-kit/index.html`
+- **Acceptance gate:** current-main-based final P55 uses one manifest status vocabulary; REMOTE_ONLY/LOCAL_ONLY/local-root continuations are executable; lifecycle/profile/history records are regenerated from final current-main authority; focused P55 and deterministic-floor tests pass; generated site is exact; all actionable review threads are resolved with evidence; exact head is mergeable and provider checks green; #623 integrates to refreshed main; #367 closes only after replacement containment is proven
+- **Gate:** none
+- **Last proof:** run:#35812547079 SUCCESS; deterministic floor 42/42; generated Prompt Kit parity PASS; exact reconciled head c56ce33e63642dce844e31bc2fc83bca08213511 CodeRabbit SUCCESS with zero unresolved review threads; merge:5e129012221f3108e03bda129084b616e8ffd50b contained in refreshed main; authoritative P55 read-back PASS; donor PR #367 closed.
+- **Next action:** none; no safe actionable work remains
+- **Updated:** 2026-09-23T03:06:00Z
+
+## TRQ-022 — Converge reviewed P143 repository planner contracts
+
+- **Status:** DONE
+- **Priority:** P1
+- **Owner:** p143-review-contract-convergence-20260923
+- **Branch / PR:** `converge/p143-review-contracts-20260923` / #640 merged as `6835ed4b2d0278798323e2b0eceff0f52dd0326f`
+- **Scope:** converge the reviewed P143 Repository Convergence Planner onto current main; preserve integrated provider-neutral P55; close P143 search/routing, durable-plan authority, typed P55 handoff, provider-state, capability-ownership, deterministic-regression, generated-site, review, and integration gates
+- **Forbidden:** roll back or semantically weaken integrated P55; create or mutate a destination repository; execute donor convergence; modify unrelated donor-resource projections; hand-edit generated Prompt Kit HTML as canonical source; force-push/reset; weaken semantic/test-floor validators
+- **Dependencies:** `main@adb26cb5df57e5fe50b0befc72c14f18da10555c`; PR #632 and `repair/p143-review-contracts-20260922@26a0e030e36daacbe7551f54d451fbc69ca30714` as donor/review evidence only; canonical Prompt Kit builder; prompt semantic lifecycle; deterministic test floor
+- **References:** PR #640, PR #632, `registry/prompts/repository-work-ledger-prompts.v1.json`, `harness/contracts/p55-bootstrap-handoff.v1.json`, `scripts/p55_bootstrap_handoff.py`, `tests/test_p143_repository_convergence_prompt.py`, `tests/test_p55_bootstrap_handoff.py`, `harness/prompt-topology/prompt-capability-profiles.v1.json`, `harness/test-floor.v1.json`, `web/prompt-kit/index.html`
+- **Acceptance gate:** current-main P55 identity remains authoritative; P143 has safe global synonyms and real generated-JS precedence regression; proposal/provider/authority states are orthogonal; durable plan authority is validated; `p55-bootstrap-handoff/v1` has a versioned contract and executable validator; P143 guards but does not primarily own mainline convergence; focused and deterministic gates pass; generated site is exact; actionable review is empty; exact green head merges into refreshed main; #632 closes only after replacement containment is proven
+- **Gate:** none
+- **Last proof:** run:#35909235297 deterministic repository floor SUCCESS on exact head `366cd23023c255008a0127c5147fa03ff4fa5abc`; Prompt topology A/B/C, Prompt Quality History, Pages parity, browser/web/harness/eval gates PASS; zero unresolved review threads; merge:6835ed4b2d0278798323e2b0eceff0f52dd0326f verified as refreshed `main` with P07 REQUIRED/PRIMARY mainline convergence, P143 REQUIRED/SECONDARY guard ownership, and hardened `p55-bootstrap-handoff/v1` read back from default.
+- **Next action:** none; no safe actionable work remains
+- **Updated:** 2026-09-23T15:32:17-04:00
+
+## TRQ-023 — Deterministic ticket tracker ingestion automation
+
+- **Status:** READY
+- **Priority:** P1
+- **Owner:** P125 + Triage ticket-ingestion capability; P56 artifact mutation; P111 Drive sync; P79 prompt strengthening
+- **Branch / PR:** `plan/ticket-tracker-ingestion-automation-20260924` / #648 merged as `ebd9aaa24027992b48dc98c391366e0bc59ac540`
+- **Scope:** turn recurring H&H ticket intake into a deterministic pipeline from screenshot/pasted-list/P125 evidence through versioned observation/update/merge contracts, explicit incident identity + dedupe/non-conflation kernel, tracker-schema-aware per-column merge dispositions, Excel-first mutation, shared CLI/library + local website projection, post-write readback, stable Drive handoff, and protected P125 strengthening after the implementation seam exists
+- **Forbidden:** new prompt ID at the planning floor; raw/private H&H screenshots or workbook bytes in Git; invented missing ticket fields; same-site/same-day conflation; ServiceNow authority/credentials assumed without proof; duplicate CURRENT Drive artifacts; UI-specific duplicate merge logic; P125 prompt mutation before the deterministic engine contract exists
+- **Dependencies:** current P125 on main (PR #343 + #377 history); P56 Context-to-Artifact Generator; P111 Repository + Google Drive Artifact Synchronizer; P79 protected prompt lifecycle; P13/P94 recurring-regression contract; P114 cloud-artifact handoff integrated via PR #641; existing Triage workbook/artifact-engine safety contracts; planning floor `main@c7c5a029d92c81a100abc9cde9477ae39a3379e9`
+- **References:** `docs/plans/TICKET_TRACKER_INGESTION_AUTOMATION_SPRINT_MAP.md`, `registry/prompts/management-operations-prompts.v1.json` (P125), `tests/test_hh_ticket_tracking_prompt.py`, `docs/prompts.json` (P56), `registry/prompts/repository-work-ledger-prompts.v1.json` (P111), `harness/contracts/prompt-regression-safety.v1.json`, `ARTIFACT_REGISTRY.md`
+- **Acceptance gate:** TTI-1..TTI-9 program completes; versioned ticket observation/update/merge contracts + validators exist; screenshot/pasted-text/P125 adapters converge on one observation model; explicit-ID dedupe and non-conflation are deterministic/idempotent; every current tracker column gets an explicit set/derive/preserve/blank/conflict/N-A disposition; workbook structure is preserved; CLI/UI share one merge kernel; P125 is strengthened through `prompt_registry_ops.py` without new identity; stable Drive tracker identity is updated/read back through P111; sanitized regression matrix is retained; one real H&H batch is observed end-to-end with zero duplicate tracker IDs
+- **Gate:** planning is integrated on main; implementation is not started; first safe implementation slice is TTI-1 contracts/fixtures/validators only from refreshed main
+- **Last proof:** exact reconciled PR head `6919be004a728daac0a9dad2f607572603d205a0` passed Repository work ledger, App Harness, Artifact engine, Prompt Kit Pages, and deterministic repository floor workflows with zero unresolved review threads; PR #648 merged as `ebd9aaa24027992b48dc98c391366e0bc59ac540`; mainline plan readback PASS; no current `ticket_update`/screenshot-ingestion engine is implemented
+- **Next action:** Execute TTI-1 from refreshed main: create the smallest versioned ticket-observation, ticket-update-batch, and ticket-merge-receipt contracts plus sanitized positive/negative fixtures and validators; do not mutate P125, private H&H artifacts, workbooks, or Drive in that slice
+- **Updated:** 2026-09-24T19:42:46-04:00

@@ -12,7 +12,11 @@ CONTRACT = ROOT / "harness/contracts/operant-product-identity.v1.json"
 PRODUCT_NAME = "AFK Agent Flow"
 PRODUCT_ID = "afk-agent-flow"
 PUBLIC_ROUTE = "/afk-agent-flow/"
-TARGET_REPOSITORY = "UnderDeskDev/AFK-Agent-Flow"
+TARGET_REPOSITORY = "EndeavorEverlasting/TokenCorridor"
+TARGET_REPOSITORY_STATE = "created-convergence-authority-cutover-unproven"
+CONVERGENCE_PLAN_REPOSITORY = "EndeavorEverlasting/TokenCorridor"
+CONVERGENCE_PLAN_PATH = "plans/active/AFK-FACTORY-CONVERGENCE.plan.json"
+CONVERGENCE_MATERIAL_FLOOR = "afbc796f6292d13888975699329ad188b86d3ee5"
 
 
 def evaluate() -> list[str]:
@@ -56,8 +60,14 @@ def evaluate() -> list[str]:
         findings.append("current repository authority drifted")
     if authority.get("target_repository") != TARGET_REPOSITORY:
         findings.append("target repository drifted")
-    if authority.get("target_repository_state") != "not-created-or-unproven":
-        findings.append("target repository state was promoted without proof")
+    if authority.get("target_repository_state") != TARGET_REPOSITORY_STATE:
+        findings.append("target repository state drifted")
+    if authority.get("convergence_plan_repository") != CONVERGENCE_PLAN_REPOSITORY:
+        findings.append("convergence plan repository drifted")
+    if authority.get("convergence_plan_path") != CONVERGENCE_PLAN_PATH:
+        findings.append("convergence plan path drifted")
+    if authority.get("convergence_material_floor") != CONVERGENCE_MATERIAL_FLOOR:
+        findings.append("convergence material floor drifted")
 
     compatibility = payload.get("compatibility", {})
     if compatibility.get("visible_brand") != PRODUCT_NAME:
@@ -98,9 +108,8 @@ def evaluate() -> list[str]:
     governance = (ROOT / "AGENTS.md").read_text(encoding="utf-8")
     for marker in (
         "**AFK Agent Flow**",
-        "`UnderDeskDev/AFK-Agent-Flow`",
-        "Operant",
-        "Prompt Kit",
+        "`EndeavorEverlasting/TokenCorridor`",
+        "legacy `operant` / `prompt-kit` paths",
         "must not be silently moved",
     ):
         if marker not in governance:

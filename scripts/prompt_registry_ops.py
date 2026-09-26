@@ -57,7 +57,11 @@ SEMANTIC_PROFILE_FIELDS = {
     "distinct_residual",
     "transfer_targets",
 }
-EDITABLE_PROMPT_FIELDS = {"name", "copyContent", "sprintRole", "useWhen"}
+SEMANTIC_EDITABLE_PROMPT_FIELDS = {"name", "copyContent", "sprintRole", "useWhen"}
+METADATA_EDITABLE_PROMPT_FIELDS = {
+    "class", "inspectFirst", "expectedOutput", "nextStep", "proofGate", "keywords",
+}
+EDITABLE_PROMPT_FIELDS = SEMANTIC_EDITABLE_PROMPT_FIELDS | METADATA_EDITABLE_PROMPT_FIELDS
 
 
 def _read_json(path_value: str) -> dict[str, Any]:
@@ -1193,6 +1197,102 @@ def _replace_current_profile(
     return updated
 
 
+def adopt_profile(
+    prompt_id: str,
+    candidate: dict[str, Any],
+    evidence_refs: list[str],
+    rationale: str,
+    dry_run: bool = False,
+) -> dict[str, Any]:
+    """Adopt an existing unprofiled prompt into semantic coverage without changing its body."""
+    prompt_id = prompt_id.strip().upper()
+    rationale = rationale.strip()
+    if not rationale:
+        raise SystemExit("Profile adoption requires a non-empty rationale")
+
+    source_path, _payload, _is_base, record, _index = _find_canonical_prompt(prompt_id)
+    profiles_data = _load_semantic_profiles()
+    existing = [
+        row for row in profiles_data.get("profiles", [])
+        if row.get("prompt_id") == prompt_id
+    ]
+    if any(row.get("profile_status") == "ACCEPTED" for row in existing):
+        raise SystemExit(f"{prompt_id} already has an ACCEPTED semantic profile")
+    if existing:
+        raise SystemExit(
+            f"{prompt_id} already has semantic profile history; reconcile it before adoption"
+        )
+
+    semantic_candidate = _validate_candidate_semantic_profile(candidate)
+    merged_candidate = _clone_json(semantic_candidate)
+    merged_refs = sorted(
+        set(_semantic_evidence_refs(semantic_candidate))
+        | {str(ref).strip() for ref in evidence_refs if str(ref).strip()}
+    )
+    if not merged_refs:
+        raise SystemExit("Profile adoption requires at least one evidence reference")
+    merged_candidate["evidence_refs"] = merged_refs
+
+    accepted = _build_accepted_profile(
+        record,
+        merged_candidate,
+        profile_version=1,
+        prior_profile=None,
+    )
+    semantic_errors: list[str] = []
+    semantic_errors.extend(semantic_validator.check_psc002_profile_binds_canonical_prompt(accepted))
+    semantic_errors.extend(
+        semantic_validator.check_psc002_profile_matches_canonical_record(accepted, record)
+    )
+    semantic_errors.extend(
+        semantic_validator.check_psc003_known_capability_only(
+            accepted,
+            semantic_validator._load_catalog(),
+        )
+    )
+    semantic_errors.extend(
+        semantic_validator.check_psc011_new_primary_or_required_requires_proof(accepted)
+    )
+    semantic_errors.extend(
+        semantic_validator.check_psc016_inherited_source_integrity(accepted)
+    )
+    if semantic_errors:
+        raise SystemExit(
+            "Profile adoption candidate failed semantic coverage: "
+            + " | ".join(semantic_errors)
+        )
+
+    updated = _clone_json(profiles_data)
+    updated.setdefault("profiles", []).append(accepted)
+    updated["profile_count"] = len(updated["profiles"])
+
+    preview = {
+        "status": "dry-run" if dry_run else "adopted",
+        "prompt_id": prompt_id,
+        "registry_path": str(source_path.relative_to(REPO_ROOT)),
+        "profile_version": accepted["profile_version"],
+        "profile_sha256": accepted["profile_sha256"],
+        "evidence_refs": merged_refs,
+        "rationale": rationale,
+    }
+    if dry_run:
+        return preview
+
+    receipt = _apply_lifecycle_transaction(
+        {SEMANTIC_PROFILES_PATH: _json_bytes(updated)},
+        f"adopt-profile-{prompt_id}",
+    )
+    preview.update(
+        {
+            "backup_path": receipt["backup_path"],
+            "site_path": str(registry.DEFAULT_OUTPUT.relative_to(REPO_ROOT)),
+            "site_parity": True,
+            "prompt_count": receipt["prompt_count"],
+        }
+    )
+    return preview
+
+
 def check_retirement_coverage(
     prompt_id: str,
     transfers: dict[str, str] | None = None,
@@ -1428,10 +1528,19 @@ def edit_prompt(
     if unknown:
         raise SystemExit("Prompt edit contains unsupported fields: " + ", ".join(unknown))
     changed_fields = sorted(set(patch).intersection(EDITABLE_PROMPT_FIELDS))
+    semantic_changed_fields = sorted(
+        set(patch).intersection(SEMANTIC_EDITABLE_PROMPT_FIELDS)
+    )
     if not changed_fields:
         raise SystemExit(
-            "Prompt edit must change at least one canonical semantic field: "
+            "Prompt edit must change at least one supported field: "
             + ", ".join(sorted(EDITABLE_PROMPT_FIELDS))
+        )
+    if not semantic_changed_fields:
+        raise SystemExit(
+            "Prompt edit metadata may accompany a semantic edit but cannot independently "
+            "advance the semantic lifecycle; change at least one of: "
+            + ", ".join(sorted(SEMANTIC_EDITABLE_PROMPT_FIELDS))
         )
 
     source_path, payload, is_base, record, index = _find_canonical_prompt(prompt_id)
@@ -1442,6 +1551,16 @@ def edit_prompt(
     new_record = _clone_json(record)
     for field in changed_fields:
         value = patch[field]
+        if field == "keywords":
+            if not isinstance(value, list) or not value:
+                raise SystemExit("Prompt edit keywords must be a non-empty list")
+            if any(not isinstance(item, str) or not item.strip() for item in value):
+                raise SystemExit("Prompt edit keywords must contain only non-empty strings")
+            normalized = [item.strip() for item in value]
+            if len(normalized) != len({_normalize_text(item) for item in normalized}):
+                raise SystemExit("Prompt edit keywords must not contain duplicates")
+            new_record[field] = normalized
+            continue
         if not isinstance(value, str) or not value.strip():
             raise SystemExit(f"Prompt edit field must be a non-empty string: {field}")
         new_record[field] = value.rstrip() if field == "copyContent" else value.strip()
@@ -1581,7 +1700,7 @@ def edit_prompt(
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(
         description=(
-            "Inspect, add, edit, retire, and validate Prompt Kit registry lifecycle "
+            "Inspect, add, adopt profiles, edit, retire, and validate Prompt Kit registry lifecycle "
             "mutations through P79 semantic coverage gates."
         )
     )
@@ -1611,6 +1730,28 @@ def main(argv: list[str] | None = None) -> int:
     add.add_argument("--input", required=True, help="Draft JSON path, or - for stdin.")
     add.add_argument("--registry", help="Existing registry_id; otherwise resolve from draft profile.")
     add.add_argument("--dry-run", action="store_true", help="Resolve and validate without writing files.")
+
+    adopt = sub.add_parser(
+        "adopt-profile",
+        help=(
+            "Adopt an existing unprofiled prompt into semantic coverage without changing "
+            "its canonical body."
+        ),
+    )
+    adopt.add_argument("--prompt-id", required=True, help="Existing prompt ID to profile.")
+    adopt.add_argument(
+        "--input",
+        required=True,
+        help="Semantic profile JSON containing direct_assignments and optional inherited/evidence fields.",
+    )
+    adopt.add_argument(
+        "--evidence-ref",
+        action="append",
+        default=[],
+        help="Reviewed profile-adoption evidence reference; repeat for multiple refs.",
+    )
+    adopt.add_argument("--rationale", required=True, help="Reviewed reason for adopting this prompt into semantic coverage.")
+    adopt.add_argument("--dry-run", action="store_true", help="Validate adoption without writing files.")
 
     edit = sub.add_parser(
         "edit",
@@ -1658,6 +1799,14 @@ def main(argv: list[str] | None = None) -> int:
         result = review_prior_art(args.query)
     elif args.command == "add":
         result = add_prompt(_read_json(args.input), args.registry, args.dry_run)
+    elif args.command == "adopt-profile":
+        result = adopt_profile(
+            args.prompt_id,
+            _read_json(args.input),
+            args.evidence_ref,
+            args.rationale,
+            args.dry_run,
+        )
     elif args.command == "edit":
         result = edit_prompt(
             args.prompt_id,
