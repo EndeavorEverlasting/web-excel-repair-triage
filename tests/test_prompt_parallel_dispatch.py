@@ -18,12 +18,30 @@ SPEC.loader.exec_module(MOD)
 
 
 def lane(lane_id: str, *, deps: list[str] | None = None, surfaces: list[str] | None = None) -> dict:
+    work_unit = {
+        "work_unit_id": lane_id,
+        "required_capabilities": ["local_process"],
+        "capability_facts": {
+            "current_runtime_available": False,
+            "current_runtime_authorized": False,
+            "local_runtime_required": True,
+            "ci_remote_required": False,
+            "operator_physical_required": False,
+        },
+        "provider_access": [],
+        "inherited_evidence": [],
+    }
+    projection = MOD.runtime_partition.project_p04(
+        MOD.runtime_partition.partition_work_unit(work_unit)
+    )
     return {
         "lane_id": lane_id,
         "mission": f"execute {lane_id}",
         "dependencies": deps or [],
         "owned_mutation_surfaces": surfaces or [f"owned/{lane_id}"],
         "forbidden_surfaces": ["secrets/**"],
+        "runtime_partition_input": work_unit,
+        "runtime_partition": projection,
         "adapter": {"kind": "local_process", "rung": 5},
         "launch": {
             "mode": "argv",
@@ -50,6 +68,35 @@ def manifest(*lanes: dict, width: int = 2, disposition: str = "REQUIRED", autono
 
 
 class PromptParallelDispatchTests(unittest.TestCase):
+    def test_runtime_partition_projection_is_recomputed_by_dispatch_owner(self) -> None:
+        payload = manifest(lane("lane-a"), width=1, disposition="NOT_APPLICABLE")
+        summary = MOD.validate_manifest(payload)
+        self.assertEqual(
+            summary["lanes"]["lane-a"]["runtime_partition"]["execution_environment"],
+            "LOCAL_AGENT_RUNTIME",
+        )
+
+    def test_runtime_partition_projection_drift_fails_closed(self) -> None:
+        altered = lane("lane-a")
+        altered["runtime_partition"]["execution_environment"] = "CURRENT_CHAT_RUNTIME"
+        payload = manifest(altered, width=1, disposition="NOT_APPLICABLE")
+        with self.assertRaisesRegex(MOD.DispatchError, "does not match planning.runtime_partition"):
+            MOD.validate_manifest(payload)
+
+    def test_runtime_partition_conflicting_host_facts_fail_before_dispatch(self) -> None:
+        altered = lane("lane-a")
+        altered["runtime_partition_input"]["capability_facts"]["ci_remote_required"] = True
+        payload = manifest(altered, width=1, disposition="NOT_APPLICABLE")
+        with self.assertRaisesRegex(MOD.DispatchError, "split it before placement"):
+            MOD.validate_manifest(payload)
+
+    def test_runtime_partition_work_unit_identity_must_match_lane(self) -> None:
+        altered = lane("lane-a")
+        altered["runtime_partition_input"]["work_unit_id"] = "different-lane"
+        payload = manifest(altered, width=1, disposition="NOT_APPLICABLE")
+        with self.assertRaisesRegex(MOD.DispatchError, "work_unit_id must equal lane_id"):
+            MOD.validate_manifest(payload)
+
     def test_validator_computes_deterministic_ready_wave_and_tiebreak(self) -> None:
         payload = manifest(lane("lane-b"), lane("lane-a"))
         summary = MOD.validate_manifest(payload)
