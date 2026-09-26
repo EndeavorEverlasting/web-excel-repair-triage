@@ -3,7 +3,7 @@
 **packet_id:** `PK-B01A-operator-state-presentation`
 **destination:** TokenCorridor M2 / `plans/active/M2-PROMPT-KIT-MIGRATION-STATE-PRESENTATION.*` → PK-B01A
 **donor_prs:** `#651`
-**status:** Sync A COMPLETE — #651+#652 on main@c6b6765e
+**status:** Sync A COMPLETE — typed-state code on main@c6b6765e; packets/ledger on main@0a7f1fa6
 
 ## Donor identity
 
