@@ -1,7 +1,7 @@
 # PACKET PK-B02A — Upstream capability watch (+ freshness recovery)
 
-**packet_id:** `PK-B02A-upstream-capability-watch`  
-**destination:** TokenCorridor PK-B02A  
+**packet_id:** `PK-B02A-upstream-capability-watch`
+**destination:** TokenCorridor PK-B02A
 **donor_prs:** `#619` → `#631` (preserve predecessor/successor; do not flatten)
 
 ## Donor identity

@@ -1,7 +1,7 @@
 # PACKET PK-B02C — Routing-decision continuation / Evidence Spine
 
-**packet_id:** `PK-B02C-routing-decision`  
-**destination:** TokenCorridor PK-B02C  
+**packet_id:** `PK-B02C-routing-decision`
+**destination:** TokenCorridor PK-B02C
 **donor_prs:** `#600`
 
 ## Donor identity

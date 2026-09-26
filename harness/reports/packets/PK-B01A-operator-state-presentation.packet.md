@@ -1,8 +1,8 @@
 # PACKET PK-B01A — Operator state presentation (Sync A)
 
-**packet_id:** `PK-B01A-operator-state-presentation`  
-**destination:** TokenCorridor M2 / `plans/active/M2-PROMPT-KIT-MIGRATION-STATE-PRESENTATION.*` → PK-B01A  
-**donor_prs:** `#651`  
+**packet_id:** `PK-B01A-operator-state-presentation`
+**destination:** TokenCorridor M2 / `plans/active/M2-PROMPT-KIT-MIGRATION-STATE-PRESENTATION.*` → PK-B01A
+**donor_prs:** `#651`
 **status:** Sync A COMPLETE — #651+#652 on main@c6b6765e
 
 ## Donor identity

@@ -1,9 +1,9 @@
 # Triage AFKAF donor closeout — 20260926
 
-**Sprint:** `TRIAGE-AFKAF-DONOR-CLOSEOUT-20260926`  
-**Program:** `AFK-FACTORY-CONVERGENCE-2026-09-22`  
-**Donor repo:** `EndeavorEverlasting/web-excel-repair-triage`  
-**Destination authority:** `EndeavorEverlasting/TokenCorridor` → `plans/active/AFK-FACTORY-CONVERGENCE.*` + `plans/active/M2-PROMPT-KIT-MIGRATION-STATE-PRESENTATION.*`  
+**Sprint:** `TRIAGE-AFKAF-DONOR-CLOSEOUT-20260926`
+**Program:** `AFK-FACTORY-CONVERGENCE-2026-09-22`
+**Donor repo:** `EndeavorEverlasting/web-excel-repair-triage`
+**Destination authority:** `EndeavorEverlasting/TokenCorridor` → `plans/active/AFK-FACTORY-CONVERGENCE.*` + `plans/active/M2-PROMPT-KIT-MIGRATION-STATE-PRESENTATION.*`
 **Evidence floor at classification:** Triage `origin/main@0fd4c578610f1c3ae81fadd795ace3bb97d7ebc3` (contains merged #650)
 
 ## Current-state table (T0)

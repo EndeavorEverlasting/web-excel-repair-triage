@@ -1,7 +1,7 @@
 # PACKET PK-B02B — Prompt findability / wayfinding
 
-**packet_id:** `PK-B02B-prompt-findability`  
-**destination:** TokenCorridor PK-B02B  
+**packet_id:** `PK-B02B-prompt-findability`
+**destination:** TokenCorridor PK-B02B
 **donor_prs:** `#630` → `#636` (preserve #630 design intent when extracting #636 implementation)
 
 ## Donor identity

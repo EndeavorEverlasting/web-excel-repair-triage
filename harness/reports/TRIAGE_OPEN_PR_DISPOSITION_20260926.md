@@ -1,6 +1,6 @@
 # Open PR disposition — Prompt Kit / AFKAF / retained Triage
 
-**Floor:** `origin/main@0fd4c578610f1c3ae81fadd795ace3bb97d7ebc3`  
+**Floor:** `origin/main@0fd4c578610f1c3ae81fadd795ace3bb97d7ebc3`
 **Method:** refreshed `gh pr list`; unique deltas via `git diff --name-only origin/main...<head>`; known donor chains preserved.
 
 ## Prompt Kit / AFKAF dispositions
