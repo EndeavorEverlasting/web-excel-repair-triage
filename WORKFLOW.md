@@ -215,7 +215,7 @@ For use case `prompt-strengthening-runtime-compliance`, enter through the plan, 
 **Skill:** `.ai/skills/prompt-semantic-coverage/SKILL.md`
 **Focused contracts:** `harness/contracts/prompt-semantic-coverage.v1.json`, `harness/prompt-topology/semantic-capability-catalog.v1.json`
 
-Activate when canonical prompt ADD/EDIT/RETIRE operations or semantic profile/catalog/migration changes occur. Enforce PSC001-PSC016 non-weakening rules to prevent silent capability degradation.
+Activate when canonical prompt ADD/EDIT/RETIRE operations or semantic profile/catalog/migration changes occur. Enforce PSC001-PSC018 non-weakening rules to prevent silent capability degradation.
 
 **ADD operation:**
 1. Require candidate semantic profile in draft JSON

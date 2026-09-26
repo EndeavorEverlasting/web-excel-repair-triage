@@ -438,13 +438,13 @@
     },
     {
       "id": "prompt-semantic-coverage",
-      "version": "1.0.0",
+      "version": "1.1.0",
       "status": "canonical",
       "skill": ".ai/skills/prompt-semantic-coverage/SKILL.md",
       "trigger_ids": [
         "prompt-semantic-lifecycle-change"
       ],
-      "operation": "Enforce PSC001-PSC016 non-weakening semantic coverage rules; validate capability profiles, migrations, and lifecycle transitions; prevent silent prompt behavior degradation through versioned capability truth.",
+      "operation": "Enforce PSC001-PSC018 non-weakening semantic coverage rules; validate capability profiles, migrations, and lifecycle transitions; prevent silent prompt behavior degradation through versioned capability truth.",
       "inputs": [
         "harness/contracts/prompt-semantic-coverage.v1.json",
         "harness/prompt-topology/semantic-capability-catalog.v1.json",
@@ -458,13 +458,14 @@
         "semantic diff report",
         "coverage/overlap analysis",
         "migration disposition",
-        "PSC rule PASS/FAIL receipt"
+        "PSC rule PASS/FAIL receipt",
+        "PSC018 mutation lifecycle/compression receipt"
       ],
       "implementation": {
         "kind": "script",
         "path": "scripts/validate_prompt_semantic_coverage.py"
       },
-      "proof_ceiling": "Static semantic lifecycle enforcement and accepted profile regression protection; runtime model behavior remains separate proof."
+      "proof_ceiling": "Static semantic lifecycle enforcement, accepted-profile regression protection, and PSC018 non-weakening/compression lifecycle proof; runtime model behavior remains separate proof."
     },
     {
       "id": "repo-native-update",

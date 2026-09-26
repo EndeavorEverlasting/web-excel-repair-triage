@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Prompt Semantic Coverage validator — enforces PSC001-PSC016 non-weakening rules.
+"""Prompt Semantic Coverage validator — enforces PSC001-PSC018 non-weakening rules.
 
 Sprint 1B: Semantic diff validator + lifecycle engine.
 Validates profile changes against accepted baselines to prevent silent capability degradation.

@@ -85,7 +85,7 @@ Before removal:
 - Semantic diff calculation
 - Coverage hole detection
 - Lifecycle bridge in `scripts/prompt_registry_ops.py`
-- PSC001-PSC016 enforcement
+- PSC001-PSC018 enforcement
 
 ### FORBIDDEN
 
