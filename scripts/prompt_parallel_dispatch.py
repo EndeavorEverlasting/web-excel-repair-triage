@@ -101,16 +101,16 @@ def _validate_runtime_launch_compatibility(
     projected_partition: dict[str, Any],
     launch_mode: str,
 ) -> None:
+    host = projected_partition["execution_environment"]
+    if host == "CURRENT_CHAT_RUNTIME" and projected_partition.get("execute_now") is not True:
+        raise DispatchError(
+            f"lane {lane_id} current-runtime work is already complete and may not appear in a fresh dispatch manifest"
+        )
     if lane_status == "BLOCKED":
         return
-    host = projected_partition["execution_environment"]
     if host == "LOCAL_AGENT_RUNTIME":
         return
     if host == "CURRENT_CHAT_RUNTIME":
-        if projected_partition.get("execute_now") is not True:
-            raise DispatchError(
-                f"lane {lane_id} current-runtime work is already complete and may not be a fresh dispatch lane"
-            )
         if launch_mode != "runtime_tool":
             raise DispatchError(
                 f"lane {lane_id} CURRENT_CHAT_RUNTIME requires runtime_tool launch, not {launch_mode}"
