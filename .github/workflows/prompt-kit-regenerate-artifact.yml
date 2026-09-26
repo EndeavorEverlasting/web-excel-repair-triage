@@ -1,0 +1,40 @@
+name: Temporary canonical Prompt Kit regeneration artifact
+
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/prompt-kit-regenerate-artifact.yml'
+      - 'harness/capabilities.v1.json'
+      - '.ai/skills/prompt-semantic-coverage/SKILL.md'
+      - 'scripts/build_prompt_kit_registry.py'
+      - 'registry/prompts/**'
+      - 'docs/**'
+      - 'harness/prompt-compilation/**'
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout exact candidate
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+      - name: Set up Python
+        uses: actions/setup-python@v7
+        with:
+          python-version: '3.11'
+      - name: Build canonical Prompt Kit through registered generator
+        run: |
+          mkdir -p Outputs/generated-prompt-kit
+          python scripts/build_prompt_kit_registry.py --output Outputs/generated-prompt-kit/index.html
+          python scripts/build_prompt_kit_registry.py --output Outputs/generated-prompt-kit/index.html --check
+      - name: Upload exact generated artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: canonical-prompt-kit-regenerated
+          path: Outputs/generated-prompt-kit/index.html
+          if-no-files-found: error
+          retention-days: 1
