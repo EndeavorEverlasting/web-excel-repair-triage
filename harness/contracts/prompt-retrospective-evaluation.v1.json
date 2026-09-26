@@ -127,8 +127,26 @@
     "Prompt Kit reuse is not inherently less novel in outcome.",
     "Productivity cannot be inferred from merge count alone; the merge must be attributable to the prompt use.",
     "Gap cannot be inferred from manual wording alone; current Prompt Kit coverage must be checked.",
-    "Do not calculate a composite priority score until an explicit weighting policy is approved."
+    "Do not calculate a composite priority score until an explicit weighting policy is approved.",
+    "INVOCATION_FIDELITY FAIL is terminal for an invocation whose requested execution was replaced by prompt rewriting; other high-quality dimensions do not average that failure away."
   ],
+  "terminal_merits": {
+    "INVOCATION_FIDELITY": {
+      "values": [
+        "PASS",
+        "FAIL",
+        "NOT_APPLICABLE",
+        "UNKNOWN"
+      ],
+      "definition": "Whether an invoked operational prompt executed its workflow instead of being rewritten unless the operator explicitly requested prompt mutation.",
+      "fail_rule": "FAIL when the operator invoked an operational prompt with repository/context and the agent returned a rewritten/improved prompt body or rewrite commentary without executing the authorized workflow.",
+      "pass_rules": [
+        "PASS when an invoked operational prompt produces the authorized execution artifacts/workflow results.",
+        "PASS when an explicit rewrite/upgrade/edit request mutates the prompt without claiming repository workflow execution."
+      ],
+      "owner": "scripts/prompt_invocation_fidelity.py"
+    }
+  },
   "record_contract": {
     "schema_version": "prompt-retrospective-register/v1",
     "allowed_statuses": [
@@ -142,6 +160,9 @@
       "productivity",
       "prompt_kit_gap",
       "authorship_origin"
+    ],
+    "terminal_merits": [
+      "INVOCATION_FIDELITY"
     ],
     "confidence_levels": [
       "HIGH",

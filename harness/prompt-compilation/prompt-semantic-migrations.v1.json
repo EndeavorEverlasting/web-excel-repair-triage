@@ -237,6 +237,38 @@
         "tests/test_prompt_semantic_coverage.py",
         "tests/test_prompt_quality_history.py"
       ]
+    },
+    {
+      "migration_id": "p79-strengthen-p04-015",
+      "path": "docs/prompts.json",
+      "from_git_blob_sha1": "c963a857a8dc72ab5df8c99c2b3524c737271206",
+      "to_git_blob_sha1": "d15582d32e9b6346d74aeed2ffb72d974b851ade",
+      "affected_prompt_ids": [
+        "P04"
+      ],
+      "change_kind": "strengthening",
+      "effective_identity_change": "preserve_canonical",
+      "rationale": "UF-1A STRENGTHEN: bind shared planning.runtime_partition into P04 so host runtime and provider transport are composable, LAUNCH ORDER stays first, and typed sanitized evidence is required before adapter selection.",
+      "focused_tests": [
+        "tests/test_prompt_semantic_coverage.py",
+        "tests/test_prompt_quality_history.py"
+      ]
+    },
+    {
+      "migration_id": "p79-strengthen-p05-016",
+      "path": "docs/prompts.json",
+      "from_git_blob_sha1": "d15582d32e9b6346d74aeed2ffb72d974b851ade",
+      "to_git_blob_sha1": "8a344da1d7249f1c2d3854e26715cfb98a67a32c",
+      "affected_prompt_ids": [
+        "P05"
+      ],
+      "change_kind": "strengthening",
+      "effective_identity_change": "preserve_canonical",
+      "rationale": "UF-1A STRENGTHEN: bind shared planning.runtime_partition into P05 serialized planning so host/provider placement, sanitized inherited evidence, and launch-order-first output are enforced without inventing fake local sprints.",
+      "focused_tests": [
+        "tests/test_prompt_semantic_coverage.py",
+        "tests/test_prompt_quality_history.py"
+      ]
     }
   ]
 }

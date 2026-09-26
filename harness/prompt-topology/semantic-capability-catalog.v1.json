@@ -886,12 +886,41 @@
       "overlap_policy": "PRIMARY_CROWDING_FAIL",
       "seed_source": "harness/contracts/prompt-strength.v1.json:supporting_owners.recurring_process",
       "provenance": "P13 canonical owner"
+    },
+    {
+      "capability_id": "planning.runtime_partition",
+      "title": "Planning Runtime Partition",
+      "definition": "Before dependency-graph width or ordered-pack construction, assign exactly one host execution environment and zero or more provider/access routes, then carry sanitized typed inherited evidence without exposing private provider identifiers.",
+      "class": "orchestration.planning",
+      "domain": "execution_orchestration",
+      "aliases": [
+        "runtime partition",
+        "execution placement",
+        "host runtime",
+        "provider access",
+        "sanitized evidence"
+      ],
+      "admissible_relations": [
+        "IMPLEMENTS",
+        "ROUTES_TO",
+        "TESTS",
+        "GUARDS"
+      ],
+      "evidence_requirements": {
+        "primary_requires_proof": true,
+        "required_requires_proof": true,
+        "test_requires_fixture": true
+      },
+      "global_coverage_policy": "AT_LEAST_ONE_PRIMARY",
+      "overlap_policy": "OVERLAP_ALLOWED_WITH_RATIONALE",
+      "seed_source": "harness/contracts/planning-runtime-partition.v1.json",
+      "provenance": "Shared P04/P05 runtime-partition contract"
     }
   ],
   "baseline_acceptance": {
     "commit": "55148914364e2988bc6096b7c8d142eca3f62c28",
     "prompt_count": 62,
-    "capability_count": 32,
-    "reason": "Sprint 1A baseline seeded from Prompt Strength, registry metadata, and product domain evidence"
+    "capability_count": 33,
+    "reason": "Sprint 1A baseline seeded from Prompt Strength, registry metadata, and product domain evidence; UF-1A adds planning.runtime_partition"
   }
 }

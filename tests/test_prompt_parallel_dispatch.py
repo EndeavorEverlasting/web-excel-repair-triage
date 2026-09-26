@@ -382,6 +382,52 @@ class PromptParallelDispatchTests(unittest.TestCase):
         with self.assertRaisesRegex(MOD.DispatchError, "observed_parallelism=true"):
             MOD.validate_receipt(payload, receipt)
 
+    def test_runtime_partition_fields_are_required_and_reject_private_provider_ids(self) -> None:
+        missing = lane("lane-a")
+        del missing["runtime_partition_input"]
+        with self.assertRaisesRegex(MOD.DispatchError, "missing field: runtime_partition_input"):
+            MOD.validate_manifest(manifest(missing, width=1, disposition="NOT_APPLICABLE"))
+
+        private = lane("lane-a")
+        private["runtime_partition_input"]["inherited_evidence"] = [
+            {
+                "evidence_type": "drive_file",
+                "source_owner": "google_drive",
+                "sanitized_ref": "https://drive.google.com/file/d/1AbCdEfGhIjKlMnOpQrStUvWxYz012345/view",
+                "revision_or_freshness": "now",
+                "visibility": "PUBLIC_TRACKED",
+                "proof_ceiling": "unit",
+                "public_provider_ref_verified": True,
+            }
+        ]
+        with self.assertRaisesRegex(MOD.DispatchError, "Google Workspace URL"):
+            MOD.validate_manifest(manifest(private, width=1, disposition="NOT_APPLICABLE"))
+
+        composable = lane("lane-a")
+        composable["runtime_partition_input"]["provider_access"] = [
+            {
+                "provider_family": "google_drive",
+                "operation": "read",
+                "authority_state": "VERIFIED",
+                "mutation_authority": False,
+            }
+        ]
+        composable["runtime_partition"] = MOD.runtime_partition.project_p04(
+            MOD.runtime_partition.partition_work_unit(composable["runtime_partition_input"])
+        )
+        summary = MOD.validate_manifest(
+            manifest(composable, width=1, disposition="NOT_APPLICABLE")
+        )
+        self.assertEqual(summary["waves"], [["lane-a"]])
+        self.assertEqual(
+            summary["lanes"]["lane-a"]["runtime_partition"]["execution_environment"],
+            "LOCAL_AGENT_RUNTIME",
+        )
+        self.assertEqual(
+            summary["lanes"]["lane-a"]["runtime_partition"]["provider_access"][0]["provider_family"],
+            "google_drive",
+        )
+
 
     def test_panels_are_machine_transport_not_human_only(self) -> None:
         """Validate that panel/portability language emphasizes agent consumption."""
