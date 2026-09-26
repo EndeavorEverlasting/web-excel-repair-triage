@@ -36,6 +36,13 @@ When both are viable, choose the topology that produces the strongest safe evide
 - The next action must identify owner, dependency, exact command or operator action, expected evidence/artifact, and completion gate. Continue agent-capable work immediately; reserve handoff for a protected runtime, physical action, inaccessible credential/system, or another genuine operator-only gate.
 - `none; no safe actionable work remains` is valid only when the requested proof ceiling is actually satisfied, integration/cleanup is complete or explicitly out of scope, and no known safe unproven action remains.
 
+## Operator state presentation
+
+- Preserve typed evidence state as the authority; emoji/icon/color is presentation only and never creates a second status machine.
+- Render typed text beside any visual indicator. Canonical families are: ✅ PROVEN/VALIDATED/INTEGRATED/DONE; 🟡 IN_PROGRESS/PARTIAL; 🔵 READY/SAFE & EXECUTABLE; ⏳ WAITING; ⛔ BLOCKED; ⚠️ RISK/UNPROVEN/DEGRADED; 🟣 REQUIRED SUCCESSOR WORK; ⚪ HISTORICAL/NOT APPLICABLE/RETIRED; ❓ UNKNOWN.
+- When three or more related stages/contracts/items have differing material states, prefer `Item | State | Meaning | Exact next transition` before narrative. When one gate dominates, surface that critical path first.
+- Accessible typed text must remain complete when visual rendering is unavailable. Reuse this presentation contract across plans, ledgers, orientation, convergence, closeouts, CLI/reporting, and UI projections instead of hand-authoring divergent icon vocabularies.
+
 ## Evidence and artifact safety
 
 Evidence strength is ordered by what was actually observed. Distinguish source/build proof, process start, command acknowledgment, observed behavior, local runtime proof, target proof, and production proof. Never silently promote a weaker class.
