@@ -64,7 +64,8 @@
     "rules": [
       "Tracked evidence must not contain raw private provider URLs or identifiers; sanitize them regardless of the claimed visibility label.",
       "PROTECTED_EXTERNAL evidence must use an opaque tracked alias and keep the private identity in protected provider transport.",
-      "Freshness/revision and proof ceiling travel with the evidence reference."
+      "Freshness/revision and proof ceiling travel with the evidence reference.",
+      "Raw GitHub provider URLs are accepted only for PUBLIC_TRACKED evidence when public_provider_ref_verified=true; otherwise use an opaque alias."
     ]
   },
   "placement_precedence": [
@@ -81,13 +82,21 @@
   },
   "privacy_rules": [
     "Reject raw Google Workspace URLs from tracked evidence regardless of the submitted visibility label.",
+    "Raw GitHub provider URLs require PUBLIC_TRACKED visibility plus public_provider_ref_verified=true; private or unverified GitHub identities must use an opaque alias.",
     "PROTECTED_EXTERNAL evidence must use an opaque alias such as opaque:prompt-scratch/live-workbook.",
     "Visibility metadata never declassifies a private provider identity; provider-private identity remains in protected external transport."
   ],
+  "optional_evidence_fields": {
+    "public_provider_ref_verified": {
+      "type": "boolean",
+      "default": false,
+      "rule": "May be true only with PUBLIC_TRACKED visibility and only when the planner has independently verified that the provider reference is public."
+    }
+  },
   "proof_ceiling": "Prototype/static contract. It proves deterministic placement and projection semantics only; it does not prove provider authentication, prompt-model obedience, local runner availability, or live dispatch.",
   "already_executed_here": {
     "type": "boolean",
     "optional": true,
-    "rule": "May be true only when the selected host is CURRENT_CHAT_RUNTIME; it means the active runtime has already completed the work and P05 must preserve its evidence without emitting a fake successor handoff."
+    "rule": "May be true only when the selected host is CURRENT_CHAT_RUNTIME and inherited_evidence is non-empty; it means the active runtime has already completed the work and P04/P05 must preserve its evidence without emitting repeat execution or a fake successor handoff."
   }
 }
