@@ -1,7 +1,11 @@
 from __future__ import annotations
 
+import contextlib
 import importlib.util
+import io
+import json
 import sys
+import tempfile
 import unittest
 from pathlib import Path
 
@@ -209,6 +213,21 @@ class RuntimePartitionPrototypeTests(unittest.TestCase):
         panel = MOD.project_p05(decision)
         self.assertTrue(panel["ALREADY EXECUTED HERE"])
         self.assertEqual(panel["RUNTIME HANDOFF"], "none")
+
+    def test_cli_emits_p04_projection_from_work_unit_json(self) -> None:
+        payload = unit(local_runtime_required=True)
+        with tempfile.TemporaryDirectory() as temp_dir:
+            input_path = Path(temp_dir) / "work-unit.json"
+            input_path.write_text(json.dumps(payload), encoding="utf-8")
+            stdout = io.StringIO()
+            with contextlib.redirect_stdout(stdout):
+                returncode = MOD.main(["p04", "--input", str(input_path)])
+        self.assertEqual(returncode, 0)
+        emitted = json.loads(stdout.getvalue())
+        self.assertEqual(emitted["schema_version"], "planning-runtime-partition-cli/v1")
+        self.assertEqual(emitted["surface"], "P04")
+        self.assertEqual(emitted["work_unit_id"], "wu-1")
+        self.assertEqual(emitted["projection"], MOD.project_p04(MOD.partition_work_unit(payload)))
 
 
 if __name__ == "__main__":
