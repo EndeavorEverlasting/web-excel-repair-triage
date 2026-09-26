@@ -85,11 +85,18 @@ def _validate_evidence(records: Any) -> tuple[dict[str, Any], ...]:
             raise RuntimePartitionError(f"inherited_evidence[{index}].visibility is invalid")
         proof_ceiling = _nonempty(record.get("proof_ceiling"), f"inherited_evidence[{index}].proof_ceiling")
         lowered = sanitized_ref.lower()
-        if visibility == "PROTECTED_EXTERNAL":
-            if not sanitized_ref.startswith("opaque:"):
-                raise RuntimePartitionError("PROTECTED_EXTERNAL evidence must use an opaque: tracked alias")
-            if "http://" in lowered or "https://" in lowered or "docs.google.com" in lowered or "drive.google.com" in lowered:
-                raise RuntimePartitionError("PROTECTED_EXTERNAL evidence may not expose a raw provider URL")
+        private_provider_url = (
+            "docs.google.com/" in lowered
+            or "drive.google.com/" in lowered
+            or "mail.google.com/" in lowered
+            or "calendar.google.com/" in lowered
+        )
+        if private_provider_url:
+            raise RuntimePartitionError(
+                "tracked evidence may not expose a raw private provider URL; use a sanitized or opaque reference"
+            )
+        if visibility == "PROTECTED_EXTERNAL" and not sanitized_ref.startswith("opaque:"):
+            raise RuntimePartitionError("PROTECTED_EXTERNAL evidence must use an opaque: tracked alias")
         out.append({
             "evidence_type": evidence_type,
             "source_owner": source_owner,
@@ -138,7 +145,13 @@ def partition_work_unit(work_unit: dict[str, Any]) -> PartitionDecision:
         raise AssertionError(host)
     provider_access = _validate_provider_access(work_unit.get("provider_access"))
     evidence_inputs = _validate_evidence(work_unit.get("inherited_evidence"))
-    already_executed = bool(work_unit.get("already_executed_here", False))
+    already_executed = work_unit.get("already_executed_here", False)
+    if not isinstance(already_executed, bool):
+        raise RuntimePartitionError("already_executed_here must be boolean when supplied")
+    if already_executed and host != "CURRENT_CHAT_RUNTIME":
+        raise RuntimePartitionError(
+            "already_executed_here=true is valid only for CURRENT_CHAT_RUNTIME work"
+        )
     return PartitionDecision(
         work_unit_id=work_unit_id,
         execution_environment=host,
