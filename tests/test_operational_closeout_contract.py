@@ -56,6 +56,48 @@ class OperationalCloseoutContractTests(unittest.TestCase):
         ):
             self.assertIn(phrase, suffix)
 
+    def test_shared_policy_defines_typed_operator_state_presentation(self) -> None:
+        presentation = self.policy["state_presentation"]
+        self.assertEqual(presentation["contract_id"], "operator-state-presentation/v1")
+        self.assertEqual(presentation["machine_state_authority"], "typed_state_text")
+        self.assertEqual(presentation["multi_state_table_threshold"], 3)
+        self.assertEqual(
+            presentation["table_columns"],
+            ["Item", "State", "Meaning", "Exact next transition"],
+        )
+        expected = {
+            "✅": {"PROVEN", "VALIDATED", "INTEGRATED", "DONE"},
+            "🟡": {"IN_PROGRESS", "PARTIAL", "IMPLEMENTED_AWAITING_HIGHER_GATE"},
+            "🔵": {"READY", "SAFE_AND_EXECUTABLE"},
+            "⏳": {"WAITING"},
+            "⛔": {"BLOCKED"},
+            "⚠️": {"RISK", "UNPROVEN", "DEGRADED"},
+            "🟣": {"REQUIRED_SUCCESSOR_WORK"},
+            "⚪": {"HISTORICAL", "NOT_APPLICABLE", "RETIRED"},
+            "❓": {"UNKNOWN"},
+        }
+        observed = {row["icon"]: set(row["states"]) for row in presentation["render_mappings"]}
+        self.assertEqual(observed, expected)
+        appendix = self.policy["copy_content_appendix"]
+        self.assertIn("OPERATOR STATE PRESENTATION CONTRACT", appendix)
+        self.assertIn("typed state text remains authoritative", appendix)
+        self.assertIn("Item | State | Meaning | Exact next transition", appendix)
+        self.assertIn("⛔ CRITICAL PATH", appendix)
+        self.assertIn("🔵 NEXT CRITICAL PATH", appendix)
+
+    def test_operational_prompts_inherit_state_presentation_once(self) -> None:
+        selected = [
+            prompt for prompt in self.effective.values()
+            if "OPERATIONAL CLOSEOUT / GAP-RISK CONTRACT" in prompt["copyContent"]
+        ]
+        self.assertGreater(len(selected), 0)
+        for prompt in selected:
+            with self.subTest(prompt_id=prompt["id"]):
+                content = prompt["copyContent"]
+                self.assertEqual(content.count("OPERATOR STATE PRESENTATION CONTRACT"), 1)
+                self.assertIn("typed state text remains authoritative", content)
+                self.assertIn("Item | State | Meaning | Exact next transition", content)
+
     def test_operational_effective_prompts_inherit_closeout_contract(self) -> None:
         tokens = ("BUILD", "REPAIR", "ARTIFACT", "RUNTIME", "CERT", "DEPLOY", "VERIFY", "ADVANCE")
         selected = [p for p in self.effective.values() if any(t in str(p["type"]).upper() for t in tokens)]

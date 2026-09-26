@@ -98,6 +98,7 @@ REQUIRED_ACTIONABILITY_POLICY_FIELDS = {
     "existing_work_reuse",
     "forbidden_solo_actions",
     "copy_content_appendix",
+    "state_presentation",
     "boundary_sprint_policy_id",
     "boundary_sprint_marker",
     "boundary_sprint_suffix",
@@ -225,6 +226,54 @@ def load_actionability_policy() -> dict[str, Any]:
     closeout_marker = str(payload["closeout_marker"])
     if closeout_marker not in appendix:
         raise SystemExit("Actionability appendix must include its operational closeout marker")
+
+    presentation = payload.get("state_presentation")
+    if not isinstance(presentation, dict):
+        raise SystemExit("Actionability policy must define state_presentation")
+    if presentation.get("contract_id") != "operator-state-presentation/v1":
+        raise SystemExit("Unsupported operator state presentation contract")
+    if presentation.get("machine_state_authority") != "typed_state_text":
+        raise SystemExit("Operator state presentation must keep typed state text authoritative")
+    threshold = presentation.get("multi_state_table_threshold")
+    if not isinstance(threshold, int) or isinstance(threshold, bool) or threshold < 2:
+        raise SystemExit("Operator state presentation threshold must be an integer >= 2")
+    columns = presentation.get("table_columns")
+    if columns != ["Item", "State", "Meaning", "Exact next transition"]:
+        raise SystemExit("Operator state presentation table columns drifted")
+    mappings = presentation.get("render_mappings")
+    if not isinstance(mappings, list) or not mappings:
+        raise SystemExit("Operator state presentation requires render_mappings")
+    seen_states: set[str] = set()
+    seen_icons: set[str] = set()
+    for mapping in mappings:
+        if not isinstance(mapping, dict):
+            raise SystemExit("Operator state presentation mappings must be objects")
+        icon = mapping.get("icon")
+        states = mapping.get("states")
+        meaning = mapping.get("meaning")
+        if not isinstance(icon, str) or not icon.strip() or icon in seen_icons:
+            raise SystemExit("Operator state presentation icons must be unique non-empty strings")
+        if not isinstance(states, list) or not states or any(
+            not isinstance(state, str) or not state.strip() for state in states
+        ):
+            raise SystemExit("Operator state presentation states must be non-empty string lists")
+        if not isinstance(meaning, str) or not meaning.strip():
+            raise SystemExit("Operator state presentation meaning must be non-empty")
+        duplicates = seen_states.intersection(states)
+        if duplicates:
+            raise SystemExit(
+                "Operator state presentation state appears in multiple render families: "
+                + ", ".join(sorted(duplicates))
+            )
+        seen_icons.add(icon)
+        seen_states.update(states)
+    rules = presentation.get("rules")
+    if not isinstance(rules, list) or not rules or any(
+        not isinstance(rule, str) or not rule.strip() for rule in rules
+    ):
+        raise SystemExit("Operator state presentation rules must be non-empty strings")
+    if "OPERATOR STATE PRESENTATION CONTRACT" not in appendix:
+        raise SystemExit("Actionability appendix must include operator state presentation contract")
 
     disposition_marker = str(payload["disposition_marker"]).strip()
     if disposition_marker not in appendix:

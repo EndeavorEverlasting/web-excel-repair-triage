@@ -5,9 +5,9 @@
       "id": "deepseek-harness",
       "repository": "deepseek-ai/deepseek-harness",
       "default_branch": "master",
-      "resolved_sha": "ddefc45fbc7f8e46dd73185e68295696d1297887",
+      "resolved_sha": "477b4f420553e8a52c2fbccc464d7561b239c443",
       "resource_root": ".agents/skills",
-      "resource_count": 12,
+      "resource_count": 14,
       "enumeration": "git_skill_tree"
     },
     {
@@ -48,8 +48,8 @@
   ],
   "summary": {
     "source_count": 4,
-    "resource_count": 57,
-    "point_to_existing_prompt": 10,
+    "resource_count": 59,
+    "point_to_existing_prompt": 12,
     "point_to_existing_skill": 0,
     "point_to_external": 47,
     "review_add_prompt": 47,
@@ -58,15 +58,36 @@
   },
   "resources": [
     {
+      "id": "deepseek-harness:agent-experience",
+      "source_id": "deepseek-harness",
+      "source_repo": "deepseek-ai/deepseek-harness",
+      "source_sha": "477b4f420553e8a52c2fbccc464d7561b239c443",
+      "kind": "agent-skill",
+      "slug": "agent-experience",
+      "title": "Agent Experience",
+      "path": ".agents/skills/agent-experience/SKILL.md",
+      "url": "https://github.com/deepseek-ai/deepseek-harness/blob/477b4f420553e8a52c2fbccc464d7561b239c443/.agents/skills/agent-experience/SKILL.md",
+      "search_terms": [
+        "experience"
+      ],
+      "coverage": {
+        "disposition": "POINT_TO_EXISTING_PROMPT",
+        "target_id": "P106",
+        "target_title": "UX Product Designer & Interaction Architect",
+        "score": 1.0,
+        "prompt_action": "NO_NEW_PROMPT"
+      }
+    },
+    {
       "id": "deepseek-harness:dsh-archive-agent-notes",
       "source_id": "deepseek-harness",
       "source_repo": "deepseek-ai/deepseek-harness",
-      "source_sha": "ddefc45fbc7f8e46dd73185e68295696d1297887",
+      "source_sha": "477b4f420553e8a52c2fbccc464d7561b239c443",
       "kind": "agent-skill",
       "slug": "dsh-archive-agent-notes",
       "title": "Dsh Archive Agent Notes",
       "path": ".agents/skills/dsh-archive-agent-notes/SKILL.md",
-      "url": "https://github.com/deepseek-ai/deepseek-harness/blob/ddefc45fbc7f8e46dd73185e68295696d1297887/.agents/skills/dsh-archive-agent-notes/SKILL.md",
+      "url": "https://github.com/deepseek-ai/deepseek-harness/blob/477b4f420553e8a52c2fbccc464d7561b239c443/.agents/skills/dsh-archive-agent-notes/SKILL.md",
       "search_terms": [
         "archive",
         "notes"
@@ -83,12 +104,12 @@
       "id": "deepseek-harness:dsh-ci-test-reliability",
       "source_id": "deepseek-harness",
       "source_repo": "deepseek-ai/deepseek-harness",
-      "source_sha": "ddefc45fbc7f8e46dd73185e68295696d1297887",
+      "source_sha": "477b4f420553e8a52c2fbccc464d7561b239c443",
       "kind": "agent-skill",
       "slug": "dsh-ci-test-reliability",
       "title": "Dsh Ci Test Reliability",
       "path": ".agents/skills/dsh-ci-test-reliability/SKILL.md",
-      "url": "https://github.com/deepseek-ai/deepseek-harness/blob/ddefc45fbc7f8e46dd73185e68295696d1297887/.agents/skills/dsh-ci-test-reliability/SKILL.md",
+      "url": "https://github.com/deepseek-ai/deepseek-harness/blob/477b4f420553e8a52c2fbccc464d7561b239c443/.agents/skills/dsh-ci-test-reliability/SKILL.md",
       "search_terms": [
         "ci",
         "reliability",
@@ -103,15 +124,38 @@
       }
     },
     {
+      "id": "deepseek-harness:dsh-client-ui-ux",
+      "source_id": "deepseek-harness",
+      "source_repo": "deepseek-ai/deepseek-harness",
+      "source_sha": "477b4f420553e8a52c2fbccc464d7561b239c443",
+      "kind": "agent-skill",
+      "slug": "dsh-client-ui-ux",
+      "title": "Dsh Client Ui Ux",
+      "path": ".agents/skills/dsh-client-ui-ux/SKILL.md",
+      "url": "https://github.com/deepseek-ai/deepseek-harness/blob/477b4f420553e8a52c2fbccc464d7561b239c443/.agents/skills/dsh-client-ui-ux/SKILL.md",
+      "search_terms": [
+        "client",
+        "ui",
+        "ux"
+      ],
+      "coverage": {
+        "disposition": "POINT_TO_EXISTING_PROMPT",
+        "target_id": "P106",
+        "target_title": "UX Product Designer & Interaction Architect",
+        "score": 0.667,
+        "prompt_action": "NO_NEW_PROMPT"
+      }
+    },
+    {
       "id": "deepseek-harness:dsh-code-review",
       "source_id": "deepseek-harness",
       "source_repo": "deepseek-ai/deepseek-harness",
-      "source_sha": "ddefc45fbc7f8e46dd73185e68295696d1297887",
+      "source_sha": "477b4f420553e8a52c2fbccc464d7561b239c443",
       "kind": "agent-skill",
       "slug": "dsh-code-review",
       "title": "Dsh Code Review",
       "path": ".agents/skills/dsh-code-review/SKILL.md",
-      "url": "https://github.com/deepseek-ai/deepseek-harness/blob/ddefc45fbc7f8e46dd73185e68295696d1297887/.agents/skills/dsh-code-review/SKILL.md",
+      "url": "https://github.com/deepseek-ai/deepseek-harness/blob/477b4f420553e8a52c2fbccc464d7561b239c443/.agents/skills/dsh-code-review/SKILL.md",
       "search_terms": [
         "code",
         "review"
@@ -128,12 +172,12 @@
       "id": "deepseek-harness:dsh-doc",
       "source_id": "deepseek-harness",
       "source_repo": "deepseek-ai/deepseek-harness",
-      "source_sha": "ddefc45fbc7f8e46dd73185e68295696d1297887",
+      "source_sha": "477b4f420553e8a52c2fbccc464d7561b239c443",
       "kind": "agent-skill",
       "slug": "dsh-doc",
       "title": "Dsh Doc",
       "path": ".agents/skills/dsh-doc/SKILL.md",
-      "url": "https://github.com/deepseek-ai/deepseek-harness/blob/ddefc45fbc7f8e46dd73185e68295696d1297887/.agents/skills/dsh-doc/SKILL.md",
+      "url": "https://github.com/deepseek-ai/deepseek-harness/blob/477b4f420553e8a52c2fbccc464d7561b239c443/.agents/skills/dsh-doc/SKILL.md",
       "search_terms": [
         "doc"
       ],
@@ -149,12 +193,12 @@
       "id": "deepseek-harness:dsh-find-simplifications",
       "source_id": "deepseek-harness",
       "source_repo": "deepseek-ai/deepseek-harness",
-      "source_sha": "ddefc45fbc7f8e46dd73185e68295696d1297887",
+      "source_sha": "477b4f420553e8a52c2fbccc464d7561b239c443",
       "kind": "agent-skill",
       "slug": "dsh-find-simplifications",
       "title": "Dsh Find Simplifications",
       "path": ".agents/skills/dsh-find-simplifications/SKILL.md",
-      "url": "https://github.com/deepseek-ai/deepseek-harness/blob/ddefc45fbc7f8e46dd73185e68295696d1297887/.agents/skills/dsh-find-simplifications/SKILL.md",
+      "url": "https://github.com/deepseek-ai/deepseek-harness/blob/477b4f420553e8a52c2fbccc464d7561b239c443/.agents/skills/dsh-find-simplifications/SKILL.md",
       "search_terms": [
         "find",
         "simplifications"
@@ -171,12 +215,12 @@
       "id": "deepseek-harness:dsh-merging-stacked-prs",
       "source_id": "deepseek-harness",
       "source_repo": "deepseek-ai/deepseek-harness",
-      "source_sha": "ddefc45fbc7f8e46dd73185e68295696d1297887",
+      "source_sha": "477b4f420553e8a52c2fbccc464d7561b239c443",
       "kind": "agent-skill",
       "slug": "dsh-merging-stacked-prs",
       "title": "Dsh Merging Stacked Prs",
       "path": ".agents/skills/dsh-merging-stacked-prs/SKILL.md",
-      "url": "https://github.com/deepseek-ai/deepseek-harness/blob/ddefc45fbc7f8e46dd73185e68295696d1297887/.agents/skills/dsh-merging-stacked-prs/SKILL.md",
+      "url": "https://github.com/deepseek-ai/deepseek-harness/blob/477b4f420553e8a52c2fbccc464d7561b239c443/.agents/skills/dsh-merging-stacked-prs/SKILL.md",
       "search_terms": [
         "merging",
         "prs",
@@ -194,12 +238,12 @@
       "id": "deepseek-harness:dsh-pre-push-checks",
       "source_id": "deepseek-harness",
       "source_repo": "deepseek-ai/deepseek-harness",
-      "source_sha": "ddefc45fbc7f8e46dd73185e68295696d1297887",
+      "source_sha": "477b4f420553e8a52c2fbccc464d7561b239c443",
       "kind": "agent-skill",
       "slug": "dsh-pre-push-checks",
       "title": "Dsh Pre Push Checks",
       "path": ".agents/skills/dsh-pre-push-checks/SKILL.md",
-      "url": "https://github.com/deepseek-ai/deepseek-harness/blob/ddefc45fbc7f8e46dd73185e68295696d1297887/.agents/skills/dsh-pre-push-checks/SKILL.md",
+      "url": "https://github.com/deepseek-ai/deepseek-harness/blob/477b4f420553e8a52c2fbccc464d7561b239c443/.agents/skills/dsh-pre-push-checks/SKILL.md",
       "search_terms": [
         "checks",
         "pre",
@@ -217,12 +261,12 @@
       "id": "deepseek-harness:dsh-prose-standard",
       "source_id": "deepseek-harness",
       "source_repo": "deepseek-ai/deepseek-harness",
-      "source_sha": "ddefc45fbc7f8e46dd73185e68295696d1297887",
+      "source_sha": "477b4f420553e8a52c2fbccc464d7561b239c443",
       "kind": "agent-skill",
       "slug": "dsh-prose-standard",
       "title": "Dsh Prose Standard",
       "path": ".agents/skills/dsh-prose-standard/SKILL.md",
-      "url": "https://github.com/deepseek-ai/deepseek-harness/blob/ddefc45fbc7f8e46dd73185e68295696d1297887/.agents/skills/dsh-prose-standard/SKILL.md",
+      "url": "https://github.com/deepseek-ai/deepseek-harness/blob/477b4f420553e8a52c2fbccc464d7561b239c443/.agents/skills/dsh-prose-standard/SKILL.md",
       "search_terms": [
         "prose",
         "standard"
@@ -239,12 +283,12 @@
       "id": "deepseek-harness:dsh-speed-up-perf",
       "source_id": "deepseek-harness",
       "source_repo": "deepseek-ai/deepseek-harness",
-      "source_sha": "ddefc45fbc7f8e46dd73185e68295696d1297887",
+      "source_sha": "477b4f420553e8a52c2fbccc464d7561b239c443",
       "kind": "agent-skill",
       "slug": "dsh-speed-up-perf",
       "title": "Dsh Speed Up Perf",
       "path": ".agents/skills/dsh-speed-up-perf/SKILL.md",
-      "url": "https://github.com/deepseek-ai/deepseek-harness/blob/ddefc45fbc7f8e46dd73185e68295696d1297887/.agents/skills/dsh-speed-up-perf/SKILL.md",
+      "url": "https://github.com/deepseek-ai/deepseek-harness/blob/477b4f420553e8a52c2fbccc464d7561b239c443/.agents/skills/dsh-speed-up-perf/SKILL.md",
       "search_terms": [
         "perf",
         "speed",
@@ -262,12 +306,12 @@
       "id": "deepseek-harness:dsh-translate-docs",
       "source_id": "deepseek-harness",
       "source_repo": "deepseek-ai/deepseek-harness",
-      "source_sha": "ddefc45fbc7f8e46dd73185e68295696d1297887",
+      "source_sha": "477b4f420553e8a52c2fbccc464d7561b239c443",
       "kind": "agent-skill",
       "slug": "dsh-translate-docs",
       "title": "Dsh Translate Docs",
       "path": ".agents/skills/dsh-translate-docs/SKILL.md",
-      "url": "https://github.com/deepseek-ai/deepseek-harness/blob/ddefc45fbc7f8e46dd73185e68295696d1297887/.agents/skills/dsh-translate-docs/SKILL.md",
+      "url": "https://github.com/deepseek-ai/deepseek-harness/blob/477b4f420553e8a52c2fbccc464d7561b239c443/.agents/skills/dsh-translate-docs/SKILL.md",
       "search_terms": [
         "docs",
         "translate"
@@ -284,12 +328,12 @@
       "id": "deepseek-harness:dsh-trim-cot-leakage",
       "source_id": "deepseek-harness",
       "source_repo": "deepseek-ai/deepseek-harness",
-      "source_sha": "ddefc45fbc7f8e46dd73185e68295696d1297887",
+      "source_sha": "477b4f420553e8a52c2fbccc464d7561b239c443",
       "kind": "agent-skill",
       "slug": "dsh-trim-cot-leakage",
       "title": "Dsh Trim Cot Leakage",
       "path": ".agents/skills/dsh-trim-cot-leakage/SKILL.md",
-      "url": "https://github.com/deepseek-ai/deepseek-harness/blob/ddefc45fbc7f8e46dd73185e68295696d1297887/.agents/skills/dsh-trim-cot-leakage/SKILL.md",
+      "url": "https://github.com/deepseek-ai/deepseek-harness/blob/477b4f420553e8a52c2fbccc464d7561b239c443/.agents/skills/dsh-trim-cot-leakage/SKILL.md",
       "search_terms": [
         "cot",
         "leakage",
@@ -307,12 +351,12 @@
       "id": "deepseek-harness:record-browser-gif",
       "source_id": "deepseek-harness",
       "source_repo": "deepseek-ai/deepseek-harness",
-      "source_sha": "ddefc45fbc7f8e46dd73185e68295696d1297887",
+      "source_sha": "477b4f420553e8a52c2fbccc464d7561b239c443",
       "kind": "agent-skill",
       "slug": "record-browser-gif",
       "title": "Record Browser Gif",
       "path": ".agents/skills/record-browser-gif/SKILL.md",
-      "url": "https://github.com/deepseek-ai/deepseek-harness/blob/ddefc45fbc7f8e46dd73185e68295696d1297887/.agents/skills/record-browser-gif/SKILL.md",
+      "url": "https://github.com/deepseek-ai/deepseek-harness/blob/477b4f420553e8a52c2fbccc464d7561b239c443/.agents/skills/record-browser-gif/SKILL.md",
       "search_terms": [
         "browser",
         "gif",
