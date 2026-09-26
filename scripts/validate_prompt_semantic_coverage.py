@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Prompt Semantic Coverage validator — enforces PSC001-PSC016 non-weakening rules.
+"""Prompt Semantic Coverage validator — enforces PSC001-PSC018 non-weakening rules.
 
 Sprint 1B: Semantic diff validator + lifecycle engine.
 Validates profile changes against accepted baselines to prevent silent capability degradation.
@@ -511,6 +511,125 @@ def check_psc016_inherited_source_integrity(profile: dict[str, Any]) -> list[str
     return errors
 
 
+def check_psc018_holistic_non_weakening_mutation_lifecycle(
+    before_profile: dict[str, Any],
+    after_profile: dict[str, Any],
+    migration: dict[str, Any] | None,
+) -> list[str]:
+    """PSC018: strengthening/compression cannot weaken any accepted capability cell."""
+    if not migration:
+        return []
+    kind = migration.get("migration_kind")
+    if kind not in {"STRENGTHEN", "NO_CAPABILITY_CHANGE"}:
+        return []
+
+    errors: list[str] = []
+    before = {row["capability_id"]: row for row in before_profile.get("direct_assignments", [])}
+    after = {row["capability_id"]: row for row in after_profile.get("direct_assignments", [])}
+
+    for capability_id, prior in before.items():
+        current = after.get(capability_id)
+        if current is None:
+            errors.append(
+                "PSC018 HOLISTIC_NON_WEAKENING_MUTATION_LIFECYCLE: "
+                f"{kind} removed accepted capability {capability_id} from "
+                f"{after_profile.get('prompt_id')}"
+            )
+            continue
+        if PRESENCE_ORDER.index(current.get("presence", "NONE")) < PRESENCE_ORDER.index(
+            prior.get("presence", "NONE")
+        ):
+            errors.append(
+                "PSC018 HOLISTIC_NON_WEAKENING_MUTATION_LIFECYCLE: "
+                f"{kind} weakened presence for {capability_id} "
+                f"({prior.get('presence')} -> {current.get('presence')})"
+            )
+        if OWNERSHIP_ORDER.index(current.get("ownership", "NONE")) < OWNERSHIP_ORDER.index(
+            prior.get("ownership", "NONE")
+        ):
+            errors.append(
+                "PSC018 HOLISTIC_NON_WEAKENING_MUTATION_LIFECYCLE: "
+                f"{kind} weakened ownership for {capability_id} "
+                f"({prior.get('ownership')} -> {current.get('ownership')})"
+            )
+        if kind == "NO_CAPABILITY_CHANGE":
+            for field in ("capability_relation", "delivery_source"):
+                if current.get(field) != prior.get(field):
+                    errors.append(
+                        "PSC018 HOLISTIC_NON_WEAKENING_MUTATION_LIFECYCLE: "
+                        f"NO_CAPABILITY_CHANGE altered {field} for {capability_id}"
+                    )
+
+    if kind == "NO_CAPABILITY_CHANGE" and set(after) != set(before):
+        errors.append(
+            "PSC018 HOLISTIC_NON_WEAKENING_MUTATION_LIFECYCLE: "
+            "NO_CAPABILITY_CHANGE changed the accepted capability set"
+        )
+    return errors
+
+
+def check_psc018_mutation_receipt(
+    migration: dict[str, Any],
+    contract: dict[str, Any],
+    migration_index: int,
+) -> list[str]:
+    """PSC018: every post-activation lifecycle migration carries compression/non-weakening proof."""
+    lifecycle = contract.get("mutation_lifecycle", {})
+    legacy_count = lifecycle.get("legacy_migration_count_before_psc018")
+    if not isinstance(legacy_count, int) or legacy_count < 0:
+        return ["PSC018 HOLISTIC_NON_WEAKENING_MUTATION_LIFECYCLE: invalid activation floor"]
+    if migration_index < legacy_count:
+        return []
+
+    receipt = migration.get("mutation_lifecycle")
+    if not isinstance(receipt, dict):
+        return [
+            "PSC018 HOLISTIC_NON_WEAKENING_MUTATION_LIFECYCLE: "
+            f"{migration.get('migration_id')} lacks mutation_lifecycle receipt"
+        ]
+
+    errors: list[str] = []
+    required = lifecycle.get("required_receipt_fields", [])
+    missing = [field for field in required if field not in receipt]
+    if missing:
+        errors.append(
+            "PSC018 HOLISTIC_NON_WEAKENING_MUTATION_LIFECYCLE: "
+            f"{migration.get('migration_id')} receipt missing {missing}"
+        )
+    if receipt.get("operation") != migration.get("migration_kind"):
+        errors.append(
+            "PSC018 HOLISTIC_NON_WEAKENING_MUTATION_LIFECYCLE: "
+            f"{migration.get('migration_id')} receipt operation disagrees with migration kind"
+        )
+    allowed = set(lifecycle.get("edit_compression_dispositions", [])) | set(
+        lifecycle.get("generated_receipt_dispositions", [])
+    )
+    if receipt.get("compression_disposition") not in allowed:
+        errors.append(
+            "PSC018 HOLISTIC_NON_WEAKENING_MUTATION_LIFECYCLE: "
+            f"{migration.get('migration_id')} has invalid compression disposition"
+        )
+    if receipt.get("compression_disposition") == "GROWTH_JUSTIFIED":
+        rationale = receipt.get("compression_rationale")
+        if not isinstance(rationale, str) or not rationale.strip():
+            errors.append(
+                "PSC018 HOLISTIC_NON_WEAKENING_MUTATION_LIFECYCLE: "
+                f"{migration.get('migration_id')} GROWTH_JUSTIFIED receipt requires "
+                "non-blank compression rationale"
+            )
+    if receipt.get("portfolio_coverage_preserved") is not True:
+        errors.append(
+            "PSC018 HOLISTIC_NON_WEAKENING_MUTATION_LIFECYCLE: "
+            f"{migration.get('migration_id')} does not prove portfolio coverage preservation"
+        )
+    if receipt.get("lost_protected_capabilities") not in ([], None):
+        errors.append(
+            "PSC018 HOLISTIC_NON_WEAKENING_MUTATION_LIFECYCLE: "
+            f"{migration.get('migration_id')} records lost protected capabilities"
+        )
+    return errors
+
+
 def validate_profile_change(
     before_profile: dict[str, Any],
     after_profile: dict[str, Any],
@@ -544,6 +663,13 @@ def validate_profile_change(
 
     # PSC016: Inherited source integrity
     errors.extend(check_psc016_inherited_source_integrity(after_profile))
+
+    # PSC018: Holistic non-weakening mutation lifecycle
+    errors.extend(
+        check_psc018_holistic_non_weakening_mutation_lifecycle(
+            before_profile, after_profile, migration
+        )
+    )
 
     return errors
 
@@ -584,7 +710,7 @@ def validate_repository_state() -> list[str]:
     errors: list[str] = []
 
     # Load every canonical owner up front so missing/garbled inputs fail closed.
-    _load_contract()
+    contract = _load_contract()
     catalog = _load_catalog()
     profiles_data = _load_profiles()
     migrations_data = _load_migrations()
@@ -637,8 +763,9 @@ def validate_repository_state() -> list[str]:
         "RETIRE",
         "RESTORE",
     }
-    for migration in migrations:
+    for migration_index, migration in enumerate(migrations):
         errors.extend(validate_migration(migration, catalog, profiles))
+        errors.extend(check_psc018_mutation_receipt(migration, contract, migration_index))
         if migration.get("migration_kind") not in lifecycle_kinds:
             continue
         source_id = str(migration.get("source_history_migration_id", "")).strip()
