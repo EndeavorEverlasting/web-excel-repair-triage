@@ -438,17 +438,17 @@ Canonical terminal action: none; no safe actionable work remains
 
 ## TRQ-025 — Post-#651 floor-clear + B02 donor closeout
 
-- **Status:** READY
+- **Status:** DONE
 - **Priority:** P1
 - **Owner:** floor-clear-post651-20260926
 - **Work item:** ledger:TRQ-025
-- **Branch / PR:** `chore/floor-clear-post651-20260926` / PR pending
+- **Branch / PR:** main / #658 merged as a47e1d7867af730d482513ab5705215449affd41
 - **Scope:** refresh open-PR dispositions against `main@f395a5b4`; close STALE #260/#243; after TokenCorridor B02 containment, close donors #600/#619/#631/#630/#636 without Triage merge; close SUPERSEDED_CONTAINED NEW=0 PRs #561/#393/#313/#257; refresh disposition + continuity index; validate ledger; merge this repair
 - **Forbidden:** merging Prompt Kit donor PRs into Triage to reduce open count; deleting Prompt Kit source; spreadsheet/domain product mutation; new AFK product features in Triage; claiming M4 cutover
 - **Dependencies:** none
 - **References:** `harness/reports/TRIAGE_OPEN_PR_DISPOSITION_20260926.md`, `harness/reports/TRIAGE_AFKAF_DONOR_CLOSEOUT_20260926.md`, `harness/reports/packets/PK-B02A-upstream-capability-watch.packet.md`, `harness/reports/packets/PK-B02B-prompt-findability.packet.md`, `harness/reports/packets/PK-B02C-routing-decision.packet.md`; closed Triage PRs #260 #243 #600 #619 #631 #630 #636 #561 #393 #313 #257; remote TokenCorridor https://github.com/EndeavorEverlasting/TokenCorridor/pull/41 https://github.com/EndeavorEverlasting/TokenCorridor/pull/42 https://github.com/EndeavorEverlasting/TokenCorridor/pull/43
 - **Acceptance gate:** disposition table refreshed for all open PRs; B02 donors closed with TC PR citations; SUPERSEDED/STALE closes evidenced; ledger validator PASS on PR head; this TRQ reaches DONE only after merge integration proof
 - **Gate:** none
-- **Last proof:** Triage main@f395a5b4; open=38 classified PORT=21 RETAIN=17; finish-pass NEW≥1 on remaining PK opens (0 additional closes); artifact:harness/reports/TRIAGE_OPEN_PR_DISPOSITION_20260926.md
-- **Next action:** merge this ledger/disposition repair PR; after merge integration, mark DONE with merge SHA
-- **Updated:** 2026-09-26T20:35:00Z
+- **Last proof:** merge:a47e1d7867af730d482513ab5705215449affd41; artifact:harness/reports/TRIAGE_OPEN_PR_DISPOSITION_20260926.md; open=38 PORT=21 RETAIN=17; no Prompt Kit donor merges
+- **Next action:** none; no safe actionable work remains
+- **Updated:** 2026-09-26T21:20:00Z
