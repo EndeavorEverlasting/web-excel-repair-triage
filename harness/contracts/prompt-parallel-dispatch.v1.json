@@ -125,6 +125,14 @@
     "implementation": "scripts/prompt_runtime_partition.py",
     "rule": "Every lane carries the raw WorkUnit and its P04 projection. The validator recomputes the projection through planning.runtime_partition and rejects drift before dependency/adapter dispatch.",
     "identity_rule": "runtime_partition_input.work_unit_id must equal lane_id.",
-    "privacy_rule": "Inherited evidence/provider references are validated by planning.runtime_partition before they may enter the dispatch manifest."
+    "privacy_rule": "Inherited evidence/provider references are validated by planning.runtime_partition before they may enter the dispatch manifest.",
+    "launch_compatibility": {
+      "blocked_lane": "BLOCKED lanes are validated but never invoked, so unresolved/operator runtime ownership may be preserved without executing it.",
+      "CURRENT_CHAT_RUNTIME": "Fresh executable work requires runtime_tool; argv would execute in the repository CLI host instead of the selected chat runtime.",
+      "LOCAL_AGENT_RUNTIME": "May use argv or runtime_tool according to the selected adapter.",
+      "CI_OR_REMOTE_RUNNER": "Requires runtime_tool from this provider-neutral dispatcher; plain argv cannot prove it is running in the selected remote/CI host.",
+      "OPERATOR_OR_PHYSICAL_RUNTIME": "Must remain BLOCKED until an operator/physical runtime owner advances it.",
+      "UNKNOWN_RUNTIME": "Must remain BLOCKED until runtime ownership is resolved."
+    }
   }
 }
