@@ -1,6 +1,7 @@
 import json
 import pathlib
 import subprocess
+import sys
 import tempfile
 import unittest
 
@@ -11,7 +12,7 @@ PORTABLE_COMMIT = '429237aa41d8712d71859865c9be407ca23d8580'
 
 
 def run_validator(path=None, adoption=None):
-    command = ['python3', str(VALIDATOR)]
+    command = [sys.executable, str(VALIDATOR)]
     if path:
         command += ['--file', str(path)]
     if adoption:
@@ -26,7 +27,11 @@ localAuthority: AGENTS.md
 # Test ledger
 
 Continuation states are not stopping states.
+Work item owns progression state.
+Branch / PR is execution evidence, not work identity.
+READY is AFK-dispatchable only when fully specified and dependency-ready.
 PR opened is not completion.
+Merged PR alone is not DONE.
 DONE is strict.
 Canonical terminal action: none; no safe actionable work remains
 '''
@@ -35,7 +40,7 @@ Canonical terminal action: none; no safe actionable work remains
 def task(**overrides):
     values = {
         'Status': 'READY', 'Priority': 'P1', 'Owner': 'unclaimed',
-        'Branch / PR': 'none', 'Scope': 'bounded test scope',
+        'Work item': 'ledger:TRQ-900', 'Branch / PR': 'none', 'Scope': 'bounded test scope',
         'Forbidden': 'production mutation', 'Dependencies': 'none',
         'References': '`AGENTS.md`', 'Acceptance gate': 'observable proof exists',
         'Gate': 'none', 'Last proof': 'none',
@@ -52,6 +57,7 @@ class RepositoryWorkLedgerTests(unittest.TestCase):
         result = run_validator()
         self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
         self.assertIn('portable=RepoLedgerInteroperability.v1@429237aa41d8', result.stdout)
+        self.assertIn('issue-centered=PASS', result.stdout)
         self.assertIn('stale-ref-probes=PASS', result.stdout)
 
     def test_canonical_contract_is_blacksmith_and_exact(self):
@@ -64,6 +70,114 @@ class RepositoryWorkLedgerTests(unittest.TestCase):
         self.assertRegex(canonical['pinnedCommit'], r'^[0-9a-f]{40}$')
         self.assertEqual(canonical['contractPath'], '.tbg/workflows/repo-ledger-interoperability.contract.json')
         self.assertEqual(canonical['schemaPath'], '.tbg/harness/schemas/repo-ledger-adoption.schema.json')
+
+    def test_issue_progression_contract_is_local_and_issue_centered(self):
+        adoption = json.loads(ADOPTION.read_text(encoding='utf-8'))
+        self.assertEqual(
+            adoption['local']['issueProgressionContract'],
+            '.ai/issue-centered-work-progression.v1.json',
+        )
+        contract = json.loads((ROOT / adoption['local']['issueProgressionContract']).read_text(encoding='utf-8'))
+        self.assertEqual(contract['schema_version'], 'issue-centered-work-progression/v1')
+        self.assertEqual(contract['work_identity']['canonical_unit'], 'work_item')
+        self.assertEqual(contract['work_identity']['preferred_anchor'], 'issue')
+        states = {state['id']: state for state in contract['afk_states']}
+        self.assertTrue(states['READY']['afk_dispatchable'])
+        self.assertFalse(states['CLAIMED']['afk_dispatchable'])
+        self.assertTrue(states['DONE']['terminal'])
+        self.assertFalse(contract['done_gate']['merged_pr_alone_sufficient'])
+
+    def test_pr_or_branch_cannot_be_the_work_item_identity(self):
+        for work_item in ('pr:#123', 'branch:feat/example', 'commit:1234567', 'merge:1234567'):
+            with self.subTest(work_item=work_item):
+                result = self.run_temp(task(**{'Work item': work_item}))
+                self.assertNotEqual(result.returncode, 0)
+                self.assertIn('Work item must be an issue/ticket/ledger anchor', result.stderr)
+
+    def test_issue_work_item_can_survive_pr_execution_evidence(self):
+        result = self.run_temp(task(
+            **{
+                'Work item': 'issue:#614',
+                'Branch / PR': 'feat/example / #615',
+                'Next action': 'execute the bounded implementation attached to issue #614',
+            }
+        ))
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+
+    def test_ledger_anchor_must_match_task_identity(self):
+        result = self.run_temp(task(**{'Work item': 'ledger:TRQ-899'}))
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn('ledger Work item anchor must match its task id', result.stderr)
+
+    def test_merge_only_proof_cannot_make_work_item_done(self):
+        result = self.run_temp(task(
+            Status='DONE',
+            Owner='agent-session',
+            **{
+                'Last proof': 'merge:1234567890abcdef1234567890abcdef12345678',
+                'Next action': 'none; no safe actionable work remains',
+            }
+        ))
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn('merged/committed code alone cannot satisfy DONE', result.stderr)
+
+    def test_validation_without_merge_cannot_make_work_item_done(self):
+        result = self.run_temp(task(
+            Status='DONE',
+            Owner='agent-session',
+            **{
+                'Last proof': 'workflow:123456789',
+                'Next action': 'none; no safe actionable work remains',
+            }
+        ))
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn('durable merge integration proof is required', result.stderr)
+    def test_nonexistent_artifact_cannot_satisfy_done(self):
+        result = self.run_temp(task(
+            Status='DONE',
+            Owner='agent-session',
+            **{
+                'Last proof': 'merge:1234567890abcdef1234567890abcdef12345678; artifact:this-does-not-exist',
+                'Next action': 'none; no safe actionable work remains',
+            }
+        ))
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn('declared existing artifact/operator-proof', result.stderr)
+
+    def test_declared_existing_artifact_can_supply_non_merge_acceptance_proof(self):
+        result = self.run_temp(task(
+            Status='DONE',
+            Owner='agent-session',
+            References='`AGENTS.md`',
+            **{
+                'Last proof': 'merge:1234567890abcdef1234567890abcdef12345678; artifact:AGENTS.md',
+                'Next action': 'none; no safe actionable work remains',
+            }
+        ))
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+
+    def test_done_rejects_placeholder_acceptance_gate(self):
+        result = self.run_temp(task(
+            Status='DONE',
+            Owner='agent-session',
+            **{
+                'Acceptance gate': 'pending',
+                'Last proof': 'merge:1234567890abcdef1234567890abcdef12345678; workflow:123456789',
+                'Next action': 'none; no safe actionable work remains',
+            }
+        ))
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn('DONE requires a non-placeholder Acceptance gate', result.stderr)
+    def test_done_accepts_merge_plus_validation_evidence(self):
+        result = self.run_temp(task(
+            Status='DONE',
+            Owner='agent-session',
+            **{
+                'Last proof': 'merge:1234567890abcdef1234567890abcdef12345678; workflow:123456789',
+                'Next action': 'none; no safe actionable work remains',
+            }
+        ))
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
 
     def run_temp(self, content):
         with tempfile.NamedTemporaryFile('w', suffix='.md', delete=False, dir=ROOT, encoding='utf-8') as handle:
@@ -103,8 +217,18 @@ class RepositoryWorkLedgerTests(unittest.TestCase):
         self.assertIn('DONE requires canonical terminal Next action', result.stderr)
 
     def test_done_accepts_durable_proof(self):
-        result = self.run_temp(task(Status='DONE', Owner='agent-session', **{'Last proof': 'commit:1234567', 'Next action': 'none; no safe actionable work remains'}))
+        result = self.run_temp(task(Status='DONE', Owner='agent-session', **{'Last proof': 'merge:1234567890abcdef1234567890abcdef12345678; workflow:123456789', 'Next action': 'none; no safe actionable work remains'}))
         self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+
+    def test_ready_rejects_active_gate(self):
+        result = self.run_temp(task(Status='READY', Gate='operator authentication required'))
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn('READY is AFK-dispatchable only with Gate: none', result.stderr)
+
+    def test_ready_rejects_non_none_dependencies(self):
+        result = self.run_temp(task(Status='READY', Dependencies='ASB #320 merged; planning floor main@abc'))
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn('READY is AFK-dispatchable only with Dependencies: none', result.stderr)
 
     def test_operator_requires_gate(self):
         result = self.run_temp(task(Status='OPERATOR', Owner='operator', Gate='none'))
