@@ -15,9 +15,9 @@ Current shared launch order: **S1 || S3 → S2 → S4 → S5**.
 **Shared convergence ID:** `AFK-FACTORY-CONVERGENCE-2026-09-22`
 **Repository:** `EndeavorEverlasting/web-excel-repair-triage`
 **Repository role:** Prompt Kit / AFK Agent Flow — human↔AFK interface foundation
-**Planning floor:** `main@5aca914e8026702844201fb9026b28ee54fbb08d`
-**Canonical cross-repository plan:** `EndeavorEverlasting/TokenCorridor` → `plans/active/AFK-FACTORY-CONVERGENCE.md` + `plans/active/AFK-FACTORY-CONVERGENCE.plan.json` (material floor `afbc796f6292d13888975699329ad188b86d3ee5`, current observed `main@4d20a69f3f3e518ec9ccb401555ec6ee2cc2a661`)
-**AgentSwitchboard companion plan:** `ASB-2026-09-TOKEN-CORRIDOR-COMPETITIVE-ARCHITECTURE` (PR #347 integrated; current observed `main@2b2d5dfc9aa11ca8bab44137984a97fea4bd12db`)
+**Planning floor:** `main@246739c95ea808ee057d39407b4afe86cf0b8643`
+**Canonical cross-repository plan:** `EndeavorEverlasting/TokenCorridor` → `plans/active/AFK-FACTORY-CONVERGENCE.md` + `plans/active/AFK-FACTORY-CONVERGENCE.plan.json` (current observed `main@e6872144fdfe81321cbf1d8eaa65ffa582244a12`)
+**AgentSwitchboard companion plan:** `ASB-2026-09-TOKEN-CORRIDOR-COMPETITIVE-ARCHITECTURE` (PR #347 historical; current observed `main@3348a06950368663a336fbc56bcd23982511afea`)
 **Destination invariant (canonical):** **TokenCorridor is the destination product and canonical convergence repository for Prompt Kit / AFKAF and AgentSwitchboard; the current three-repository split is migration topology, not permanent product boundary.** Logical ownership survives physical consolidation. See canonical plan for M0–M5 phases, authority-transfer gates, and donor dispositions.
 **Local AFK identity authority:** `harness/contracts/operant-product-identity.v1.json` on `main@5aca914e8026702844201fb9026b28ee54fbb08d` now targets `EndeavorEverlasting/TokenCorridor` with state `created-convergence-authority-cutover-unproven`; this repository remains current donor authority until per-capability cutover gates pass.
 **Floor freshness semantics:** pinned SHAs are material integration floors; later `main` descendants remain current when they contain the floor and governing content is present. This companion file cannot certify another repository's freshness: every execution must refresh TokenCorridor/AgentSwitchboard provider truth and use ancestry plus current-content checks before relying on their plans.
@@ -106,11 +106,14 @@ Current integrated mainline owners:
 
 Current active convergence lanes to refresh before mutation:
 
-- **PR #626** — issue-centered AFK/P66 progression;
 - **PR #600** — routing decision / Evidence Spine continuation;
-- **PR #630** — prompt findability and agent readability.
+- **PR #630** — prompt findability and agent readability;
+- **PR #631** — upstream source-floor freshness recovery;
+- **PR #636** — wayfinding/context implementation.
 
-Adjacent active writers **#636** and **#641** must be collision-checked before any M2 registry/generator/test-floor mutation. They are not substitutes for the canonical integrated P55/P143 owners.
+PR #626 is integrated on `main@246739c9`; it is no longer an active writer.
+
+Adjacent active writer **#636** must be collision-checked before any M2 registry/generator/test-floor mutation; **#641 is merged** and is not an active writer. They are not substitutes for the canonical integrated P55/P143 owners.
 
 Older predecessor writers are floor-clearing candidates, not parallel authorities. The closeout owner must reconcile unique behavior into one refreshed floor rather than independently fixing every historical PR forever.
 
@@ -413,4 +416,4 @@ This plan is repository-local convergence intent. It does not prove TokenCorrido
 
 Owner: Prompt Kit closeout lane.
 
-Refresh current provider/main truth; treat integrated P55 (#623/#638) and P143 (#640; #632 superseded) as mainline floor, reconcile the still-active #626/#600/#630 lanes plus collisions from #636/#641, and publish one integrated Prompt Kit floor. Then execute PK-C0.5: run prior-art/identity review for the Private Tutor and Repository Grill, write and integrate `docs/plans/PROMPT_TUTOR_GRILL_IDENTITY_DECISION.md`, and only then begin PK-C1.
+Refresh current provider/main truth; treat integrated P55 (#623/#638) and P143 (#640; #632 superseded) as mainline floor, reconcile the still-active #600/#630/#631/#636 lanes, preserving #626 as integrated evidence and #641 as merged evidence, and publish one integrated Prompt Kit floor. Then execute PK-C0.5: run prior-art/identity review for the Private Tutor and Repository Grill, write and integrate `docs/plans/PROMPT_TUTOR_GRILL_IDENTITY_DECISION.md`, and only then begin PK-C1.
