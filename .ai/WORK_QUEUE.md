@@ -344,16 +344,16 @@ Canonical terminal action: none; no safe actionable work remains
 - **Priority:** P1
 - **Owner:** upstream-capability-watch-20260920
 - **Work item:** ledger:TRQ-020
-- **Branch / PR:** `plan/upstream-capability-watch-20260920` / #611 open
+- **Branch / PR:** donor chain `#619` → `#631` (TokenCorridor PK-B02A); historical plan branch `#611` superseded as continuity pointer only
 - **Scope:** classify the missed Matt Pocock `teach` signal; add capability-level identity and observed-vs-processed watch state; preserve external-resource intake as donor discovery authority; add deduped source-change events, impact edges, review-required promotion policy, and P115 visibility routing; reconcile P96/P98/P65 only from evidence; research and then admit authoritative design/skill-authoring donor surfaces; expose receipt-derived capability status; prove synthetic A→B routing and dedupe
-- **Forbidden:** second donor registry; browser telemetry as provider polling; raw donor-body persistence; automatic prompt rewrite/promotion; P79 bypass; human scheduling as the primary parallel-dispatch path; claiming due-time AFK observation from schedule configuration; overwriting open PR #431/#561/#600/#606 owned surfaces without refresh/reconciliation
-- **Dependencies:** `main@70178017ffa5c27f4428d6aae733a61113a6f4ad`; `harness/contracts/operant-external-resource-intake.v1.json`; `.github/workflows/operant-external-resource-refresh.yml`; P102 polling semantics; P115 AFK coordinator; P79 upstream prior-art gate
-- **References:** `docs/plans/UPSTREAM_CAPABILITY_WATCH_SPRINT_MAP.md`, `Outputs/prompt-parallel-dispatch/manifest.json`, `scripts/prompt_kit_afk_signal_router.py`, `registry/prompts/tutorial-discovery-prompts.v1.json`, `web/prompt-kit/resources.v1.json`
-- **Acceptance gate:** five forensic dispositions evidence-typed; per-capability immutable identity tracked separately from repository revision; `last_observed_identity` cannot advance `last_processed_identity` before durable routing; one A→B transition yields one event; zero-impact retains a diagnosable event; P115 receives bounded actionable change evidence; promotion remains review-required; teaching/design changes require owner/semantic proof; user-visible status reads canonical watch/review state; exact green result converges to refreshed main
-- **Gate:** current ChatGPT environment has no exposed native/local autonomous repo worker or workflow-dispatch action; manifest graph width is 2 and records DEGRADED execution with an explicit autonomy gap
-- **Last proof:** plan:78809b8cb264715731d4dbb57824385566ce0ece; dispatch-manifest:74d9196c3f88f5f81f5607d3a9871a758d3f6903; provider evidence confirms registered Matt donor, daily drift-proof schedule, current `teach` resource with null local target, and read-only workflow with no P115 routing
-- **Next action:** Execute U0A's evidence-backed missed-`teach` forensic lane and write `harness/reports/UPSTREAM_CAPABILITY_WATCH_FORENSICS.md`; dispatch U0B authoritative design/skill-authoring source research in parallel when an autonomous adapter is available; start U1 only after U0A establishes the exact failure boundary
-- **Updated:** 2026-09-20T20:00:00Z
+- **Forbidden:** second donor registry; browser telemetry as provider polling; raw donor-body persistence; automatic prompt rewrite/promotion; P79 bypass; human scheduling as the primary parallel-dispatch path; claiming due-time AFK observation from schedule configuration; overwriting open PR #431/#561/#600/#606 owned surfaces without refresh/reconciliation; merging #619/#631 into Triage merely to tidy open PRs
+- **Dependencies:** TokenCorridor PK-B02A containment; donor packets `harness/reports/packets/PK-B02A-upstream-capability-watch.packet.md`; `harness/contracts/operant-external-resource-intake.v1.json`; `.github/workflows/operant-external-resource-refresh.yml`; P102 polling semantics; P115 AFK coordinator; P79 upstream prior-art gate
+- **References:** `docs/plans/UPSTREAM_CAPABILITY_WATCH_SPRINT_MAP.md`, `harness/reports/packets/PK-B02A-upstream-capability-watch.packet.md`, TokenCorridor plans/active/AFK-FACTORY-CONVERGENCE.plan.json (remote canonical), `Outputs/prompt-parallel-dispatch/manifest.json`, `scripts/prompt_kit_afk_signal_router.py`, `registry/prompts/tutorial-discovery-prompts.v1.json`, `web/prompt-kit/resources.v1.json`
+- **Acceptance gate:** five forensic dispositions evidence-typed; per-capability immutable identity tracked separately from repository revision; `last_observed_identity` cannot advance `last_processed_identity` before durable routing; one A→B transition yields one event; zero-impact retains a diagnosable event; P115 receives bounded actionable change evidence; promotion remains review-required; teaching/design changes require owner/semantic proof; user-visible status reads canonical watch/review state; TokenCorridor PK-B02A containment proven before donor PR closure
+- **Gate:** TokenCorridor Sync C B02A containment unproven; donor PRs remain open as CLOSE_AFTER_TOKENCORRIDOR_CONTAINMENT
+- **Last proof:** donor heads #619 `ab35d72f7149e79fcd15cabd5f65ec8081a3470c` and #631 `fb730893b9e73bd06729f4ab8dffed5852ae47c0` inventoried vs main@0fd4c578; transplant packet emitted 2026-09-26
+- **Next action:** TokenCorridor executes PK-B02A from `harness/reports/packets/PK-B02A-upstream-capability-watch.packet.md` without flattening #619→#631; Triage closes donors only after Sync C containment proof
+- **Updated:** 2026-09-26T15:30:00Z
 
 ## TRQ-021 — P55 repository bootstrap recovery and mainline convergence
 
@@ -405,3 +405,20 @@ Canonical terminal action: none; no safe actionable work remains
 - **Last proof:** exact reconciled PR head `6919be004a728daac0a9dad2f607572603d205a0` passed Repository work ledger, App Harness, Artifact engine, Prompt Kit Pages, and deterministic repository floor workflows with zero unresolved review threads; merge:ebd9aaa24027992b48dc98c391366e0bc59ac540 integrated PR #648 plan floor; mainline plan readback PASS; no current `ticket_update`/screenshot-ingestion engine is implemented; next slice is TTI-1 contracts/fixtures/validators only
 - **Next action:** Execute TTI-1 from refreshed main: create the smallest versioned ticket-observation, ticket-update-batch, and ticket-merge-receipt contracts plus sanitized positive/negative fixtures and validators; do not mutate P125, private H&H artifacts, workbooks, or Drive in that slice
 - **Updated:** 2026-09-26T03:10:00Z
+
+## TRQ-024 — AFKAF donor closeout + TokenCorridor transplant packets
+
+- **Status:** MERGE
+- **Priority:** P1
+- **Owner:** triage-afkaf-donor-closeout-20260926
+- **Work item:** ledger:TRQ-024
+- **Branch / PR:** sprint/triage-afkaf-donor-closeout-20260926 / #653; #651+#652 integrated
+- **Scope:** finish Triage-side convergence floor clearing: integrate #651 typed operator-state presentation; classify open Prompt Kit/AFKAF PRs; emit exact TokenCorridor transplant packets for PK-B01A/B02A/B02B/B02C; reconcile this ledger as a continuity index; recenter governance language without claiming M4 cutover; keep compatibility routes explicit
+- **Forbidden:** TokenCorridor destination module mutation; premature M4 authority-cutover claims; removing donor authority before TokenCorridor containment; merging Prompt Kit donor PRs merely to tidy Triage; hand-editing generated Prompt Kit HTML; weakening Operant refresh validators
+- **Dependencies:** none
+- **References:** `harness/reports/TRIAGE_AFKAF_DONOR_CLOSEOUT_20260926.md`, `harness/reports/TRIAGE_OPEN_PR_DISPOSITION_20260926.md`, `harness/reports/packets/`, `docs/plans/AFK_FACTORY_INTERFACE_CONVERGENCE_SPRINT_MAP.md`, TokenCorridor remote canonical AFK-FACTORY-CONVERGENCE and M2-PROMPT-KIT-MIGRATION-STATE-PRESENTATION plans
+- **Acceptance gate:** #651 integrated or exact blocker recorded; every open Prompt Kit/AFKAF PR classified; B02 chains have exact packets; ledger validator passes; compatibility obligations explicit; no M4 cutover claim; Sync A handoff deterministic for TokenCorridor PK-B01A
+- **Gate:** none
+- **Last proof:** merge:#651→main@e46499fe; merge:#652→main@c6b6765e contains appendix upgrade 5e9cbcba; ledger validator PASS; packets emitted
+- **Next action:** Merge PR #653 donor-closeout docs/packets into main, then stamp TokenCorridor Sync A complete with main@c6b6765e+
+- **Updated:** 2026-09-26T16:25:00Z
