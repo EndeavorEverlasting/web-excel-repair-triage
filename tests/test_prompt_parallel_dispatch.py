@@ -133,6 +133,29 @@ class PromptParallelDispatchTests(unittest.TestCase):
         with self.assertRaisesRegex(MOD.DispatchError, "CURRENT_CHAT_RUNTIME requires runtime_tool"):
             MOD.validate_manifest(payload)
 
+    def test_already_completed_current_runtime_work_cannot_hide_as_blocked_lane(self) -> None:
+        altered = lane("lane-a")
+        facts = altered["runtime_partition_input"]["capability_facts"]
+        facts["local_runtime_required"] = False
+        facts["current_runtime_available"] = True
+        facts["current_runtime_authorized"] = True
+        altered["runtime_partition_input"]["already_executed_here"] = True
+        altered["runtime_partition_input"]["inherited_evidence"] = [{
+            "evidence_type": "repository_state",
+            "source_owner": "Prompt Kit",
+            "sanitized_ref": "repo:completed@abc123",
+            "revision_or_freshness": "sha:abc123",
+            "visibility": "PUBLIC_TRACKED",
+            "proof_ceiling": "repository evidence",
+        }]
+        altered["runtime_partition"] = MOD.runtime_partition.project_p04(
+            MOD.runtime_partition.partition_work_unit(altered["runtime_partition_input"])
+        )
+        altered["status"] = "BLOCKED"
+        payload = manifest(altered, width=1, disposition="NOT_APPLICABLE")
+        with self.assertRaisesRegex(MOD.DispatchError, "already complete"):
+            MOD.validate_manifest(payload)
+
     def test_non_autonomous_runtime_may_be_preserved_as_blocked_without_launch(self) -> None:
         altered = lane("lane-a")
         facts = altered["runtime_partition_input"]["capability_facts"]
