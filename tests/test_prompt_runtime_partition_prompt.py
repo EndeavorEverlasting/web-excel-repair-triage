@@ -113,6 +113,15 @@ class RuntimePartitionPrototypeTests(unittest.TestCase):
         decision = MOD.partition_work_unit(payload)
         self.assertEqual(decision.evidence_inputs[0]["visibility"], "PROTECTED_EXTERNAL")
 
+    def test_transport_metadata_fields_cannot_smuggle_provider_urls(self) -> None:
+        for field in ("source_owner", "revision_or_freshness", "proof_ceiling"):
+            payload = unit(current_runtime_available=True, current_runtime_authorized=True)
+            payload["inherited_evidence"][0][field] = "https://docs.google.com/private/example"
+            with self.subTest(field=field), self.assertRaisesRegex(
+                MOD.RuntimePartitionError, "may not contain a provider URL"
+            ):
+                MOD.partition_work_unit(payload)
+
     def test_private_github_url_requires_opaque_or_verified_public_status(self) -> None:
         payload = unit(current_runtime_available=True, current_runtime_authorized=True)
         payload["inherited_evidence"] = [
@@ -213,6 +222,17 @@ class RuntimePartitionPrototypeTests(unittest.TestCase):
         panel = MOD.project_p05(decision)
         self.assertTrue(panel["ALREADY EXECUTED HERE"])
         self.assertEqual(panel["RUNTIME HANDOFF"], "none")
+
+    def test_cli_invalid_utf8_returns_contract_error_not_traceback(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            input_path = Path(temp_dir) / "bad.json"
+            input_path.write_bytes(b"\xff\xfe\x00")
+            stderr = io.StringIO()
+            with contextlib.redirect_stderr(stderr):
+                returncode = MOD.main(["decision", "--input", str(input_path)])
+        self.assertEqual(returncode, 2)
+        self.assertIn("runtime-partition error:", stderr.getvalue())
+        self.assertNotIn("Traceback", stderr.getvalue())
 
     def test_cli_emits_p04_projection_from_work_unit_json(self) -> None:
         payload = unit(local_runtime_required=True)
