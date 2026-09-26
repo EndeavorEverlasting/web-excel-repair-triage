@@ -144,6 +144,7 @@ python3 scripts/prompt_registry_ops.py retire --prompt-id P42 --rationale "reaso
 - **PSC015**: Source and capability migration link
 - **PSC016**: Inherited source integrity
 - **PSC017**: Existing prompt profile adoption
+- **PSC018**: Holistic non-weakening mutation lifecycle — deliberate compression strengthens semantic density without dropping accepted behavior/ownership; all future ADD/EDIT/TRANSFER/RETIRE migrations carry a lifecycle receipt
 
 ## Related Skills
 

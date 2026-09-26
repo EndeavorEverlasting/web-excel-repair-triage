@@ -80,6 +80,10 @@
     {
       "id": "PSC017",
       "rule": "EXISTING_PROMPT_PROFILE_ADOPTION — an existing unprofiled prompt may enter ACCEPTED coverage without a body mutation only through the semantic-coverage lifecycle owner, with exact canonical binding, reviewed evidence, no pre-existing profile history, atomic validation, and no fabricated Prompt Quality History migration."
+    },
+    {
+      "id": "PSC018",
+      "rule": "HOLISTIC_NON_WEAKENING_MUTATION_LIFECYCLE — every protected ADD, EDIT/STRENGTHEN, TRANSFER, or RETIRE must compare before/after semantic state and preserve the effective Prompt Kit portfolio. STRENGTHEN and NO_CAPABILITY_CHANGE may not reduce any accepted presence/ownership cell. Compression is a semantic-density operation: remove redundancy before removing obligations, ownership boundaries, failure handling, proof requirements, continuation semantics, or lifecycle history. Any intentional semantic reduction must use an explicit lifecycle disposition with evidence, and transferred/retired responsibility must remain equal-or-stronger elsewhere."
     }
   ],
   "capability_cell_model": {
@@ -130,6 +134,48 @@
     "text_history": "Prompt Quality History",
     "global_execution_strength": "Prompt Strength",
     "runtime_compliance": "Runtime Compliance (downstream evidence)",
-    "semantic_profiles": "Prompt Semantic Coverage (this contract)"
+    "semantic_profiles": "Prompt Semantic Coverage (this contract)",
+    "mutation_non_weakening_and_compression": "PSC018 HOLISTIC_NON_WEAKENING_MUTATION_LIFECYCLE + scripts/prompt_registry_ops.py"
+  },
+  "mutation_lifecycle": {
+    "contract_version": "v1",
+    "legacy_migration_count_before_psc018": 13,
+    "canonical_mutator": "scripts/prompt_registry_ops.py",
+    "strength_owner": "harness/contracts/prompt-strength.v1.json",
+    "principles": [
+      "Prompt strength is measured by preserved or increased accepted semantics and effective portfolio coverage, not by character count.",
+      "Compression is preferred when wording is repetitive or a prompt approaches its representation budget, but compression may remove only redundancy, never protected behavior or ownership.",
+      "Compare before and after canonical body, accepted semantic profile, effective shared-policy inheritance, focused regression coverage, and portfolio coverage before accepting a mutation.",
+      "ADD must prove a distinct residual and compact bounded identity; it must not duplicate an owner merely to avoid editing a dense prompt.",
+      "EDIT/STRENGTHEN must choose an explicit compression disposition and preserve all prior accepted capability presence/ownership unless a stronger explicit lifecycle operation owns the transfer.",
+      "RETIRE must preserve equal-or-stronger coverage, tombstone/history, and successor routing; deletion for tidiness is not retirement.",
+      "Character ceilings are design budgets. Near a ceiling, first compact repetition and shared-policy prose before dropping unique semantics.",
+      "Generated HTML and prose volume are never semantic authority; canonical source, profiles, migrations, contracts, tests, and effective composition are."
+    ],
+    "edit_compression_dispositions": [
+      "COMPRESS",
+      "PRESERVE",
+      "GROWTH_JUSTIFIED"
+    ],
+    "generated_receipt_dispositions": [
+      "NEW_IDENTITY_COMPACT",
+      "RETIRE_WITH_COVERAGE"
+    ],
+    "required_receipt_fields": [
+      "contract_id",
+      "operation",
+      "before_chars",
+      "after_chars",
+      "char_delta",
+      "compression_disposition",
+      "compression_rationale",
+      "semantic_rationale",
+      "coverage_before_fingerprint",
+      "coverage_after_fingerprint",
+      "portfolio_coverage_preserved",
+      "lost_protected_capabilities",
+      "proof_ceiling"
+    ],
+    "proof_ceiling": "Repository semantic/profile/history and mutation-gate proof only. This contract does not prove downstream model obedience, operator acceptance, runtime behavior, deployment, or that prose quality can be reduced to character counts."
   }
 }

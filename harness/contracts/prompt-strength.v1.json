@@ -33,7 +33,8 @@
       "state": "INTEGRATED",
       "content_anchor": "tests/test_p07_effective_prompt_identity.py",
       "integration_sha": "fc5fca0d4f1318a8671b7c8cd1be7abdf7b54050"
-    }
+    },
+    "prompt_mutation_lifecycle": "harness/contracts/prompt-semantic-coverage.v1.json#PSC018"
   },
   "authority_rules": [
     "Strengthen the smallest canonical shared owner instead of copying equivalent prose into many prompts.",
@@ -41,7 +42,8 @@
     "Prompts may direct application work but must not become the only implementation of deterministic application behavior.",
     "Bounded mutation scope never implies bounded reasoning depth.",
     "Profile overlays may specialize execution strategy but may not erase immutable semantic dimensions.",
-    "Every legitimate stop states the exact completed fixed point, blocker, unsafe boundary, external gate, or exhausted authorized scope; silent cessation at a tool or capability boundary is invalid while safe progress-bearing work remains."
+    "Every legitimate stop states the exact completed fixed point, blocker, unsafe boundary, external gate, or exhausted authorized scope; silent cessation at a tool or capability boundary is invalid while safe progress-bearing work remains.",
+    "Prompt mutation strength is semantic, not proportional to text length: protected ADD/EDIT/RETIRE flows must preserve or increase accepted capability/ownership at the Prompt Kit portfolio level, while compression removes redundancy without dropping unique obligations, boundaries, failure handling, proof, continuation semantics, or lifecycle history."
   ],
   "dimensions": [
     {
@@ -489,7 +491,8 @@
       "focused regression proof",
       "proof that immutable semantic dimensions survive or are intentionally superseded by a stronger equivalent"
     ],
-    "detail_copy_runtime_identity_required": true
+    "detail_copy_runtime_identity_required": true,
+    "compression_is_not_weakening": "Character count is a representation budget, not a strength score. A shorter prompt is accepted only when canonical/effective semantics and protected regression obligations are preserved or strengthened through the mutation lifecycle."
   },
   "parallelism_invariants": {
     "graph_width_two_requires_dispatch_when_capacity_exists": true,

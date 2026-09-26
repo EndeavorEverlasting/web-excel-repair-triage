@@ -74,11 +74,12 @@ Static success does not prove a specific browser menu, PWA installation, Termux/
 **Trigger:** Canonical prompts, extensions, policies, reference data, builder behavior, generator options, checked-in HTML, or Prompt Kit interaction/discovery contracts change.
 
 1. Change canonical source, never only generated HTML.
-2. Read the relevant contract before implementation.
-3. Keep harness-only work to contracts, registries, validators, fixtures, hooks, CI, reports, and documentation.
-4. In an authorized product lane, repair the canonical behavior source and regenerate deterministic output.
-5. Run interaction/discovery validators, prompt-language audit when language changes, registry tests, header checks, exact site parity, and broader affected tests.
-6. Keep browser, clipboard, focus, provider, and visual proof separate from static checks.
+2. Read the relevant contract before implementation. For any protected prompt ADD/EDIT/STRENGTHEN/TRANSFER/RETIRE, load `harness/contracts/prompt-semantic-coverage.v1.json` PSC018 and mutate through `scripts/prompt_registry_ops.py`; direct canonical prompt edits are not an alternate lifecycle.
+3. Treat prompt length as a representation budget, not a strength score. Compare before/after canonical + effective semantics, preserve accepted capability/ownership and focused regressions, and prefer semantic-preserving compression of repetition/shared-policy prose before removing unique behavior. Protected EDIT requires an explicit `--compression-disposition`; growth requires a compression rationale. RETIRE requires equal-or-stronger surviving coverage plus retained history.
+4. Keep harness-only work to contracts, registries, validators, fixtures, hooks, CI, reports, and documentation.
+5. In an authorized product lane, repair the canonical behavior source and regenerate deterministic output.
+6. Run interaction/discovery validators, prompt-language audit when language changes, registry tests, header checks, exact site parity, and broader affected tests.
+7. Keep browser, clipboard, focus, provider, and visual proof separate from static checks.
 
 ### C. Harness infrastructure change
 
