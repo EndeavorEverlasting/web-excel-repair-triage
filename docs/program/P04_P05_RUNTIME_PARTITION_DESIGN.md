@@ -81,7 +81,9 @@ Operator invokes P04 with repo/context
 → CURRENT_CHAT_RUNTIME + provider_access[google_drive]
 → execute authorized planning/evidence step now
 → convert result to sanitized InheritedEvidence
-→ P04 builds dependency graph
+→ append that evidence to the WorkUnit and set `already_executed_here=true`
+→ re-run `partition_work_unit` so the completed fact is part of the decision
+→ P04 builds the remaining-work dependency graph
 → `project_p04`
 → typed dispatch manifest for remaining work
 → LAUNCH ORDER first, placement table after it
@@ -92,8 +94,9 @@ Terminal user value: the local executor receives only the work that actually rem
 
 Operator invokes P05
 → preflight/normalization
+→ attach any already-completed current-runtime evidence and set `already_executed_here=true` before final placement
 → `partition_work_unit` for each ordered work unit
-→ mark already-completed current-runtime steps
+→ if execution during planning adds evidence, update the WorkUnit and re-partition before projection
 → build serialized dependency chain
 → LAUNCH ORDER
 → runtime-placement summary
@@ -138,9 +141,12 @@ The focused test suite covers:
 - provider presence without host proof;
 - local-only placement;
 - conflicting host requirements;
-- raw private-provider URL rejection regardless of claimed visibility;
+- raw Google Workspace URL rejection regardless of claimed visibility;
+- raw GitHub URL rejection unless public status is explicitly verified;
 - opaque protected evidence;
-- strict `already_executed_here` boolean validation and current-runtime-only completion;
+- strict enum typing;
+- strict `already_executed_here` boolean validation, current-runtime-only completion, and evidence requirement;
+- projection copy isolation;
 - shared P04/P05 decision projection;
 - already-completed P05 current-runtime work.
 
