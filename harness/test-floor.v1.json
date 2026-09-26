@@ -87,7 +87,10 @@
     "tests/test_prompt_runtime_compliance_*.py",
     "tests/test_p02_continuity_regression_matrix.py",
     "tests/test_p55_repository_bootstrap.py",
-    "tests/test_p55_bootstrap_handoff.py"
+    "tests/test_p55_bootstrap_handoff.py",
+    "tests/test_planning_runtime_partition.py",
+    "tests/test_prompt_invocation_fidelity.py",
+    "tests/test_prompt_runtime_partition_contract.py"
   ],
   "prompt_semantic_test_excludes": [
     "tests/test_skill_prompt_registry.py"
