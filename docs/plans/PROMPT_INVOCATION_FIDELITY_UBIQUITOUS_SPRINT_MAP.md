@@ -1,10 +1,10 @@
 # Prompt Invocation Fidelity + Ubiquitous Factoring Donor Handoff
 
-**Date:** 2026-09-26
-**Repository:** `EndeavorEverlasting/web-excel-repair-triage`
-**Observed donor floor:** `main@c6b6765e640205d7df33b349d5aee133aafbc1ec` (#652 integrated)
-**Destination authority:** `EndeavorEverlasting/TokenCorridor`
-**Canonical cross-repository plan:** `plans/active/PROMPT-SCRATCH-UBIQUITOUS-SPRINT-MAP.md` in TokenCorridor
+**Date:** 2026-09-26  
+**Repository:** `EndeavorEverlasting/web-excel-repair-triage`  
+**Observed donor floor:** `main@c6b6765e640205d7df33b349d5aee133aafbc1ec` (#652 integrated)  
+**Destination authority:** `EndeavorEverlasting/TokenCorridor`  
+**Canonical cross-repository plan:** `plans/active/PROMPT-SCRATCH-UBIQUITOUS-SPRINT-MAP.md` in TokenCorridor  
 **State:** UF-1A READY / donor implementation not yet performed; TokenCorridor PK-B01A already integrated early and requires UF-1B after this lane
 
 ## Why this donor handoff exists
