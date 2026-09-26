@@ -1,5 +1,11 @@
 # Triage P66 owner reconciliation handoff (TokenCorridor S2 gate)
 
+## Post-merge provider refresh — 2026-09-26
+
+PR #626 is now **MERGED** into Triage `main@246739c95ea808ee057d39407b4afe86cf0b8643`; validated head `0a697d1595817f6542d2d0063beb083f6cb95247` is contained. Therefore `TRIAGE_PR_626_RECONCILED` is **SATISFIED**.
+
+**Important dependency correction:** this clears TokenCorridor Agent Work Graph S2's external P66-owner gate, but S2 still depends on S1. The faithful shared sequence is **S1 || S3 → S2 → S4 → S5**. Do not jump directly from this handoff into S2 unless S1 has independently satisfied its completion gate.
+
 **Issued:** 2026-09-26
 **Owner PR:** [#626](https://github.com/EndeavorEverlasting/web-excel-repair-triage/pull/626) `feat/issue-centered-afkaf-progression-reconcile-20260922`
 **Default branch floor at reconciliation:** `origin/main@f2289974a54b9bc5b4ca251a0b3c919d4e7ae1cb`
@@ -32,7 +38,7 @@ Also fixed Windows false-positive `local issueProgressionContract path drifted` 
 
 | Item | State |
 | --- | --- |
-| Issue-centered progression contract + validator on #626 vs refreshed main | **VALIDATED locally** (awaiting provider CI + merge) |
+| Issue-centered progression contract + validator on #626 vs refreshed main | **INTEGRATED** on `main@246739c9` (provider merge confirmed; historical local/CI proof preserved in the owner closeout) |
 | TRQ-019 vision map | **INTEGRATED** on main via #604; ledger DONE on this PR |
 | TRQ-007 | **OPERATOR** (provider/runtime gate retained) |
 | TRQ-020 | **BLOCKED** (autonomy/workflow-dispatch gap retained) |
@@ -46,7 +52,7 @@ Also fixed Windows false-positive `local issueProgressionContract path drifted` 
 
 | Candidate | Status |
 | --- | --- |
-| `TRIAGE_PR_626_RECONCILED` | **SATISFIABLE after** exact-head provider ledger CI green **and** #626 merges (or equivalent successor integrates the same contract onto main) |
+| `TRIAGE_PR_626_RECONCILED` | **SATISFIED** — #626 merged as `246739c95ea808ee057d39407b4afe86cf0b8643`; validated head `0a697d1595817f6542d2d0063beb083f6cb95247` is contained |
 | `P66_OWNERSHIP_MOVED_OFF_TRIAGE_626` | Not used — #626 remains sole P66 ledger/progression writer |
 
 Do **not** close #626 merely to clear the floor. Do **not** relaunch superseded #615.
@@ -61,7 +67,7 @@ Do **not** close #626 merely to clear the floor. Do **not** relaunch superseded 
 
 ## Next gate for TokenCorridor
 
-1. Refresh Triage; confirm #626 head contains this reconciliation and ledger CI is green.
-2. Merge #626 when authorized → mark `TRIAGE_PR_626_RECONCILED` satisfied.
-3. Agent Work Graph S2 may then mutate work-item/lane relation contracts **without** rewriting P66 ledger authority.
-4. TC continues W1 PRAM/GHCLI/PMG; LM2 remains TC-owned and out of this lane.
+1. Treat `TRIAGE_P66_OWNER_RECONCILED` as satisfied from Triage `main@246739c9`.
+2. Execute TokenCorridor Agent Work Graph **S1 and ASB S3 in parallel** when their own collision checks are clear.
+3. After S1 completes, S2 may mutate work-item/lane relation contracts **without** rewriting P66 ledger authority.
+4. Preserve #630/#631/#636 as active donor owners; LM2 remains TokenCorridor-owned and exact-batch/collision-scan gated.
