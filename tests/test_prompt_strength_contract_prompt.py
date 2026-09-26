@@ -71,6 +71,9 @@ class PromptStrengthContractTests(unittest.TestCase):
         rotated = json.loads(seed_before.decode("utf-8"))
         rotated["run_id"] = "runtime-compliance-rotation-regression"
         rotated["lanes"][0]["lane_id"] = "lane-runtime-compliance-rotation"
+        rotated["lanes"][0]["runtime_partition_input"]["work_unit_id"] = (
+            "lane-runtime-compliance-rotation"
+        )
         rotated["lanes"][0]["mission"] = (
             "Prove the global active dispatch manifest can rotate to a different valid "
             "orchestration without mutating the historical prompt-strength seed."
