@@ -58,6 +58,7 @@
   "freshness_marker": "REMOTE FRESHNESS / BRANCH FLOOR CONTRACT",
   "closeout_marker": "OPERATIONAL CLOSEOUT / GAP-RISK CONTRACT",
   "disposition_marker": "DISPOSITION / MODE PRECEDENCE CONTRACT",
+  "state_presentation_marker": "OPERATOR STATE PRESENTATION CONTRACT",
   "disposition_precedence": {
     "rule": "An explicit active mode or disposition is an authorization boundary. Shared execution, continuation, integration, merge, deploy, and successor-work rules may strengthen how authorized execution proceeds, but they MUST NOT promote a non-execution disposition into implementation.",
     "p02_rule": "For P02 specifically, ORIENT and SUMMARIZE do not authorize repository implementation; CLOSEOUT may persist the mode-authorized checkpoint/handoff but must not start a new implementation slice; CONTINUE is the execution-bearing disposition that activates Sections 6-8 and the shared execution contracts.",
