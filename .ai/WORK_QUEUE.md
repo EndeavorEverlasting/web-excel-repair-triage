@@ -408,17 +408,17 @@ Canonical terminal action: none; no safe actionable work remains
 
 ## TRQ-024 — AFKAF donor closeout + TokenCorridor transplant packets
 
-- **Status:** MERGE
+- **Status:** DONE
 - **Priority:** P1
 - **Owner:** triage-afkaf-donor-closeout-20260926
 - **Work item:** ledger:TRQ-024
-- **Branch / PR:** sprint/triage-afkaf-donor-closeout-20260926 / #653; #651+#652 integrated
+- **Branch / PR:** main / #653 merged as 0a7f1fa6163b5d36970d139695f94aa0af335dc4 (also #651/#652)
 - **Scope:** finish Triage-side convergence floor clearing: integrate #651 typed operator-state presentation; classify open Prompt Kit/AFKAF PRs; emit exact TokenCorridor transplant packets for PK-B01A/B02A/B02B/B02C; reconcile this ledger as a continuity index; recenter governance language without claiming M4 cutover; keep compatibility routes explicit
 - **Forbidden:** TokenCorridor destination module mutation; premature M4 authority-cutover claims; removing donor authority before TokenCorridor containment; merging Prompt Kit donor PRs merely to tidy Triage; hand-editing generated Prompt Kit HTML; weakening Operant refresh validators
 - **Dependencies:** none
 - **References:** `harness/reports/TRIAGE_AFKAF_DONOR_CLOSEOUT_20260926.md`, `harness/reports/TRIAGE_OPEN_PR_DISPOSITION_20260926.md`, `harness/reports/packets/`, `docs/plans/AFK_FACTORY_INTERFACE_CONVERGENCE_SPRINT_MAP.md`, TokenCorridor remote canonical AFK-FACTORY-CONVERGENCE and M2-PROMPT-KIT-MIGRATION-STATE-PRESENTATION plans
 - **Acceptance gate:** #651 integrated or exact blocker recorded; every open Prompt Kit/AFKAF PR classified; B02 chains have exact packets; ledger validator passes; compatibility obligations explicit; no M4 cutover claim; Sync A handoff deterministic for TokenCorridor PK-B01A
 - **Gate:** none
-- **Last proof:** merge:#651→main@e46499fe; merge:#652→main@c6b6765e contains appendix upgrade 5e9cbcba; ledger validator PASS; packets emitted
-- **Next action:** Merge PR #653 donor-closeout docs/packets into main, then stamp TokenCorridor Sync A complete with main@c6b6765e+
-- **Updated:** 2026-09-26T16:25:00Z
+- **Last proof:** workflow:36242583046 contract PASS; workflow:36242583136 deterministic-test-floor PASS; workflow:36242583033 operational-harness PASS; artifact:harness/reports/packets/PK-B01A-operator-state-presentation.packet.md; merge:0a7f1fa6163b5d36970d139695f94aa0af335dc4; merge:#652→c6b6765e; merge:#651→e46499fe
+- **Next action:** none; no safe actionable work remains
+- **Updated:** 2026-09-26T16:55:00Z
