@@ -64,7 +64,7 @@ Use this only for an existing canonical prompt that predates semantic-profile co
 Before changing prompt text:
 1. Load the target ACCEPTED profile as immutable prior; if none exists, route to this skill owner instead of inventing one in place.
 2. Put only changed canonical semantic fields in a JSON patch.
-3. Run `python3 scripts/prompt_registry_ops.py edit --prompt-id P## --input patch.json --disposition <NO_CAPABILITY_CHANGE|STRENGTHEN|INTENTIONAL_CHANGE|TRANSFER> --evidence-ref <proof> --rationale "<reason>"`.
+3. Run `python3 scripts/prompt_registry_ops.py edit --prompt-id P## --input patch.json --disposition <NO_CAPABILITY_CHANGE|STRENGTHEN|INTENTIONAL_CHANGE|TRANSFER> --evidence-ref <proof> --rationale "<reason>" --compression-disposition <COMPRESS|PRESERVE|GROWTH_JUSTIFIED>`; when using `GROWTH_JUSTIFIED`, also pass `--compression-rationale "<why the added semantics cannot be safely recovered through compression>"`.
 4. NO_CAPABILITY_CHANGE preserves assignments; other dispositions require the proposed `semantic_profile`.
 5. Reject unexplained downgrade (PSC004/PSC005), require linked capability/source-history migrations, rebuild the site, and fail closed on any partial transition.
 
@@ -113,7 +113,7 @@ python3 -m unittest tests.test_prompt_semantic_coverage tests.test_prompt_semant
 python3 scripts/prompt_registry_ops.py add --input draft.json --dry-run
 
 # EDIT with explicit capability disposition/evidence
-python3 scripts/prompt_registry_ops.py edit --prompt-id P07 --input patch.json --disposition NO_CAPABILITY_CHANGE --evidence-ref tests/test_prompt_semantic_coverage.py --rationale "reviewed wording strengthening" --dry-run
+python3 scripts/prompt_registry_ops.py edit --prompt-id P07 --input patch.json --disposition NO_CAPABILITY_CHANGE --evidence-ref tests/test_prompt_semantic_coverage.py --rationale "reviewed wording strengthening" --compression-disposition PRESERVE --dry-run
 
 # RETIRE with coverage check / optional successor binding
 python3 scripts/prompt_registry_ops.py retire --prompt-id P42 --rationale "reason" --dry-run
