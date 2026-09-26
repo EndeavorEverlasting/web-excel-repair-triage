@@ -51,3 +51,13 @@ See `harness/reports/TRIAGE_OPEN_PR_DISPOSITION_20260926.md`.
 
 - **Sync A:** #651 merges → refresh PK-B01A packet with integrated main SHA + merge SHA.
 - **Sync B/C/D:** owned by TokenCorridor containment evidence; Triage closes corresponding donors only after destination proof.
+
+## Amendment — classifier rejoin (2026-09-26)
+
+Subagent rejoin after initial closeout proved two material gaps vs the first packet/disposition draft:
+
+1. **Intent-chain anatomy** — `#619` is not a git ancestor of `#631`; `#630` is not a git ancestor of `#636`; path sets are disjoint. Packets `PK-B02A` / `PK-B02B` now state this explicitly with transplant rules. `#600` packet now forbids tip-blob `harness/test-floor.v1.json` transplant.
+2. **Under-classified PORT rows** — disposition amended so unique NEW-file PRs are not marked STALE/SUPERSEDED: `#113`, `#119`, `#156`, `#240`, `#245`, `#284`, `#399`, `#431`, `#491`, `#606`, `#625`, `#629` (plus ACTIVE_COLLISION on test-floor/P143 cluster).
+
+Evidence: [Classify open Prompt Kit PRs](de1fe02b-0809-4383-bc58-931f5295fe23), [Extract known donor deltas](cda084bb-3dfd-4464-ad65-93e6c0117b11).
+**No M4 authority-cutover claimed.**
