@@ -95,6 +95,38 @@ def _validated_runtime_partition(lane_id: str, lane: dict[str, Any]) -> dict[str
     return expected
 
 
+def _validate_runtime_launch_compatibility(
+    lane_id: str,
+    lane_status: str,
+    projected_partition: dict[str, Any],
+    launch_mode: str,
+) -> None:
+    if lane_status == "BLOCKED":
+        return
+    host = projected_partition["execution_environment"]
+    if host == "LOCAL_AGENT_RUNTIME":
+        return
+    if host == "CURRENT_CHAT_RUNTIME":
+        if projected_partition.get("execute_now") is not True:
+            raise DispatchError(
+                f"lane {lane_id} current-runtime work is already complete and may not be a fresh dispatch lane"
+            )
+        if launch_mode != "runtime_tool":
+            raise DispatchError(
+                f"lane {lane_id} CURRENT_CHAT_RUNTIME requires runtime_tool launch, not {launch_mode}"
+            )
+        return
+    if host == "CI_OR_REMOTE_RUNNER":
+        if launch_mode != "runtime_tool":
+            raise DispatchError(
+                f"lane {lane_id} CI_OR_REMOTE_RUNNER requires runtime_tool launch, not {launch_mode}"
+            )
+        return
+    raise DispatchError(
+        f"lane {lane_id} host {host} is not autonomously launchable; mark the lane BLOCKED until its runtime owner is resolved"
+    )
+
+
 def _topological_waves(lanes: dict[str, dict[str, Any]]) -> list[list[str]]:
     remaining = {lane_id: set(lane["dependencies"]) for lane_id, lane in lanes.items()}
     waves: list[list[str]] = []
@@ -200,6 +232,12 @@ def validate_manifest(manifest: dict[str, Any]) -> dict[str, Any]:
             _nonempty(launch.get("operation"), f"lane {lane_id} runtime operation")
             if not isinstance(launch.get("arguments"), dict):
                 raise DispatchError(f"lane {lane_id} runtime arguments must be an object")
+        _validate_runtime_launch_compatibility(
+            lane_id,
+            lane["status"],
+            projected_partition,
+            mode,
+        )
         lanes[lane_id] = {
             **lane,
             "dependencies": dependencies,
