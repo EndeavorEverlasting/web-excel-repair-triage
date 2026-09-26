@@ -47,7 +47,8 @@ Strengthen the smallest existing Prompt Kit owners so:
 2. a request to rewrite/upgrade a prompt remains a valid prompt-mutation path and is not misclassified as execution;
 3. applicable evaluation/validation/retrospective matrices can represent the merit `INVOCATION_FIDELITY`;
 4. the defect is protected by one reproducing negative fixture plus positive controls;
-5. the integrated donor SHA becomes the source floor for TokenCorridor PK-B01A.
+5. the integrated donor SHA becomes the source floor for TokenCorridor PK-B01A;
+6. P04 performs a first-class runtime partition before dependency graph and adapter selection, preserving ChatGPT/provider-capable work separately from local-agent-only work.
 
 ### Read first
 
@@ -145,6 +146,85 @@ The destination implementation is owned by TokenCorridor after PK-B01A.
 - #653 is a separate docs/ledger/packet writer and remains read-only to UF-1.
 - UF-1 must integrate before the next PK-B01A donor source freeze.
 - After UF-1A merges, TokenCorridor performs UF-1B delta reconciliation against the already-integrated PK-B01A destination before UF-2.
+
+## PS-0004 / P04 runtime partition — normative non-weakening draft
+
+**Source idea:** Prompt Scratch `PS-0004 — Runtime-aware sprint planning`  
+**Relationship:** fold into UF-1A; this is not a new competing prompt or a separate planning authority.
+
+The current P04 adapter ladder is useful but insufficient by itself. Adapter selection answers **how a lane can run**. PS-0004 additionally requires P04 to decide **which runtime owns each material unit of work before lanes are emitted**, so ChatGPT/provider-capable work is not unnecessarily deferred to local Cursor/OpenCode agents and local-only work is not assigned to a web runtime that cannot perform it.
+
+### Exact P04 draft insertion — preserve semantics; compression must be demonstrably non-weakening
+
+Insert this section after `COMPACT PREFLIGHT` and before `FACTORING PASS` (or the nearest semantically equivalent location if the canonical source moved):
+
+```text
+RUNTIME PARTITION / EXECUTION PLACEMENT — REQUIRED
+Before factoring sprint lanes, classify every material work unit by the runtime that can actually perform it. Do not collapse the active ChatGPT/web runtime, connected providers, local repository agents, CI/runners, and operator/physical environments into a generic "agent" capability.
+
+Use these execution-environment classes:
+- CURRENT_CHAT_RUNTIME — work the active ChatGPT/web session can perform with its presently evidenced tools and mutation authority.
+- CONNECTED_PROVIDER — work executable through a connected API/connector/provider from the active runtime.
+- LOCAL_AGENT_RUNTIME — work requiring local filesystem, shell, repository toolchain, local browser/runtime, or repo-proven runners such as Cursor/OpenCode/AgentSwitchboard/Codex/Claude wrappers.
+- CI_OR_REMOTE_RUNNER — deterministic work owned by CI, matrix jobs, hosted runners, or another evidenced remote execution surface.
+- OPERATOR_OR_PHYSICAL_RUNTIME — work that genuinely requires a human, physical device, protected workstation, credential boundary, or environment unavailable to agents.
+- UNKNOWN_RUNTIME — required capability or authority is not yet evidenced. Resolve it; do not guess.
+
+For each material work unit record:
+- required capability and mutation authority;
+- evidence that the capability exists in the chosen runtime;
+- preferred execution environment and fallback environment;
+- exact inputs/evidence inherited from prior lanes;
+- expected artifact/proof returned;
+- dependencies and collision surface.
+
+PLACEMENT RULES
+- Never hand local agents work that the current ChatGPT/provider runtime can safely complete inside P04's planning/recovery/durability authority when doing it now closes a dependency, establishes provider truth, updates the canonical plan, or prevents rediscovery.
+- Consume dependency-ready CURRENT_CHAT_RUNTIME and CONNECTED_PROVIDER planning/evidence work before emitting downstream local-agent packets when that materially reduces uncertainty or duplicated work.
+- P04 remains PLAN / DISTRIBUTE. Runtime partition does not turn P04 into the application-implementation owner. Code/product implementation still routes to P07 or the canonical implementation owner unless the active prompt separately authorizes that mutation.
+- Never assign local-only filesystem/shell/toolchain work to the ChatGPT/web runtime merely because the plan can describe it.
+- Never ask the operator to shuttle evidence between runtimes when an available connector/provider/manifest can carry it.
+- A local-agent handoff must inherit exact provider/repository/Drive evidence already established here: repository, branch/default head, PR state, canonical plan revision/path, artifact/provider identity, relevant URLs/IDs, blockers, and proof ceiling. Do not require the local agent to rediscover known facts unless freshness rules require revalidation.
+- UNKNOWN_RUNTIME is an owner-resolution gate, not permission to invent capability.
+- Runtime placement precedes dependency-graph width and adapter selection. The adapter ladder is evaluated only after execution ownership is established.
+
+RUNTIME PARTITION OUTPUT
+Before LAUNCH ORDER, emit one compact table:
+Work unit | Execution environment | Required capability | Evidence | Execute now? | Dependency/output seam
+
+The PARALLEL DISPATCH MANIFEST must preserve the placement decision so downstream executors can distinguish current-runtime/provider work from local-agent work and cannot silently reassign it.
+```
+
+### Internal mechanism changes required from the local Cursor lane
+
+Cursor/local implementation must update the smallest existing canonical owners rather than merely pasting the draft into P04:
+
+1. **Prompt registry:** strengthen canonical P04 in `docs/prompts.json` (P04 currently has no override in `registry/prompts/prompt-overrides.v1.json`; do not create one without a repository reason).
+2. **Dispatch contract:** extend `harness/contracts/prompt-parallel-dispatch.v1.json` with the minimum typed lane metadata needed to preserve execution placement. Preferred minimal fields:
+   - `execution_environment` using the six classes above;
+   - `required_capabilities` as a typed list;
+   - `evidence_inputs` as durable references already established upstream.
+   Reuse existing `adapter`, `launch`, `expected_artifacts`, and `convergence_owner` rather than duplicating them.
+3. **Semantic/non-weakening coverage:** add/protect a P04 planning capability such as `planning.runtime_partition` in the existing semantic capability owners and update P04's accepted capability profile through the repository's normal migration/baseline path.
+4. **Focused regressions:** preserve current P04 parallel-dispatch behavior and add:
+   - negative: ChatGPT/provider evidence is available, but P04 punts that inspection/durability work to a local agent without consuming it;
+   - negative: local filesystem/toolchain-only work is assigned to the ChatGPT/web runtime;
+   - positive: current runtime establishes provider/Drive truth and persists plan evidence, then a local lane inherits those exact refs;
+   - positive: P04 performs runtime partition without stealing P07's implementation ownership.
+5. **Registry/build parity:** run the canonical Prompt Kit builders and required tests; do not hand-edit generated public HTML.
+6. **Public-facing website:** regenerate/publish the Prompt Kit from canonical sources so the public P04 surface contains the strengthened runtime-partition behavior. Website text is derived evidence, never the source authority.
+
+### Non-weakening acceptance gate
+
+The local Cursor lane fails if it:
+- shortens P04 by deleting existing dependency, parallelism, durability, collision, manifest, or portability semantics without equivalent proven coverage;
+- implements only prose while leaving the dispatch schema unable to preserve execution placement;
+- updates only the generated website;
+- makes "current runtime" synonymous with "local runtime";
+- treats runtime partition as permission for P04 to implement work owned by P07;
+- leaves PS-0004 as a Drive-only idea with no repository enforcement.
+
+Completion requires canonical registry + internal typed mechanism + focused regression + generated/public Prompt Kit parity, with exact donor/destination SHAs and proof ceiling recorded.
 
 ## Proof ceiling
 
