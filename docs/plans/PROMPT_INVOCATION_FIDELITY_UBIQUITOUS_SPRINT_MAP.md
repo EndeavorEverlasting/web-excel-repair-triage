@@ -1,10 +1,10 @@
 # Prompt Invocation Fidelity + Ubiquitous Factoring Donor Handoff
 
-**Date:** 2026-09-26  
-**Repository:** `EndeavorEverlasting/web-excel-repair-triage`  
-**Observed donor floor:** `main@c6b6765e640205d7df33b349d5aee133aafbc1ec` (#652 integrated)  
-**Destination authority:** `EndeavorEverlasting/TokenCorridor`  
-**Canonical cross-repository plan:** `plans/active/PROMPT-SCRATCH-UBIQUITOUS-SPRINT-MAP.md` in TokenCorridor  
+**Date:** 2026-09-26
+**Repository:** `EndeavorEverlasting/web-excel-repair-triage`
+**Observed donor floor:** `main@c6b6765e640205d7df33b349d5aee133aafbc1ec` (#652 integrated)
+**Destination authority:** `EndeavorEverlasting/TokenCorridor`
+**Canonical cross-repository plan:** `plans/active/PROMPT-SCRATCH-UBIQUITOUS-SPRINT-MAP.md` in TokenCorridor
 **State:** UF-1A READY / donor implementation not yet performed; TokenCorridor PK-B01A already integrated early and requires UF-1B after this lane
 
 ## Why this donor handoff exists
@@ -149,7 +149,7 @@ The destination implementation is owned by TokenCorridor after PK-B01A.
 
 ## PS-0004 / P04 runtime partition — normative non-weakening draft
 
-**Source idea:** Prompt Scratch `PS-0004 — Runtime-aware sprint planning`  
+**Source idea:** Prompt Scratch `PS-0004 — Runtime-aware sprint planning`
 **Relationship:** fold into UF-1A; this is not a new competing prompt or a separate planning authority.
 
 The current P04 adapter ladder is useful but insufficient by itself. Adapter selection answers **how a lane can run**. PS-0004 additionally requires P04 to decide **which runtime owns each material unit of work before lanes are emitted**, so ChatGPT/provider-capable work is not unnecessarily deferred to local Cursor/OpenCode agents and local-only work is not assigned to a web runtime that cannot perform it.
