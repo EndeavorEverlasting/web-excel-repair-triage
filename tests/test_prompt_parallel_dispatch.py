@@ -97,6 +97,57 @@ class PromptParallelDispatchTests(unittest.TestCase):
         with self.assertRaisesRegex(MOD.DispatchError, "work_unit_id must equal lane_id"):
             MOD.validate_manifest(payload)
 
+    def test_unknown_runtime_cannot_execute_argv_locally(self) -> None:
+        altered = lane("lane-a")
+        facts = altered["runtime_partition_input"]["capability_facts"]
+        facts["local_runtime_required"] = False
+        altered["runtime_partition"] = MOD.runtime_partition.project_p04(
+            MOD.runtime_partition.partition_work_unit(altered["runtime_partition_input"])
+        )
+        payload = manifest(altered, width=1, disposition="NOT_APPLICABLE")
+        with self.assertRaisesRegex(MOD.DispatchError, "UNKNOWN_RUNTIME.*not autonomously launchable"):
+            MOD.validate_manifest(payload)
+
+    def test_ci_runtime_cannot_execute_plain_argv_through_local_dispatcher(self) -> None:
+        altered = lane("lane-a")
+        facts = altered["runtime_partition_input"]["capability_facts"]
+        facts["local_runtime_required"] = False
+        facts["ci_remote_required"] = True
+        altered["runtime_partition"] = MOD.runtime_partition.project_p04(
+            MOD.runtime_partition.partition_work_unit(altered["runtime_partition_input"])
+        )
+        payload = manifest(altered, width=1, disposition="NOT_APPLICABLE")
+        with self.assertRaisesRegex(MOD.DispatchError, "CI_OR_REMOTE_RUNNER requires runtime_tool"):
+            MOD.validate_manifest(payload)
+
+    def test_current_chat_runtime_requires_runtime_tool_launch(self) -> None:
+        altered = lane("lane-a")
+        facts = altered["runtime_partition_input"]["capability_facts"]
+        facts["local_runtime_required"] = False
+        facts["current_runtime_available"] = True
+        facts["current_runtime_authorized"] = True
+        altered["runtime_partition"] = MOD.runtime_partition.project_p04(
+            MOD.runtime_partition.partition_work_unit(altered["runtime_partition_input"])
+        )
+        payload = manifest(altered, width=1, disposition="NOT_APPLICABLE")
+        with self.assertRaisesRegex(MOD.DispatchError, "CURRENT_CHAT_RUNTIME requires runtime_tool"):
+            MOD.validate_manifest(payload)
+
+    def test_non_autonomous_runtime_may_be_preserved_as_blocked_without_launch(self) -> None:
+        altered = lane("lane-a")
+        facts = altered["runtime_partition_input"]["capability_facts"]
+        facts["local_runtime_required"] = False
+        altered["runtime_partition"] = MOD.runtime_partition.project_p04(
+            MOD.runtime_partition.partition_work_unit(altered["runtime_partition_input"])
+        )
+        altered["status"] = "BLOCKED"
+        payload = manifest(altered, width=1, disposition="NOT_APPLICABLE")
+        summary = MOD.validate_manifest(payload)
+        self.assertEqual(
+            summary["lanes"]["lane-a"]["runtime_partition"]["execution_environment"],
+            "UNKNOWN_RUNTIME",
+        )
+
     def test_validator_computes_deterministic_ready_wave_and_tiebreak(self) -> None:
         payload = manifest(lane("lane-b"), lane("lane-a"))
         summary = MOD.validate_manifest(payload)
