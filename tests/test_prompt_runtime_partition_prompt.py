@@ -16,7 +16,12 @@ sys.modules[SPEC.name] = MOD
 SPEC.loader.exec_module(MOD)
 
 
-def evidence(*, visibility: str = "PUBLIC_TRACKED", ref: str = "repo:plan@abc123") -> dict:
+def evidence(
+    *,
+    visibility: str = "PUBLIC_TRACKED",
+    ref: str = "repo:plan@abc123",
+    public_provider_ref_verified: bool = False,
+) -> dict:
     return {
         "evidence_type": "repository_state",
         "source_owner": "TokenCorridor",
@@ -24,6 +29,7 @@ def evidence(*, visibility: str = "PUBLIC_TRACKED", ref: str = "repo:plan@abc123
         "revision_or_freshness": "sha:abc123",
         "visibility": visibility,
         "proof_ceiling": "repository/provider evidence",
+        "public_provider_ref_verified": public_provider_ref_verified,
     }
 
 
@@ -103,6 +109,45 @@ class RuntimePartitionPrototypeTests(unittest.TestCase):
         decision = MOD.partition_work_unit(payload)
         self.assertEqual(decision.evidence_inputs[0]["visibility"], "PROTECTED_EXTERNAL")
 
+    def test_private_github_url_requires_opaque_or_verified_public_status(self) -> None:
+        payload = unit(current_runtime_available=True, current_runtime_authorized=True)
+        payload["inherited_evidence"] = [
+            evidence(
+                visibility="SANITIZED_OPAQUE",
+                ref="https://github.com/EndeavorEverlasting/TokenCorridor/blob/main/plan.md",
+            )
+        ]
+        with self.assertRaisesRegex(MOD.RuntimePartitionError, "verified public status"):
+            MOD.partition_work_unit(payload)
+
+    def test_verified_public_github_url_may_be_tracked(self) -> None:
+        payload = unit(current_runtime_available=True, current_runtime_authorized=True)
+        payload["inherited_evidence"] = [
+            evidence(
+                visibility="PUBLIC_TRACKED",
+                ref="https://github.com/EndeavorEverlasting/web-excel-repair-triage/blob/main/README.md",
+                public_provider_ref_verified=True,
+            )
+        ]
+        decision = MOD.partition_work_unit(payload)
+        self.assertTrue(decision.evidence_inputs[0]["public_provider_ref_verified"])
+
+    def test_malformed_enum_values_fail_with_runtime_partition_error(self) -> None:
+        payload = unit(current_runtime_available=True, current_runtime_authorized=True)
+        payload["provider_access"] = [{
+            "provider_family": "github",
+            "operation": "read pull request",
+            "authority_state": ["VERIFIED"],
+            "mutation_authority": False,
+        }]
+        with self.assertRaisesRegex(MOD.RuntimePartitionError, "authority_state is invalid"):
+            MOD.partition_work_unit(payload)
+
+        payload = unit(current_runtime_available=True, current_runtime_authorized=True)
+        payload["inherited_evidence"][0]["visibility"] = ["PUBLIC_TRACKED"]
+        with self.assertRaisesRegex(MOD.RuntimePartitionError, "visibility is invalid"):
+            MOD.partition_work_unit(payload)
+
     def test_p04_and_p05_project_same_shared_decision(self) -> None:
         payload = unit(current_runtime_available=True, current_runtime_authorized=True)
         decision = MOD.partition_work_unit(payload)
@@ -110,6 +155,22 @@ class RuntimePartitionPrototypeTests(unittest.TestCase):
         p05 = MOD.project_p05(decision)
         self.assertEqual(p04["execution_environment"], p05["EXECUTION ENVIRONMENT"])
         self.assertEqual(p04["evidence_inputs"], p05["INHERITED EVIDENCE"])
+
+    def test_projection_records_are_isolated_copies(self) -> None:
+        payload = unit(current_runtime_available=True, current_runtime_authorized=True)
+        payload["provider_access"] = [{
+            "provider_family": "github",
+            "operation": "read pull request",
+            "authority_state": "VERIFIED",
+            "mutation_authority": False,
+        }]
+        decision = MOD.partition_work_unit(payload)
+        p04 = MOD.project_p04(decision)
+        p05 = MOD.project_p05(decision)
+        p04["provider_access"][0]["operation"] = "mutated"
+        p05["INHERITED EVIDENCE"][0]["proof_ceiling"] = "mutated"
+        self.assertEqual(decision.provider_access[0]["operation"], "read pull request")
+        self.assertEqual(decision.evidence_inputs[0]["proof_ceiling"], "repository/provider evidence")
 
     def test_already_executed_here_requires_boolean(self) -> None:
         payload = unit(current_runtime_available=True, current_runtime_authorized=True)
@@ -122,6 +183,23 @@ class RuntimePartitionPrototypeTests(unittest.TestCase):
         payload["already_executed_here"] = True
         with self.assertRaisesRegex(MOD.RuntimePartitionError, "CURRENT_CHAT_RUNTIME"):
             MOD.partition_work_unit(payload)
+
+    def test_already_executed_here_requires_evidence(self) -> None:
+        payload = unit(current_runtime_available=True, current_runtime_authorized=True)
+        payload["inherited_evidence"] = []
+        payload["already_executed_here"] = True
+        with self.assertRaisesRegex(MOD.RuntimePartitionError, "requires inherited_evidence"):
+            MOD.partition_work_unit(payload)
+
+    def test_repartition_after_current_runtime_completion_suppresses_repeat_execution(self) -> None:
+        payload = unit(current_runtime_available=True, current_runtime_authorized=True)
+        first = MOD.partition_work_unit(payload)
+        self.assertTrue(first.execute_now)
+        payload["inherited_evidence"].append(evidence(ref="repo:current-runtime-result@def456"))
+        payload["already_executed_here"] = True
+        completed = MOD.partition_work_unit(payload)
+        self.assertFalse(completed.execute_now)
+        self.assertTrue(completed.already_executed_here)
 
     def test_p05_completed_current_runtime_step_is_not_fake_handoff(self) -> None:
         payload = unit(current_runtime_available=True, current_runtime_authorized=True)
