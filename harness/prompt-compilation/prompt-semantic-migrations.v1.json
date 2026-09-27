@@ -285,6 +285,86 @@
         "tests/test_prompt_semantic_coverage.py",
         "tests/test_prompt_quality_history.py"
       ]
+    },
+    {
+      "migration_id": "p79-no-capability-change-p04-018",
+      "path": "docs/prompts.json",
+      "from_git_blob_sha1": "f914eb3cb61f89521f0c6341c01b31ad064e83f6",
+      "to_git_blob_sha1": "70e67f129ae81795ac0d9bf0c4f7860a0240807e",
+      "affected_prompt_ids": [
+        "P04"
+      ],
+      "change_kind": "strengthening",
+      "effective_identity_change": "preserve_canonical",
+      "rationale": "Faithfulness repair: restore P04 durable plan-change synchronization and full P66 continuity indexing lost during UF-1A compression while preserving runtime-partition and P07 ownership.",
+      "focused_tests": [
+        "tests/test_prompt_semantic_coverage.py",
+        "tests/test_prompt_quality_history.py"
+      ]
+    },
+    {
+      "migration_id": "p79-no-capability-change-p05-019",
+      "path": "docs/prompts.json",
+      "from_git_blob_sha1": "70e67f129ae81795ac0d9bf0c4f7860a0240807e",
+      "to_git_blob_sha1": "0b07ece9c6d865638ab4f1cf92677645d73512b3",
+      "affected_prompt_ids": [
+        "P05"
+      ],
+      "change_kind": "strengthening",
+      "effective_identity_change": "preserve_canonical",
+      "rationale": "Faithfulness repair: make P05 a self-contained serialized planner that consumes accepted P04 factoring, narrows execute-now authority to planning/evidence/durability, and preserves P07 implementation ownership.",
+      "focused_tests": [
+        "tests/test_prompt_semantic_coverage.py",
+        "tests/test_prompt_quality_history.py"
+      ]
+    },
+    {
+      "migration_id": "p79-no-capability-change-p13-020",
+      "path": "docs/prompts.json",
+      "from_git_blob_sha1": "0b07ece9c6d865638ab4f1cf92677645d73512b3",
+      "to_git_blob_sha1": "be11acbec8de866fcfd7634efb4cc04babc41d31",
+      "affected_prompt_ids": [
+        "P13"
+      ],
+      "change_kind": "strengthening",
+      "effective_identity_change": "preserve_canonical",
+      "rationale": "Systemic recurrence repair: make mutator reliability part of P13 ownership routing so a repeated prompt-faithfulness defect is not delegated back to the implicated canonical prompt author.",
+      "focused_tests": [
+        "tests/test_prompt_semantic_coverage.py",
+        "tests/test_prompt_quality_history.py"
+      ]
+    },
+    {
+      "migration_id": "p79-no-capability-change-p13-021",
+      "path": "registry/prompts/prompt-overrides.v1.json",
+      "from_git_blob_sha1": "c829602236b58aceeedd18c273255825179b45cc",
+      "to_git_blob_sha1": "fd91ec985983599b4bbe656472160c65cd086604",
+      "affected_prompt_ids": [
+        "P13"
+      ],
+      "change_kind": "strengthening",
+      "effective_identity_change": "preserve_canonical",
+      "rationale": "Strengthen effective P13 with a same-mutator quarantine/requalification gate so repeated prompt-faithfulness repair cannot be assigned back to a quarantined mutator.",
+      "focused_tests": [
+        "tests/test_prompt_regression_safety_prompt.py",
+        "tests/test_skill_prompt_registry.py"
+      ]
+    },
+    {
+      "migration_id": "p79-no-capability-change-p04-022",
+      "path": "docs/prompts.json",
+      "from_git_blob_sha1": "be11acbec8de866fcfd7634efb4cc04babc41d31",
+      "to_git_blob_sha1": "64de75c8301e05bc0851d3f5d20d99348b9e1e29",
+      "affected_prompt_ids": [
+        "P04"
+      ],
+      "change_kind": "strengthening",
+      "effective_identity_change": "preserve_canonical",
+      "rationale": "Non-weakening follow-up: restore the complete pre-existing P04 next-step autonomy/PR/read-only semantics while retaining the new material-plan-change and P66 continuity requirements.",
+      "focused_tests": [
+        "tests/test_prompt_semantic_coverage.py",
+        "tests/test_prompt_quality_history.py"
+      ]
     }
   ]
 }

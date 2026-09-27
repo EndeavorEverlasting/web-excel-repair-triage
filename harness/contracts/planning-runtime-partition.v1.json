@@ -1,7 +1,7 @@
 {
   "schema_version": "planning-runtime-partition/v1",
   "contract_id": "planning-runtime-partition",
-  "status": "PROTOTYPE",
+  "status": "INTEGRATED",
   "purpose": "Provide one executable planning seam shared by P04 and P05 that separates host execution runtime from provider/external access, preserves sanitized inherited evidence, and prevents already-completed current-runtime work from being re-planned as local work.",
   "owner": "Prompt Kit planning semantics",
   "consumers": [
@@ -93,7 +93,7 @@
       "rule": "May be true only with PUBLIC_TRACKED visibility and only when the planner has independently verified that the provider reference is public."
     }
   },
-  "proof_ceiling": "Deterministic repository implementation and shared P04/P05 projection contract. P04 dispatch can recompute the projection before launch; provider authentication, prompt-model obedience, local runner availability, live runtime-tool dispatch, and P05 canonical-body adoption remain separately proven states.",
+  "proof_ceiling": "Integrated repository/static/CI planning seam for P04/P05 host/provider placement and sanitized evidence projection. Does not prove live provider authentication, downstream model obedience, or external runtime behavior.",
   "already_executed_here": {
     "type": "boolean",
     "optional": true,

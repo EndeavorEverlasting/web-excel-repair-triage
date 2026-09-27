@@ -142,7 +142,7 @@
     "P137",
     "P138"
   ],
-  "override_registry_git_blob_sha1": "c829602236b58aceeedd18c273255825179b45cc",
+  "override_registry_git_blob_sha1": "fd91ec985983599b4bbe656472160c65cd086604",
   "override_bindings": [
     {
       "prompt_id": "P02",
@@ -167,7 +167,8 @@
         "0A. MANDATORY CANARY / EXECUTION POSTURE GATE — P114 OWNER",
         "3. ESTABLISH THE CURRENT CRITICAL PATH",
         "4. EXECUTE ONE CRITICAL-PATH ADVANCEMENT NOW",
-        "5. PARALLEL EXECUTION — P07 OWNS ACTUAL DISPATCH"
+        "5. PARALLEL EXECUTION — P07 OWNS ACTUAL DISPATCH",
+        "1A. SAME-MUTATOR RELIABILITY GATE"
       ],
       "focused_regression_refs": [
         "tests/test_skill_prompt_registry.py",

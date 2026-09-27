@@ -1,6 +1,6 @@
 # P04/P05 Runtime Partition Program Design
 
-**Status:** PROTOTYPE / pre-broad-implementation design gate
+**Status:** INTEGRATED shared planning seam; original prototype gate satisfied by UF-1A. Live provider/model obedience remains outside repository proof.
 **Shared contract:** `harness/contracts/planning-runtime-partition.v1.json`
 **Executable seam:** `scripts/prompt_runtime_partition.py`
 **Focused tests:** `tests/test_prompt_runtime_partition_prompt.py`

@@ -71,8 +71,8 @@ class PromptRuntimePartitionContractTests(unittest.TestCase):
     def test_p05_runtime_partition_keeps_launch_order_first(self) -> None:
         text = self.prompts["P05"]["copyContent"]
         self.assertIn("RUNTIME PARTITION / EXECUTION PLACEMENT", text)
-        self.assertIn("same shared planning.runtime_partition contract as P04", text)
-        self.assertIn("LAUNCH ORDER remains first substantive section", text)
+        self.assertIn("apply shared planning.runtime_partition", text)
+        self.assertIn("LAUNCH ORDER remains the first substantive emitted section", text)
         self.assertIn("INHERITED EVIDENCE", text)
         self.assertIn("RUNTIME HANDOFF", text)
         self.assertLess(
@@ -83,6 +83,40 @@ class PromptRuntimePartitionContractTests(unittest.TestCase):
             text.index("RUNTIME PARTITION / EXECUTION PLACEMENT"),
             text.index("3. FACTORING PASS"),
         )
+
+    def test_p04_restores_durable_handoff_and_canonical_runtime_owner(self) -> None:
+        text = self.prompts["P04"]["copyContent"]
+        self.assertIn("canonical implementation scripts/prompt_runtime_partition.py", text)
+        self.assertIn("scripts/planning_runtime_partition.py is compatibility-only", text)
+        self.assertIn("Material approval or a material plan change must sync", text)
+        self.assertIn("BEFORE P05, P07, or another agent takes over", text)
+        self.assertIn("canonical plan/PR, current proof, owner, and executable next action", text)
+        self.assertLess(text.index("RUNTIME PARTITION / EXECUTION PLACEMENT"), text.index("FACTORING PASS"))
+
+    def test_p05_consumes_p04_and_fallback_is_recovery_only(self) -> None:
+        text = self.prompts["P05"]["copyContent"]
+        self.assertIn("P04 CONSUMER / RECOVERY FALLBACK", text)
+        self.assertIn("When a current accepted P04 factoring artifact exists, consume it as upstream authority", text)
+        self.assertIn("Do not silently re-factor an accepted P04 map", text)
+        self.assertIn("Only when no usable P04 artifact exists", text)
+        self.assertIn("planning/evidence/recovery/durability authority", text)
+        self.assertIn("Product/repository implementation remains P07", text)
+        self.assertNotIn("Complete safe current-runtime work first", text)
+
+    def test_p05_runtime_taxonomy_is_self_contained(self) -> None:
+        text = self.prompts["P05"]["copyContent"]
+        runtime_slice = text.split("RUNTIME PARTITION / EXECUTION PLACEMENT", 1)[1].split("3. FACTORING PASS", 1)[0]
+        for host in ("CURRENT_CHAT_RUNTIME", "LOCAL_AGENT_RUNTIME", "CI_OR_REMOTE_RUNNER", "OPERATOR_OR_PHYSICAL_RUNTIME", "UNKNOWN_RUNTIME"):
+            self.assertIn(host, runtime_slice)
+        self.assertIn("a provider is metadata, never the host", runtime_slice)
+        self.assertIn("UNKNOWN_RUNTIME is an owner-resolution gate", runtime_slice)
+        self.assertIn("canonical scripts/prompt_runtime_partition.py", runtime_slice)
+        self.assertIn("scripts/planning_runtime_partition.py is compatibility-only", runtime_slice)
+
+    def test_runtime_partition_contract_status_matches_integrated_consumption(self) -> None:
+        shared = json.loads((ROOT / "harness/contracts/planning-runtime-partition.v1.json").read_text(encoding="utf-8"))
+        self.assertEqual(shared["status"], "INTEGRATED")
+        self.assertEqual(shared["canonical_implementation"], "scripts/prompt_runtime_partition.py")
 
     def test_dispatch_contract_requires_runtime_partition_lane_fields(self) -> None:
         contract = json.loads(

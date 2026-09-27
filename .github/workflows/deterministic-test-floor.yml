@@ -29,19 +29,25 @@ jobs:
         with:
           ref: ${{ github.event.pull_request.head.sha || github.sha }}
           persist-credentials: false
-          fetch-depth: 1
+          fetch-depth: 0
 
-      - name: Verify exact candidate and fetch shallow main evidence
+      - name: Verify exact candidate and fetch comparison evidence
         shell: bash
         env:
           EXPECTED_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+          PR_BASE: ${{ github.base_ref }}
         run: |
           set -euo pipefail
           actual="$(git rev-parse HEAD)"
           test "$actual" = "$EXPECTED_SHA"
-          git fetch --no-tags --depth=1 origin \
+          git fetch --no-tags origin \
             +refs/heads/main:refs/remotes/origin/main
           test "$(git rev-parse origin/main)" != ""
+          if [[ -n "${PR_BASE:-}" && "$PR_BASE" != "main" ]]; then
+            git fetch --no-tags origin \
+              "+refs/heads/${PR_BASE}:refs/remotes/origin/${PR_BASE}"
+            test "$(git rev-parse "origin/${PR_BASE}")" != ""
+          fi
           echo "deterministic test-floor candidate sha=$actual"
           echo "deterministic test-floor main floor=$(git rev-parse origin/main)"
 
@@ -55,6 +61,31 @@ jobs:
           set -euo pipefail
           python -m pip install --upgrade pip
           python -m pip install -r requirements-test-floor.txt
+
+      - name: Enforce canonical prompt mutator quarantine
+        shell: bash
+        env:
+          BEFORE_SHA: ${{ github.event.before }}
+          PR_BASE: ${{ github.base_ref }}
+        run: |
+          set -euo pipefail
+          if [[ "$GITHUB_EVENT_NAME" == "pull_request" ]]; then
+            base_ref="origin/${PR_BASE:-main}"
+          elif [[ -n "${BEFORE_SHA:-}" && "$BEFORE_SHA" != "0000000000000000000000000000000000000000" ]]; then
+            base_ref="$BEFORE_SHA"
+          elif git rev-parse --verify HEAD^ >/dev/null 2>&1; then
+            base_ref="HEAD^"
+          else
+            echo "cannot establish a safe candidate base for quarantine enforcement" >&2
+            exit 1
+          fi
+          candidate_ref="${GITHUB_HEAD_REF:-${GITHUB_REF_NAME:-}}"
+          python scripts/validate_prompt_regression_safety.py \
+            --summary \
+            --enforce-mutator-quarantine \
+            --base-ref "$base_ref" \
+            --head-ref HEAD \
+            --candidate-ref "$candidate_ref"
 
       - name: Negative generated-site canary must prove declared failure
         shell: bash
