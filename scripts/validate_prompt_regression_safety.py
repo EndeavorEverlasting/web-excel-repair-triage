@@ -890,7 +890,9 @@ def _git_output(*args: str) -> str:
 
 
 def _is_protected_mutation_path(path: str, protected_paths: list[str]) -> bool:
-    normalized = path.replace("\\", "/").lstrip("./")
+    normalized = path.replace("\\", "/")
+    while normalized.startswith("./"):
+        normalized = normalized[2:]
     return any(
         normalized == rule or (rule.endswith("/") and normalized.startswith(rule))
         for rule in protected_paths
@@ -911,7 +913,20 @@ def validate_mutator_quarantine_records(
 
     for record in records:
         sha = _text(record.get("sha"), "candidate_commit.sha")
-        metadata = _text(record.get("metadata"), f"candidate_commit[{sha}].metadata").lower()
+        author = _text(record.get("author"), f"candidate_commit[{sha}].author").casefold()
+        committer = _text(
+            record.get("committer"),
+            f"candidate_commit[{sha}].committer",
+        ).casefold()
+        coauthors = [
+            item.casefold()
+            for item in _string_list(
+                record.get("coauthors"),
+                f"candidate_commit[{sha}].coauthors",
+                min_items=0,
+            )
+        ]
+        attribution = "\n".join([author, committer, *coauthors])
         paths = _string_list(record.get("paths"), f"candidate_commit[{sha}].paths", min_items=0)
         touched = sorted(
             path for path in paths
@@ -924,8 +939,9 @@ def validate_mutator_quarantine_records(
             if mutator.get("state") != "QUARANTINED_CANONICAL_PROMPT_MUTATION":
                 continue
             name = _text(mutator.get("mutator"), "restricted_mutator.mutator")
-            marker = name.lower()
-            if marker in metadata or marker in ref_lower:
+            marker = name.casefold()
+            ref_matches = ref_lower.startswith(f"{marker}/")
+            if marker in attribution or ref_matches:
                 violations.append(
                     f"{name}@{sha[:12]} touched protected path(s): {', '.join(touched)}"
                 )
@@ -952,12 +968,24 @@ def collect_git_candidate_records(base_ref: str, head_ref: str) -> list[dict[str
     ]
     records: list[dict[str, Any]] = []
     for sha in shas:
-        metadata = _git_output(
+        author = _git_output(
             "show",
             "-s",
-            "--format=%H%n%an%n%ae%n%cn%n%ce%n%B",
+            "--format=%an <%ae>",
             sha,
         ).strip()
+        committer = _git_output(
+            "show",
+            "-s",
+            "--format=%cn <%ce>",
+            sha,
+        ).strip()
+        message = _git_output("show", "-s", "--format=%B", sha)
+        coauthors = [
+            match.group(1).strip()
+            for line in message.splitlines()
+            if (match := re.match(r"(?i)^co-authored-by:\\s*(.+)$", line.strip()))
+        ]
         paths = sorted(
             {
                 line.strip()
@@ -972,7 +1000,15 @@ def collect_git_candidate_records(base_ref: str, head_ref: str) -> list[dict[str
                 if line.strip()
             }
         )
-        records.append({"sha": sha, "metadata": metadata, "paths": paths})
+        records.append(
+            {
+                "sha": sha,
+                "author": author,
+                "committer": committer,
+                "coauthors": coauthors,
+                "paths": paths,
+            }
+        )
     return records
 
 
