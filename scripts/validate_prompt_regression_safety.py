@@ -912,7 +912,7 @@ def validate_mutator_quarantine_records(
     for record in records:
         sha = _text(record.get("sha"), "candidate_commit.sha")
         metadata = _text(record.get("metadata"), f"candidate_commit[{sha}].metadata").lower()
-        paths = _string_list(record.get("paths"), f"candidate_commit[{sha}].paths")
+        paths = _string_list(record.get("paths"), f"candidate_commit[{sha}].paths", min_items=0)
         touched = sorted(
             path for path in paths
             if _is_protected_mutation_path(path, protected_paths)
