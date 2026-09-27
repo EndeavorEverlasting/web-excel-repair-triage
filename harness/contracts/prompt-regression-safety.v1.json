@@ -172,7 +172,8 @@
           "effective prompt override bodies",
           "prompt semantic profiles and migrations",
           "prompt quality-history migrations",
-          "generated Prompt Kit output"
+          "generated Prompt Kit output",
+          "mutator quarantine contract, validator, deterministic gate, and protected-path inventory"
         ],
         "allowed_roles": [
           "READ_ONLY_ANALYSIS",
@@ -188,6 +189,24 @@
           "An explicit reviewed contract change promotes the mutator; one green CI run or one apparently correct edit is insufficient."
         ]
       }
+    ],
+    "protected_paths": [
+      "docs/prompts.json",
+      "registry/prompts/",
+      "harness/prompt-topology/prompt-capability-profiles.v1.json",
+      "harness/prompt-topology/prompt-capability-migrations.v1.json",
+      "harness/prompt-topology/semantic-capability-catalog.v1.json",
+      "harness/prompt-compilation/prompt-semantic-migrations.v1.json",
+      "harness/evals/prompt-regression/prompt-coverage-baseline.v1.json",
+      "web/prompt-kit/",
+      "harness/contracts/prompt-regression-safety.v1.json",
+      "harness/evals/prompt-regression/defect-families.v1.json",
+      "scripts/validate_prompt_regression_safety.py",
+      "tests/test_prompt_regression_safety_prompt.py",
+      "scripts/prompt_registry_ops.py",
+      "scripts/build_prompt_kit_registry.py",
+      "harness/test-floor.v1.json",
+      ".github/workflows/deterministic-test-floor.yml"
     ]
   }
 }
