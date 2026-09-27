@@ -148,9 +148,9 @@
     },
     {
       "prompt_id": "P04",
-      "profile_version": 2,
-      "canonical_prompt_hash": "b84d7b14e2708b25a70abc4e31b96cabdc98a658885587f03a6ca7f80014d1d4",
-      "acceptance_commit": "68cf9cbe69d98544689bd9fe32fe321571543593",
+      "profile_version": 3,
+      "canonical_prompt_hash": "8c8369942f0493ea6904fbf243fd2117f1779357051a46548f22acf1e662a75c",
+      "acceptance_commit": "21b1c8c9a0c5718df4d6d65fc079b1f9e611c9ed",
       "direct_assignments": [
         {
           "capability_id": "execution.implementation",
@@ -185,22 +185,25 @@
           "source_hash": "e249da6706d86733cd03a046ef9e16552a3ae87dc8cc644281c5c1fd9c08c796"
         }
       ],
-      "semantic_dependency_fingerprint": "5a7958f34a14bbed5a17996bcfe636e43a8ae82b75fd8b9e3c3389293e621222",
+      "semantic_dependency_fingerprint": "0125c3a05f4fcfb1daa27d929680cd7107a2a830b5976d2a809e04e02a02f07f",
       "evidence_refs": [
         "docs/prompts.json:P04",
         "harness/contracts/planning-runtime-partition.v1.json",
         "harness/contracts/prompt-strength.v1.json",
-        "scripts/prompt_runtime_partition.py",
         "scripts/planning_runtime_partition.py",
+        "scripts/prompt_runtime_partition.py",
+        "tests/test_planning_runtime_partition.py",
+        "tests/test_prompt_runtime_partition_contract.py",
         "tests/test_prompt_runtime_partition_prompt.py",
-        "tests/test_planning_runtime_partition.py"
+        "tests/test_repository_plan_durability.py",
+        "tests/test_spec_architecture_prompt_registry.py"
       ],
       "profile_status": "ACCEPTED",
       "prior_profile_ref": {
-        "profile_version": 1,
-        "profile_sha256": "9554b6129bd6a0af1c67a02d0dbc110950163f0431cc5b067e08a2210e1919e7"
+        "profile_version": 2,
+        "profile_sha256": "af8a071fbcdee82acf724a66d901cf93b7fac923f07d1e541e43f150bf672573"
       },
-      "profile_sha256": "af8a071fbcdee82acf724a66d901cf93b7fac923f07d1e541e43f150bf672573"
+      "profile_sha256": "ccc4967e6611292feb626e312c1a82834a2abc0572bb9e09ee9cf0543163c52a"
     },
     {
       "prompt_id": "P05",

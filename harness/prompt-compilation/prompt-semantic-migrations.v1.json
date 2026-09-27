@@ -269,6 +269,22 @@
         "tests/test_prompt_semantic_coverage.py",
         "tests/test_prompt_quality_history.py"
       ]
+    },
+    {
+      "migration_id": "p79-no-capability-change-p04-017",
+      "path": "docs/prompts.json",
+      "from_git_blob_sha1": "8a344da1d7249f1c2d3854e26715cfb98a67a32c",
+      "to_git_blob_sha1": "f914eb3cb61f89521f0c6341c01b31ad064e83f6",
+      "affected_prompt_ids": [
+        "P04"
+      ],
+      "change_kind": "strengthening",
+      "effective_identity_change": "preserve_canonical",
+      "rationale": "UF-1A follow-up: restore exact P04 QUALITY RULES phrase and active-PR proofGate wording required by non-weakening registry regressions without changing capability ownership.",
+      "focused_tests": [
+        "tests/test_prompt_semantic_coverage.py",
+        "tests/test_prompt_quality_history.py"
+      ]
     }
   ]
 }
