@@ -12,6 +12,7 @@ import argparse
 import hashlib
 import json
 import re
+import subprocess
 from pathlib import Path
 from typing import Any
 
@@ -28,6 +29,7 @@ FOCUSED_TEST = "tests/test_prompt_regression_safety_prompt.py"
 COVERAGE_BASELINE_PATH = ROOT / "harness" / "evals" / "prompt-regression" / "prompt-coverage-baseline.v1.json"
 SEMANTIC_PROFILES_PATH = ROOT / "harness" / "prompt-topology" / "prompt-capability-profiles.v1.json"
 OVERRIDE_REGISTRY_PATH = ROOT / "registry" / "prompts" / "prompt-overrides.v1.json"
+DETERMINISTIC_FLOOR_WORKFLOW_PATH = ROOT / ".github" / "workflows" / "deterministic-test-floor.yml"
 COMMIT_RE = re.compile(r"^[0-9a-f]{40}$")
 KNOWN_UNPROFILED_SEED_SHA256 = "75d6746dc6310b157fb7526f20939c849b1b0c05dc07f863c58d5ac30c6c4cfd"
 CANONICAL_LF_PATTERNS = [".gitattributes","*.py","*.json","*.md","*.yml","*.yaml","*.toml","*.ini","*.cfg","*.js","*.css","*.html","*.sh","*.ps1","*.txt","*.csv","*.tsv","*.xml","*.sha256","*.webmanifest"]
@@ -415,7 +417,7 @@ def validate_contract(contract: dict[str, Any]) -> None:
     reliability = contract.get("mutator_reliability")
     if not isinstance(reliability, dict):
         raise RegressionSafetyError("mutator_reliability must be an object")
-    expected_reliability_fields = {"rate_claim_policy", "same_actor_rule", "quarantine_states", "restricted_mutators"}
+    expected_reliability_fields = {"rate_claim_policy", "same_actor_rule", "quarantine_states", "protected_paths", "restricted_mutators"}
     if set(reliability) != expected_reliability_fields:
         raise RegressionSafetyError("mutator_reliability fields do not match contract")
     rate_policy = _text(reliability.get("rate_claim_policy"), "mutator_reliability.rate_claim_policy")
@@ -425,6 +427,22 @@ def validate_contract(contract: dict[str, Any]) -> None:
     states = _string_list(reliability.get("quarantine_states"), "mutator_reliability.quarantine_states", min_items=2)
     if set(states) != {"QUARANTINED_CANONICAL_PROMPT_MUTATION", "ELIGIBLE_CANONICAL_PROMPT_MUTATION"}:
         raise RegressionSafetyError("mutator reliability quarantine state vocabulary drifted")
+    protected_paths = _string_list(
+        reliability.get("protected_paths"),
+        "mutator_reliability.protected_paths",
+        min_items=8,
+    )
+    for required_path in (
+        "docs/prompts.json",
+        "registry/prompts/",
+        "harness/prompt-compilation/prompt-semantic-migrations.v1.json",
+        "web/prompt-kit/",
+        "harness/contracts/prompt-regression-safety.v1.json",
+        "scripts/validate_prompt_regression_safety.py",
+        ".github/workflows/deterministic-test-floor.yml",
+    ):
+        if required_path not in protected_paths:
+            raise RegressionSafetyError(f"mutator quarantine missing protected path: {required_path}")
     restricted = reliability.get("restricted_mutators")
     if not isinstance(restricted, list) or not restricted:
         raise RegressionSafetyError("mutator_reliability.restricted_mutators must be non-empty")
@@ -713,7 +731,9 @@ def validate_register(register: dict[str, Any], contract: dict[str, Any]) -> dic
     for required_surface in (
         "harness/contracts/prompt-regression-safety.v1.json",
         "registry/prompts/prompt-overrides.v1.json",
+        "scripts/validate_prompt_regression_safety.py",
         "tests/test_prompt_regression_safety_prompt.py",
+        ".github/workflows/deterministic-test-floor.yml",
     ):
         if required_surface not in cursor_prevention:
             raise RegressionSafetyError(
