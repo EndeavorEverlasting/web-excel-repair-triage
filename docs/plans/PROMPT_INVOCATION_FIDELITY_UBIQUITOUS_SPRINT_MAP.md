@@ -323,3 +323,200 @@ Do not create a P05-specific runtime taxonomy. Add/protect one semantic capabili
 ## Proof ceiling
 
 This file is a durable donor handoff and does not itself prove UF-1 implementation, tests, generated-site parity, merge, destination transplant, or live model compliance.
+
+---
+
+## Post-UF-1A P04/P05 faithfulness audit and repair fixed point — 2026-09-26
+
+### Why this successor exists
+
+UF-1A is integrated on Triage `main@b951c9d5b7dafc1afda8daba58d06d118ddc8351` through PR #665. Its runtime-partition architecture is valuable and remains the floor: host execution environment and provider transport are separate/composable, typed sanitized inherited evidence is required, P04 and P05 consume one shared `planning.runtime_partition` seam, and P07 remains the implementation owner.
+
+This successor does **not** reopen that architecture. It exists because post-merge review found that compression and regression selection allowed prompt-level faithfulness drift even while topology, semantic-coverage, quality-history, dispatch, retrospective, and hosted CI validators passed. The repair therefore treats green validators as evidence of the current contract, not proof that the contract is complete.
+
+### Verified current floor
+
+- Canonical donor main: `b951c9d5b7dafc1afda8daba58d06d118ddc8351`.
+- UF-1A implementation tip: `f8efb872736dddc7aaf672d73c90cee9e954ce57`.
+- P04 dispatch predecessor: PR #664 / merge `35115b8f85e241797f018e9c0257dae3aaac7348`.
+- Planning predecessor: PR #662 / head `861662e12580f308f4919b5fe37b82f89a7f226b`.
+- Shared semantic owner remains `harness/contracts/planning-runtime-partition.v1.json` with canonical implementation `scripts/prompt_runtime_partition.py`; `scripts/planning_runtime_partition.py` is compatibility/shim surface, not a second semantic owner.
+- Generated `web/prompt-kit/index.html` remains derived output and must only move through its canonical builder.
+
+### Faithfulness findings — these are successor acceptance inputs, not optional review notes
+
+#### F1 — P04 durability semantics were weakened during compression
+
+The #665 P04 edit was not purely additive. It compressed the durable-plan tail and removed explicit obligations that were present immediately before UF-1A:
+
+- material approval/plan change must synchronize to the owned canonical plan or relevant writable PR **before P05/P07 or another agent takes over**;
+- when P66/a repository ledger exists, the index must carry the canonical plan, **current proof, owner, and next action**.
+
+The replacement says to use P66/ledger as an index and to persist the complete map, but it no longer preserves those exact transition triggers and ledger fields. That is a real non-weakening gap even though semantic-history validators accepted the edit.
+
+**Required repair:** restore equivalent explicit semantics through the canonical prompt lifecycle. Do not merely add back a literal sentence to satisfy a string test.
+
+#### F2 — P04/P05 ownership is insufficiently protected
+
+The intended split remains:
+
+- **P04 = PLAN / DISTRIBUTE:** recover truth, runtime-partition material work, factor ownership/collisions/dependencies, produce the durable factoring map and machine-executable parallel dispatch manifest, then route implementation to P07.
+- **P05 = PLAN / PACK:** consume an accepted/recovered factoring map, runtime-partition the remaining serialized work, preserve launch/display order, and emit self-contained ordered successor panels/handoffs.
+- **P07 = IMPLEMENT / EXECUTE:** own repository/product implementation unless another canonical implementation owner is explicitly established.
+
+Current P05 still contains a broad independent `FACTORING PASS`. That can be a recovery fallback, but it must not silently become a competing owner that re-factors an accepted P04 map.
+
+**Required repair:** when a current accepted P04 factoring artifact exists, P05 consumes it and may only reconcile stale/conflicting evidence explicitly. P05 may perform bounded fallback factoring only when no usable P04 artifact exists; fallback must be labeled recovery, must preserve established ownership/collision decisions unless fresher evidence disproves them, and must not create a second plan authority.
+
+#### F3 — the P05 runtime insertion is over-compressed and weakens authority boundaries
+
+The normative P05 draft limited immediate current-runtime execution to P05-authorized **planning/evidence/durability** work. The merged prompt compresses this to `Complete safe current-runtime work first` and relies on a later `P07 owns implementation` clause.
+
+That wording is too broad for weaker agents and can be read as permission to execute implementation in P05 before noticing the later ownership sentence.
+
+**Required repair:** explicitly scope execute-now behavior to work inside P05's planning/evidence/durability authority and state that product/repository implementation remains a successor owned by P07/canonical implementation owner.
+
+#### F4 — P05 is not sufficiently self-contained when invoked alone
+
+The merged P05 runtime section says to use the same shared contract as P04 and says `one HOST plus zero or more PROVIDER routes`, but it no longer includes the host-runtime enum or the `UNKNOWN_RUNTIME` owner-resolution rule carried by the accepted normative draft.
+
+P05 is a copyable Prompt Kit surface and must remain understandable when invoked without first reading P04 or opening repository internals.
+
+**Required repair:** include the minimum executable runtime taxonomy and placement invariants directly in P05 while still naming the shared contract as authority. Cross-reference may reinforce semantics; it may not be the only place essential semantics live.
+
+#### F5 — canonical implementation vs shim ownership must be explicit
+
+The shared contract names `scripts/prompt_runtime_partition.py` as canonical implementation, while P04/P05 prompt text points agents at `scripts/planning_runtime_partition.py`.
+
+Compatibility is acceptable; semantic dual ownership is not.
+
+**Required repair:** document/test that `prompt_runtime_partition.py` is canonical, `planning_runtime_partition.py` is compatibility only, and prompt or downstream edits must not fork taxonomy/placement behavior into the shim.
+
+#### F6 — current regressions protect some literals but miss the faithfulness boundaries above
+
+`tests/test_prompt_runtime_partition_contract.py` currently asserts, among other things, that P04 contains `LAUNCH ORDER stays first`. That preserves an output-order invariant but does not prove:
+
+- P04 durable-plan change synchronization survives;
+- P66 index fields survive;
+- P05 consumes accepted P04 factoring instead of re-owning it;
+- P05 current-runtime execution is scoped to planning/evidence/durability;
+- P05 remains usable without prior P04 context;
+- canonical runtime implementation and shim cannot diverge.
+
+**Required repair:** add focused semantic/behavioral regressions for these invariants. Prefer structural or scenario assertions over brittle sentence-only matching. Existing literal tests may remain when the literal itself is a deliberate compatibility contract.
+
+#### F7 — proof/status language must reconcile `PROTOTYPE` vs integrated canonical use
+
+`harness/contracts/planning-runtime-partition.v1.json` is consumed as the canonical shared seam yet currently declares `status: PROTOTYPE`. UF-1A closeout simultaneously reports no remaining Triage gap for the lane.
+
+**Required repair:** inspect repository status conventions and either promote the contract through the existing lifecycle with proof, or explicitly document why `PROTOTYPE` is the correct durable status for a canonical consumed seam. Do not silently relabel it just to make the words agree.
+
+### Non-negotiable architecture preserved through every repair
+
+1. Host execution environment and provider/access transport are separate dimensions.
+2. Exactly one host runtime is selected for each material work unit; provider routes compose with that host.
+3. Private provider URLs/IDs are never forced into tracked manifests; inherited evidence remains typed and sanitized with owner, revision/freshness, visibility, and proof ceiling.
+4. Runtime partition happens before P04 graph/adapter selection and before P05 ordered-pack construction.
+5. Serialization is ordering, not locality.
+6. P04 does not become P07; P05 does not become P07.
+7. P04 factoring and P05 ordered packing remain distinct responsibilities even when both use the same runtime decision.
+8. Existing dependency, collision, durability, autonomy, manifest, dirty-worktree, proof, panel identity, and handoff semantics may only be compressed when equivalence is proven.
+9. Do not create a new P### prompt, a P04/P05-specific runtime taxonomy, a duplicate semantic owner, a second work ledger, or a hand-edited generated HTML path.
+10. TokenCorridor must not treat `b951c9d5...` as the final donor once this successor begins. Its next reconciliation must use the eventual repaired Triage donor SHA and import only the proven delta.
+
+### Execution sequence — serial where canonical prompt ownership collides
+
+These sprints are intentionally ordered. P04 and P05 both mutate `docs/prompts.json`, semantic/profile migrations, generated Prompt Kit output, and overlapping prompt regressions; do not run their canonical mutations concurrently.
+
+#### FAITH-1 — P04 non-weakening repair
+
+**Mission:** restore the P04 durability transition semantics lost by UF-1A compression while preserving the runtime-partition architecture and every pre-existing P04 capability.
+
+**Read first:**
+- this plan;
+- `docs/prompts.json` P04;
+- the P04 section above under PS-0004;
+- `harness/contracts/prompt-strength.v1.json`;
+- `harness/prompt-topology/prompt-capability-profiles.v1.json`;
+- `harness/prompt-compilation/prompt-semantic-migrations.v1.json`;
+- `harness/prompt-topology/prompt-capability-migrations.v1.json`;
+- `tests/test_repository_plan_durability.py`;
+- `tests/test_prompt_runtime_partition_contract.py`;
+- `scripts/prompt_registry_ops.py`.
+
+**Required changes:**
+- restore explicit material-plan-change synchronization before P05/P07/agent handoff;
+- restore explicit P66/ledger index requirements for canonical plan + current proof + owner + next action;
+- keep runtime partition before factoring/adapter selection;
+- keep P07 implementation ownership;
+- preserve existing P04 launch/display ordering only as presentation/orchestration behavior, not as a reason to blur P04 into P05.
+
+**Mutation contract:** use the canonical prompt lifecycle/registry tooling; do not hand-author profile/migration hashes; regenerate derived website output only through the canonical builder.
+
+**Acceptance:** targeted prompt-strength/durability/runtime tests, semantic/topology/history validators, builder parity, `git diff --check`, hosted required checks, and explicit before/after non-weakening receipt.
+
+#### FAITH-2 — P05 serialized planner repair
+
+**Dependency:** FAITH-1 merged and refreshed main.
+
+**Mission:** make P05 a self-contained ordered-pack consumer of accepted P04 factoring, with bounded recovery fallback and correctly scoped current-runtime planning/evidence work.
+
+**Required changes:**
+- add the minimum host enum and UNKNOWN owner-resolution rule directly to P05;
+- narrow execute-now language to P05-authorized planning/evidence/durability work;
+- explicitly consume the current accepted P04 factoring artifact when present;
+- define fallback factoring as recovery-only when no usable upstream artifact exists;
+- forbid fallback from silently changing accepted ownership/collision decisions without fresher evidence;
+- preserve exact launch-order/display-order identity, one-panel-per-sprint, dirty-worktree protection, proof taxonomy, successor execution requirement, and exact-next-command handoff;
+- state canonical runtime implementation + shim relationship without creating duplicate ownership.
+
+**Acceptance:** focused positive/negative scenarios for accepted-P04 consumption, fallback recovery, already-executed current-runtime evidence, local-only work, UNKNOWN runtime, provider composition, P07 ownership, and self-contained invocation; full semantic/topology/history/build parity gates.
+
+#### FAITH-3 — cross-prompt boundary and adversarial regression hardening
+
+**Dependency:** FAITH-2 merged and refreshed main.
+
+**Mission:** make the intended P04→P05→P07 handoff difficult for weaker agents or future compression to weaken.
+
+**Required work:**
+- extend existing regression owners rather than inventing a parallel validation framework;
+- add scenario coverage that fails if P05 re-factors an accepted P04 plan without new evidence;
+- fail if P04 or P05 claims implementation ownership merely because the chosen host is CURRENT_CHAT_RUNTIME;
+- fail if a material P04 plan change can hand off without durable synchronization;
+- fail if P66 indexing loses current proof/owner/next action when that ledger exists;
+- fail if shim semantics diverge from the canonical runtime owner;
+- retain invocation-fidelity proof ceilings: repository/static tests do not prove live model obedience.
+
+**Acceptance:** focused tests + full deterministic floor + prompt semantic/topology/history + dispatch + retrospective + generated-site parity + clean diff/status + hosted CI.
+
+#### FAITH-4 — donor closeout and TokenCorridor re-reconciliation packet
+
+**Dependency:** FAITH-3 merged and refreshed main.
+
+**Mission:** establish one exact repaired donor SHA and update this canonical plan with the completion receipt.
+
+**Required output:**
+- final Triage main SHA and prompt hashes;
+- exact changed donor surfaces;
+- validation/check receipts;
+- proof ceiling;
+- any unresolved live-model/provider proof;
+- minimal `old donor b951c9d5... -> repaired donor` delta for TokenCorridor;
+- explicit instruction that TokenCorridor reconciles its current state against the repaired donor rather than replaying the entire Triage history.
+
+No AgentSwitchboard mutation and no new Prompt Scratch authority are part of this successor.
+
+### Completion gate
+
+This successor is complete only when:
+
+- F1-F7 each have a disposition backed by tracked evidence;
+- P04 and P05 remain distinct owners with one shared runtime-partition semantic seam;
+- prompt lifecycle/history records prove non-weakening for the canonical mutations;
+- targeted regressions protect the repaired boundaries rather than only the new wording;
+- generated/public Prompt Kit parity is rebuilt from canonical sources;
+- hosted checks are green;
+- this plan records the repaired donor SHA and TokenCorridor delta handoff;
+- remaining live-provider/model-obedience proof is reported as a proof ceiling, not silently promoted to repository proof.
+
+Until then, `b951c9d5...` is an integrated UF-1A floor, **not** the final faithfulness-fixed donor.
