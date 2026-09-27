@@ -1,0 +1,60 @@
+# One-shot P04 nextStep non-weakening repair carrier.
+name: Temporary P04 nextStep nonweakening repair
+
+on:
+  push:
+    branches:
+      - fix/p04-p05-p13-faithfulness-systemic-20260927
+    paths:
+      - .github/workflows/temp-p04-nextstep-nonweakening.yml
+
+permissions:
+  contents: write
+
+jobs:
+  repair:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.ref_name }}
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Refresh and prove branch floor
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch origin main --prune
+          git merge-base --is-ancestor a9dad7322d02f8df8370a56382da4b8e2fbbea41 HEAD
+          git diff --check origin/main...HEAD
+      - name: Apply protected P04 metadata repair
+        run: python scripts/temp_restore_p04_nextstep_nonweakening.py
+      - name: Focused non-weakening proof
+        shell: bash
+        run: |
+          set -euo pipefail
+          python -m unittest \
+            tests.test_prompt_parallel_execution_contract \
+            tests.test_repository_plan_durability \
+            tests.test_prompt_runtime_partition_contract \
+            tests.test_prompt_quality_history \
+            -v
+          python scripts/validate_prompt_semantic_coverage.py
+          python scripts/validate_prompt_quality_history.py
+          python scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html --check
+          git diff --check
+      - name: Remove carrier and commit
+        shell: bash
+        run: |
+          set -euo pipefail
+          git rm scripts/temp_restore_p04_nextstep_nonweakening.py
+          git rm .github/workflows/temp-p04-nextstep-nonweakening.yml
+          git add -A
+          git diff --cached --check
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit -m "fix(prompt-kit): restore full P04 next-step non-weakening contract"
+          git push origin HEAD:"${GITHUB_REF_NAME}"
