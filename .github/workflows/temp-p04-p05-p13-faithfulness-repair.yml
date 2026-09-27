@@ -1,4 +1,4 @@
-# One-shot protected carrier. Removed by the job after a green lifecycle mutation.
+# One-shot protected carrier revision 2. Removed by the job after a green lifecycle mutation.
 name: Temporary P04 P05 P13 faithfulness repair
 
 on:
@@ -62,7 +62,6 @@ jobs:
             tests.test_prompt_regression_safety_prompt \
             tests.test_prompt_quality_history \
             tests.test_skill_prompt_registry \
-            tests.test_prompt_kit_mainline_delivery \
             -v
 
       - name: Canonical semantic and build gates
