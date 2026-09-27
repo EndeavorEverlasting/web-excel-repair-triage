@@ -535,3 +535,102 @@ Disposition:
 
 Canonical prevention owner: harness/contracts/prompt-regression-safety.v1.json.
 Defect family: CURSOR_CANONICAL_PROMPT_FAITHFULNESS.
+
+
+## FAITH-4 completion receipt — repaired donor closeout
+
+**State:** ✅ INTEGRATED / DONOR CLOSED
+
+This receipt closes the successor defined above without reopening UF-1A. It records the exact repaired Triage donor after FAITH-1/2/3 and the systemic prompt-mutator prevention repair were integrated.
+
+### Exact donor identity
+
+- Repository: `EndeavorEverlasting/web-excel-repair-triage`
+- Prior UF-1A donor floor: `b951c9d5b7dafc1afda8daba58d06d118ddc8351`
+- Repaired FAITH donor: `main@b22a7e79d64e678bd32bd74d572a8f3a71591dfc`
+- Integrated implementation/review head: `33ffb99928a44ab4b608715397a165934dba6d22`
+- Integration owner: PR #667, `fix(prompt-kit): restore P04/P05 faithfulness and quarantine recurrent prompt mutator`
+- Containment proof: comparing `33ffb99928a44ab4b608715397a165934dba6d22...main` after merge reports `main` ahead by exactly the merge commit with the PR head as merge base; comparing `b951c9d5...b22a7e79...` reports the old donor as the exact merge base, 34 commits behind, and zero commits on the repaired donor behind the old floor.
+
+### Canonical prompt/profile identities on repaired main
+
+The accepted Prompt Capability Profiles are the canonical hash-bearing lifecycle records for this receipt:
+
+| Prompt | Profile | Canonical prompt SHA-256 | Profile SHA-256 |
+| --- | --- | --- | --- |
+| P04 | v5 | `355166641192f7f2f4cc41d1e729b672d3ab8fc07eb1249e4ce9d2bcefbe267d` | `02fe70d5cc613a720e59816d7b5e4c0834f558222a0edbdc17faab4cf4b264a3` |
+| P05 | v3 | `319e0095c3a1fd8b8b9738a640e8476a94768072d2d4206a9529bf599d462d15` | `fefbba8e63f83e35a62f372fbe09925bba4a9f18e89d66c7bb4d699379e0daed` |
+| P13 | v2 | `674587f0d0a9702d3211250f238c258df8ae0c68e8f3c8a44d6dee7e4be85986` | `d651a0d6725e80d83f68aeb34129bbebbc4bc1bff19e877b5d7d976d036dec42` |
+
+### F1-F7 final disposition
+
+| Finding | Final state | Evidence retained on repaired main |
+| --- | --- | --- |
+| F1 — P04 durability semantics | ✅ PROVEN | P04 requires material plan synchronization before P05/P07/agent handoff and retains the canonical-plan/current-proof/owner/executable-next-action index; focused regression: `test_p04_restores_durable_handoff_and_canonical_runtime_owner`. |
+| F2 — P05 upstream factoring ownership | ✅ PROVEN | P05 consumes a current accepted P04 factoring artifact and permits factoring fallback only as recovery when no usable P04 artifact exists; focused regression: `test_p05_consumes_p04_and_fallback_is_recovery_only`. |
+| F3 — P05 runtime execution scope | ✅ PROVEN | Execute-now wording is bounded to P05 planning/evidence/recovery/durability authority; product/repository implementation remains routed to P07/canonical implementation owner. |
+| F4 — P05 self-contained runtime semantics | ✅ PROVEN | P05 carries the host-runtime taxonomy and `UNKNOWN_RUNTIME` owner-resolution rule in its own runtime slice; focused regression: `test_p05_runtime_taxonomy_is_self_contained`. |
+| F5 — canonical implementation vs shim | ✅ PROVEN | `harness/contracts/planning-runtime-partition.v1.json` names `scripts/prompt_runtime_partition.py` as canonical; `scripts/planning_runtime_partition.py` declares itself a compatibility shim and delegates to that owner. |
+| F6 — regression depth | ✅ PROVEN | Focused runtime/faithfulness/quarantine regressions are registered and the exact PR head passed the deterministic floor, generated-site and semantic-weakening negative canaries, prompt semantic/topology/history gates, generated Prompt Kit parity, and hosted checks. |
+| F7 — prototype/integration status | ✅ PROVEN | `harness/contracts/planning-runtime-partition.v1.json` now declares `status: INTEGRATED` and retains an explicit repository/static/CI proof ceiling. |
+
+### Repaired donor delta
+
+The exact `b951c9d5... -> b22a7e79...` compare changes 19 tracked surfaces. TokenCorridor should reconcile **this proven delta**, not replay Triage history:
+
+- `.github/workflows/deterministic-test-floor.yml`
+- `docs/PROMPT_REGRESSION_SAFETY.md`
+- `docs/plans/PROMPT_INVOCATION_FIDELITY_UBIQUITOUS_SPRINT_MAP.md`
+- `docs/program/P04_P05_RUNTIME_PARTITION_DESIGN.md`
+- `docs/prompts.json`
+- `harness/contracts/planning-runtime-partition.v1.json`
+- `harness/contracts/prompt-regression-safety.v1.json`
+- `harness/evals/prompt-regression/defect-families.v1.json`
+- `harness/evals/prompt-regression/prompt-coverage-baseline.v1.json`
+- `harness/prompt-compilation/prompt-semantic-migrations.v1.json`
+- `harness/prompt-topology/prompt-capability-migrations.v1.json`
+- `harness/prompt-topology/prompt-capability-profiles.v1.json`
+- `registry/prompts/prompt-overrides.v1.json`
+- `scripts/validate_prompt_regression_safety.py`
+- `tests/test_deterministic_test_floor.py`
+- `tests/test_prompt_regression_safety_prompt.py`
+- `tests/test_prompt_runtime_partition_contract.py`
+- `tests/test_remote_freshness_p13_iteration.py`
+- `web/prompt-kit/index.html`
+
+This is a donor-side delta inventory, **not** an instruction to copy every file verbatim. TokenCorridor remains responsible for destination-native ownership, builders, registries, tests, and collision reconciliation. Reuse already-integrated destination equivalents and import only missing semantic/proof deltas.
+
+### Validation / review receipt
+
+Exact behavioral candidate `33ffb99928a44ab4b608715397a165934dba6d22` passed the complete current PR workflow set before integration: 22 workflows concluded `success`; the temporary tutorial-carrier workflow concluded `skipped` by design. The deterministic repository test floor specifically passed:
+
+1. exact-candidate checkout/comparison evidence;
+2. canonical prompt-mutator quarantine enforcement across the exact candidate range;
+3. generated-site negative canary;
+4. P07 semantic-weakening negative canary;
+5. public-runner private-input fail-closed gate;
+6. clean deterministic test floor; and
+7. evidence upload.
+
+All actionable review threads were repaired or evidence-dispositioned before merge; the final PR had zero unresolved non-outdated review threads and CodeRabbit status `success`.
+
+A failed pre-merge deterministic-floor pass was not hidden: its canary showed one stale self-test still requiring `fetch-depth: 1` / shallow-main evidence. That assertion protected the old behavior and conflicted with full candidate-range quarantine enforcement. The owning test was repaired to require exact-head full-history evidence; the floor then passed. During the repair, an over-escaped `Co-authored-by` regex was detected by source re-read, corrected before acceptance, and the exact-head quarantine gate subsequently passed.
+
+### Proof ceiling
+
+Repository/static/CI proof establishes the repaired P04/P05/P13 semantics, lifecycle hashes, shared runtime-partition ownership, quarantine enforcement, generated parity, and mainline integration. It does **not** independently prove live downstream-model obedience, live provider authentication/authority, operator-device behavior, or TokenCorridor destination parity after reconciliation. Those remain separate destination/runtime observations.
+
+### TokenCorridor reconciliation handoff
+
+TokenCorridor's next reconciliation owner must:
+
+1. refresh its own current default branch and active PR/worktree truth;
+2. use `b22a7e79d64e678bd32bd74d572a8f3a71591dfc` as the repaired Triage donor identity, superseding `b951c9d5...` for faithfulness reconciliation;
+3. compare its current accepted runtime-partition/prompt-lifecycle state against the 19-surface donor delta above;
+4. preserve destination-native canonical owners/builders/tests and import only missing semantics/regressions;
+5. rerun destination-owned semantic/runtime/build/dispatch gates; and
+6. record destination containment/proof without reopening this closed Triage donor lane.
+
+**AgentSwitchboard:** unchanged; no broker defect was proven by FAITH-1 through FAITH-4, so this closeout authorizes no ASB mutation.
+
+**Local prompt contract:** CLOSED. **Triage donor outcome:** CLOSED at repaired donor `b22a7e79d64e678bd32bd74d572a8f3a71591dfc`. **Required successor work:** TokenCorridor destination reconciliation against this repaired donor.
