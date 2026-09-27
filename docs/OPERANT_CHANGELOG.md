@@ -37,6 +37,8 @@ Human-facing Operant releases. Git commit/artifact identity remains the forensic
 - fix(operant): refresh external resource projection for deepseek-harness drift (`362f920c`)
 - fix(prompt-kit): upgrade appendices missing state presentation (`5e9cbcba`)
 - fix(prompt-kit): restore P04 quality-rules literal for floor regressions (`f8efb872`)
+- fix(prompt-kit): repair P04 P05 P13 faithfulness and quarantine recurrent mutator (`c25dad2e`)
+- fix(prompt-kit): restore full P04 next-step non-weakening contract (`39c4ca1e`)
 
 ## 0.10.1 - 2026-09-19
 
