@@ -756,6 +756,7 @@ def validate_repository_wiring(
     validators: dict[str, Any] | None = None,
     pre_commit_text: str | None = None,
     gitattributes_text: str | None = None,
+    deterministic_workflow_text: str | None = None,
 ) -> None:
     marker = contract["prompt_marker"]
     policy = load_json(POLICY_PATH) if policy is None else policy
@@ -784,6 +785,23 @@ def validate_repository_wiring(
     pre_commit_text = PRE_COMMIT_PATH.read_text(encoding="utf-8") if pre_commit_text is None else pre_commit_text
     if "git diff --cached --check" not in pre_commit_text:
         raise RegressionSafetyError("pre-commit hook must retain staged patch-hygiene proof")
+
+    deterministic_workflow_text = (
+        DETERMINISTIC_FLOOR_WORKFLOW_PATH.read_text(encoding="utf-8")
+        if deterministic_workflow_text is None
+        else deterministic_workflow_text
+    )
+    for marker in (
+        "fetch-depth: 0",
+        "--enforce-mutator-quarantine",
+        "--base-ref",
+        "--head-ref",
+        "--candidate-ref",
+    ):
+        if marker not in deterministic_workflow_text:
+            raise RegressionSafetyError(
+                f"deterministic floor missing mutator-quarantine enforcement marker: {marker}"
+            )
 
     gitattributes_text = (
         GITATTRIBUTES_PATH.read_text(encoding="utf-8")
