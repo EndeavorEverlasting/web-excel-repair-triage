@@ -180,10 +180,13 @@
         "registry/prompts/prompt-overrides.v1.json",
         "tests/test_prompt_regression_safety_prompt.py",
         "tests/test_prompt_runtime_partition_contract.py",
-        "docs/plans/PROMPT_INVOCATION_FIDELITY_UBIQUITOUS_SPRINT_MAP.md"
+        "docs/plans/PROMPT_INVOCATION_FIDELITY_UBIQUITOUS_SPRINT_MAP.md",
+        "scripts/validate_prompt_regression_safety.py",
+        ".github/workflows/deterministic-test-floor.yml",
+        "harness/evals/prompt-regression/prompt-coverage-baseline.v1.json"
       ],
       "regression_gate": "tests/test_prompt_regression_safety_prompt.py",
-      "local_first_requirement": "Before assigning canonical/effective Prompt Kit mutation, resolve mutator reliability. Cursor remains quarantined from prompt-body/profile/migration/generated-output authorship until the explicit requalification gate passes. The operator's reported 100% observed failure rate is retained as attributed evidence, not presented as an independently audited statistic.",
+      "local_first_requirement": "Before assigning canonical/effective Prompt Kit mutation, resolve mutator reliability. Cursor remains quarantined from prompt-body/profile/migration/generated-output and quarantine-enforcement authorship until the explicit requalification gate passes. Exact candidate CI must inspect the full commit range and reject Cursor-attributed protected-path mutation. The operator's reported 100% observed failure rate is retained as attributed evidence, not presented as an independently audited statistic.",
       "occurrences": [
         {
           "repository": "EndeavorEverlasting/web-excel-repair-triage",
