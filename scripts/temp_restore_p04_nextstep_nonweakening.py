@@ -20,7 +20,7 @@ new_next=(
     "If the planning task is explicitly read-only or repository mutation is forbidden, keep the chat plan PROVISIONAL and name durable-plan synchronization as BLOCKED. "
     "Route execution to P07 from the validated manifest. "
     "If graph width is at least two, every dependency-ready lane must have an autonomous execution adapter or an explicit AUTONOMY_GAP with a machine-executable bootstrap/repair owner; do not make the operator launch chats. "
-    "Validate the JSON manifest with scripts/prompt_parallel_dispatch.py before P07 consumes it."
+    "Validate the JSON manifest with `scripts/prompt_parallel_dispatch.py` before P07 consumes it."
 )
 required=[
     "following existing repository plan/docs/harness conventions",
