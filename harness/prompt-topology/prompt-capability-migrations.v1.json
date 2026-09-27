@@ -2191,6 +2191,141 @@
         "lost_protected_capabilities": [],
         "proof_ceiling": "Canonical/profile/history and protected portfolio coverage only; does not prove downstream model obedience or runtime behavior."
       }
+    },
+    {
+      "migration_id": "NO_CAPABILITY_CHANGE_P04_020",
+      "migration_kind": "NO_CAPABILITY_CHANGE",
+      "prompt_id": "P04",
+      "old_canonical_prompt_hash": "baca0f027fc90f8178a62c2f03dbfeaef236bac57dde06324a9c001cfdb661cc",
+      "new_canonical_prompt_hash": "355166641192f7f2f4cc41d1e729b672d3ab8fc07eb1249e4ce9d2bcefbe267d",
+      "from_profile_version": 4,
+      "to_profile_version": 5,
+      "from_profile_sha256": "4fa3d73706d167825f50e98ca00c44a1b97f537f051704fe5d4578585683673a",
+      "to_profile_sha256": "02fe70d5cc613a720e59816d7b5e4c0834f558222a0edbdc17faab4cf4b264a3",
+      "capability_deltas": [
+        {
+          "capability_id": "execution.implementation",
+          "before": {
+            "presence": "AWARE",
+            "ownership": "NONE"
+          },
+          "after": {
+            "presence": "AWARE",
+            "ownership": "NONE"
+          }
+        },
+        {
+          "capability_id": "planning.runtime_partition",
+          "before": {
+            "presence": "REQUIRED",
+            "ownership": "PRIMARY"
+          },
+          "after": {
+            "presence": "REQUIRED",
+            "ownership": "PRIMARY"
+          }
+        }
+      ],
+      "rationale": "Non-weakening follow-up: restore the complete pre-existing P04 next-step autonomy/PR/read-only semantics while retaining the new material-plan-change and P66 continuity requirements.",
+      "evidence_refs": [
+        "docs/plans/PROMPT_INVOCATION_FIDELITY_UBIQUITOUS_SPRINT_MAP.md",
+        "docs/prompts.json:P04",
+        "harness/contracts/planning-runtime-partition.v1.json",
+        "harness/contracts/prompt-strength.v1.json",
+        "scripts/planning_runtime_partition.py",
+        "scripts/prompt_runtime_partition.py",
+        "tests/test_planning_runtime_partition.py",
+        "tests/test_prompt_parallel_execution_contract.py",
+        "tests/test_prompt_runtime_partition_contract.py",
+        "tests/test_prompt_runtime_partition_prompt.py",
+        "tests/test_repository_plan_durability.py",
+        "tests/test_spec_architecture_prompt_registry.py"
+      ],
+      "focused_tests": [
+        "tests/test_prompt_semantic_coverage.py",
+        "tests/test_prompt_semantic_validator_1b.py"
+      ],
+      "source_history_migration_id": "p79-no-capability-change-p04-022",
+      "source_history_from_git_blob_sha1": "be11acbec8de866fcfd7634efb4cc04babc41d31",
+      "source_history_to_git_blob_sha1": "64de75c8301e05bc0851d3f5d20d99348b9e1e29",
+      "coverage_before_fingerprint": "5915469a0cb8f12f36c4c3865e65e8f26026dd6aa8ef4eb8f0708147dd6a7d94",
+      "coverage_after_fingerprint": "5915469a0cb8f12f36c4c3865e65e8f26026dd6aa8ef4eb8f0708147dd6a7d94",
+      "acceptance_state": "ACCEPTED",
+      "prior_profile_snapshot": {
+        "prompt_id": "P04",
+        "profile_version": 4,
+        "canonical_prompt_hash": "baca0f027fc90f8178a62c2f03dbfeaef236bac57dde06324a9c001cfdb661cc",
+        "acceptance_commit": "adf6040157538317198cfca309f046733e8f9bb1",
+        "direct_assignments": [
+          {
+            "capability_id": "execution.implementation",
+            "presence": "AWARE",
+            "ownership": "NONE",
+            "capability_relation": "ROUTES_TO",
+            "delivery_source": "ROUTED_OWNER",
+            "evidence_refs": [
+              "docs/prompts.json:P04"
+            ],
+            "rationale": "P04 routes to P07 for implementation execution"
+          },
+          {
+            "capability_id": "planning.runtime_partition",
+            "presence": "REQUIRED",
+            "ownership": "PRIMARY",
+            "capability_relation": "IMPLEMENTS",
+            "delivery_source": "CANONICAL_BODY",
+            "evidence_refs": [
+              "docs/prompts.json:P04",
+              "harness/contracts/planning-runtime-partition.v1.json",
+              "scripts/prompt_runtime_partition.py",
+              "scripts/planning_runtime_partition.py"
+            ],
+            "rationale": "P04 implements shared host/provider runtime partition before graph or ordered-pack projection"
+          }
+        ],
+        "inherited_sources": [
+          {
+            "source_id": "prompt-strength-shared-policy",
+            "source_version": "v1",
+            "source_hash": "e249da6706d86733cd03a046ef9e16552a3ae87dc8cc644281c5c1fd9c08c796"
+          }
+        ],
+        "semantic_dependency_fingerprint": "0125c3a05f4fcfb1daa27d929680cd7107a2a830b5976d2a809e04e02a02f07f",
+        "evidence_refs": [
+          "docs/plans/PROMPT_INVOCATION_FIDELITY_UBIQUITOUS_SPRINT_MAP.md",
+          "docs/prompts.json:P04",
+          "harness/contracts/planning-runtime-partition.v1.json",
+          "harness/contracts/prompt-strength.v1.json",
+          "scripts/planning_runtime_partition.py",
+          "scripts/prompt_runtime_partition.py",
+          "tests/test_planning_runtime_partition.py",
+          "tests/test_prompt_runtime_partition_contract.py",
+          "tests/test_prompt_runtime_partition_prompt.py",
+          "tests/test_repository_plan_durability.py",
+          "tests/test_spec_architecture_prompt_registry.py"
+        ],
+        "profile_status": "ACCEPTED",
+        "prior_profile_ref": {
+          "profile_version": 3,
+          "profile_sha256": "ccc4967e6611292feb626e312c1a82834a2abc0572bb9e09ee9cf0543163c52a"
+        },
+        "profile_sha256": "4fa3d73706d167825f50e98ca00c44a1b97f537f051704fe5d4578585683673a"
+      },
+      "mutation_lifecycle": {
+        "contract_id": "prompt-semantic-coverage#PSC018",
+        "operation": "NO_CAPABILITY_CHANGE",
+        "before_chars": 11974,
+        "after_chars": 11969,
+        "char_delta": -5,
+        "compression_disposition": "COMPRESS",
+        "compression_rationale": "A five-character body compression sharpens the durable transition from generic execution routing to explicit P05/P07 handoff while the metadata restoration reinstates protected autonomy, PR-ownership, and read-only semantics.",
+        "semantic_rationale": "Non-weakening follow-up: restore the complete pre-existing P04 next-step autonomy/PR/read-only semantics while retaining the new material-plan-change and P66 continuity requirements.",
+        "coverage_before_fingerprint": "5915469a0cb8f12f36c4c3865e65e8f26026dd6aa8ef4eb8f0708147dd6a7d94",
+        "coverage_after_fingerprint": "5915469a0cb8f12f36c4c3865e65e8f26026dd6aa8ef4eb8f0708147dd6a7d94",
+        "portfolio_coverage_preserved": true,
+        "lost_protected_capabilities": [],
+        "proof_ceiling": "Canonical/profile/history and protected portfolio coverage only; does not prove downstream model obedience or runtime behavior."
+      }
     }
   ],
   "note": "Migrations recorded after Sprint 1A baseline. Every lifecycle transition after baseline acceptance must be explicit and recorded here."

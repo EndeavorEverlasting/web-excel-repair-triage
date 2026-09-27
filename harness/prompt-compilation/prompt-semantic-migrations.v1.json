@@ -350,6 +350,22 @@
         "tests/test_skill_prompt_registry.py",
         "tests/test_prompt_kit_mainline_delivery.py"
       ]
+    },
+    {
+      "migration_id": "p79-no-capability-change-p04-022",
+      "path": "docs/prompts.json",
+      "from_git_blob_sha1": "be11acbec8de866fcfd7634efb4cc04babc41d31",
+      "to_git_blob_sha1": "64de75c8301e05bc0851d3f5d20d99348b9e1e29",
+      "affected_prompt_ids": [
+        "P04"
+      ],
+      "change_kind": "strengthening",
+      "effective_identity_change": "preserve_canonical",
+      "rationale": "Non-weakening follow-up: restore the complete pre-existing P04 next-step autonomy/PR/read-only semantics while retaining the new material-plan-change and P66 continuity requirements.",
+      "focused_tests": [
+        "tests/test_prompt_semantic_coverage.py",
+        "tests/test_prompt_quality_history.py"
+      ]
     }
   ]
 }
