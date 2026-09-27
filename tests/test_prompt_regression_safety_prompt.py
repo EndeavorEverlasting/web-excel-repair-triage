@@ -557,7 +557,9 @@ class PromptRegressionSafetyTests(unittest.TestCase):
         records = [
             {
                 "sha": "a" * 40,
-                "metadata": "fix(prompt-kit): mutate body\n\nCo-authored-by: Cursor <cursoragent@cursor.com>",
+                "author": "Human Maintainer <maintainer@example.invalid>",
+                "committer": "Human Maintainer <maintainer@example.invalid>",
+                "coauthors": ["Cursor <cursoragent@cursor.com>"],
                 "paths": ["docs/prompts.json"],
             }
         ]
@@ -575,7 +577,9 @@ class PromptRegressionSafetyTests(unittest.TestCase):
         records = [
             {
                 "sha": "b" * 40,
-                "metadata": "fix(prompt-kit): generic author",
+                "author": "Human Maintainer <maintainer@example.invalid>",
+                "committer": "Human Maintainer <maintainer@example.invalid>",
+                "coauthors": [],
                 "paths": ["registry/prompts/prompt-overrides.v1.json"],
             }
         ]
@@ -589,11 +593,51 @@ class PromptRegressionSafetyTests(unittest.TestCase):
                 candidate_ref="cursor/prompt-edit",
             )
 
-    def test_cursor_non_prompt_change_remains_allowed(self) -> None:
+    def test_cursor_attributed_dot_prefixed_workflow_change_is_rejected(self) -> None:
         records = [
             {
                 "sha": "c" * 40,
-                "metadata": "feat(app): safe support\n\nCo-authored-by: Cursor <cursoragent@cursor.com>",
+                "author": "Cursor <cursoragent@cursor.com>",
+                "committer": "Human Maintainer <maintainer@example.invalid>",
+                "coauthors": [],
+                "paths": [".github/workflows/deterministic-test-floor.yml"],
+            }
+        ]
+        with self.assertRaisesRegex(
+            regression.RegressionSafetyError,
+            "quarantined mutator touched protected prompt surface",
+        ):
+            regression.validate_mutator_quarantine_records(
+                copy.deepcopy(self.contract),
+                records,
+                candidate_ref="fix/workflow-guard",
+            )
+
+    def test_cursor_mention_without_attribution_remains_allowed(self) -> None:
+        records = [
+            {
+                "sha": "d" * 40,
+                "author": "Human Maintainer <maintainer@example.invalid>",
+                "committer": "Human Maintainer <maintainer@example.invalid>",
+                "coauthors": [],
+                "paths": ["harness/contracts/prompt-regression-safety.v1.json"],
+            }
+        ]
+        result = regression.validate_mutator_quarantine_records(
+            copy.deepcopy(self.contract),
+            records,
+            candidate_ref="fix/cursor-quarantine-docs",
+        )
+        self.assertEqual(result["protected_commits"], 1)
+        self.assertEqual(result["violations"], 0)
+
+    def test_cursor_non_prompt_change_remains_allowed(self) -> None:
+        records = [
+            {
+                "sha": "e" * 40,
+                "author": "Human Maintainer <maintainer@example.invalid>",
+                "committer": "Human Maintainer <maintainer@example.invalid>",
+                "coauthors": ["Cursor <cursoragent@cursor.com>"],
                 "paths": ["src/non_prompt_support.py"],
             }
         ]
@@ -604,6 +648,13 @@ class PromptRegressionSafetyTests(unittest.TestCase):
         )
         self.assertEqual(result["protected_commits"], 0)
         self.assertEqual(result["violations"], 0)
+
+    def test_quarantine_workflow_uses_full_candidate_event_range(self) -> None:
+        workflow = regression.DETERMINISTIC_FLOOR_WORKFLOW_PATH.read_text(encoding="utf-8")
+        self.assertIn("github.event.before", workflow)
+        self.assertIn("github.base_ref", workflow)
+        self.assertIn('base_ref="origin/${PR_BASE:-main}"', workflow)
+        self.assertIn('base_ref="$BEFORE_SHA"', workflow)
 
     def test_cursor_prompt_mutator_quarantine_is_retained(self) -> None:
         reliability = self.contract["mutator_reliability"]
