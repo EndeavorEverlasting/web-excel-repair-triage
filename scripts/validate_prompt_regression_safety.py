@@ -870,6 +870,126 @@ def validate_repository_wiring(
         raise RegressionSafetyError("pre_push profile must retain patch-hygiene")
 
 
+
+def _git_output(*args: str) -> str:
+    process = subprocess.run(
+        ["git", *args],
+        cwd=ROOT,
+        text=True,
+        capture_output=True,
+        check=False,
+    )
+    if process.returncode != 0:
+        raise RegressionSafetyError(
+            "git command failed for mutator quarantine: "
+            + " ".join(args)
+            + " :: "
+            + process.stderr.strip()
+        )
+    return process.stdout
+
+
+def _is_protected_mutation_path(path: str, protected_paths: list[str]) -> bool:
+    normalized = path.replace("\\", "/").lstrip("./")
+    return any(
+        normalized == rule or (rule.endswith("/") and normalized.startswith(rule))
+        for rule in protected_paths
+    )
+
+
+def validate_mutator_quarantine_records(
+    contract: dict[str, Any],
+    records: list[dict[str, Any]],
+    *,
+    candidate_ref: str = "",
+) -> dict[str, Any]:
+    reliability = contract["mutator_reliability"]
+    protected_paths = reliability["protected_paths"]
+    protected_commits = 0
+    violations: list[str] = []
+    ref_lower = candidate_ref.lower()
+
+    for record in records:
+        sha = _text(record.get("sha"), "candidate_commit.sha")
+        metadata = _text(record.get("metadata"), f"candidate_commit[{sha}].metadata").lower()
+        paths = _string_list(record.get("paths"), f"candidate_commit[{sha}].paths")
+        touched = sorted(
+            path for path in paths
+            if _is_protected_mutation_path(path, protected_paths)
+        )
+        if not touched:
+            continue
+        protected_commits += 1
+        for mutator in reliability["restricted_mutators"]:
+            if mutator.get("state") != "QUARANTINED_CANONICAL_PROMPT_MUTATION":
+                continue
+            name = _text(mutator.get("mutator"), "restricted_mutator.mutator")
+            marker = name.lower()
+            if marker in metadata or marker in ref_lower:
+                violations.append(
+                    f"{name}@{sha[:12]} touched protected path(s): {', '.join(touched)}"
+                )
+
+    if violations:
+        raise RegressionSafetyError(
+            "quarantined mutator touched protected prompt surface: "
+            + " | ".join(violations)
+        )
+    return {
+        "checked_commits": len(records),
+        "protected_commits": protected_commits,
+        "violations": 0,
+    }
+
+
+def collect_git_candidate_records(base_ref: str, head_ref: str) -> list[dict[str, Any]]:
+    shas = [
+        line.strip()
+        for line in _git_output(
+            "rev-list", "--reverse", f"{base_ref}..{head_ref}"
+        ).splitlines()
+        if line.strip()
+    ]
+    records: list[dict[str, Any]] = []
+    for sha in shas:
+        metadata = _git_output(
+            "show",
+            "-s",
+            "--format=%H%n%an%n%ae%n%cn%n%ce%n%B",
+            sha,
+        ).strip()
+        paths = sorted(
+            {
+                line.strip()
+                for line in _git_output(
+                    "diff-tree",
+                    "--no-commit-id",
+                    "--name-only",
+                    "-r",
+                    "-m",
+                    sha,
+                ).splitlines()
+                if line.strip()
+            }
+        )
+        records.append({"sha": sha, "metadata": metadata, "paths": paths})
+    return records
+
+
+def enforce_mutator_quarantine(
+    contract: dict[str, Any],
+    *,
+    base_ref: str,
+    head_ref: str,
+    candidate_ref: str = "",
+) -> dict[str, Any]:
+    records = collect_git_candidate_records(base_ref, head_ref)
+    return validate_mutator_quarantine_records(
+        contract,
+        records,
+        candidate_ref=candidate_ref,
+    )
+
 def validate_all(
     contract: dict[str, Any], register: dict[str, Any], *, check_repository_wiring: bool = True
 ) -> dict[str, Any]:
