@@ -149,5 +149,45 @@
       "Closeout OR review owner classification is derived from prompt ownership metadata, not incidental wording in proof text, and any owner-set drift requires explicit baseline review.",
       "A coverage ratchet is prevention, not backfill proof: baseline debt remains unprofiled until Prompt Semantic Coverage accepts profiles through its lifecycle."
     ]
+  },
+  "mutator_reliability": {
+    "rate_claim_policy": "Failure-rate claims from operator feedback are stored as attributed, scoped observations unless the underlying attempt corpus is independently enumerated and audited; attributed evidence may still trigger a conservative quarantine when recurrence is independently repository-evidenced.",
+    "same_actor_rule": "When a systemic defect family implicates the same mutator in repeated canonical prompt-faithfulness loss, mutator assignment is part of the defect: do not delegate canonical/effective prompt repair back to that mutator while quarantined.",
+    "quarantine_states": [
+      "QUARANTINED_CANONICAL_PROMPT_MUTATION",
+      "ELIGIBLE_CANONICAL_PROMPT_MUTATION"
+    ],
+    "restricted_mutators": [
+      {
+        "mutator": "Cursor",
+        "state": "QUARANTINED_CANONICAL_PROMPT_MUTATION",
+        "operator_observation": "Operator reports a 100% failure rate across their observed Cursor canonical-prompt-edit attempts. This is attributed operator evidence, not an independently audited statistical corpus.",
+        "repository_evidence": [
+          "e6737d06a71e2882ad2ce4375007f900314a8a00",
+          "8d7eff7749aee8e80ed3d7ff49e22827c6f1a33f",
+          "a9dad7322d02f8df8370a56382da4b8e2fbbea41"
+        ],
+        "forbidden_surfaces": [
+          "canonical prompt bodies",
+          "effective prompt override bodies",
+          "prompt semantic profiles and migrations",
+          "prompt quality-history migrations",
+          "generated Prompt Kit output"
+        ],
+        "allowed_roles": [
+          "READ_ONLY_ANALYSIS",
+          "DIAGNOSIS",
+          "TEST_EXECUTION",
+          "NON_PROMPT_SUPPORT_IMPLEMENTATION"
+        ],
+        "requalification_requirements": [
+          "Retained negative fixture reproduces the prompt-faithfulness loss.",
+          "Positive control proves legitimate non-prompt Cursor work remains allowed.",
+          "A candidate canonical prompt mutation is produced outside the quarantined mutator and its exact lifecycle diff is independently reviewed.",
+          "Focused semantic, lifecycle, generated-parity, and deterministic-floor checks pass on the exact candidate.",
+          "An explicit reviewed contract change promotes the mutator; one green CI run or one apparently correct edit is insufficient."
+        ]
+      }
+    ]
   }
 }

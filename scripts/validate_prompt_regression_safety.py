@@ -412,6 +412,62 @@ def validate_contract(contract: dict[str, Any]) -> None:
             raise RegressionSafetyError(f"missing incident source: {required_source}")
     _text(recurrence.get("rule"), "recurrence.rule")
 
+    reliability = contract.get("mutator_reliability")
+    if not isinstance(reliability, dict):
+        raise RegressionSafetyError("mutator_reliability must be an object")
+    expected_reliability_fields = {"rate_claim_policy", "same_actor_rule", "quarantine_states", "restricted_mutators"}
+    if set(reliability) != expected_reliability_fields:
+        raise RegressionSafetyError("mutator_reliability fields do not match contract")
+    rate_policy = _text(reliability.get("rate_claim_policy"), "mutator_reliability.rate_claim_policy")
+    if "attributed" not in rate_policy.lower() or "audited" not in rate_policy.lower():
+        raise RegressionSafetyError("mutator reliability must distinguish attributed from audited rate claims")
+    _text(reliability.get("same_actor_rule"), "mutator_reliability.same_actor_rule")
+    states = _string_list(reliability.get("quarantine_states"), "mutator_reliability.quarantine_states", min_items=2)
+    if set(states) != {"QUARANTINED_CANONICAL_PROMPT_MUTATION", "ELIGIBLE_CANONICAL_PROMPT_MUTATION"}:
+        raise RegressionSafetyError("mutator reliability quarantine state vocabulary drifted")
+    restricted = reliability.get("restricted_mutators")
+    if not isinstance(restricted, list) or not restricted:
+        raise RegressionSafetyError("mutator_reliability.restricted_mutators must be non-empty")
+    seen_mutators: set[str] = set()
+    cursor = None
+    required_mutator_fields = {
+        "mutator", "state", "operator_observation", "repository_evidence",
+        "forbidden_surfaces", "allowed_roles", "requalification_requirements",
+    }
+    for index, mutator in enumerate(restricted):
+        if not isinstance(mutator, dict) or set(mutator) != required_mutator_fields:
+            raise RegressionSafetyError(f"restricted_mutator[{index}] fields do not match contract")
+        name = _text(mutator.get("mutator"), f"restricted_mutator[{index}].mutator")
+        if name in seen_mutators:
+            raise RegressionSafetyError(f"duplicate restricted mutator: {name}")
+        seen_mutators.add(name)
+        if mutator.get("state") not in states:
+            raise RegressionSafetyError(f"invalid mutator reliability state: {name}")
+        _text(mutator.get("operator_observation"), f"{name}.operator_observation")
+        evidence = _string_list(mutator.get("repository_evidence"), f"{name}.repository_evidence", min_items=2)
+        if any(not COMMIT_RE.fullmatch(commit) for commit in evidence):
+            raise RegressionSafetyError(f"{name} repository evidence must be lowercase 40-hex commits")
+        _string_list(mutator.get("forbidden_surfaces"), f"{name}.forbidden_surfaces", min_items=3)
+        _string_list(mutator.get("allowed_roles"), f"{name}.allowed_roles", min_items=2)
+        requirements = _string_list(mutator.get("requalification_requirements"), f"{name}.requalification_requirements", min_items=4)
+        joined_requirements = " ".join(requirements).lower()
+        for phrase in ("negative", "positive", "lifecycle diff", "explicit reviewed"):
+            if phrase not in joined_requirements:
+                raise RegressionSafetyError(f"{name} requalification is missing concept: {phrase}")
+        if name == "Cursor":
+            cursor = mutator
+    if cursor is None:
+        raise RegressionSafetyError("Cursor systemic prompt-faithfulness quarantine must be retained")
+    if cursor.get("state") != "QUARANTINED_CANONICAL_PROMPT_MUTATION":
+        raise RegressionSafetyError("Cursor canonical prompt mutation quarantine may change only through explicit reviewed requalification")
+    observation = str(cursor.get("operator_observation", "")).lower()
+    if "100%" not in observation or "operator" not in observation or "not an independently audited" not in observation:
+        raise RegressionSafetyError("Cursor operator-rate observation must remain attributed and explicitly unaudited")
+    forbidden_text = " ".join(cursor.get("forbidden_surfaces", [])).lower()
+    for phrase in ("canonical prompt", "effective prompt", "semantic profiles", "generated prompt kit"):
+        if phrase not in forbidden_text:
+            raise RegressionSafetyError(f"Cursor quarantine missing forbidden surface: {phrase}")
+
     loop = contract.get("required_loop")
     expected_loop = [
         "REPAIR_INSTANCE",
@@ -640,6 +696,29 @@ def validate_register(register: dict[str, Any], contract: dict[str, Any]) -> dic
         raise RegressionSafetyError("LINE_ENDING_DRIFT must not depend on retrospective matrix capture")
     if ".gitattributes" not in line_ending_family.get("prevention_surfaces", []):
         raise RegressionSafetyError("LINE_ENDING_DRIFT must retain .gitattributes prevention owner")
+
+    cursor_family = next(
+        (family for family in families if family.get("id") == "CURSOR_CANONICAL_PROMPT_FAITHFULNESS"),
+        None,
+    )
+    if cursor_family is None:
+        raise RegressionSafetyError("defect register must retain CURSOR_CANONICAL_PROMPT_FAITHFULNESS systemic family")
+    if cursor_family.get("classification") != "PROMPT_SEMANTICS":
+        raise RegressionSafetyError("CURSOR_CANONICAL_PROMPT_FAITHFULNESS must remain PROMPT_SEMANTICS")
+    if cursor_family.get("recurring_across_repositories") is not False:
+        raise RegressionSafetyError("Cursor prompt-faithfulness family is currently Triage-scoped")
+    if cursor_family.get("matrix_capture_required") is not False:
+        raise RegressionSafetyError("Cursor prompt-faithfulness recurrence must not depend on retrospective matrix capture")
+    cursor_prevention = set(cursor_family.get("prevention_surfaces", []))
+    for required_surface in (
+        "harness/contracts/prompt-regression-safety.v1.json",
+        "registry/prompts/prompt-overrides.v1.json",
+        "tests/test_prompt_regression_safety_prompt.py",
+    ):
+        if required_surface not in cursor_prevention:
+            raise RegressionSafetyError(
+                f"CURSOR_CANONICAL_PROMPT_FAITHFULNESS missing prevention surface: {required_surface}"
+            )
 
     return {
         "families": len(families),

@@ -148,9 +148,9 @@
     },
     {
       "prompt_id": "P04",
-      "profile_version": 3,
-      "canonical_prompt_hash": "8c8369942f0493ea6904fbf243fd2117f1779357051a46548f22acf1e662a75c",
-      "acceptance_commit": "21b1c8c9a0c5718df4d6d65fc079b1f9e611c9ed",
+      "profile_version": 4,
+      "canonical_prompt_hash": "baca0f027fc90f8178a62c2f03dbfeaef236bac57dde06324a9c001cfdb661cc",
+      "acceptance_commit": "adf6040157538317198cfca309f046733e8f9bb1",
       "direct_assignments": [
         {
           "capability_id": "execution.implementation",
@@ -187,6 +187,7 @@
       ],
       "semantic_dependency_fingerprint": "0125c3a05f4fcfb1daa27d929680cd7107a2a830b5976d2a809e04e02a02f07f",
       "evidence_refs": [
+        "docs/plans/PROMPT_INVOCATION_FIDELITY_UBIQUITOUS_SPRINT_MAP.md",
         "docs/prompts.json:P04",
         "harness/contracts/planning-runtime-partition.v1.json",
         "harness/contracts/prompt-strength.v1.json",
@@ -200,16 +201,16 @@
       ],
       "profile_status": "ACCEPTED",
       "prior_profile_ref": {
-        "profile_version": 2,
-        "profile_sha256": "af8a071fbcdee82acf724a66d901cf93b7fac923f07d1e541e43f150bf672573"
+        "profile_version": 3,
+        "profile_sha256": "ccc4967e6611292feb626e312c1a82834a2abc0572bb9e09ee9cf0543163c52a"
       },
-      "profile_sha256": "ccc4967e6611292feb626e312c1a82834a2abc0572bb9e09ee9cf0543163c52a"
+      "profile_sha256": "4fa3d73706d167825f50e98ca00c44a1b97f537f051704fe5d4578585683673a"
     },
     {
       "prompt_id": "P05",
-      "profile_version": 2,
-      "canonical_prompt_hash": "f215a1410e68eb77056bc062c02b206740edcfc14cf4f25e4ec3871d6cfadae4",
-      "acceptance_commit": "68cf9cbe69d98544689bd9fe32fe321571543593",
+      "profile_version": 3,
+      "canonical_prompt_hash": "319e0095c3a1fd8b8b9738a640e8476a94768072d2d4206a9529bf599d462d15",
+      "acceptance_commit": "adf6040157538317198cfca309f046733e8f9bb1",
       "direct_assignments": [
         {
           "capability_id": "execution.implementation",
@@ -244,22 +245,24 @@
           "source_hash": "e249da6706d86733cd03a046ef9e16552a3ae87dc8cc644281c5c1fd9c08c796"
         }
       ],
-      "semantic_dependency_fingerprint": "7fad8face731c68455f8d314c1b26e9b826890c70070d068682d308dca2d4c5f",
+      "semantic_dependency_fingerprint": "57b5a0d9de11d6e626d764baed1feafd995e71d4f8744783e0cbd8875823f283",
       "evidence_refs": [
+        "docs/plans/PROMPT_INVOCATION_FIDELITY_UBIQUITOUS_SPRINT_MAP.md",
         "docs/prompts.json:P05",
         "harness/contracts/planning-runtime-partition.v1.json",
         "harness/contracts/prompt-strength.v1.json",
-        "scripts/prompt_runtime_partition.py",
         "scripts/planning_runtime_partition.py",
-        "tests/test_prompt_runtime_partition_prompt.py",
-        "tests/test_planning_runtime_partition.py"
+        "scripts/prompt_runtime_partition.py",
+        "tests/test_planning_runtime_partition.py",
+        "tests/test_prompt_runtime_partition_contract.py",
+        "tests/test_prompt_runtime_partition_prompt.py"
       ],
       "profile_status": "ACCEPTED",
       "prior_profile_ref": {
-        "profile_version": 1,
-        "profile_sha256": "2c849ecbd71b9aac75f8c423c4ed82d4aa3566ec6bde140116c5ef1acabb56a3"
+        "profile_version": 2,
+        "profile_sha256": "bbf7879807dfa2274f4bdc0ecbdffbe2c48055790adc9157f37038884796f217"
       },
-      "profile_sha256": "bbf7879807dfa2274f4bdc0ecbdffbe2c48055790adc9157f37038884796f217"
+      "profile_sha256": "fefbba8e63f83e35a62f372fbe09925bba4a9f18e89d66c7bb4d699379e0daed"
     },
     {
       "prompt_id": "P06",
@@ -518,9 +521,9 @@
     },
     {
       "prompt_id": "P13",
-      "profile_version": 1,
-      "canonical_prompt_hash": "82e8591b8bcaaa3176bbf837d959e1e489620b1566dfc92079b82922873c3f89",
-      "acceptance_commit": "55148914364e2988bc6096b7c8d142eca3f62c28",
+      "profile_version": 2,
+      "canonical_prompt_hash": "674587f0d0a9702d3211250f238c258df8ae0c68e8f3c8a44d6dee7e4be85986",
+      "acceptance_commit": "adf6040157538317198cfca309f046733e8f9bb1",
       "direct_assignments": [
         {
           "capability_id": "process.recurring",
@@ -545,10 +548,18 @@
       "semantic_dependency_fingerprint": "9c0031aaa951a7dcf1cfd76cfe25dde60762c2c41baf07fc49208ef3ea9b7619",
       "evidence_refs": [
         "docs/prompts.json:P13",
-        "harness/contracts/prompt-strength.v1.json"
+        "harness/contracts/prompt-regression-safety.v1.json",
+        "harness/contracts/prompt-strength.v1.json",
+        "harness/contracts/prompt-strength.v1.json:supporting_owners.recurring_process",
+        "harness/evals/prompt-regression/defect-families.v1.json",
+        "tests/test_prompt_regression_safety_prompt.py"
       ],
       "profile_status": "ACCEPTED",
-      "profile_sha256": "bb71bb78881b0f1896229fc17f7d89dd08d7b102e7621caf651f4dde85de9b2a"
+      "prior_profile_ref": {
+        "profile_version": 1,
+        "profile_sha256": "bb71bb78881b0f1896229fc17f7d89dd08d7b102e7621caf651f4dde85de9b2a"
+      },
+      "profile_sha256": "d651a0d6725e80d83f68aeb34129bbebbc4bc1bff19e877b5d7d976d036dec42"
     },
     {
       "prompt_id": "P14",

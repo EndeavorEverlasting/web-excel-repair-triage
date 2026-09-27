@@ -1,7 +1,7 @@
 {
   "schema_version": "prompt-regression-defect-register/v1",
   "contract": "harness/contracts/prompt-regression-safety.v1.json",
-  "evaluation_time": "2026-09-18T17:04:50Z",
+  "evaluation_time": "2026-09-27T04:47:21Z",
   "families": [
     {
       "id": "TRAILING_WHITESPACE",
@@ -160,6 +160,45 @@
           "repository": "EndeavorEverlasting/web-excel-repair-triage",
           "commit": "3defbc21812522f9bc454d96835ba6bb7ea1552c",
           "summary": "P02 required a dedicated effective-override regression matrix because PSC002 binds the raw canonical record rather than the live override body, exposing a second semantic coverage seam."
+        }
+      ]
+    },
+    {
+      "id": "CURSOR_CANONICAL_PROMPT_FAITHFULNESS",
+      "status": "SYSTEMIC",
+      "classification": "PROMPT_SEMANTICS",
+      "recurring_across_repositories": false,
+      "matrix_capture_required": false,
+      "canonical_owner": "prompt-regression-safety mutator reliability + P13 recurrence owner; canonical prompt repair must use a non-quarantined author and P79 lifecycle",
+      "prompt_strengthening": "SCOPED_SHARED_POLICY",
+      "detector_commands": [
+        "python scripts/validate_prompt_regression_safety.py --summary",
+        "python -m unittest tests.test_prompt_regression_safety_prompt tests.test_prompt_runtime_partition_contract -v"
+      ],
+      "prevention_surfaces": [
+        "harness/contracts/prompt-regression-safety.v1.json",
+        "registry/prompts/prompt-overrides.v1.json",
+        "tests/test_prompt_regression_safety_prompt.py",
+        "tests/test_prompt_runtime_partition_contract.py",
+        "docs/plans/PROMPT_INVOCATION_FIDELITY_UBIQUITOUS_SPRINT_MAP.md"
+      ],
+      "regression_gate": "tests/test_prompt_regression_safety_prompt.py",
+      "local_first_requirement": "Before assigning canonical/effective Prompt Kit mutation, resolve mutator reliability. Cursor remains quarantined from prompt-body/profile/migration/generated-output authorship until the explicit requalification gate passes. The operator's reported 100% observed failure rate is retained as attributed evidence, not presented as an independently audited statistic.",
+      "occurrences": [
+        {
+          "repository": "EndeavorEverlasting/web-excel-repair-triage",
+          "commit": "e6737d06a71e2882ad2ce4375007f900314a8a00",
+          "summary": "Repair history records restoration of P07 non-parallel proof gates after prior prompt strengthening dropped protected semantics; the repair commit is Cursor-co-authored and evidences the recurring prompt-faithfulness family."
+        },
+        {
+          "repository": "EndeavorEverlasting/web-excel-repair-triage",
+          "commit": "8d7eff7749aee8e80ed3d7ff49e22827c6f1a33f",
+          "summary": "Repair history explicitly records P07 closeout and phase-continuity requirements lost during prompt shortening; the repair commit is Cursor-co-authored and independently evidences recurring semantic loss."
+        },
+        {
+          "repository": "EndeavorEverlasting/web-excel-repair-triage",
+          "commit": "a9dad7322d02f8df8370a56382da4b8e2fbbea41",
+          "summary": "Merged post-UF-1A faithfulness audit records F1-F7 after the Cursor-authored/assisted #665 implementation passed existing checks yet still weakened P04 durability and P05 ownership/self-containment semantics."
         }
       ]
     }
