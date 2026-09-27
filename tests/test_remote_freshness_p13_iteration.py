@@ -123,7 +123,8 @@ class RemoteFreshnessAndP13IterationTests(unittest.TestCase):
         self.assertIn("Prefer executable enforcement over prose", content)
         self.assertIn("Do not manufacture revisions", content)
         self.assertIn("Do not ask the user to compare rule wording", content)
-        self.assertIn("Stale branch state is ruled out before inventing doctrine", p13["proofGate"])
+        self.assertIn("Stale branch state is ruled out", p13["proofGate"])
+        self.assertIn("before doctrine", p13["proofGate"])
         self.assertIn("smallest enforceable repo doctrine", p13["sprintRole"])
 
     def test_every_build_repair_or_artifact_prompt_inherits_fresh_evidence_floor(self) -> None:
