@@ -984,7 +984,7 @@ def collect_git_candidate_records(base_ref: str, head_ref: str) -> list[dict[str
         coauthors = [
             match.group(1).strip()
             for line in message.splitlines()
-            if (match := re.match(r"(?i)^co-authored-by:\\s*(.+)$", line.strip()))
+            if (match := re.match(r"(?i)^co-authored-by:\s*(.+)$", line.strip()))
         ]
         paths = sorted(
             {
