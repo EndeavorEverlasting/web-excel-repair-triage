@@ -1015,9 +1015,21 @@ def main() -> int:
     parser.add_argument("--contract", type=Path, default=CONTRACT_PATH)
     parser.add_argument("--input", type=Path, default=REGISTER_PATH)
     parser.add_argument("--summary", action="store_true")
+    parser.add_argument("--enforce-mutator-quarantine", action="store_true")
+    parser.add_argument("--base-ref", default="origin/main")
+    parser.add_argument("--head-ref", default="HEAD")
+    parser.add_argument("--candidate-ref", default="")
     args = parser.parse_args()
 
-    result = validate_all(load_json(args.contract), load_json(args.input))
+    contract = load_json(args.contract)
+    result = validate_all(contract, load_json(args.input))
+    if args.enforce_mutator_quarantine:
+        result["mutator_quarantine"] = enforce_mutator_quarantine(
+            contract,
+            base_ref=args.base_ref,
+            head_ref=args.head_ref,
+            candidate_ref=args.candidate_ref,
+        )
     if args.summary:
         print(
             "prompt-regression-safety: PASS "
@@ -1029,7 +1041,12 @@ def main() -> int:
             f"unprofiled={result['coverage']['unprofiled_prompts']} "
             f"closeout_review={result['coverage']['closeout_or_review_owners']} "
             f"overrides={result['coverage']['override_bindings']} "
-            "matrix_exhaustive=false provider_semantic_owner=false"
+            + (
+                f"mutator_quarantine=PASS protected_commits={result['mutator_quarantine']['protected_commits']} "
+                if "mutator_quarantine" in result
+                else "mutator_quarantine=NOT_ENFORCED "
+            )
+            + "matrix_exhaustive=false provider_semantic_owner=false"
         )
     else:
         print(json.dumps(result, indent=2, sort_keys=True))
