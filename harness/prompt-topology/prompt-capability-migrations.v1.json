@@ -1511,6 +1511,333 @@
         },
         "profile_sha256": "4365a2c5e5a001f2479e0bb7fa549002baed65b241f3b09be4bcbb2cda943ade"
       }
+    },
+    {
+      "migration_id": "STRENGTHEN_P04_014",
+      "migration_kind": "STRENGTHEN",
+      "prompt_id": "P04",
+      "old_canonical_prompt_hash": "5cd6f94f54f49695d01d58803b1b05bce071b0effcf8e2972ece10e7c8b1ee25",
+      "new_canonical_prompt_hash": "b84d7b14e2708b25a70abc4e31b96cabdc98a658885587f03a6ca7f80014d1d4",
+      "from_profile_version": 1,
+      "to_profile_version": 2,
+      "from_profile_sha256": "9554b6129bd6a0af1c67a02d0dbc110950163f0431cc5b067e08a2210e1919e7",
+      "to_profile_sha256": "af8a071fbcdee82acf724a66d901cf93b7fac923f07d1e541e43f150bf672573",
+      "capability_deltas": [
+        {
+          "capability_id": "execution.implementation",
+          "before": {
+            "presence": "AWARE",
+            "ownership": "NONE"
+          },
+          "after": {
+            "presence": "AWARE",
+            "ownership": "NONE"
+          }
+        },
+        {
+          "capability_id": "planning.runtime_partition",
+          "before": null,
+          "after": {
+            "presence": "REQUIRED",
+            "ownership": "PRIMARY"
+          }
+        }
+      ],
+      "rationale": "UF-1A STRENGTHEN: bind shared planning.runtime_partition into P04 so host runtime and provider transport are composable, LAUNCH ORDER stays first, and typed sanitized evidence is required before adapter selection.",
+      "evidence_refs": [
+        "docs/prompts.json:P04",
+        "harness/contracts/planning-runtime-partition.v1.json",
+        "harness/contracts/prompt-strength.v1.json",
+        "scripts/planning_runtime_partition.py",
+        "tests/test_planning_runtime_partition.py",
+        "tests/test_prompt_parallel_dispatch.py"
+      ],
+      "focused_tests": [
+        "tests/test_prompt_semantic_coverage.py",
+        "tests/test_prompt_semantic_validator_1b.py"
+      ],
+      "source_history_migration_id": "p79-strengthen-p04-015",
+      "source_history_from_git_blob_sha1": "c963a857a8dc72ab5df8c99c2b3524c737271206",
+      "source_history_to_git_blob_sha1": "d15582d32e9b6346d74aeed2ffb72d974b851ade",
+      "coverage_before_fingerprint": "9332c858d6ec669db6b70847a9d0acc950e830e4648de446fd81e6d2ae84d19b",
+      "coverage_after_fingerprint": "ca6e3482db29a0bf98ade990e71e4ed564ada206fddbd78f4e5c526483272a1a",
+      "acceptance_state": "ACCEPTED",
+      "prior_profile_snapshot": {
+        "prompt_id": "P04",
+        "profile_version": 1,
+        "canonical_prompt_hash": "5cd6f94f54f49695d01d58803b1b05bce071b0effcf8e2972ece10e7c8b1ee25",
+        "acceptance_commit": "55148914364e2988bc6096b7c8d142eca3f62c28",
+        "direct_assignments": [
+          {
+            "capability_id": "execution.implementation",
+            "presence": "AWARE",
+            "ownership": "NONE",
+            "capability_relation": "ROUTES_TO",
+            "delivery_source": "ROUTED_OWNER",
+            "evidence_refs": [
+              "docs/prompts.json:P04"
+            ],
+            "rationale": "P04 routes to P07 for implementation execution"
+          }
+        ],
+        "inherited_sources": [
+          {
+            "source_id": "prompt-strength-shared-policy",
+            "source_version": "v1",
+            "source_hash": "e249da6706d86733cd03a046ef9e16552a3ae87dc8cc644281c5c1fd9c08c796"
+          }
+        ],
+        "semantic_dependency_fingerprint": "8965781a674b9270f4c5c13e5e015d0d98a2a6211f3f3d7e6d58b19f4af5e377",
+        "evidence_refs": [
+          "docs/prompts.json:P04",
+          "harness/contracts/prompt-strength.v1.json"
+        ],
+        "profile_status": "ACCEPTED",
+        "profile_sha256": "9554b6129bd6a0af1c67a02d0dbc110950163f0431cc5b067e08a2210e1919e7"
+      },
+      "mutation_lifecycle": {
+        "contract_id": "prompt-semantic-coverage#PSC018",
+        "operation": "STRENGTHEN",
+        "before_chars": 11528,
+        "after_chars": 11544,
+        "char_delta": 16,
+        "compression_disposition": "GROWTH_JUSTIFIED",
+        "compression_rationale": "Unique shared runtime-partition host/provider/sanitized-evidence semantics cannot be recovered from existing P04 adapter-ladder text alone; body growth is minimal after compressing durable-plan prose.",
+        "semantic_rationale": "UF-1A STRENGTHEN: bind shared planning.runtime_partition into P04 so host runtime and provider transport are composable, LAUNCH ORDER stays first, and typed sanitized evidence is required before adapter selection.",
+        "coverage_before_fingerprint": "9332c858d6ec669db6b70847a9d0acc950e830e4648de446fd81e6d2ae84d19b",
+        "coverage_after_fingerprint": "ca6e3482db29a0bf98ade990e71e4ed564ada206fddbd78f4e5c526483272a1a",
+        "portfolio_coverage_preserved": true,
+        "lost_protected_capabilities": [],
+        "proof_ceiling": "Canonical/profile/history and protected portfolio coverage only; does not prove downstream model obedience or runtime behavior."
+      }
+    },
+    {
+      "migration_id": "STRENGTHEN_P05_015",
+      "migration_kind": "STRENGTHEN",
+      "prompt_id": "P05",
+      "old_canonical_prompt_hash": "bc5a50c738318b4b8d69aa242672701149cf7ae3734f324bb0a0cb7d459e6568",
+      "new_canonical_prompt_hash": "f215a1410e68eb77056bc062c02b206740edcfc14cf4f25e4ec3871d6cfadae4",
+      "from_profile_version": 1,
+      "to_profile_version": 2,
+      "from_profile_sha256": "2c849ecbd71b9aac75f8c423c4ed82d4aa3566ec6bde140116c5ef1acabb56a3",
+      "to_profile_sha256": "bbf7879807dfa2274f4bdc0ecbdffbe2c48055790adc9157f37038884796f217",
+      "capability_deltas": [
+        {
+          "capability_id": "execution.implementation",
+          "before": {
+            "presence": "AWARE",
+            "ownership": "NONE"
+          },
+          "after": {
+            "presence": "AWARE",
+            "ownership": "NONE"
+          }
+        },
+        {
+          "capability_id": "planning.runtime_partition",
+          "before": null,
+          "after": {
+            "presence": "REQUIRED",
+            "ownership": "PRIMARY"
+          }
+        }
+      ],
+      "rationale": "UF-1A STRENGTHEN: bind shared planning.runtime_partition into P05 serialized planning so host/provider placement, sanitized inherited evidence, and launch-order-first output are enforced without inventing fake local sprints.",
+      "evidence_refs": [
+        "docs/prompts.json:P05",
+        "harness/contracts/planning-runtime-partition.v1.json",
+        "harness/contracts/prompt-strength.v1.json",
+        "scripts/planning_runtime_partition.py",
+        "tests/test_planning_runtime_partition.py",
+        "tests/test_prompt_parallel_execution_contract.py"
+      ],
+      "focused_tests": [
+        "tests/test_prompt_semantic_coverage.py",
+        "tests/test_prompt_semantic_validator_1b.py"
+      ],
+      "source_history_migration_id": "p79-strengthen-p05-016",
+      "source_history_from_git_blob_sha1": "d15582d32e9b6346d74aeed2ffb72d974b851ade",
+      "source_history_to_git_blob_sha1": "8a344da1d7249f1c2d3854e26715cfb98a67a32c",
+      "coverage_before_fingerprint": "ca6e3482db29a0bf98ade990e71e4ed564ada206fddbd78f4e5c526483272a1a",
+      "coverage_after_fingerprint": "5915469a0cb8f12f36c4c3865e65e8f26026dd6aa8ef4eb8f0708147dd6a7d94",
+      "acceptance_state": "ACCEPTED",
+      "prior_profile_snapshot": {
+        "prompt_id": "P05",
+        "profile_version": 1,
+        "canonical_prompt_hash": "bc5a50c738318b4b8d69aa242672701149cf7ae3734f324bb0a0cb7d459e6568",
+        "acceptance_commit": "55148914364e2988bc6096b7c8d142eca3f62c28",
+        "direct_assignments": [
+          {
+            "capability_id": "execution.implementation",
+            "presence": "AWARE",
+            "ownership": "NONE",
+            "capability_relation": "ROUTES_TO",
+            "delivery_source": "ROUTED_OWNER",
+            "evidence_refs": [
+              "docs/prompts.json:P05"
+            ],
+            "rationale": "P05 routes to P07 for implementation execution"
+          }
+        ],
+        "inherited_sources": [
+          {
+            "source_id": "prompt-strength-shared-policy",
+            "source_version": "v1",
+            "source_hash": "e249da6706d86733cd03a046ef9e16552a3ae87dc8cc644281c5c1fd9c08c796"
+          }
+        ],
+        "semantic_dependency_fingerprint": "088a54c415ad812c1ea81eb61bba7691d39bf9ce055b4c41b911651bcad07754",
+        "evidence_refs": [
+          "docs/prompts.json:P05",
+          "harness/contracts/prompt-strength.v1.json"
+        ],
+        "profile_status": "ACCEPTED",
+        "profile_sha256": "2c849ecbd71b9aac75f8c423c4ed82d4aa3566ec6bde140116c5ef1acabb56a3"
+      },
+      "mutation_lifecycle": {
+        "contract_id": "prompt-semantic-coverage#PSC018",
+        "operation": "STRENGTHEN",
+        "before_chars": 8757,
+        "after_chars": 9557,
+        "char_delta": 800,
+        "compression_disposition": "GROWTH_JUSTIFIED",
+        "compression_rationale": "P05 must carry the shared runtime-partition contract and launch-order-safe placement table semantics that existing ordered-pack text does not encode.",
+        "semantic_rationale": "UF-1A STRENGTHEN: bind shared planning.runtime_partition into P05 serialized planning so host/provider placement, sanitized inherited evidence, and launch-order-first output are enforced without inventing fake local sprints.",
+        "coverage_before_fingerprint": "ca6e3482db29a0bf98ade990e71e4ed564ada206fddbd78f4e5c526483272a1a",
+        "coverage_after_fingerprint": "5915469a0cb8f12f36c4c3865e65e8f26026dd6aa8ef4eb8f0708147dd6a7d94",
+        "portfolio_coverage_preserved": true,
+        "lost_protected_capabilities": [],
+        "proof_ceiling": "Canonical/profile/history and protected portfolio coverage only; does not prove downstream model obedience or runtime behavior."
+      }
+    },
+    {
+      "migration_id": "NO_CAPABILITY_CHANGE_P04_016",
+      "migration_kind": "NO_CAPABILITY_CHANGE",
+      "prompt_id": "P04",
+      "old_canonical_prompt_hash": "b84d7b14e2708b25a70abc4e31b96cabdc98a658885587f03a6ca7f80014d1d4",
+      "new_canonical_prompt_hash": "8c8369942f0493ea6904fbf243fd2117f1779357051a46548f22acf1e662a75c",
+      "from_profile_version": 2,
+      "to_profile_version": 3,
+      "from_profile_sha256": "af8a071fbcdee82acf724a66d901cf93b7fac923f07d1e541e43f150bf672573",
+      "to_profile_sha256": "ccc4967e6611292feb626e312c1a82834a2abc0572bb9e09ee9cf0543163c52a",
+      "capability_deltas": [
+        {
+          "capability_id": "execution.implementation",
+          "before": {
+            "presence": "AWARE",
+            "ownership": "NONE"
+          },
+          "after": {
+            "presence": "AWARE",
+            "ownership": "NONE"
+          }
+        },
+        {
+          "capability_id": "planning.runtime_partition",
+          "before": {
+            "presence": "REQUIRED",
+            "ownership": "PRIMARY"
+          },
+          "after": {
+            "presence": "REQUIRED",
+            "ownership": "PRIMARY"
+          }
+        }
+      ],
+      "rationale": "UF-1A follow-up: restore exact P04 QUALITY RULES phrase and active-PR proofGate wording required by non-weakening registry regressions without changing capability ownership.",
+      "evidence_refs": [
+        "docs/prompts.json:P04",
+        "harness/contracts/planning-runtime-partition.v1.json",
+        "harness/contracts/prompt-strength.v1.json",
+        "scripts/planning_runtime_partition.py",
+        "scripts/prompt_runtime_partition.py",
+        "tests/test_planning_runtime_partition.py",
+        "tests/test_prompt_runtime_partition_contract.py",
+        "tests/test_prompt_runtime_partition_prompt.py",
+        "tests/test_repository_plan_durability.py",
+        "tests/test_spec_architecture_prompt_registry.py"
+      ],
+      "focused_tests": [
+        "tests/test_prompt_semantic_coverage.py",
+        "tests/test_prompt_semantic_validator_1b.py"
+      ],
+      "source_history_migration_id": "p79-no-capability-change-p04-017",
+      "source_history_from_git_blob_sha1": "8a344da1d7249f1c2d3854e26715cfb98a67a32c",
+      "source_history_to_git_blob_sha1": "f914eb3cb61f89521f0c6341c01b31ad064e83f6",
+      "coverage_before_fingerprint": "5915469a0cb8f12f36c4c3865e65e8f26026dd6aa8ef4eb8f0708147dd6a7d94",
+      "coverage_after_fingerprint": "5915469a0cb8f12f36c4c3865e65e8f26026dd6aa8ef4eb8f0708147dd6a7d94",
+      "acceptance_state": "ACCEPTED",
+      "prior_profile_snapshot": {
+        "prompt_id": "P04",
+        "profile_version": 2,
+        "canonical_prompt_hash": "b84d7b14e2708b25a70abc4e31b96cabdc98a658885587f03a6ca7f80014d1d4",
+        "acceptance_commit": "68cf9cbe69d98544689bd9fe32fe321571543593",
+        "direct_assignments": [
+          {
+            "capability_id": "execution.implementation",
+            "presence": "AWARE",
+            "ownership": "NONE",
+            "capability_relation": "ROUTES_TO",
+            "delivery_source": "ROUTED_OWNER",
+            "evidence_refs": [
+              "docs/prompts.json:P04"
+            ],
+            "rationale": "P04 routes to P07 for implementation execution"
+          },
+          {
+            "capability_id": "planning.runtime_partition",
+            "presence": "REQUIRED",
+            "ownership": "PRIMARY",
+            "capability_relation": "IMPLEMENTS",
+            "delivery_source": "CANONICAL_BODY",
+            "evidence_refs": [
+              "docs/prompts.json:P04",
+              "harness/contracts/planning-runtime-partition.v1.json",
+              "scripts/prompt_runtime_partition.py",
+              "scripts/planning_runtime_partition.py"
+            ],
+            "rationale": "P04 implements shared host/provider runtime partition before graph or ordered-pack projection"
+          }
+        ],
+        "inherited_sources": [
+          {
+            "source_id": "prompt-strength-shared-policy",
+            "source_version": "v1",
+            "source_hash": "e249da6706d86733cd03a046ef9e16552a3ae87dc8cc644281c5c1fd9c08c796"
+          }
+        ],
+        "semantic_dependency_fingerprint": "5a7958f34a14bbed5a17996bcfe636e43a8ae82b75fd8b9e3c3389293e621222",
+        "evidence_refs": [
+          "docs/prompts.json:P04",
+          "harness/contracts/planning-runtime-partition.v1.json",
+          "harness/contracts/prompt-strength.v1.json",
+          "scripts/prompt_runtime_partition.py",
+          "scripts/planning_runtime_partition.py",
+          "tests/test_prompt_runtime_partition_prompt.py",
+          "tests/test_planning_runtime_partition.py"
+        ],
+        "profile_status": "ACCEPTED",
+        "prior_profile_ref": {
+          "profile_version": 1,
+          "profile_sha256": "9554b6129bd6a0af1c67a02d0dbc110950163f0431cc5b067e08a2210e1919e7"
+        },
+        "profile_sha256": "af8a071fbcdee82acf724a66d901cf93b7fac923f07d1e541e43f150bf672573"
+      },
+      "mutation_lifecycle": {
+        "contract_id": "prompt-semantic-coverage#PSC018",
+        "operation": "NO_CAPABILITY_CHANGE",
+        "before_chars": 11544,
+        "after_chars": 11603,
+        "char_delta": 59,
+        "compression_disposition": "GROWTH_JUSTIFIED",
+        "compression_rationale": "Restores the exact protected QUALITY RULES sentence and active-PR proofGate continuity required by existing floor/registry regressions; compact slash-joined wording lost required literal matches.",
+        "semantic_rationale": "UF-1A follow-up: restore exact P04 QUALITY RULES phrase and active-PR proofGate wording required by non-weakening registry regressions without changing capability ownership.",
+        "coverage_before_fingerprint": "5915469a0cb8f12f36c4c3865e65e8f26026dd6aa8ef4eb8f0708147dd6a7d94",
+        "coverage_after_fingerprint": "5915469a0cb8f12f36c4c3865e65e8f26026dd6aa8ef4eb8f0708147dd6a7d94",
+        "portfolio_coverage_preserved": true,
+        "lost_protected_capabilities": [],
+        "proof_ceiling": "Canonical/profile/history and protected portfolio coverage only; does not prove downstream model obedience or runtime behavior."
+      }
     }
   ],
   "note": "Migrations recorded after Sprint 1A baseline. Every lifecycle transition after baseline acceptance must be explicit and recorded here."

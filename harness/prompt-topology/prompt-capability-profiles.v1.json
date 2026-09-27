@@ -148,9 +148,9 @@
     },
     {
       "prompt_id": "P04",
-      "profile_version": 1,
-      "canonical_prompt_hash": "5cd6f94f54f49695d01d58803b1b05bce071b0effcf8e2972ece10e7c8b1ee25",
-      "acceptance_commit": "55148914364e2988bc6096b7c8d142eca3f62c28",
+      "profile_version": 3,
+      "canonical_prompt_hash": "8c8369942f0493ea6904fbf243fd2117f1779357051a46548f22acf1e662a75c",
+      "acceptance_commit": "21b1c8c9a0c5718df4d6d65fc079b1f9e611c9ed",
       "direct_assignments": [
         {
           "capability_id": "execution.implementation",
@@ -162,6 +162,20 @@
             "docs/prompts.json:P04"
           ],
           "rationale": "P04 routes to P07 for implementation execution"
+        },
+        {
+          "capability_id": "planning.runtime_partition",
+          "presence": "REQUIRED",
+          "ownership": "PRIMARY",
+          "capability_relation": "IMPLEMENTS",
+          "delivery_source": "CANONICAL_BODY",
+          "evidence_refs": [
+            "docs/prompts.json:P04",
+            "harness/contracts/planning-runtime-partition.v1.json",
+            "scripts/prompt_runtime_partition.py",
+            "scripts/planning_runtime_partition.py"
+          ],
+          "rationale": "P04 implements shared host/provider runtime partition before graph or ordered-pack projection"
         }
       ],
       "inherited_sources": [
@@ -171,19 +185,31 @@
           "source_hash": "e249da6706d86733cd03a046ef9e16552a3ae87dc8cc644281c5c1fd9c08c796"
         }
       ],
-      "semantic_dependency_fingerprint": "8965781a674b9270f4c5c13e5e015d0d98a2a6211f3f3d7e6d58b19f4af5e377",
+      "semantic_dependency_fingerprint": "0125c3a05f4fcfb1daa27d929680cd7107a2a830b5976d2a809e04e02a02f07f",
       "evidence_refs": [
         "docs/prompts.json:P04",
-        "harness/contracts/prompt-strength.v1.json"
+        "harness/contracts/planning-runtime-partition.v1.json",
+        "harness/contracts/prompt-strength.v1.json",
+        "scripts/planning_runtime_partition.py",
+        "scripts/prompt_runtime_partition.py",
+        "tests/test_planning_runtime_partition.py",
+        "tests/test_prompt_runtime_partition_contract.py",
+        "tests/test_prompt_runtime_partition_prompt.py",
+        "tests/test_repository_plan_durability.py",
+        "tests/test_spec_architecture_prompt_registry.py"
       ],
       "profile_status": "ACCEPTED",
-      "profile_sha256": "9554b6129bd6a0af1c67a02d0dbc110950163f0431cc5b067e08a2210e1919e7"
+      "prior_profile_ref": {
+        "profile_version": 2,
+        "profile_sha256": "af8a071fbcdee82acf724a66d901cf93b7fac923f07d1e541e43f150bf672573"
+      },
+      "profile_sha256": "ccc4967e6611292feb626e312c1a82834a2abc0572bb9e09ee9cf0543163c52a"
     },
     {
       "prompt_id": "P05",
-      "profile_version": 1,
-      "canonical_prompt_hash": "bc5a50c738318b4b8d69aa242672701149cf7ae3734f324bb0a0cb7d459e6568",
-      "acceptance_commit": "55148914364e2988bc6096b7c8d142eca3f62c28",
+      "profile_version": 2,
+      "canonical_prompt_hash": "f215a1410e68eb77056bc062c02b206740edcfc14cf4f25e4ec3871d6cfadae4",
+      "acceptance_commit": "68cf9cbe69d98544689bd9fe32fe321571543593",
       "direct_assignments": [
         {
           "capability_id": "execution.implementation",
@@ -195,6 +221,20 @@
             "docs/prompts.json:P05"
           ],
           "rationale": "P05 routes to P07 for implementation execution"
+        },
+        {
+          "capability_id": "planning.runtime_partition",
+          "presence": "REQUIRED",
+          "ownership": "PRIMARY",
+          "capability_relation": "IMPLEMENTS",
+          "delivery_source": "CANONICAL_BODY",
+          "evidence_refs": [
+            "docs/prompts.json:P05",
+            "harness/contracts/planning-runtime-partition.v1.json",
+            "scripts/prompt_runtime_partition.py",
+            "scripts/planning_runtime_partition.py"
+          ],
+          "rationale": "P05 implements shared host/provider runtime partition before graph or ordered-pack projection"
         }
       ],
       "inherited_sources": [
@@ -204,13 +244,22 @@
           "source_hash": "e249da6706d86733cd03a046ef9e16552a3ae87dc8cc644281c5c1fd9c08c796"
         }
       ],
-      "semantic_dependency_fingerprint": "088a54c415ad812c1ea81eb61bba7691d39bf9ce055b4c41b911651bcad07754",
+      "semantic_dependency_fingerprint": "7fad8face731c68455f8d314c1b26e9b826890c70070d068682d308dca2d4c5f",
       "evidence_refs": [
         "docs/prompts.json:P05",
-        "harness/contracts/prompt-strength.v1.json"
+        "harness/contracts/planning-runtime-partition.v1.json",
+        "harness/contracts/prompt-strength.v1.json",
+        "scripts/prompt_runtime_partition.py",
+        "scripts/planning_runtime_partition.py",
+        "tests/test_prompt_runtime_partition_prompt.py",
+        "tests/test_planning_runtime_partition.py"
       ],
       "profile_status": "ACCEPTED",
-      "profile_sha256": "2c849ecbd71b9aac75f8c423c4ed82d4aa3566ec6bde140116c5ef1acabb56a3"
+      "prior_profile_ref": {
+        "profile_version": 1,
+        "profile_sha256": "2c849ecbd71b9aac75f8c423c4ed82d4aa3566ec6bde140116c5ef1acabb56a3"
+      },
+      "profile_sha256": "bbf7879807dfa2274f4bdc0ecbdffbe2c48055790adc9157f37038884796f217"
     },
     {
       "prompt_id": "P06",

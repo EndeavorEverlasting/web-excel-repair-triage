@@ -38,11 +38,15 @@
     "tests/test_p123_source_document_quality_prompt.py",
     "tests/test_p123_youtube_ingestion_behavior_eval_prompt.py",
     "tests/test_p143_repository_convergence_prompt.py",
+    "tests/test_p55_bootstrap_handoff.py",
+    "tests/test_p55_repository_bootstrap.py",
     "tests/test_p65_staged_routing_prompt.py",
     "tests/test_p67_source_faithfulness_eval_prompt.py",
     "tests/test_permissioned_repository_polling_prompt.py",
+    "tests/test_planning_runtime_partition.py",
     "tests/test_privacy_preserving_failure_observatory_prompt.py",
     "tests/test_prompt_classification_refiner_prompt.py",
+    "tests/test_prompt_invocation_fidelity.py",
     "tests/test_prompt_kit_compute_mode.py",
     "tests/test_prompt_kit_durability_graduation_prompt.py",
     "tests/test_prompt_kit_selected_prompt.py",
@@ -59,8 +63,10 @@
     "tests/test_prompt_runtime_compliance_runner.py",
     "tests/test_prompt_runtime_compliance_validator.py",
     "tests/test_prompt_runtime_compliance_validator_hardening.py",
+    "tests/test_prompt_runtime_partition_contract.py",
     "tests/test_prompt_runtime_partition_prompt.py",
     "tests/test_prompt_strength_contract_prompt.py",
+    "tests/test_repository_drive_artifact_synchronizer_prompt.py",
     "tests/test_repository_local_proof_continuity_prompt.py",
     "tests/test_repository_versioning_system_prompt.py",
     "tests/test_repository_work_ledger_prompt.py",
@@ -68,10 +74,7 @@
     "tests/test_sysadminsuite_prompt_registry.py",
     "tests/test_teams_attendance_roster_prompt.py",
     "tests/test_test_floor_evolution_prompt.py",
-    "tests/test_ux_design_prompt_suite.py",
-    "tests/test_repository_drive_artifact_synchronizer_prompt.py",
-    "tests/test_p55_repository_bootstrap.py",
-    "tests/test_p55_bootstrap_handoff.py"
+    "tests/test_ux_design_prompt_suite.py"
   ],
   "prompt_semantic_test_globs": [
     "tests/test_*_prompt.py",
@@ -84,7 +87,10 @@
     "tests/test_prompt_runtime_compliance_*.py",
     "tests/test_p02_continuity_regression_matrix.py",
     "tests/test_p55_repository_bootstrap.py",
-    "tests/test_p55_bootstrap_handoff.py"
+    "tests/test_p55_bootstrap_handoff.py",
+    "tests/test_planning_runtime_partition.py",
+    "tests/test_prompt_invocation_fidelity.py",
+    "tests/test_prompt_runtime_partition_contract.py"
   ],
   "prompt_semantic_test_excludes": [
     "tests/test_skill_prompt_registry.py"
