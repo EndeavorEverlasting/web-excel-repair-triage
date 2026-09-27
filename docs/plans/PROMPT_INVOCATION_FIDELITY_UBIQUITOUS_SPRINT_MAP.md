@@ -520,3 +520,18 @@ This successor is complete only when:
 - remaining live-provider/model-obedience proof is reported as a proof ceiling, not silently promoted to repository proof.
 
 Until then, `b951c9d5...` is an integrated UF-1A floor, **not** the final faithfulness-fixed donor.
+
+### Systemic recurrence escalation — canonical prompt mutator quarantine
+
+The post-UF-1A review crossed the repository recurrence threshold. Repository history independently records repeated prompt-semantic restoration after Cursor-authored/assisted changes, including e6737d06... and 8d7eff77...; this plan merge at a9dad732... records the current P04/P05 recurrence after #665.
+
+The operator additionally reports a 100% failure rate across their observed Cursor canonical-prompt-edit attempts. That rate is retained as attributed operator evidence and is not represented as an independently audited statistical corpus.
+
+Disposition:
+- Cursor is QUARANTINED_CANONICAL_PROMPT_MUTATION for canonical/effective prompt bodies, prompt semantic/profile/history mutation, and generated Prompt Kit output.
+- Cursor may still perform read-only analysis, diagnosis, test execution, and non-prompt support implementation.
+- Canonical prompt repair is authored by a non-quarantined owner and executed through the P79 lifecycle.
+- Requalification requires retained negative + positive controls, exact lifecycle-diff review, semantic/build/parity proof, deterministic-floor proof, and an explicit reviewed contract change. One green CI run is insufficient.
+
+Canonical prevention owner: harness/contracts/prompt-regression-safety.v1.json.
+Defect family: CURSOR_CANONICAL_PROMPT_FAITHFULNESS.

@@ -215,7 +215,7 @@ SKIPPED [1] tests/test_three.py:30: Real roster log not present
             self.assertEqual(["git", "diff", "--check", "origin/main", "HEAD"], patch)
             self.assertNotIn("...", " ".join(patch))
 
-    def test_workflow_is_thin_read_only_exact_head_shallow_and_has_no_unrequested_schedule(self) -> None:
+    def test_workflow_is_read_only_exact_head_full_history_and_has_no_unrequested_schedule(self) -> None:
         workflow = FLOOR_WORKFLOW.read_text(encoding="utf-8")
         self.assertIn("pull_request:", workflow)
         self.assertIn("push:", workflow)
@@ -226,10 +226,14 @@ SKIPPED [1] tests/test_three.py:30: Real roster log not present
         self.assertIn("PYTHONHASHSEED: \"0\"", workflow)
         self.assertIn("TZ: UTC", workflow)
         self.assertIn("ref: ${{ github.event.pull_request.head.sha || github.sha }}", workflow)
-        self.assertIn("fetch-depth: 1", workflow)
-        self.assertIn("Verify exact candidate and fetch shallow main evidence", workflow)
+        self.assertIn("fetch-depth: 0", workflow)
+        self.assertIn("Verify exact candidate and fetch comparison evidence", workflow)
         self.assertIn('test "$actual" = "$EXPECTED_SHA"', workflow)
         self.assertIn("+refs/heads/main:refs/remotes/origin/main", workflow)
+        self.assertIn("github.base_ref", workflow)
+        self.assertIn("github.event.before", workflow)
+        self.assertIn('base_ref="origin/${PR_BASE:-main}"', workflow)
+        self.assertIn('base_ref="$BEFORE_SHA"', workflow)
         self.assertIn("python -m pip install -r requirements-test-floor.txt", workflow)
         self.assertNotIn("python -m pip install -r requirements.txt", workflow)
         self.assertEqual(workflow.count("scripts/run_deterministic_test_floor.py"), 1)

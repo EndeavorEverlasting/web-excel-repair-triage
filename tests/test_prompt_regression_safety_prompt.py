@@ -56,7 +56,7 @@ class PromptRegressionSafetyTests(unittest.TestCase):
         self.assertEqual(result["families"], len(self.register["families"]))
         self.assertEqual(
             {family["id"] for family in self.register["families"]},
-            {"TRAILING_WHITESPACE", "PROVIDER_QUOTA_TERMINATION", "LINE_ENDING_DRIFT", "PROMPT_REGRESSION_COVERAGE_GAP"},
+            {"TRAILING_WHITESPACE", "PROVIDER_QUOTA_TERMINATION", "LINE_ENDING_DRIFT", "PROMPT_REGRESSION_COVERAGE_GAP", "CURSOR_CANONICAL_PROMPT_FAITHFULNESS"},
         )
         self.assertGreaterEqual(
             result["occurrences"],
@@ -552,6 +552,157 @@ class PromptRegressionSafetyTests(unittest.TestCase):
         ]
         with self.assertRaisesRegex(regression.RegressionSafetyError, "retain LINE_ENDING_DRIFT"):
             regression.validate_register(register, self.contract)
+
+    def test_cursor_attributed_protected_prompt_commit_is_rejected(self) -> None:
+        records = [
+            {
+                "sha": "a" * 40,
+                "author": "Human Maintainer <maintainer@example.invalid>",
+                "committer": "Human Maintainer <maintainer@example.invalid>",
+                "coauthors": ["Cursor <cursoragent@cursor.com>"],
+                "paths": ["docs/prompts.json"],
+            }
+        ]
+        with self.assertRaisesRegex(
+            regression.RegressionSafetyError,
+            "quarantined mutator touched protected prompt surface",
+        ):
+            regression.validate_mutator_quarantine_records(
+                copy.deepcopy(self.contract),
+                records,
+                candidate_ref="fix/prompt-change",
+            )
+
+    def test_cursor_ref_with_protected_prompt_change_is_rejected(self) -> None:
+        records = [
+            {
+                "sha": "b" * 40,
+                "author": "Human Maintainer <maintainer@example.invalid>",
+                "committer": "Human Maintainer <maintainer@example.invalid>",
+                "coauthors": [],
+                "paths": ["registry/prompts/prompt-overrides.v1.json"],
+            }
+        ]
+        with self.assertRaisesRegex(
+            regression.RegressionSafetyError,
+            "quarantined mutator touched protected prompt surface",
+        ):
+            regression.validate_mutator_quarantine_records(
+                copy.deepcopy(self.contract),
+                records,
+                candidate_ref="cursor/prompt-edit",
+            )
+
+    def test_cursor_attributed_dot_prefixed_workflow_change_is_rejected(self) -> None:
+        records = [
+            {
+                "sha": "c" * 40,
+                "author": "Cursor <cursoragent@cursor.com>",
+                "committer": "Human Maintainer <maintainer@example.invalid>",
+                "coauthors": [],
+                "paths": [".github/workflows/deterministic-test-floor.yml"],
+            }
+        ]
+        with self.assertRaisesRegex(
+            regression.RegressionSafetyError,
+            "quarantined mutator touched protected prompt surface",
+        ):
+            regression.validate_mutator_quarantine_records(
+                copy.deepcopy(self.contract),
+                records,
+                candidate_ref="fix/workflow-guard",
+            )
+
+    def test_cursor_mention_without_attribution_remains_allowed(self) -> None:
+        records = [
+            {
+                "sha": "d" * 40,
+                "author": "Human Maintainer <maintainer@example.invalid>",
+                "committer": "Human Maintainer <maintainer@example.invalid>",
+                "coauthors": [],
+                "paths": ["harness/contracts/prompt-regression-safety.v1.json"],
+            }
+        ]
+        result = regression.validate_mutator_quarantine_records(
+            copy.deepcopy(self.contract),
+            records,
+            candidate_ref="fix/cursor-quarantine-docs",
+        )
+        self.assertEqual(result["protected_commits"], 1)
+        self.assertEqual(result["violations"], 0)
+
+    def test_cursor_non_prompt_change_remains_allowed(self) -> None:
+        records = [
+            {
+                "sha": "e" * 40,
+                "author": "Human Maintainer <maintainer@example.invalid>",
+                "committer": "Human Maintainer <maintainer@example.invalid>",
+                "coauthors": ["Cursor <cursoragent@cursor.com>"],
+                "paths": ["src/non_prompt_support.py"],
+            }
+        ]
+        result = regression.validate_mutator_quarantine_records(
+            copy.deepcopy(self.contract),
+            records,
+            candidate_ref="cursor/non-prompt-support",
+        )
+        self.assertEqual(result["protected_commits"], 0)
+        self.assertEqual(result["violations"], 0)
+
+    def test_quarantine_workflow_uses_full_candidate_event_range(self) -> None:
+        workflow = regression.DETERMINISTIC_FLOOR_WORKFLOW_PATH.read_text(encoding="utf-8")
+        self.assertIn("github.event.before", workflow)
+        self.assertIn("github.base_ref", workflow)
+        self.assertIn('base_ref="origin/${PR_BASE:-main}"', workflow)
+        self.assertIn('base_ref="$BEFORE_SHA"', workflow)
+
+    def test_cursor_prompt_mutator_quarantine_is_retained(self) -> None:
+        reliability = self.contract["mutator_reliability"]
+        cursor = next(item for item in reliability["restricted_mutators"] if item["mutator"] == "Cursor")
+        self.assertEqual(cursor["state"], "QUARANTINED_CANONICAL_PROMPT_MUTATION")
+        observation = cursor["operator_observation"]
+        self.assertIn("100%", observation)
+        self.assertIn("Operator reports", observation)
+        self.assertIn("not an independently audited statistical corpus", observation)
+        self.assertGreaterEqual(len(cursor["repository_evidence"]), self.contract["recurrence"]["systemic_threshold"])
+        forbidden = " ".join(cursor["forbidden_surfaces"])
+        for phrase in ("canonical prompt bodies", "effective prompt override bodies", "prompt semantic profiles and migrations", "generated Prompt Kit output"):
+            self.assertIn(phrase, forbidden)
+        self.assertIn("NON_PROMPT_SUPPORT_IMPLEMENTATION", cursor["allowed_roles"])
+        protected = self.contract["mutator_reliability"]["protected_paths"]
+        self.assertIn("docs/prompts.json", protected)
+        self.assertIn("registry/prompts/", protected)
+        self.assertIn("scripts/validate_prompt_regression_safety.py", protected)
+        self.assertIn(".github/workflows/deterministic-test-floor.yml", protected)
+
+    def test_cursor_quarantine_cannot_silently_promote_itself(self) -> None:
+        contract = copy.deepcopy(self.contract)
+        cursor = next(item for item in contract["mutator_reliability"]["restricted_mutators"] if item["mutator"] == "Cursor")
+        cursor["state"] = "ELIGIBLE_CANONICAL_PROMPT_MUTATION"
+        with self.assertRaisesRegex(regression.RegressionSafetyError, "Cursor canonical prompt mutation quarantine"):
+            regression.validate_contract(contract)
+
+    def test_cursor_prompt_faithfulness_family_cannot_disappear(self) -> None:
+        register = copy.deepcopy(self.register)
+        register["families"] = [item for item in register["families"] if item["id"] != "CURSOR_CANONICAL_PROMPT_FAITHFULNESS"]
+        with self.assertRaisesRegex(regression.RegressionSafetyError, "retain CURSOR_CANONICAL_PROMPT_FAITHFULNESS"):
+            regression.validate_register(register, self.contract)
+
+    def test_effective_p13_enforces_same_mutator_quarantine(self) -> None:
+        overrides = regression.load_json(regression.OVERRIDE_REGISTRY_PATH)
+        p13 = next(item for item in overrides["overrides"] if item["id"] == "P13")
+        copy_content = p13["copyContent"]
+        self.assertIn("1A. SAME-MUTATOR RELIABILITY GATE", copy_content)
+        self.assertIn("QUARANTINED_CANONICAL_PROMPT_MUTATION", copy_content)
+        self.assertIn("MUST NOT author/rewrite canonical or effective prompt bodies", copy_content)
+        self.assertIn("One green CI run is not requalification", copy_content)
+        self.assertIn("attributed operator evidence", copy_content)
+
+    def test_non_prompt_cursor_role_remains_positive_control(self) -> None:
+        cursor = next(item for item in self.contract["mutator_reliability"]["restricted_mutators"] if item["mutator"] == "Cursor")
+        self.assertIn("READ_ONLY_ANALYSIS", cursor["allowed_roles"])
+        self.assertIn("TEST_EXECUTION", cursor["allowed_roles"])
+        self.assertIn("NON_PROMPT_SUPPORT_IMPLEMENTATION", cursor["allowed_roles"])
 
     def test_required_loop_retains_negative_and_positive_controls(self) -> None:
         loop = self.contract["required_loop"]

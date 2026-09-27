@@ -12,6 +12,7 @@ import argparse
 import hashlib
 import json
 import re
+import subprocess
 from pathlib import Path
 from typing import Any
 
@@ -28,6 +29,7 @@ FOCUSED_TEST = "tests/test_prompt_regression_safety_prompt.py"
 COVERAGE_BASELINE_PATH = ROOT / "harness" / "evals" / "prompt-regression" / "prompt-coverage-baseline.v1.json"
 SEMANTIC_PROFILES_PATH = ROOT / "harness" / "prompt-topology" / "prompt-capability-profiles.v1.json"
 OVERRIDE_REGISTRY_PATH = ROOT / "registry" / "prompts" / "prompt-overrides.v1.json"
+DETERMINISTIC_FLOOR_WORKFLOW_PATH = ROOT / ".github" / "workflows" / "deterministic-test-floor.yml"
 COMMIT_RE = re.compile(r"^[0-9a-f]{40}$")
 KNOWN_UNPROFILED_SEED_SHA256 = "75d6746dc6310b157fb7526f20939c849b1b0c05dc07f863c58d5ac30c6c4cfd"
 CANONICAL_LF_PATTERNS = [".gitattributes","*.py","*.json","*.md","*.yml","*.yaml","*.toml","*.ini","*.cfg","*.js","*.css","*.html","*.sh","*.ps1","*.txt","*.csv","*.tsv","*.xml","*.sha256","*.webmanifest"]
@@ -412,6 +414,78 @@ def validate_contract(contract: dict[str, Any]) -> None:
             raise RegressionSafetyError(f"missing incident source: {required_source}")
     _text(recurrence.get("rule"), "recurrence.rule")
 
+    reliability = contract.get("mutator_reliability")
+    if not isinstance(reliability, dict):
+        raise RegressionSafetyError("mutator_reliability must be an object")
+    expected_reliability_fields = {"rate_claim_policy", "same_actor_rule", "quarantine_states", "protected_paths", "restricted_mutators"}
+    if set(reliability) != expected_reliability_fields:
+        raise RegressionSafetyError("mutator_reliability fields do not match contract")
+    rate_policy = _text(reliability.get("rate_claim_policy"), "mutator_reliability.rate_claim_policy")
+    if "attributed" not in rate_policy.lower() or "audited" not in rate_policy.lower():
+        raise RegressionSafetyError("mutator reliability must distinguish attributed from audited rate claims")
+    _text(reliability.get("same_actor_rule"), "mutator_reliability.same_actor_rule")
+    states = _string_list(reliability.get("quarantine_states"), "mutator_reliability.quarantine_states", min_items=2)
+    if set(states) != {"QUARANTINED_CANONICAL_PROMPT_MUTATION", "ELIGIBLE_CANONICAL_PROMPT_MUTATION"}:
+        raise RegressionSafetyError("mutator reliability quarantine state vocabulary drifted")
+    protected_paths = _string_list(
+        reliability.get("protected_paths"),
+        "mutator_reliability.protected_paths",
+        min_items=8,
+    )
+    for required_path in (
+        "docs/prompts.json",
+        "registry/prompts/",
+        "harness/prompt-compilation/prompt-semantic-migrations.v1.json",
+        "web/prompt-kit/",
+        "harness/contracts/prompt-regression-safety.v1.json",
+        "scripts/validate_prompt_regression_safety.py",
+        ".github/workflows/deterministic-test-floor.yml",
+    ):
+        if required_path not in protected_paths:
+            raise RegressionSafetyError(f"mutator quarantine missing protected path: {required_path}")
+    restricted = reliability.get("restricted_mutators")
+    if not isinstance(restricted, list) or not restricted:
+        raise RegressionSafetyError("mutator_reliability.restricted_mutators must be non-empty")
+    seen_mutators: set[str] = set()
+    cursor = None
+    required_mutator_fields = {
+        "mutator", "state", "operator_observation", "repository_evidence",
+        "forbidden_surfaces", "allowed_roles", "requalification_requirements",
+    }
+    for index, mutator in enumerate(restricted):
+        if not isinstance(mutator, dict) or set(mutator) != required_mutator_fields:
+            raise RegressionSafetyError(f"restricted_mutator[{index}] fields do not match contract")
+        name = _text(mutator.get("mutator"), f"restricted_mutator[{index}].mutator")
+        if name in seen_mutators:
+            raise RegressionSafetyError(f"duplicate restricted mutator: {name}")
+        seen_mutators.add(name)
+        if mutator.get("state") not in states:
+            raise RegressionSafetyError(f"invalid mutator reliability state: {name}")
+        _text(mutator.get("operator_observation"), f"{name}.operator_observation")
+        evidence = _string_list(mutator.get("repository_evidence"), f"{name}.repository_evidence", min_items=2)
+        if any(not COMMIT_RE.fullmatch(commit) for commit in evidence):
+            raise RegressionSafetyError(f"{name} repository evidence must be lowercase 40-hex commits")
+        _string_list(mutator.get("forbidden_surfaces"), f"{name}.forbidden_surfaces", min_items=3)
+        _string_list(mutator.get("allowed_roles"), f"{name}.allowed_roles", min_items=2)
+        requirements = _string_list(mutator.get("requalification_requirements"), f"{name}.requalification_requirements", min_items=4)
+        joined_requirements = " ".join(requirements).lower()
+        for phrase in ("negative", "positive", "lifecycle diff", "explicit reviewed"):
+            if phrase not in joined_requirements:
+                raise RegressionSafetyError(f"{name} requalification is missing concept: {phrase}")
+        if name == "Cursor":
+            cursor = mutator
+    if cursor is None:
+        raise RegressionSafetyError("Cursor systemic prompt-faithfulness quarantine must be retained")
+    if cursor.get("state") != "QUARANTINED_CANONICAL_PROMPT_MUTATION":
+        raise RegressionSafetyError("Cursor canonical prompt mutation quarantine may change only through explicit reviewed requalification")
+    observation = str(cursor.get("operator_observation", "")).lower()
+    if "100%" not in observation or "operator" not in observation or "not an independently audited" not in observation:
+        raise RegressionSafetyError("Cursor operator-rate observation must remain attributed and explicitly unaudited")
+    forbidden_text = " ".join(cursor.get("forbidden_surfaces", [])).lower()
+    for phrase in ("canonical prompt", "effective prompt", "semantic profiles", "generated prompt kit"):
+        if phrase not in forbidden_text:
+            raise RegressionSafetyError(f"Cursor quarantine missing forbidden surface: {phrase}")
+
     loop = contract.get("required_loop")
     expected_loop = [
         "REPAIR_INSTANCE",
@@ -641,6 +715,31 @@ def validate_register(register: dict[str, Any], contract: dict[str, Any]) -> dic
     if ".gitattributes" not in line_ending_family.get("prevention_surfaces", []):
         raise RegressionSafetyError("LINE_ENDING_DRIFT must retain .gitattributes prevention owner")
 
+    cursor_family = next(
+        (family for family in families if family.get("id") == "CURSOR_CANONICAL_PROMPT_FAITHFULNESS"),
+        None,
+    )
+    if cursor_family is None:
+        raise RegressionSafetyError("defect register must retain CURSOR_CANONICAL_PROMPT_FAITHFULNESS systemic family")
+    if cursor_family.get("classification") != "PROMPT_SEMANTICS":
+        raise RegressionSafetyError("CURSOR_CANONICAL_PROMPT_FAITHFULNESS must remain PROMPT_SEMANTICS")
+    if cursor_family.get("recurring_across_repositories") is not False:
+        raise RegressionSafetyError("Cursor prompt-faithfulness family is currently Triage-scoped")
+    if cursor_family.get("matrix_capture_required") is not False:
+        raise RegressionSafetyError("Cursor prompt-faithfulness recurrence must not depend on retrospective matrix capture")
+    cursor_prevention = set(cursor_family.get("prevention_surfaces", []))
+    for required_surface in (
+        "harness/contracts/prompt-regression-safety.v1.json",
+        "registry/prompts/prompt-overrides.v1.json",
+        "scripts/validate_prompt_regression_safety.py",
+        "tests/test_prompt_regression_safety_prompt.py",
+        ".github/workflows/deterministic-test-floor.yml",
+    ):
+        if required_surface not in cursor_prevention:
+            raise RegressionSafetyError(
+                f"CURSOR_CANONICAL_PROMPT_FAITHFULNESS missing prevention surface: {required_surface}"
+            )
+
     return {
         "families": len(families),
         "occurrences": occurrence_count,
@@ -657,6 +756,7 @@ def validate_repository_wiring(
     validators: dict[str, Any] | None = None,
     pre_commit_text: str | None = None,
     gitattributes_text: str | None = None,
+    deterministic_workflow_text: str | None = None,
 ) -> None:
     marker = contract["prompt_marker"]
     policy = load_json(POLICY_PATH) if policy is None else policy
@@ -685,6 +785,23 @@ def validate_repository_wiring(
     pre_commit_text = PRE_COMMIT_PATH.read_text(encoding="utf-8") if pre_commit_text is None else pre_commit_text
     if "git diff --cached --check" not in pre_commit_text:
         raise RegressionSafetyError("pre-commit hook must retain staged patch-hygiene proof")
+
+    deterministic_workflow_text = (
+        DETERMINISTIC_FLOOR_WORKFLOW_PATH.read_text(encoding="utf-8")
+        if deterministic_workflow_text is None
+        else deterministic_workflow_text
+    )
+    for marker in (
+        "fetch-depth: 0",
+        "--enforce-mutator-quarantine",
+        "--base-ref",
+        "--head-ref",
+        "--candidate-ref",
+    ):
+        if marker not in deterministic_workflow_text:
+            raise RegressionSafetyError(
+                f"deterministic floor missing mutator-quarantine enforcement marker: {marker}"
+            )
 
     gitattributes_text = (
         GITATTRIBUTES_PATH.read_text(encoding="utf-8")
@@ -753,6 +870,162 @@ def validate_repository_wiring(
         raise RegressionSafetyError("pre_push profile must retain patch-hygiene")
 
 
+
+def _git_output(*args: str) -> str:
+    process = subprocess.run(
+        ["git", *args],
+        cwd=ROOT,
+        text=True,
+        capture_output=True,
+        check=False,
+    )
+    if process.returncode != 0:
+        raise RegressionSafetyError(
+            "git command failed for mutator quarantine: "
+            + " ".join(args)
+            + " :: "
+            + process.stderr.strip()
+        )
+    return process.stdout
+
+
+def _is_protected_mutation_path(path: str, protected_paths: list[str]) -> bool:
+    normalized = path.replace("\\", "/")
+    while normalized.startswith("./"):
+        normalized = normalized[2:]
+    return any(
+        normalized == rule or (rule.endswith("/") and normalized.startswith(rule))
+        for rule in protected_paths
+    )
+
+
+def validate_mutator_quarantine_records(
+    contract: dict[str, Any],
+    records: list[dict[str, Any]],
+    *,
+    candidate_ref: str = "",
+) -> dict[str, Any]:
+    reliability = contract["mutator_reliability"]
+    protected_paths = reliability["protected_paths"]
+    protected_commits = 0
+    violations: list[str] = []
+    ref_lower = candidate_ref.lower()
+
+    for record in records:
+        sha = _text(record.get("sha"), "candidate_commit.sha")
+        author = _text(record.get("author"), f"candidate_commit[{sha}].author").casefold()
+        committer = _text(
+            record.get("committer"),
+            f"candidate_commit[{sha}].committer",
+        ).casefold()
+        coauthors = [
+            item.casefold()
+            for item in _string_list(
+                record.get("coauthors"),
+                f"candidate_commit[{sha}].coauthors",
+                min_items=0,
+            )
+        ]
+        attribution = "\n".join([author, committer, *coauthors])
+        paths = _string_list(record.get("paths"), f"candidate_commit[{sha}].paths", min_items=0)
+        touched = sorted(
+            path for path in paths
+            if _is_protected_mutation_path(path, protected_paths)
+        )
+        if not touched:
+            continue
+        protected_commits += 1
+        for mutator in reliability["restricted_mutators"]:
+            if mutator.get("state") != "QUARANTINED_CANONICAL_PROMPT_MUTATION":
+                continue
+            name = _text(mutator.get("mutator"), "restricted_mutator.mutator")
+            marker = name.casefold()
+            ref_matches = ref_lower.startswith(f"{marker}/")
+            if marker in attribution or ref_matches:
+                violations.append(
+                    f"{name}@{sha[:12]} touched protected path(s): {', '.join(touched)}"
+                )
+
+    if violations:
+        raise RegressionSafetyError(
+            "quarantined mutator touched protected prompt surface: "
+            + " | ".join(violations)
+        )
+    return {
+        "checked_commits": len(records),
+        "protected_commits": protected_commits,
+        "violations": 0,
+    }
+
+
+def collect_git_candidate_records(base_ref: str, head_ref: str) -> list[dict[str, Any]]:
+    shas = [
+        line.strip()
+        for line in _git_output(
+            "rev-list", "--reverse", f"{base_ref}..{head_ref}"
+        ).splitlines()
+        if line.strip()
+    ]
+    records: list[dict[str, Any]] = []
+    for sha in shas:
+        author = _git_output(
+            "show",
+            "-s",
+            "--format=%an <%ae>",
+            sha,
+        ).strip()
+        committer = _git_output(
+            "show",
+            "-s",
+            "--format=%cn <%ce>",
+            sha,
+        ).strip()
+        message = _git_output("show", "-s", "--format=%B", sha)
+        coauthors = [
+            match.group(1).strip()
+            for line in message.splitlines()
+            if (match := re.match(r"(?i)^co-authored-by:\s*(.+)$", line.strip()))
+        ]
+        paths = sorted(
+            {
+                line.strip()
+                for line in _git_output(
+                    "diff-tree",
+                    "--no-commit-id",
+                    "--name-only",
+                    "-r",
+                    "-m",
+                    sha,
+                ).splitlines()
+                if line.strip()
+            }
+        )
+        records.append(
+            {
+                "sha": sha,
+                "author": author,
+                "committer": committer,
+                "coauthors": coauthors,
+                "paths": paths,
+            }
+        )
+    return records
+
+
+def enforce_mutator_quarantine(
+    contract: dict[str, Any],
+    *,
+    base_ref: str,
+    head_ref: str,
+    candidate_ref: str = "",
+) -> dict[str, Any]:
+    records = collect_git_candidate_records(base_ref, head_ref)
+    return validate_mutator_quarantine_records(
+        contract,
+        records,
+        candidate_ref=candidate_ref,
+    )
+
 def validate_all(
     contract: dict[str, Any], register: dict[str, Any], *, check_repository_wiring: bool = True
 ) -> dict[str, Any]:
@@ -778,9 +1051,21 @@ def main() -> int:
     parser.add_argument("--contract", type=Path, default=CONTRACT_PATH)
     parser.add_argument("--input", type=Path, default=REGISTER_PATH)
     parser.add_argument("--summary", action="store_true")
+    parser.add_argument("--enforce-mutator-quarantine", action="store_true")
+    parser.add_argument("--base-ref", default="origin/main")
+    parser.add_argument("--head-ref", default="HEAD")
+    parser.add_argument("--candidate-ref", default="")
     args = parser.parse_args()
 
-    result = validate_all(load_json(args.contract), load_json(args.input))
+    contract = load_json(args.contract)
+    result = validate_all(contract, load_json(args.input))
+    if args.enforce_mutator_quarantine:
+        result["mutator_quarantine"] = enforce_mutator_quarantine(
+            contract,
+            base_ref=args.base_ref,
+            head_ref=args.head_ref,
+            candidate_ref=args.candidate_ref,
+        )
     if args.summary:
         print(
             "prompt-regression-safety: PASS "
@@ -792,7 +1077,12 @@ def main() -> int:
             f"unprofiled={result['coverage']['unprofiled_prompts']} "
             f"closeout_review={result['coverage']['closeout_or_review_owners']} "
             f"overrides={result['coverage']['override_bindings']} "
-            "matrix_exhaustive=false provider_semantic_owner=false"
+            + (
+                f"mutator_quarantine=PASS protected_commits={result['mutator_quarantine']['protected_commits']} "
+                if "mutator_quarantine" in result
+                else "mutator_quarantine=NOT_ENFORCED "
+            )
+            + "matrix_exhaustive=false provider_semantic_owner=false"
         )
     else:
         print(json.dumps(result, indent=2, sort_keys=True))
