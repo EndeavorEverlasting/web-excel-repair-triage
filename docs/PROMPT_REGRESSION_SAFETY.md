@@ -129,3 +129,9 @@ Recurring semantic loss can implicate not only a missing rule, but the choice of
 The retained family is CURSOR_CANONICAL_PROMPT_FAITHFULNESS. Repository commit history independently satisfies the systemic recurrence threshold. The operator also reports a 100% failure rate across their observed Cursor canonical-prompt-edit attempts; the repository records that statement as attributed operator evidence, not as an independently audited statistical rate.
 
 While the family remains quarantined, Cursor may inspect, diagnose, execute tests, and implement non-prompt support surfaces, but it may not author canonical/effective prompt bodies, prompt semantic/profile/history transitions, or generated Prompt Kit output. Requalification is explicit and evidence-bearing: negative + positive controls, exact lifecycle-diff review, semantic/build/parity gates, deterministic-floor proof, and a reviewed contract transition. A single green CI run is not requalification.
+
+## Commit-attribution enforcement
+
+The quarantine is enforced, not merely documented. The deterministic test floor checks the full candidate commit range against the protected-path inventory in the regression-safety contract. A protected-path commit is rejected when a quarantined mutator is identified by commit metadata/co-author attribution or by the candidate ref. Cursor-attributed changes to unrelated non-prompt paths remain a positive control and are allowed.
+
+The protected inventory includes canonical/effective prompt registries, semantic profiles/migrations, generated Prompt Kit output, and the quarantine's own contract/validator/test/workflow surfaces so a quarantined mutator cannot self-remove the gate. The PR floor uses full Git history for this check; shallow-last-commit inspection is insufficient.
