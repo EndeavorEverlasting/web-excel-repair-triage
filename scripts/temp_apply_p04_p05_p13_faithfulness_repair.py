@@ -126,7 +126,7 @@ p04_receipt = protected_edit(
         "copyContent": p04_copy,
         "nextStep": (
             "Resolve and reuse the canonical repository plan/handoff owner or a relevant writable active PR owned by this lane. "
-            "If none exists and mutation is authorized, create the smallest tracked plan artifact; persist the complete accepted factoring plan and PARALLEL DISPATCH MANIFEST there and, when P66/a work ledger exists, index canonical plan/PR + current proof + owner + executable next action. "
+            "If none exists and repository mutation is authorized, create the smallest tracked plan artifact; persist the complete accepted factoring plan and PARALLEL DISPATCH MANIFEST there and, when P66/a work ledger exists, index canonical plan/PR + current proof + owner + executable next action. "
             "Material approval or plan change must be synchronized before P05/P07/another agent takes over. Unrelated PRs are not write targets; read-only scope keeps the chat plan PROVISIONAL and durability BLOCKED. "
             "Route implementation to P07 from the validated manifest; graph width >=2 requires an autonomous adapter or explicit AUTONOMY_GAP; validate the JSON manifest before P07 consumes it."
         ),
@@ -539,6 +539,18 @@ tests = replace_once(tests, test_anchor, new_tests, "regression quarantine tests
 REGRESSION_TEST.write_text(tests, encoding="utf-8")
 
 runtime_tests = RUNTIME_TEST.read_text(encoding="utf-8")
+runtime_tests = replace_once(
+    runtime_tests,
+    'self.assertIn("same shared planning.runtime_partition contract as P04", text)',
+    'self.assertIn("apply shared planning.runtime_partition", text)',
+    "P05 old cross-reference assertion",
+)
+runtime_tests = replace_once(
+    runtime_tests,
+    'self.assertIn("LAUNCH ORDER remains first substantive section", text)',
+    'self.assertIn("LAUNCH ORDER remains the first substantive emitted section", text)',
+    "P05 launch-order wording assertion",
+)
 runtime_test_anchor = '''    def test_dispatch_contract_requires_runtime_partition_lane_fields(self) -> None:
 '''
 runtime_new_tests = '''    def test_p04_restores_durable_handoff_and_canonical_runtime_owner(self) -> None:
