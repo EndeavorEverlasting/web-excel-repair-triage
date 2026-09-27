@@ -35,9 +35,15 @@ required=[
 missing=[x for x in required if x not in new_next]
 if missing:
     raise SystemExit("candidate missing preserved semantics: "+repr(missing))
+old_body_phrase="If no owner exists, create the smallest tracked plan artifact before routing to execution."
+new_body_phrase="If no owner exists, create the smallest tracked plan artifact before P05/P07 handoff."
+if p04["copyContent"].count(old_body_phrase) != 1:
+    raise RuntimeError("P04 durable-body anchor missing or duplicated")
+new_copy=p04["copyContent"].replace(old_body_phrase,new_body_phrase,1)
+
 result=ops.edit_prompt(
     "P04",
-    {"nextStep":new_next},
+    {"nextStep":new_next,"copyContent":new_copy},
     "NO_CAPABILITY_CHANGE",
     [
         "tests/test_prompt_parallel_execution_contract.py",
@@ -45,8 +51,8 @@ result=ops.edit_prompt(
         "docs/plans/PROMPT_INVOCATION_FIDELITY_UBIQUITOUS_SPRINT_MAP.md",
     ],
     "Non-weakening follow-up: restore the complete pre-existing P04 next-step autonomy/PR/read-only semantics while retaining the new material-plan-change and P66 continuity requirements.",
-    "PRESERVE",
-    "copyContent is unchanged; metadata repair restores previously protected next-step semantics that were over-compressed in the first faithfulness candidate.",
+    "COMPRESS",
+    "A five-character body compression sharpens the durable transition from generic execution routing to explicit P05/P07 handoff while the metadata restoration reinstates protected autonomy, PR-ownership, and read-only semantics.",
     dry_run=False,
 )
 print(json.dumps(result,indent=2))
