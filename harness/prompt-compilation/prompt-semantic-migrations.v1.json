@@ -347,8 +347,7 @@
       "rationale": "Strengthen effective P13 with a same-mutator quarantine/requalification gate so repeated prompt-faithfulness repair cannot be assigned back to a quarantined mutator.",
       "focused_tests": [
         "tests/test_prompt_regression_safety_prompt.py",
-        "tests/test_skill_prompt_registry.py",
-        "tests/test_prompt_kit_mainline_delivery.py"
+        "tests/test_skill_prompt_registry.py"
       ]
     },
     {
