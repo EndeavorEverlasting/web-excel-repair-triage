@@ -2,7 +2,7 @@
 
 Human-facing Operant releases. Git commit/artifact identity remains the forensic freshness proof.
 
-## 0.11.0 - 2026-09-26
+## 0.11.0 - 2026-09-27
 
 ### Features / breaking pre-1.0 changes
 
@@ -15,6 +15,7 @@ Human-facing Operant releases. Git commit/artifact identity remains the forensic
 - feat(prompt-kit): pair Canary local and cloud artifacts (`fa2ee183`)
 - feat(prompt-kit): add shared operator state presentation contract (`95b67123`)
 - feat(prompt-kit): validate operator state presentation policy (`9878637b`)
+- feat(prompt-kit): implement shared P04/P05 runtime partition (UF-1A) (`598fc937`)
 
 ### Fixes / performance
 
@@ -35,6 +36,7 @@ Human-facing Operant releases. Git commit/artifact identity remains the forensic
 - fix(plan): restore full tree after provider merge reconciliation (`6919be00`)
 - fix(operant): refresh external resource projection for deepseek-harness drift (`362f920c`)
 - fix(prompt-kit): upgrade appendices missing state presentation (`5e9cbcba`)
+- fix(prompt-kit): restore P04 quality-rules literal for floor regressions (`f8efb872`)
 
 ## 0.10.1 - 2026-09-19
 
