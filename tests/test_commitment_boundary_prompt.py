@@ -1,16 +1,20 @@
 from __future__ import annotations
 
+import copy
 import json
 import unittest
 from pathlib import Path
 
 from jsonschema import Draft202012Validator
 
+from scripts import validate_commitment_boundary as commitment_boundary
+
 
 ROOT = Path(__file__).resolve().parents[1]
 CONTRACT = ROOT / "harness" / "contracts" / "commitment-boundary.v1.json"
 AGENTS = ROOT / "AGENTS.md"
 TEST_FLOOR = ROOT / "harness" / "test-floor.v1.json"
+VALIDATORS = ROOT / "harness" / "validators.v1.json"
 
 
 class CommitmentBoundaryPromptTests(unittest.TestCase):
@@ -27,37 +31,16 @@ class CommitmentBoundaryPromptTests(unittest.TestCase):
         self.assertEqual(governance["principle_id"], "commitment-boundary")
         self.assertTrue(governance["portable"])
         self.assertEqual(governance["propagation_owner"], "P00")
+        self.assertEqual(
+            governance["semantic_validator"],
+            "scripts/validate_commitment_boundary.py",
+        )
+        self.assertIn("does not prove", governance["proof_ceiling"])
 
     def test_canonical_buffer_case_preserves_external_window_without_promoting_target(self) -> None:
-        packet = {
-            "schema_version": "commitment-boundary/v1",
-            "communication_scope": "EXTERNAL",
-            "facts": [
-                {
-                    "fact_id": "internal-arrival-target",
-                    "kind": "INTERNAL_TARGET",
-                    "value": "11:00 AM",
-                    "source": "internal scheduling buffer",
-                },
-                {
-                    "fact_id": "delivery-window",
-                    "kind": "EXTERNAL_COMMITMENT",
-                    "value": "11:30 AM-12:00 PM",
-                    "source": "confirmed recipient-facing delivery window",
-                    "externally_material": True,
-                },
-            ],
-            "claims": [
-                {
-                    "claim_id": "assembly-during-delivery",
-                    "source_ref": "delivery-window",
-                    "source_kind": "EXTERNAL_COMMITMENT",
-                    "asserted_kind": "EXTERNAL_COMMITMENT",
-                    "text": "Our technicians will assemble on-site during delivery.",
-                }
-            ],
-        }
-        self.validator.validate(packet)
+        packet = commitment_boundary.canonical_packet()
+        result = commitment_boundary.validate_packet(packet, self.schema)
+        self.assertEqual(result["status"], "PASS")
         canonical = self.schema["x-governance"]["canonical_case"]
         self.assertEqual(
             canonical["valid_external_wording"],
@@ -65,77 +48,153 @@ class CommitmentBoundaryPromptTests(unittest.TestCase):
         )
 
     def test_internal_target_cannot_be_promoted_to_external_commitment(self) -> None:
-        packet = {
-            "schema_version": "commitment-boundary/v1",
-            "communication_scope": "EXTERNAL",
-            "facts": [
-                {
-                    "fact_id": "internal-arrival-target",
-                    "kind": "INTERNAL_TARGET",
-                    "value": "11:00 AM",
-                    "source": "internal scheduling buffer",
-                }
-            ],
-            "claims": [
-                {
-                    "claim_id": "promoted-arrival-promise",
-                    "source_ref": "internal-arrival-target",
-                    "source_kind": "INTERNAL_TARGET",
-                    "asserted_kind": "EXTERNAL_COMMITMENT",
-                    "text": "Our technicians will be on-site by 11:00 AM.",
-                }
-            ],
-        }
-        errors = list(self.validator.iter_errors(packet))
-        self.assertTrue(errors)
+        packet = commitment_boundary.canonical_packet()
+        packet["claims"] = [
+            {
+                "claim_id": "promoted-arrival-promise",
+                "source_ref": "internal-arrival-target",
+                "asserted_kind": "EXTERNAL_COMMITMENT",
+                "text": "Our technicians will be on-site by 11:00 AM.",
+            }
+        ]
+        with self.assertRaisesRegex(
+            commitment_boundary.CommitmentBoundaryError,
+            "promotes INTERNAL_TARGET to EXTERNAL_COMMITMENT",
+        ):
+            commitment_boundary.validate_packet(packet, self.schema)
         self.assertEqual(
             self.schema["x-governance"]["canonical_case"]["invalid_external_wording"],
             "Our technicians will be on-site by 11:00 AM.",
         )
 
     def test_estimate_and_external_constraint_cannot_be_promoted_to_commitment(self) -> None:
-        for source_kind in ("ESTIMATE", "EXTERNAL_CONSTRAINT"):
-            with self.subTest(source_kind=source_kind):
+        cases = (
+            {
+                "kind": "ESTIMATE",
+                "authority_class": "ESTIMATE_EVIDENCE",
+                "evidence_ref": "estimate-evidence:working-arrival",
+            },
+            {
+                "kind": "EXTERNAL_CONSTRAINT",
+                "authority_class": "RECIPIENT_CONFIRMED",
+                "evidence_ref": "recipient-confirmation:access-window",
+            },
+        )
+        for case in cases:
+            with self.subTest(kind=case["kind"]):
                 packet = {
                     "schema_version": "commitment-boundary/v1",
                     "communication_scope": "EXTERNAL",
                     "facts": [
                         {
                             "fact_id": "source",
-                            "kind": source_kind,
+                            "kind": case["kind"],
                             "value": "working timing",
-                            "source": "planning evidence",
+                            "authority_class": case["authority_class"],
+                            "evidence_ref": case["evidence_ref"],
+                            "externally_material": True,
                         }
                     ],
                     "claims": [
                         {
                             "claim_id": "promotion",
                             "source_ref": "source",
-                            "source_kind": source_kind,
                             "asserted_kind": "EXTERNAL_COMMITMENT",
                             "text": "This is guaranteed.",
                         }
                     ],
                 }
-                self.assertTrue(list(self.validator.iter_errors(packet)))
+                with self.assertRaisesRegex(
+                    commitment_boundary.CommitmentBoundaryError,
+                    f"promotes {case['kind']} to EXTERNAL_COMMITMENT",
+                ):
+                    commitment_boundary.validate_packet(packet, self.schema)
 
-    def test_root_governance_binds_commitment_boundary_and_cross_repo_p00_propagation(self) -> None:
+    def test_claim_source_must_resolve_uniquely(self) -> None:
+        missing = commitment_boundary.canonical_packet()
+        missing["claims"][0]["source_ref"] = "does-not-exist"
+        with self.assertRaisesRegex(
+            commitment_boundary.CommitmentBoundaryError,
+            "references missing fact",
+        ):
+            commitment_boundary.validate_packet(missing, self.schema)
+
+        duplicate = commitment_boundary.canonical_packet()
+        duplicate["facts"].append(copy.deepcopy(duplicate["facts"][0]))
+        with self.assertRaisesRegex(
+            commitment_boundary.CommitmentBoundaryError,
+            "duplicate fact_id",
+        ):
+            commitment_boundary.validate_packet(duplicate, self.schema)
+
+    def test_claim_cannot_supply_a_fake_source_kind(self) -> None:
+        packet = commitment_boundary.canonical_packet()
+        packet["claims"][0]["source_kind"] = "EXTERNAL_COMMITMENT"
+        errors = list(self.validator.iter_errors(packet))
+        self.assertTrue(errors)
+        self.assertTrue(
+            any("Additional properties are not allowed" in error.message for error in errors)
+        )
+
+    def test_external_commitment_requires_typed_external_authority_and_evidence_ref(self) -> None:
+        packet = commitment_boundary.canonical_packet()
+        source = packet["facts"][1]
+        source["authority_class"] = "INTERNAL_PLANNING"
+        source["evidence_ref"] = "internal-plan:fabricated-promise"
+        with self.assertRaisesRegex(
+            commitment_boundary.CommitmentBoundaryError,
+            "schema validation failed",
+        ):
+            commitment_boundary.validate_packet(packet, self.schema)
+
+    def test_non_material_internal_target_is_not_exposed_in_external_packet(self) -> None:
+        packet = commitment_boundary.canonical_packet()
+        packet["claims"] = [
+            {
+                "claim_id": "exposed-buffer",
+                "source_ref": "internal-arrival-target",
+                "asserted_kind": "INTERNAL_TARGET",
+                "text": "Our internal target is 11:00 AM.",
+            }
+        ]
+        with self.assertRaisesRegex(
+            commitment_boundary.CommitmentBoundaryError,
+            "exposes a non-material internal target externally",
+        ):
+            commitment_boundary.validate_packet(packet, self.schema)
+
+    def test_root_governance_binds_commitment_boundary_and_p00_ownership(self) -> None:
         agents = AGENTS.read_text(encoding="utf-8")
         for phrase in (
             "**Commitment boundary:**",
             "internal targets, buffers, estimates, working dates, and planning assumptions are not external commitments",
             "never promote them into promises",
-            "P00 propagates it",
+            "P00 owns propagation",
             "harness/contracts/commitment-boundary.v1.json",
         ):
             self.assertIn(phrase, agents)
 
-    def test_regression_is_registered_in_deterministic_floor(self) -> None:
+    def test_regression_and_validator_are_registered(self) -> None:
         floor = json.loads(TEST_FLOOR.read_text(encoding="utf-8"))
         self.assertIn(
             "tests/test_commitment_boundary_prompt.py",
             floor["self_tests"],
         )
+
+        validators = json.loads(VALIDATORS.read_text(encoding="utf-8"))
+        by_id = {row["id"]: row for row in validators["validators"]}
+        self.assertEqual(
+            by_id["commitment-boundary-audit"]["command"],
+            "python3 scripts/validate_commitment_boundary.py --summary",
+        )
+        self.assertEqual(
+            by_id["commitment-boundary-tests"]["command"],
+            "python3 -m unittest tests.test_commitment_boundary_prompt -v",
+        )
+        for profile in ("required_checks", "harness", "pre_commit", "pre_push"):
+            with self.subTest(profile=profile):
+                self.assertIn("commitment-boundary-audit", validators["profiles"][profile])
+                self.assertIn("commitment-boundary-tests", validators["profiles"][profile])
 
 
 if __name__ == "__main__":

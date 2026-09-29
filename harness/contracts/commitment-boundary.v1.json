@@ -15,82 +15,146 @@
     },
     "facts": {
       "type": "array",
-      "items": {
-        "type": "object",
-        "additionalProperties": false,
-        "required": ["fact_id", "kind", "value", "source"],
-        "properties": {
-          "fact_id": {"type": "string", "minLength": 1},
-          "kind": {
-            "type": "string",
-            "enum": ["INTERNAL_TARGET", "ESTIMATE", "EXTERNAL_CONSTRAINT", "EXTERNAL_COMMITMENT"]
-          },
-          "value": {"type": "string", "minLength": 1},
-          "source": {"type": "string", "minLength": 1},
-          "externally_material": {"type": "boolean", "default": false}
-        }
-      }
+      "items": {"$ref": "#/$defs/fact"}
     },
     "claims": {
       "type": "array",
-      "items": {
-        "type": "object",
-        "additionalProperties": false,
-        "required": ["claim_id", "source_ref", "source_kind", "asserted_kind", "text"],
-        "properties": {
-          "claim_id": {"type": "string", "minLength": 1},
-          "source_ref": {"type": "string", "minLength": 1},
-          "source_kind": {
-            "type": "string",
-            "enum": ["INTERNAL_TARGET", "ESTIMATE", "EXTERNAL_CONSTRAINT", "EXTERNAL_COMMITMENT"]
-          },
-          "asserted_kind": {
-            "type": "string",
-            "enum": ["INTERNAL_TARGET", "ESTIMATE", "EXTERNAL_CONSTRAINT", "EXTERNAL_COMMITMENT", "NONCOMMITTAL_STATUS"]
-          },
-          "text": {"type": "string", "minLength": 1}
+      "items": {"$ref": "#/$defs/claim"}
+    }
+  },
+  "$defs": {
+    "fact": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "fact_id",
+        "kind",
+        "value",
+        "authority_class",
+        "evidence_ref",
+        "externally_material"
+      ],
+      "properties": {
+        "fact_id": {"type": "string", "minLength": 1},
+        "kind": {
+          "type": "string",
+          "enum": [
+            "INTERNAL_TARGET",
+            "ESTIMATE",
+            "EXTERNAL_CONSTRAINT",
+            "EXTERNAL_COMMITMENT"
+          ]
         },
-        "allOf": [
-          {
-            "if": {
-              "properties": {"source_kind": {"const": "INTERNAL_TARGET"}},
-              "required": ["source_kind"]
-            },
-            "then": {
-              "properties": {
-                "asserted_kind": {
-                  "enum": ["INTERNAL_TARGET", "NONCOMMITTAL_STATUS"]
-                }
-              }
-            }
+        "value": {"type": "string", "minLength": 1},
+        "authority_class": {
+          "type": "string",
+          "enum": [
+            "INTERNAL_PLANNING",
+            "ESTIMATE_EVIDENCE",
+            "RECIPIENT_CONFIRMED",
+            "CONTRACTUAL",
+            "SLA",
+            "OPERATOR_APPROVED_EXTERNAL"
+          ]
+        },
+        "evidence_ref": {
+          "type": "string",
+          "pattern": "^(internal-plan|estimate-evidence|recipient-confirmation|contract|sla|operator-approval):.+$"
+        },
+        "externally_material": {"type": "boolean"}
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {"kind": {"const": "INTERNAL_TARGET"}},
+            "required": ["kind"]
           },
-          {
-            "if": {
-              "properties": {"source_kind": {"const": "ESTIMATE"}},
-              "required": ["source_kind"]
-            },
-            "then": {
-              "properties": {
-                "asserted_kind": {
-                  "enum": ["ESTIMATE", "NONCOMMITTAL_STATUS"]
-                }
-              }
+          "then": {
+            "properties": {
+              "authority_class": {"const": "INTERNAL_PLANNING"},
+              "evidence_ref": {"pattern": "^internal-plan:.+$"}
             }
+          }
+        },
+        {
+          "if": {
+            "properties": {"kind": {"const": "ESTIMATE"}},
+            "required": ["kind"]
           },
-          {
-            "if": {
-              "properties": {"source_kind": {"const": "EXTERNAL_CONSTRAINT"}},
-              "required": ["source_kind"]
-            },
-            "then": {
-              "properties": {
-                "asserted_kind": {
-                  "enum": ["EXTERNAL_CONSTRAINT", "NONCOMMITTAL_STATUS"]
-                }
+          "then": {
+            "properties": {
+              "authority_class": {
+                "enum": ["INTERNAL_PLANNING", "ESTIMATE_EVIDENCE"]
+              },
+              "evidence_ref": {
+                "pattern": "^(internal-plan|estimate-evidence):.+$"
               }
             }
           }
-        ]
+        },
+        {
+          "if": {
+            "properties": {"kind": {"const": "EXTERNAL_CONSTRAINT"}},
+            "required": ["kind"]
+          },
+          "then": {
+            "properties": {
+              "authority_class": {
+                "enum": [
+                  "RECIPIENT_CONFIRMED",
+                  "CONTRACTUAL",
+                  "SLA",
+                  "OPERATOR_APPROVED_EXTERNAL"
+                ]
+              },
+              "evidence_ref": {
+                "pattern": "^(recipient-confirmation|contract|sla|operator-approval):.+$"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {"kind": {"const": "EXTERNAL_COMMITMENT"}},
+            "required": ["kind"]
+          },
+          "then": {
+            "properties": {
+              "authority_class": {
+                "enum": [
+                  "RECIPIENT_CONFIRMED",
+                  "CONTRACTUAL",
+                  "SLA",
+                  "OPERATOR_APPROVED_EXTERNAL"
+                ]
+              },
+              "evidence_ref": {
+                "pattern": "^(recipient-confirmation|contract|sla|operator-approval):.+$"
+              },
+              "externally_material": {"const": true}
+            }
+          }
+        }
+      ]
+    },
+    "claim": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["claim_id", "source_ref", "asserted_kind", "text"],
+      "properties": {
+        "claim_id": {"type": "string", "minLength": 1},
+        "source_ref": {"type": "string", "minLength": 1},
+        "asserted_kind": {
+          "type": "string",
+          "enum": [
+            "INTERNAL_TARGET",
+            "ESTIMATE",
+            "EXTERNAL_CONSTRAINT",
+            "EXTERNAL_COMMITMENT",
+            "NONCOMMITTAL_STATUS"
+          ]
+        },
+        "text": {"type": "string", "minLength": 1}
       }
     }
   },
@@ -98,11 +162,19 @@
     "principle_id": "commitment-boundary",
     "portable": true,
     "propagation_owner": "P00",
+    "semantic_validator": "scripts/validate_commitment_boundary.py",
+    "external_authority_classes": [
+      "RECIPIENT_CONFIRMED",
+      "CONTRACTUAL",
+      "SLA",
+      "OPERATOR_APPROVED_EXTERNAL"
+    ],
     "rules": [
       "Internal operational targets and buffers remain internal unless explicit source authority makes them externally material.",
       "An estimate may remain an estimate or be weakened, but it may not be promoted into an external commitment.",
       "An external constraint may be preserved or weakened, but it may not be rewritten as a promise.",
-      "Only an explicit external commitment source may support external commitment language.",
+      "Only an explicitly typed external authority with an evidence reference may support an external commitment fact.",
+      "Claims do not supply their own source kind; the semantic validator resolves source_ref to one unique fact and derives allowed claim strength from that fact.",
       "Communication polish must not create a stronger commitment than the evidence supports."
     ],
     "canonical_case": {
@@ -110,6 +182,7 @@
       "external_commitment": "11:30 AM-12:00 PM delivery window",
       "valid_external_wording": "Our technicians will assemble on-site during delivery.",
       "invalid_external_wording": "Our technicians will be on-site by 11:00 AM."
-    }
+    },
+    "proof_ceiling": "Schema plus semantic validation proves packet consistency, typed authority, unique source resolution, and non-promotion. It does not prove that an evidence reference exists in an external provider or that the underlying human statement is authentic; upstream evidence owners must establish that truth."
   }
 }

@@ -26,10 +26,10 @@ Forbidden: acknowledgment without mutation; plans without execution; summaries w
 Material behavior changes require proof.
 Client-facing delivery uses **minimum sufficient explanation**: purpose, period, totals, attachment, consequence. Omit internal evidence mechanics, private allocation logic, singled-out edge cases, defensive caveats, invitation-to-question closings unless needed for recipient action.
 
-**Commitment boundary:** internal targets, buffers, estimates, working dates, and planning assumptions are not external commitments; never promote them into promises. P00 propagates it. See `harness/contracts/commitment-boundary.v1.json`.
+**Commitment boundary:** internal targets, buffers, estimates, working dates, and planning assumptions are not external commitments; never promote them into promises. P00 owns propagation. See `harness/contracts/commitment-boundary.v1.json`.
 
 ### Provider degradation and merge continuity
-CI quota failures are not merge blockers. Blockers: conflicts, head movement, failed validators, review, authority. See `harness/contracts/pr-merge-gate.v1.json`.
+CI quota is not a merge blocker. Blockers: conflicts, head movement, failed validators, review, authority. See `harness/contracts/pr-merge-gate.v1.json`.
 
 ## 6. Repository identity and product boundary
 The core product domain is **spreadsheet intelligence**. Web Excel compatibility, billing, roster/time evidence, triage are first-class.

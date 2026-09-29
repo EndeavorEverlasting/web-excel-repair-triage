@@ -432,6 +432,22 @@
       "blocking": true,
       "output": "process log",
       "proof_ceiling": "Executable semantic coverage validator regression proof with positive/negative lifecycle fixtures including PSC018 non-weakening and compression behavior."
+    },
+    {
+      "id": "commitment-boundary-audit",
+      "class": "contract",
+      "command": "python3 scripts/validate_commitment_boundary.py --summary",
+      "blocking": true,
+      "output": "process log",
+      "proof_ceiling": "Static schema plus semantic packet proof for typed authority, unique fact resolution, and commitment non-promotion; external evidence authenticity remains upstream."
+    },
+    {
+      "id": "commitment-boundary-tests",
+      "class": "test",
+      "command": "python3 -m unittest tests.test_commitment_boundary_prompt -v",
+      "blocking": true,
+      "output": "process log",
+      "proof_ceiling": "Executable positive and negative regressions for commitment-boundary authority typing, referential integrity, non-promotion, governance binding, and deterministic registration."
     }
   ],
   "profiles": {
@@ -484,7 +500,9 @@
       "prompt-kit-parity",
       "artifact-hygiene",
       "app-harness-validation",
-      "patch-hygiene"
+      "patch-hygiene",
+      "commitment-boundary-audit",
+      "commitment-boundary-tests"
     ],
     "harness": [
       "harness-completeness",
@@ -523,7 +541,9 @@
       "prompt-kit-parity",
       "artifact-hygiene",
       "app-harness-validation",
-      "patch-hygiene"
+      "patch-hygiene",
+      "commitment-boundary-audit",
+      "commitment-boundary-tests"
     ],
     "artifact-engine": [
       "artifact-hygiene",
@@ -550,7 +570,9 @@
       "artifact-derivation-harness-tests",
       "harness-completeness",
       "harness-contract-tests",
-      "patch-hygiene-staged"
+      "patch-hygiene-staged",
+      "commitment-boundary-audit",
+      "commitment-boundary-tests"
     ],
     "pre_push": [
       "harness-completeness",
@@ -589,7 +611,9 @@
       "prompt-kit-parity",
       "artifact-hygiene",
       "app-harness-validation",
-      "patch-hygiene"
+      "patch-hygiene",
+      "commitment-boundary-audit",
+      "commitment-boundary-tests"
     ],
     "pre_commit_snapshot": [
       "repository-work-ledger-audit",
@@ -605,7 +629,9 @@
       "artifact-derivation-harness-audit",
       "artifact-derivation-harness-tests",
       "harness-completeness",
-      "harness-contract-tests"
+      "harness-contract-tests",
+      "commitment-boundary-audit",
+      "commitment-boundary-tests"
     ]
   },
   "hooks": {
