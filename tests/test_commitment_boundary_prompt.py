@@ -17,6 +17,14 @@ TEST_FLOOR = ROOT / "harness" / "test-floor.v1.json"
 VALIDATORS = ROOT / "harness" / "validators.v1.json"
 
 
+def fact_by_id(packet: dict, fact_id: str) -> dict:
+    return next(fact for fact in packet["facts"] if fact["fact_id"] == fact_id)
+
+
+def claim_by_id(packet: dict, claim_id: str) -> dict:
+    return next(claim for claim in packet["claims"] if claim["claim_id"] == claim_id)
+
+
 class CommitmentBoundaryPromptTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls) -> None:
@@ -169,9 +177,16 @@ class CommitmentBoundaryPromptTests(unittest.TestCase):
                 ):
                     commitment_boundary.validate_packet(packet, self.schema)
 
+    def test_packet_order_is_not_semantic_authority(self) -> None:
+        packet = commitment_boundary.canonical_packet()
+        packet["facts"] = list(reversed(packet["facts"]))
+        packet["claims"] = list(reversed(packet["claims"]))
+        result = commitment_boundary.validate_packet(packet, self.schema)
+        self.assertEqual(result["status"], "PASS")
+
     def test_claim_source_must_resolve_uniquely(self) -> None:
         missing = commitment_boundary.canonical_packet()
-        missing["claims"][0]["source_ref"] = "does-not-exist"
+        claim_by_id(missing, "assembly-during-delivery")["source_ref"] = "does-not-exist"
         with self.assertRaisesRegex(
             commitment_boundary.CommitmentBoundaryError,
             "references missing fact",
@@ -179,7 +194,9 @@ class CommitmentBoundaryPromptTests(unittest.TestCase):
             commitment_boundary.validate_packet(missing, self.schema)
 
         duplicate = commitment_boundary.canonical_packet()
-        duplicate["facts"].append(copy.deepcopy(duplicate["facts"][0]))
+        duplicate["facts"].append(
+            copy.deepcopy(fact_by_id(duplicate, "internal-arrival-target"))
+        )
         with self.assertRaisesRegex(
             commitment_boundary.CommitmentBoundaryError,
             "duplicate fact_id",
@@ -188,7 +205,9 @@ class CommitmentBoundaryPromptTests(unittest.TestCase):
 
     def test_claim_cannot_supply_a_fake_source_kind(self) -> None:
         packet = commitment_boundary.canonical_packet()
-        packet["claims"][0]["source_kind"] = "EXTERNAL_COMMITMENT"
+        claim_by_id(packet, "assembly-during-delivery")["source_kind"] = (
+            "EXTERNAL_COMMITMENT"
+        )
         errors = list(self.validator.iter_errors(packet))
         self.assertTrue(errors)
         self.assertTrue(
@@ -197,7 +216,7 @@ class CommitmentBoundaryPromptTests(unittest.TestCase):
 
     def test_external_commitment_requires_typed_external_authority_and_evidence_ref(self) -> None:
         packet = commitment_boundary.canonical_packet()
-        source = packet["facts"][1]
+        source = fact_by_id(packet, "attendance-commitment")
         source["authority_class"] = "INTERNAL_PLANNING"
         source["evidence_ref"] = "internal-plan:fabricated-promise"
         with self.assertRaisesRegex(
