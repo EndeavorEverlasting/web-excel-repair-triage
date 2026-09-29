@@ -32,6 +32,10 @@ class CommitmentBoundaryPromptTests(unittest.TestCase):
         self.assertTrue(governance["portable"])
         self.assertEqual(governance["propagation_owner"], "P00")
         self.assertEqual(
+            governance["formula"],
+            "COMMITMENT_STRENGTH <= EVIDENCE_STRENGTH AND OPERATOR_CONTROL",
+        )
+        self.assertEqual(
             governance["semantic_validator"],
             "scripts/validate_commitment_boundary.py",
         )
@@ -51,10 +55,56 @@ class CommitmentBoundaryPromptTests(unittest.TestCase):
         result = commitment_boundary.validate_packet(packet, self.schema)
         self.assertEqual(result["status"], "PASS")
         canonical = self.schema["x-governance"]["canonical_case"]
+        self.assertEqual(canonical["fixture_scope"], "synthetic_provider_neutral")
         self.assertEqual(
             canonical["valid_external_wording"],
             "Our technicians will assemble on-site during delivery.",
         )
+
+    def test_canonical_attendance_claim_has_separate_gated_authority(self) -> None:
+        packet = commitment_boundary.canonical_packet()
+        facts = {fact["fact_id"]: fact for fact in packet["facts"]}
+        claims = {claim["claim_id"]: claim for claim in packet["claims"]}
+
+        self.assertEqual(facts["delivery-window"]["kind"], "ESTIMATE")
+        attendance = facts["attendance-commitment"]
+        self.assertEqual(attendance["kind"], "EXTERNAL_COMMITMENT")
+        self.assertEqual(attendance["authority_class"], "OPERATOR_APPROVED_EXTERNAL")
+        self.assertEqual(
+            attendance["commitment_gate"],
+            {
+                "evidence_support": True,
+                "sufficient_operational_control": True,
+                "explicit_operator_intent": True,
+            },
+        )
+        self.assertEqual(
+            claims["assembly-during-delivery"]["source_ref"],
+            "attendance-commitment",
+        )
+
+        invalid = copy.deepcopy(packet)
+        for claim in invalid["claims"]:
+            if claim["claim_id"] == "assembly-during-delivery":
+                claim["source_ref"] = "delivery-window"
+        with self.assertRaisesRegex(
+            commitment_boundary.CommitmentBoundaryError,
+            "promotes ESTIMATE to EXTERNAL_COMMITMENT",
+        ):
+            commitment_boundary.validate_packet(invalid, self.schema)
+
+    def test_external_commitment_requires_all_three_gates(self) -> None:
+        packet = commitment_boundary.canonical_packet()
+        source = next(
+            fact for fact in packet["facts"]
+            if fact["fact_id"] == "attendance-commitment"
+        )
+        del source["commitment_gate"]["explicit_operator_intent"]
+        with self.assertRaisesRegex(
+            commitment_boundary.CommitmentBoundaryError,
+            "schema validation failed",
+        ):
+            commitment_boundary.validate_packet(packet, self.schema)
 
     def test_internal_target_cannot_be_promoted_to_external_commitment(self) -> None:
         packet = commitment_boundary.canonical_packet()
@@ -63,7 +113,7 @@ class CommitmentBoundaryPromptTests(unittest.TestCase):
                 "claim_id": "promoted-arrival-promise",
                 "source_ref": "internal-arrival-target",
                 "asserted_kind": "EXTERNAL_COMMITMENT",
-                "text": "Our technicians will be on-site by 11:00 AM.",
+                "text": "Our technicians will be on-site by 2:00 PM.",
             }
         ]
         with self.assertRaisesRegex(
@@ -73,7 +123,7 @@ class CommitmentBoundaryPromptTests(unittest.TestCase):
             commitment_boundary.validate_packet(packet, self.schema)
         self.assertEqual(
             self.schema["x-governance"]["canonical_case"]["invalid_external_wording"],
-            "Our technicians will be on-site by 11:00 AM.",
+            "Our technicians will be on-site by 2:00 PM.",
         )
 
     def test_estimate_and_external_constraint_cannot_be_promoted_to_commitment(self) -> None:
@@ -163,7 +213,7 @@ class CommitmentBoundaryPromptTests(unittest.TestCase):
                 "claim_id": "exposed-buffer",
                 "source_ref": "internal-arrival-target",
                 "asserted_kind": "INTERNAL_TARGET",
-                "text": "Our internal target is 11:00 AM.",
+                "text": "Our internal target is 2:00 PM.",
             }
         ]
         with self.assertRaisesRegex(

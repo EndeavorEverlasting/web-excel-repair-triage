@@ -63,30 +63,48 @@ def canonical_packet() -> dict[str, Any]:
             {
                 "fact_id": "internal-arrival-target",
                 "kind": "INTERNAL_TARGET",
-                "value": "11:00 AM",
+                "value": "2:00 PM",
                 "authority_class": "INTERNAL_PLANNING",
-                "evidence_ref": "internal-plan:south-brooklyn-buffer",
+                "evidence_ref": "internal-plan:synthetic-buffer",
                 "externally_material": False,
             },
             {
                 "fact_id": "delivery-window",
-                "kind": "EXTERNAL_COMMITMENT",
-                "value": "11:30 AM-12:00 PM",
-                "authority_class": "RECIPIENT_CONFIRMED",
-                "evidence_ref": "recipient-confirmation:south-brooklyn-delivery-window",
+                "kind": "ESTIMATE",
+                "value": "2:30 PM-3:00 PM",
+                "authority_class": "ESTIMATE_EVIDENCE",
+                "evidence_ref": "estimate-evidence:synthetic-delivery-window",
                 "externally_material": True,
+            },
+            {
+                "fact_id": "attendance-commitment",
+                "kind": "EXTERNAL_COMMITMENT",
+                "value": "technicians assemble on-site during delivery",
+                "authority_class": "OPERATOR_APPROVED_EXTERNAL",
+                "evidence_ref": "operator-approval:synthetic-attendance-commitment",
+                "externally_material": True,
+                "commitment_gate": {
+                    "evidence_support": True,
+                    "sufficient_operational_control": True,
+                    "explicit_operator_intent": True,
+                },
             },
         ],
         "claims": [
             {
-                "claim_id": "assembly-during-delivery",
+                "claim_id": "expected-delivery-window",
                 "source_ref": "delivery-window",
+                "asserted_kind": "ESTIMATE",
+                "text": "We expect delivery between 2:30 PM and 3:00 PM.",
+            },
+            {
+                "claim_id": "assembly-during-delivery",
+                "source_ref": "attendance-commitment",
                 "asserted_kind": "EXTERNAL_COMMITMENT",
                 "text": "Our technicians will assemble on-site during delivery.",
-            }
+            },
         ],
     }
-
 
 def validate_packet(
     packet: dict[str, Any],

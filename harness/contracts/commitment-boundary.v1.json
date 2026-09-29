@@ -6,20 +6,34 @@
   "schema_version": "commitment-boundary/v1",
   "type": "object",
   "additionalProperties": false,
-  "required": ["schema_version", "communication_scope", "facts", "claims"],
+  "required": [
+    "schema_version",
+    "communication_scope",
+    "facts",
+    "claims"
+  ],
   "properties": {
-    "schema_version": {"const": "commitment-boundary/v1"},
+    "schema_version": {
+      "const": "commitment-boundary/v1"
+    },
     "communication_scope": {
       "type": "string",
-      "enum": ["INTERNAL", "EXTERNAL"]
+      "enum": [
+        "INTERNAL",
+        "EXTERNAL"
+      ]
     },
     "facts": {
       "type": "array",
-      "items": {"$ref": "#/$defs/fact"}
+      "items": {
+        "$ref": "#/$defs/fact"
+      }
     },
     "claims": {
       "type": "array",
-      "items": {"$ref": "#/$defs/claim"}
+      "items": {
+        "$ref": "#/$defs/claim"
+      }
     }
   },
   "$defs": {
@@ -35,7 +49,10 @@
         "externally_material"
       ],
       "properties": {
-        "fact_id": {"type": "string", "minLength": 1},
+        "fact_id": {
+          "type": "string",
+          "minLength": 1
+        },
         "kind": {
           "type": "string",
           "enum": [
@@ -45,7 +62,10 @@
             "EXTERNAL_COMMITMENT"
           ]
         },
-        "value": {"type": "string", "minLength": 1},
+        "value": {
+          "type": "string",
+          "minLength": 1
+        },
         "authority_class": {
           "type": "string",
           "enum": [
@@ -61,30 +81,71 @@
           "type": "string",
           "pattern": "^(internal-plan|estimate-evidence|recipient-confirmation|contract|sla|operator-approval):.+$"
         },
-        "externally_material": {"type": "boolean"}
+        "externally_material": {
+          "type": "boolean"
+        },
+        "commitment_gate": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "evidence_support",
+            "sufficient_operational_control",
+            "explicit_operator_intent"
+          ],
+          "properties": {
+            "evidence_support": {
+              "type": "boolean"
+            },
+            "sufficient_operational_control": {
+              "type": "boolean"
+            },
+            "explicit_operator_intent": {
+              "type": "boolean"
+            }
+          }
+        }
       },
       "allOf": [
         {
           "if": {
-            "properties": {"kind": {"const": "INTERNAL_TARGET"}},
-            "required": ["kind"]
+            "properties": {
+              "kind": {
+                "const": "INTERNAL_TARGET"
+              }
+            },
+            "required": [
+              "kind"
+            ]
           },
           "then": {
             "properties": {
-              "authority_class": {"const": "INTERNAL_PLANNING"},
-              "evidence_ref": {"pattern": "^internal-plan:.+$"}
+              "authority_class": {
+                "const": "INTERNAL_PLANNING"
+              },
+              "evidence_ref": {
+                "pattern": "^internal-plan:.+$"
+              }
             }
           }
         },
         {
           "if": {
-            "properties": {"kind": {"const": "ESTIMATE"}},
-            "required": ["kind"]
+            "properties": {
+              "kind": {
+                "const": "ESTIMATE"
+              }
+            },
+            "required": [
+              "kind"
+            ]
           },
           "then": {
             "properties": {
               "authority_class": {
-                "enum": ["INTERNAL_PLANNING", "ESTIMATE_EVIDENCE"]
+                "enum": [
+                  "INTERNAL_PLANNING",
+                  "ESTIMATE_EVIDENCE"
+                ]
               },
               "evidence_ref": {
                 "pattern": "^(internal-plan|estimate-evidence):.+$"
@@ -94,8 +155,14 @@
         },
         {
           "if": {
-            "properties": {"kind": {"const": "EXTERNAL_CONSTRAINT"}},
-            "required": ["kind"]
+            "properties": {
+              "kind": {
+                "const": "EXTERNAL_CONSTRAINT"
+              }
+            },
+            "required": [
+              "kind"
+            ]
           },
           "then": {
             "properties": {
@@ -115,8 +182,14 @@
         },
         {
           "if": {
-            "properties": {"kind": {"const": "EXTERNAL_COMMITMENT"}},
-            "required": ["kind"]
+            "properties": {
+              "kind": {
+                "const": "EXTERNAL_COMMITMENT"
+              }
+            },
+            "required": [
+              "kind"
+            ]
           },
           "then": {
             "properties": {
@@ -131,8 +204,26 @@
               "evidence_ref": {
                 "pattern": "^(recipient-confirmation|contract|sla|operator-approval):.+$"
               },
-              "externally_material": {"const": true}
-            }
+              "externally_material": {
+                "const": true
+              },
+              "commitment_gate": {
+                "properties": {
+                  "evidence_support": {
+                    "const": true
+                  },
+                  "sufficient_operational_control": {
+                    "const": true
+                  },
+                  "explicit_operator_intent": {
+                    "const": true
+                  }
+                }
+              }
+            },
+            "required": [
+              "commitment_gate"
+            ]
           }
         }
       ]
@@ -140,10 +231,21 @@
     "claim": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["claim_id", "source_ref", "asserted_kind", "text"],
+      "required": [
+        "claim_id",
+        "source_ref",
+        "asserted_kind",
+        "text"
+      ],
       "properties": {
-        "claim_id": {"type": "string", "minLength": 1},
-        "source_ref": {"type": "string", "minLength": 1},
+        "claim_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "source_ref": {
+          "type": "string",
+          "minLength": 1
+        },
         "asserted_kind": {
           "type": "string",
           "enum": [
@@ -154,7 +256,10 @@
             "NONCOMMITTAL_STATUS"
           ]
         },
-        "text": {"type": "string", "minLength": 1}
+        "text": {
+          "type": "string",
+          "minLength": 1
+        }
       }
     }
   },
@@ -175,14 +280,19 @@
       "An external constraint may be preserved or weakened, but it may not be rewritten as a promise.",
       "Only an explicitly typed external authority with an evidence reference may support an external commitment fact.",
       "Claims do not supply their own source kind; the semantic validator resolves source_ref to one unique fact and derives allowed claim strength from that fact.",
-      "Communication polish must not create a stronger commitment than the evidence supports."
+      "Communication polish must not create a stronger commitment than the evidence supports.",
+      "Every external commitment requires evidence support, sufficient operational control, and explicit operator intent.",
+      "An external delivery estimate or constraint does not by itself authorize a separate attendance, completion, or readiness promise; that promise requires its own external-commitment authority."
     ],
     "canonical_case": {
-      "internal_target": "11:00 AM technician arrival target",
-      "external_commitment": "11:30 AM-12:00 PM delivery window",
+      "fixture_scope": "synthetic_provider_neutral",
+      "internal_target": "2:00 PM internal arrival target",
+      "delivery_estimate": "2:30 PM-3:00 PM expected delivery window",
+      "external_commitment_authority": "operator-approved attendance commitment with all three commitment gates true",
       "valid_external_wording": "Our technicians will assemble on-site during delivery.",
-      "invalid_external_wording": "Our technicians will be on-site by 11:00 AM."
+      "invalid_external_wording": "Our technicians will be on-site by 2:00 PM."
     },
-    "proof_ceiling": "Schema plus semantic validation proves packet consistency, typed authority, unique source resolution, and non-promotion. It does not prove that an evidence reference exists in an external provider or that the underlying human statement is authentic; upstream evidence owners must establish that truth."
+    "proof_ceiling": "Schema plus semantic validation proves packet consistency, typed authority, unique source resolution, non-promotion, and the three-part gate for external commitments. It does not prove that an evidence reference exists in an external provider or that the underlying human statement is authentic; upstream evidence owners must establish that truth.",
+    "formula": "COMMITMENT_STRENGTH <= EVIDENCE_STRENGTH AND OPERATOR_CONTROL"
   }
 }
