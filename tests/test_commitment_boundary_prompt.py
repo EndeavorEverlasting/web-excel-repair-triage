@@ -37,6 +37,15 @@ class CommitmentBoundaryPromptTests(unittest.TestCase):
         )
         self.assertIn("does not prove", governance["proof_ceiling"])
 
+    def test_invalid_contract_schema_uses_typed_failure(self) -> None:
+        invalid = copy.deepcopy(self.schema)
+        invalid["type"] = 7
+        with self.assertRaisesRegex(
+            commitment_boundary.CommitmentBoundaryError,
+            "invalid contract schema",
+        ):
+            commitment_boundary.validate_contract_schema(invalid)
+
     def test_canonical_buffer_case_preserves_external_window_without_promoting_target(self) -> None:
         packet = commitment_boundary.canonical_packet()
         result = commitment_boundary.validate_packet(packet, self.schema)

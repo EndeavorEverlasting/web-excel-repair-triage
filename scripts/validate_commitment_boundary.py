@@ -9,6 +9,7 @@ from pathlib import Path
 from typing import Any
 
 from jsonschema import Draft202012Validator
+from jsonschema.exceptions import SchemaError
 
 ROOT = Path(__file__).resolve().parents[1]
 CONTRACT = ROOT / "harness" / "contracts" / "commitment-boundary.v1.json"
@@ -35,9 +36,18 @@ def load_json(path: Path) -> dict[str, Any]:
     return payload
 
 
+def validate_contract_schema(contract: dict[str, Any]) -> None:
+    try:
+        Draft202012Validator.check_schema(contract)
+    except SchemaError as exc:
+        raise CommitmentBoundaryError(
+            f"invalid contract schema: {exc.message}"
+        ) from exc
+
+
 def load_contract() -> dict[str, Any]:
     contract = load_json(CONTRACT)
-    Draft202012Validator.check_schema(contract)
+    validate_contract_schema(contract)
     if contract.get("$id") != "commitment-boundary/v1":
         raise CommitmentBoundaryError("commitment boundary schema identity drift")
     if contract.get("schema_version") != "commitment-boundary/v1":
