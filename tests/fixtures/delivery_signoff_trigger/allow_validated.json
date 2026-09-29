@@ -1,0 +1,12 @@
+{
+  "request": {
+    "request_text": "Generate a delivery sign-off for this stock transfer",
+    "task_kind": "artifact_generation",
+    "input_schema": "delivery-signoff-spec/v1"
+  },
+  "expected": {
+    "decision": "allow",
+    "rule_id": "validated-signoff-generation",
+    "route": "generation"
+  }
+}

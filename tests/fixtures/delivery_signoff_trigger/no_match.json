@@ -1,0 +1,12 @@
+{
+  "request": {
+    "request_text": "Generate a pie chart",
+    "task_kind": "artifact_generation",
+    "input_schema": "delivery-signoff-spec/v1"
+  },
+  "expected": {
+    "decision": "no_match",
+    "rule_id": null,
+    "route": null
+  }
+}
