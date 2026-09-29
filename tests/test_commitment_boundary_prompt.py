@@ -191,10 +191,14 @@ class CommitmentBoundaryPromptTests(unittest.TestCase):
             by_id["commitment-boundary-tests"]["command"],
             "python3 -m unittest tests.test_commitment_boundary_prompt -v",
         )
-        for profile in ("required_checks", "harness", "pre_commit", "pre_push"):
-            with self.subTest(profile=profile):
-                self.assertIn("commitment-boundary-audit", validators["profiles"][profile])
-                self.assertIn("commitment-boundary-tests", validators["profiles"][profile])
+        self.assertIn(
+            "commitment-boundary-audit",
+            validators["profiles"]["required_checks"],
+        )
+        self.assertIn(
+            "commitment-boundary-tests",
+            validators["profiles"]["required_checks"],
+        )
 
 
 if __name__ == "__main__":

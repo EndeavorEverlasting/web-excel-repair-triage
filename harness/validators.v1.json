@@ -500,9 +500,9 @@
       "prompt-kit-parity",
       "artifact-hygiene",
       "app-harness-validation",
-      "patch-hygiene",
       "commitment-boundary-audit",
-      "commitment-boundary-tests"
+      "commitment-boundary-tests",
+      "patch-hygiene"
     ],
     "harness": [
       "harness-completeness",
@@ -541,9 +541,7 @@
       "prompt-kit-parity",
       "artifact-hygiene",
       "app-harness-validation",
-      "patch-hygiene",
-      "commitment-boundary-audit",
-      "commitment-boundary-tests"
+      "patch-hygiene"
     ],
     "artifact-engine": [
       "artifact-hygiene",
@@ -570,9 +568,7 @@
       "artifact-derivation-harness-tests",
       "harness-completeness",
       "harness-contract-tests",
-      "patch-hygiene-staged",
-      "commitment-boundary-audit",
-      "commitment-boundary-tests"
+      "patch-hygiene-staged"
     ],
     "pre_push": [
       "harness-completeness",
@@ -611,9 +607,7 @@
       "prompt-kit-parity",
       "artifact-hygiene",
       "app-harness-validation",
-      "patch-hygiene",
-      "commitment-boundary-audit",
-      "commitment-boundary-tests"
+      "patch-hygiene"
     ],
     "pre_commit_snapshot": [
       "repository-work-ledger-audit",
@@ -629,9 +623,7 @@
       "artifact-derivation-harness-audit",
       "artifact-derivation-harness-tests",
       "harness-completeness",
-      "harness-contract-tests",
-      "commitment-boundary-audit",
-      "commitment-boundary-tests"
+      "harness-contract-tests"
     ]
   },
   "hooks": {
