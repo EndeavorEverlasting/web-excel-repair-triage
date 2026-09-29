@@ -1,0 +1,65 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "validation-report",
+  "title": "Harness Validation Report",
+  "description": "Structured result of validating one or more artifacts in a run.",
+  "type": "object",
+  "required": [
+    "run_id",
+    "validated_at",
+    "overall_status",
+    "checks"
+  ],
+  "properties": {
+    "run_id": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{8}$"
+    },
+    "validated_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "overall_status": {
+      "$ref": "#/$defs/validation_status"
+    },
+    "checks": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/validation_check" },
+      "minItems": 1,
+      "description": "Individual validation checks performed."
+    },
+    "proof_ceiling": {
+      "$ref": "../schemas/run-context.json#/$defs/proof_level",
+      "description": "Highest proof level demonstrated across all checks."
+    },
+    "summary": {
+      "type": "object",
+      "properties": {
+        "total": { "type": "integer", "minimum": 0 },
+        "pass": { "type": "integer", "minimum": 0 },
+        "fail": { "type": "integer", "minimum": 0 },
+        "not_run": { "type": "integer", "minimum": 0 },
+        "not_applicable": { "type": "integer", "minimum": 0 },
+        "blocked": { "type": "integer", "minimum": 0 }
+      }
+    }
+  },
+  "$defs": {
+    "validation_status": {
+      "type": "string",
+      "enum": ["PASS", "FAIL", "NOT_RUN", "NOT_APPLICABLE", "BLOCKED"]
+    },
+    "validation_check": {
+      "type": "object",
+      "required": ["name", "status"],
+      "properties": {
+        "name": { "type": "string", "minLength": 1 },
+        "status": { "$ref": "#/$defs/validation_status" },
+        "proof_level": { "$ref": "../schemas/run-context.json#/$defs/proof_level" },
+        "message": { "type": "string" },
+        "details": { "type": "object", "additionalProperties": true },
+        "duration_ms": { "type": "integer", "minimum": 0 }
+      }
+    }
+  }
+}
