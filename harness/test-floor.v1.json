@@ -22,6 +22,7 @@
     "tests/test_context_to_artifact_prompt.py",
     "tests/test_conversation_context_canary_prompt.py",
     "tests/test_correspondence_prompt_registry.py",
+    "tests/test_commitment_boundary_prompt.py",
     "tests/test_deterministic_test_floor.py",
     "tests/test_deterministic_test_floor_canary.py",
     "tests/test_execution_boundary_enforcement_prompt.py",
