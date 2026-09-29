@@ -1,0 +1,115 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "commitment-boundary/v1",
+  "title": "Commitment Boundary Decision Packet",
+  "description": "Portable governance schema preventing internal operational targets, buffers, estimates, working dates, and planning assumptions from being promoted into external commitments without explicit source authority.",
+  "schema_version": "commitment-boundary/v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "communication_scope", "facts", "claims"],
+  "properties": {
+    "schema_version": {"const": "commitment-boundary/v1"},
+    "communication_scope": {
+      "type": "string",
+      "enum": ["INTERNAL", "EXTERNAL"]
+    },
+    "facts": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["fact_id", "kind", "value", "source"],
+        "properties": {
+          "fact_id": {"type": "string", "minLength": 1},
+          "kind": {
+            "type": "string",
+            "enum": ["INTERNAL_TARGET", "ESTIMATE", "EXTERNAL_CONSTRAINT", "EXTERNAL_COMMITMENT"]
+          },
+          "value": {"type": "string", "minLength": 1},
+          "source": {"type": "string", "minLength": 1},
+          "externally_material": {"type": "boolean", "default": false}
+        }
+      }
+    },
+    "claims": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["claim_id", "source_ref", "source_kind", "asserted_kind", "text"],
+        "properties": {
+          "claim_id": {"type": "string", "minLength": 1},
+          "source_ref": {"type": "string", "minLength": 1},
+          "source_kind": {
+            "type": "string",
+            "enum": ["INTERNAL_TARGET", "ESTIMATE", "EXTERNAL_CONSTRAINT", "EXTERNAL_COMMITMENT"]
+          },
+          "asserted_kind": {
+            "type": "string",
+            "enum": ["INTERNAL_TARGET", "ESTIMATE", "EXTERNAL_CONSTRAINT", "EXTERNAL_COMMITMENT", "NONCOMMITTAL_STATUS"]
+          },
+          "text": {"type": "string", "minLength": 1}
+        },
+        "allOf": [
+          {
+            "if": {
+              "properties": {"source_kind": {"const": "INTERNAL_TARGET"}},
+              "required": ["source_kind"]
+            },
+            "then": {
+              "properties": {
+                "asserted_kind": {
+                  "enum": ["INTERNAL_TARGET", "NONCOMMITTAL_STATUS"]
+                }
+              }
+            }
+          },
+          {
+            "if": {
+              "properties": {"source_kind": {"const": "ESTIMATE"}},
+              "required": ["source_kind"]
+            },
+            "then": {
+              "properties": {
+                "asserted_kind": {
+                  "enum": ["ESTIMATE", "NONCOMMITTAL_STATUS"]
+                }
+              }
+            }
+          },
+          {
+            "if": {
+              "properties": {"source_kind": {"const": "EXTERNAL_CONSTRAINT"}},
+              "required": ["source_kind"]
+            },
+            "then": {
+              "properties": {
+                "asserted_kind": {
+                  "enum": ["EXTERNAL_CONSTRAINT", "NONCOMMITTAL_STATUS"]
+                }
+              }
+            }
+          }
+        ]
+      }
+    }
+  },
+  "x-governance": {
+    "principle_id": "commitment-boundary",
+    "portable": true,
+    "propagation_owner": "P00",
+    "rules": [
+      "Internal operational targets and buffers remain internal unless explicit source authority makes them externally material.",
+      "An estimate may remain an estimate or be weakened, but it may not be promoted into an external commitment.",
+      "An external constraint may be preserved or weakened, but it may not be rewritten as a promise.",
+      "Only an explicit external commitment source may support external commitment language.",
+      "Communication polish must not create a stronger commitment than the evidence supports."
+    ],
+    "canonical_case": {
+      "internal_target": "11:00 AM technician arrival target",
+      "external_commitment": "11:30 AM-12:00 PM delivery window",
+      "valid_external_wording": "Our technicians will assemble on-site during delivery.",
+      "invalid_external_wording": "Our technicians will be on-site by 11:00 AM."
+    }
+  }
+}
