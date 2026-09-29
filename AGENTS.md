@@ -26,13 +26,10 @@ Forbidden: acknowledgment without mutation; plans without execution; summaries w
 Material behavior changes require proof.
 Client-facing delivery uses **minimum sufficient explanation**: purpose, period, totals, attachment, consequence. Omit internal evidence mechanics, private allocation logic, singled-out edge cases, defensive caveats, invitation-to-question closings unless needed for recipient action.
 
-### Commitment Boundary Principle
-Internal targets, buffers, estimates, working dates, and planning assumptions are not external commitments. Never promote them into promises merely to make wording more specific, confident, or convenient. External communication may state only supported recipient-facing commitments, constraints, estimates, or outcome language. When an internal target intentionally precedes an external window, keep the buffer internal unless the recipient genuinely needs it for correctness, safety, compliance, authorization, or action.
-
-Canonical example: an internal 11:00 AM technician target may buffer a confirmed 11:30 AM-12:00 PM delivery window. Valid external wording: `Our technicians will assemble on-site during delivery.` Invalid promotion: `Our technicians will be on-site by 11:00 AM.` The machine-readable authority is `harness/contracts/commitment-boundary.v1.json`. Any P00 governance installation or repair in another repository must carry this boundary forward unless the target repository already has a stricter equivalent.
+**Commitment boundary:** internal targets, buffers, estimates, working dates, and planning assumptions are not external commitments; never promote them into promises. P00 propagates it. See `harness/contracts/commitment-boundary.v1.json`.
 
 ### Provider degradation and merge continuity
-Actions minute/billing exhaustion, never-started checks, review-bot/CI limits are expected degradation, NOT merge blockers. Continue via refresh base, exact-head validation, local proof (`.githooks/pre-push`, `scripts/validate_pr_merge_gate.py`), merge when authorized. Real blockers: conflicts, draft, head-moved, failed validators, review, authority. See `harness/contracts/pr-merge-gate.v1.json`.
+CI quota failures are not merge blockers. Blockers: conflicts, head movement, failed validators, review, authority. See `harness/contracts/pr-merge-gate.v1.json`.
 
 ## 6. Repository identity and product boundary
 The core product domain is **spreadsheet intelligence**. Web Excel compatibility, billing, roster/time evidence, triage are first-class.

@@ -122,13 +122,11 @@ class CommitmentBoundaryPromptTests(unittest.TestCase):
     def test_root_governance_binds_commitment_boundary_and_cross_repo_p00_propagation(self) -> None:
         agents = AGENTS.read_text(encoding="utf-8")
         for phrase in (
-            "Commitment Boundary Principle",
-            "Internal targets, buffers, estimates, working dates, and planning assumptions are not external commitments",
-            "Never promote them into promises",
+            "**Commitment boundary:**",
+            "internal targets, buffers, estimates, working dates, and planning assumptions are not external commitments",
+            "never promote them into promises",
+            "P00 propagates it",
             "harness/contracts/commitment-boundary.v1.json",
-            "Any P00 governance installation or repair in another repository must carry this boundary forward",
-            "Our technicians will assemble on-site during delivery.",
-            "Our technicians will be on-site by 11:00 AM.",
         ):
             self.assertIn(phrase, agents)
 
