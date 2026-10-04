@@ -1,0 +1,54 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "version": "1.0.0",
+  "description": "Workflow registry: defines every known harness workflow, its inputs, outputs, artifacts, and proof ceiling.",
+  "workflows": {
+    "roster-review-blank": {
+      "name": "Roster Review — Blank Shell",
+      "description": "Generate a blank-shell workbook from the roster log for scaffolding review.",
+      "direction": "roster_to_admin",
+      "inputs": {
+        "roster_log": { "required": true, "type": "path" },
+        "months": { "required": true, "type": "list", "default": ["2026-04", "2026-05"] }
+      },
+      "outputs": ["workbook", "manifest", "preflight"],
+      "artifact_id": "blank_shell_workbook",
+      "engine": "triage.harness.cli",
+      "minimum_proof_level": "build",
+      "proof_ceiling": "package",
+      "validation_profile": "blank_shell"
+    },
+    "bonita-neuron-track-hours": {
+      "name": "Bonita Neuron Track Hours Generator",
+      "description": "Generate a clean two-tab submission workbook from the roster log.",
+      "direction": "roster_to_admin",
+      "inputs": {
+        "roster_log": { "required": true, "type": "path" },
+        "admin_log": { "required": false, "type": "path" },
+        "template": { "required": false, "type": "path" },
+        "months": { "required": true, "type": "list", "default": ["2026-04", "2026-05"] }
+      },
+      "outputs": ["workbook", "manifest", "preflight", "review_queue", "artifact_compare"],
+      "artifact_id": "bonita_neuron_track_hours",
+      "engine": "triage.nw_prj_neuron_track_hours.bonita_cli",
+      "minimum_proof_level": "build",
+      "proof_ceiling": "operator_acceptance",
+      "validation_profile": "bonita"
+    },
+    "roster-diagnostic": {
+      "name": "Roster Diagnostic Report",
+      "description": "Produce a structured diagnostic report for a roster-derived workbook.",
+      "direction": "analysis",
+      "inputs": {
+        "roster_log": { "required": true, "type": "path" },
+        "workbook_path": { "required": true, "type": "path" }
+      },
+      "outputs": ["roster_diagnostic_report"],
+      "artifact_id": "roster_diagnostic_report",
+      "engine": "triage.harness.cli",
+      "minimum_proof_level": "harness",
+      "proof_ceiling": "harness",
+      "validation_profile": "json_schema"
+    }
+  }
+}

@@ -28,7 +28,7 @@ def _minimal_parts(content_types_extra="", drawings_chart_part=False):
         parts["xl/drawings/charts/chart1.xml"] = '<c:chartSpace xmlns:c="http://schemas.openxmlformats.org/drawingml/2006/chart"/>'
         parts["xl/drawings/_rels/drawing1.xml.rels"] = (
             '<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">'
-            '<Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/chart" Target="charts/chart1.xml"/>'
+            '<Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/chart" Target="../drawings/charts/chart1.xml"/>'
             '</Relationships>'
         )
     else:
