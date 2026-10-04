@@ -513,3 +513,25 @@ Use the smallest applicable set from:
 The profile-level `evidence_refs` must retain the current P114 evidence set and add the strategic plan, checkpoint schema/validator, context-health helper, and focused context-health test after those paths exist.
 
 Do not add a new PRIMARY capability. P114 remains a continuity sensor/guard and handoff trigger, not the canonical plan owner, recovery executor, or implementation owner.
+
+
+## 20. Target-runtime parallel activation — LOCKED
+
+The P04 dispatch manifest describes the **target execution runtime**, not the remote strategic planner's local tool inventory.
+
+Therefore the canonical target manifest MUST use:
+
+```json
+"graph_width": 2,
+"parallel_disposition": "REQUIRED",
+"autonomy_gap": null
+```
+
+The remote planning runtime's inability to directly launch the operator's local Cursor/OpenCode processes is an execution-boundary fact for the planner and is disclosed in the planning closeout; it MUST NOT be encoded as a target-runtime `DEGRADED` disposition.
+
+At execution start, the local agent must probe its actual adapter capacity:
+
+- when at least two usable isolated workers/subagents/processes exist, dispatch both Wave 1 lanes concurrently and preserve observed timing/evidence so the P04 receipt can truthfully prove `observed_parallelism=true`;
+- if the local runtime unexpectedly cannot provide two usable slots, do **not** edit the strategic plan or silently serialize a `REQUIRED` graph. Emit the canonical AUTONOMY_GAP/boundary evidence and return it to the strategic owner for an explicit runtime-disposition revision.
+
+This is an execution-mechanics rule only. It grants no discretion over P114 semantics, CTX states, capability assignments, owner boundaries, or migration/cutover decisions.
