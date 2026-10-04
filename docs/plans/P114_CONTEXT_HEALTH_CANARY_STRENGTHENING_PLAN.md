@@ -474,3 +474,43 @@ python scripts/prompt_registry_ops.py edit --prompt-id P114 --disposition STRENG
 
 after a dry-run using the exact locked semantics above.
 
+
+## 19. Exact P114 semantic capability delta — LOCKED
+
+The local executor MUST use the following semantic direction for `--disposition STRENGTHEN`; it may update only evidence references mechanically when the named focused test is created, but it may not change capability IDs, presence, ownership, relation, or the ownership interpretation.
+
+No semantic-capability catalog addition is authorized.
+
+### Preserved assignments
+
+Keep these assignments semantically unchanged:
+
+- `strength.fresh_evidence_floor` — `REQUIRED / SECONDARY / GUARDS / CANONICAL_BODY`.
+- `strength.proof_relevance_freshness` — `REQUIRED / SECONDARY / GUARDS / CANONICAL_BODY`.
+- `strength.evidence_state_integrity` — `REQUIRED / SECONDARY / GUARDS / CANONICAL_BODY`.
+- `execution.implementation` — `AWARE / NONE / ROUTES_TO / ROUTED_OWNER`.
+- `process.recurring` — `AWARE / NONE / ROUTES_TO / ROUTED_OWNER`.
+
+### Strengthening deltas
+
+Apply exactly two semantic deltas:
+
+1. Upgrade `strength.actionable_continuation` from `SUPPORT` to **`REQUIRED`**, preserving `SECONDARY / IMPLEMENTS / CANONICAL_BODY`.
+   - Rationale: proactive checkpointing and fresh-chat handoff both require an executable, owner-assigned next action; P114 preserves/renders that continuation but still does not own resumed implementation.
+2. Add `strength.plan_durability` as **`REQUIRED / SECONDARY / GUARDS / CANONICAL_BODY`**.
+   - Rationale: P114 now checks whether execution-critical conversation state that crossed an existing durability trigger has a recoverable repository/provider/checkpoint owner before declaring context healthy. It guards durability; it does not become the plan owner.
+
+### Required evidence references for the two strengthened assignments
+
+Use the smallest applicable set from:
+
+- `docs/plans/P114_CONTEXT_HEALTH_CANARY_STRENGTHENING_PLAN.md`
+- `harness/conversation-continuity/checkpoint.schema.v1.json`
+- `scripts/validate_conversation_handoff_checkpoint.py`
+- `tests/test_conversation_context_canary_prompt.py`
+- `tests/test_p114_context_health_prompt.py` once created by the parallel regression lane
+
+The profile-level `evidence_refs` must retain the current P114 evidence set and add the strategic plan, checkpoint schema/validator, context-health helper, and focused context-health test after those paths exist.
+
+Do not add a new PRIMARY capability. P114 remains a continuity sensor/guard and handoff trigger, not the canonical plan owner, recovery executor, or implementation owner.
+
