@@ -1,112 +1,372 @@
 {
   "schema_version": "prompt-parallel-dispatch/v1",
-  "run_id": "upstream-capability-watch-20260920-u1-blocked",
-  "graph_width": 1,
-  "parallel_disposition": "NOT_APPLICABLE",
-  "autonomy_gap": null,
+  "run_id": "p114-context-health-canary-20261003-p04",
+  "graph_width": 2,
+  "parallel_disposition": "DEGRADED",
+  "autonomy_gap": "This ChatGPT runtime can persist the remote strategic plan and GitHub manifest but has no tool that can launch the operator's local Cursor/OpenCode runtimes. The first local executor must ingest this manifest and dispatch both Wave 1 lanes concurrently; human copy/paste is portability only and parallel execution remains UNPROVEN until the receipt observes overlap.",
   "lanes": [
     {
-      "lane_id": "u1-capability-watch-contract-floor",
-      "mission": "Inspect and extend the current canonical external-resource contracts first to express watched-capability identity/state/event/impact/dedupe/promotion semantics; create a new watch contract only after evidence proves the canonical owners cannot represent the required state, and refresh this manifest before owning any new contract path.",
+      "lane_id": "p114-semantic-implementation",
+      "mission": "Implement the locked P114 Canary context-health semantics exactly through the protected prompt lifecycle helper; preserve P114 identity and all neighbor-owner boundaries.",
       "dependencies": [],
       "owned_mutation_surfaces": [
-        "harness/contracts/operant-external-resource-intake.v1.json",
-        "scripts/upstream_capability_watch.py",
-        "registry/resources/upstream-capability-impact-edges.v1.json",
-        "tests/test_upstream_capability_watch.py",
-        "scripts/validate_operant_external_resources.py",
-        ".github/workflows/operant-external-resource-refresh.yml"
+        "registry/prompts/spec-architecture-prompts.v1.json",
+        "harness/prompt-topology/prompt-capability-profiles.v1.json",
+        "harness/prompt-topology/prompt-capability-migrations.v1.json",
+        "harness/prompt-compilation/prompt-semantic-migrations.v1.json",
+        "web/prompt-kit/index.html"
       ],
       "forbidden_surfaces": [
-        "browser feedback telemetry semantics",
-        "Prompt Kit prompt bodies",
-        "generated Prompt Kit",
-        "automatic donor-body persistence",
-        "harness/test-floor.v1.json while open PR #606 owns that mutation surface"
+        "docs/plans/P114_CONTEXT_HEALTH_CANARY_STRENGTHENING_PLAN.md",
+        "Outputs/prompt-parallel-dispatch/manifest.json",
+        "harness/conversation-continuity/context-health.v1.json",
+        "tests/test_p114_context_health_prompt.py",
+        "harness/evals/prompt-strength/p114-context-health-regression-matrix.v1.json",
+        "harness/conversation-continuity/checkpoint.schema.v1.json",
+        "P02 semantics",
+        "P76 semantics",
+        "TokenCorridor authority/cutover semantics"
       ],
-      "adapter": {
-        "kind": "connected_provider",
-        "rung": 3
-      },
-      "launch": {
-        "mode": "runtime_tool",
-        "tool": "GitHub",
-        "operation": "capability_watch_contract_floor",
-        "arguments": {
-          "repository": "EndeavorEverlasting/web-excel-repair-triage",
-          "plan": "docs/plans/UPSTREAM_CAPABILITY_WATCH_SPRINT_MAP.md",
-          "pr_number": 619,
-          "branch": "feat/upstream-capability-watch-contract-floor-20260920",
-          "expected_head_sha": "ab35d72f7149e79fcd15cabd5f65ec8081a3470c",
-          "continuation_rule": "reuse_existing_pr_writer_and_refresh_before_mutation",
-          "blocker_pr_number": 606,
-          "blocker_surface": "harness/test-floor.v1.json",
-          "blocker_required_change": "add tests/test_upstream_capability_watch.py to self_tests",
-          "resume_gate": "PR #606 integrates or releases harness/test-floor.v1.json, then refresh PR #619 and validate the deterministic floor on the exact reconciled head"
-        }
-      },
-      "expected_artifacts": [
-        "canonical external-resource contract extension decision with evidence",
-        "deterministic capability-watch state kernel consumed by later runtime wiring",
-        "impact-edge registry shape",
-        "A/B/C identity fixtures",
-        "routing-failure lost-event negative fixture",
-        "PR #619 head ab35d72f7149e79fcd15cabd5f65ec8081a3470c wires and proves the focused suite in its external-resource refresh workflow; mainline adoption remains blocked with U1 integration",
-        "if canonical contracts are insufficient: an evidence-backed manifest amendment that explicitly owns the new contract path before creation"
-      ],
-      "validation": [
-        "existing canonical contracts are inspected and extended where sufficient; no new contract path is created by assumption",
-        "canonical external-resource validator validates capability-watch/impact-edge invariants",
-        "PR #619 head ab35d72f7149e79fcd15cabd5f65ec8081a3470c external-resource refresh run 35547575957 is green and executes the focused capability-watch suite; current main does not gain that wiring until U1 integrates; deterministic-floor registration remains BLOCKED on PR #606",
-        "UNSEEN first observation establishes CURRENT baseline",
-        "last_observed_identity and last_processed_identity are distinct after A→B until durable routing succeeds",
-        "transition dedupe is enforced",
-        "routing failure preserves processed identity",
-        "missing impact edge retains source event",
-        "promotion cannot jump changed to integrated"
-      ],
-      "convergence_owner": "P102 / harness contract owner",
-      "status": "BLOCKED",
       "runtime_partition_input": {
-        "work_unit_id": "u1-capability-watch-contract-floor",
+        "work_unit_id": "p114-semantic-implementation",
         "required_capabilities": [
-          "github.provider",
+          "git",
+          "python",
+          "prompt-kit.registry",
           "repository.mutation"
         ],
         "capability_facts": {
           "current_runtime_available": true,
           "current_runtime_authorized": true,
-          "local_runtime_required": false,
+          "local_runtime_required": true,
           "ci_remote_required": false,
           "operator_physical_required": false
         },
         "provider_access": [
           {
             "provider_family": "github",
-            "operation": "capability_watch_contract_floor",
+            "operation": "p114_semantic_implementation",
             "authority_state": "VERIFIED",
             "mutation_authority": true
           }
         ],
-        "inherited_evidence": []
+        "inherited_evidence": [
+          {
+            "evidence_type": "strategic_plan",
+            "source_owner": "P04 remote strategic owner",
+            "sanitized_ref": "path:docs/plans/P114_CONTEXT_HEALTH_CANARY_STRENGTHENING_PLAN.md",
+            "revision_or_freshness": "commit-89204c199bf26b9438c50c8b9dc62d57691de13f",
+            "visibility": "PUBLIC_TRACKED",
+            "proof_ceiling": "Strategic P114 semantics, ownership boundaries, execution graph, and migration obligations are settled; implementation remains unproven.",
+            "public_provider_ref_verified": false
+          }
+        ]
       },
       "runtime_partition": {
-        "execution_environment": "CURRENT_CHAT_RUNTIME",
+        "execution_environment": "LOCAL_AGENT_RUNTIME",
         "provider_access": [
           {
             "provider_family": "github",
-            "operation": "capability_watch_contract_floor",
+            "operation": "p114_semantic_implementation",
             "authority_state": "VERIFIED",
             "mutation_authority": true
           }
         ],
         "required_capabilities": [
-          "github.provider",
+          "git",
+          "python",
+          "prompt-kit.registry",
           "repository.mutation"
         ],
-        "evidence_inputs": [],
-        "execute_now": true
-      }
+        "evidence_inputs": [
+          {
+            "evidence_type": "strategic_plan",
+            "source_owner": "P04 remote strategic owner",
+            "sanitized_ref": "path:docs/plans/P114_CONTEXT_HEALTH_CANARY_STRENGTHENING_PLAN.md",
+            "revision_or_freshness": "commit-89204c199bf26b9438c50c8b9dc62d57691de13f",
+            "visibility": "PUBLIC_TRACKED",
+            "proof_ceiling": "Strategic P114 semantics, ownership boundaries, execution graph, and migration obligations are settled; implementation remains unproven.",
+            "public_provider_ref_verified": false
+          }
+        ],
+        "execute_now": false
+      },
+      "adapter": {
+        "kind": "repo_runner",
+        "rung": 2
+      },
+      "launch": {
+        "mode": "runtime_tool",
+        "tool": "Cursor",
+        "operation": "execute_locked_p114_semantic_lane",
+        "arguments": {
+          "repository": "EndeavorEverlasting/web-excel-repair-triage",
+          "strategic_plan": "docs/plans/P114_CONTEXT_HEALTH_CANARY_STRENGTHENING_PLAN.md",
+          "planning_floor": "ee2fa75c99306607062445a5653af19129ac7c54",
+          "required_operation": "python scripts/prompt_registry_ops.py edit --prompt-id P114 --disposition STRENGTHEN",
+          "semantic_authority": "plan section 19 is locked; executor may not design or rename capability/state/owner semantics",
+          "isolation": "fresh isolated worktree/branch from refreshed origin/main"
+        }
+      },
+      "expected_artifacts": [
+        "P114 canonical body with mandatory CTX field and locked HEALTHY/LARGE/COMPACTION_RISK/HANDOFF_REQUIRED/UNKNOWN semantics",
+        "P114 accepted semantic profile with only the two locked capability deltas from plan section 19",
+        "semantic capability migration + prompt quality/source-history migration",
+        "canonical Prompt Kit site regenerated only by the protected lifecycle/builder path"
+      ],
+      "validation": [
+        "prompt_registry_ops dry-run succeeds before mutation",
+        "P114 stable ID P114 and seq 114 are preserved",
+        "strength.actionable_continuation changes SUPPORT to REQUIRED and strength.plan_durability is added REQUIRED/SECONDARY/GUARDS; no other capability authority changes",
+        "prompt semantic coverage and quality history validators pass",
+        "generated Prompt Kit site remains in exact canonical registry parity"
+      ],
+      "convergence_owner": "p114-convergence-build-integration",
+      "status": "PLANNED"
+    },
+    {
+      "lane_id": "p114-context-health-contract-regressions",
+      "mission": "Implement the locked context-health helper contract and adversarial regression floor without editing canonical P114 semantics or inventing thresholds/owners.",
+      "dependencies": [],
+      "owned_mutation_surfaces": [
+        "harness/conversation-continuity/context-health.v1.json",
+        "tests/test_p114_context_health_prompt.py",
+        "harness/evals/prompt-strength/p114-context-health-regression-matrix.v1.json"
+      ],
+      "forbidden_surfaces": [
+        "docs/plans/P114_CONTEXT_HEALTH_CANARY_STRENGTHENING_PLAN.md",
+        "Outputs/prompt-parallel-dispatch/manifest.json",
+        "registry/prompts/spec-architecture-prompts.v1.json",
+        "harness/prompt-topology/prompt-capability-profiles.v1.json",
+        "harness/prompt-topology/prompt-capability-migrations.v1.json",
+        "harness/prompt-compilation/prompt-semantic-migrations.v1.json",
+        "harness/conversation-continuity/checkpoint.schema.v1.json",
+        "P02 semantics",
+        "P76 semantics",
+        "TokenCorridor authority/cutover semantics"
+      ],
+      "runtime_partition_input": {
+        "work_unit_id": "p114-context-health-contract-regressions",
+        "required_capabilities": [
+          "git",
+          "python",
+          "test-authoring",
+          "repository.mutation"
+        ],
+        "capability_facts": {
+          "current_runtime_available": true,
+          "current_runtime_authorized": true,
+          "local_runtime_required": true,
+          "ci_remote_required": false,
+          "operator_physical_required": false
+        },
+        "provider_access": [
+          {
+            "provider_family": "github",
+            "operation": "p114_context_health_contract_regressions",
+            "authority_state": "VERIFIED",
+            "mutation_authority": true
+          }
+        ],
+        "inherited_evidence": [
+          {
+            "evidence_type": "strategic_plan",
+            "source_owner": "P04 remote strategic owner",
+            "sanitized_ref": "path:docs/plans/P114_CONTEXT_HEALTH_CANARY_STRENGTHENING_PLAN.md",
+            "revision_or_freshness": "commit-89204c199bf26b9438c50c8b9dc62d57691de13f",
+            "visibility": "PUBLIC_TRACKED",
+            "proof_ceiling": "Strategic P114 semantics, ownership boundaries, execution graph, and migration obligations are settled; implementation remains unproven.",
+            "public_provider_ref_verified": false
+          }
+        ]
+      },
+      "runtime_partition": {
+        "execution_environment": "LOCAL_AGENT_RUNTIME",
+        "provider_access": [
+          {
+            "provider_family": "github",
+            "operation": "p114_context_health_contract_regressions",
+            "authority_state": "VERIFIED",
+            "mutation_authority": true
+          }
+        ],
+        "required_capabilities": [
+          "git",
+          "python",
+          "test-authoring",
+          "repository.mutation"
+        ],
+        "evidence_inputs": [
+          {
+            "evidence_type": "strategic_plan",
+            "source_owner": "P04 remote strategic owner",
+            "sanitized_ref": "path:docs/plans/P114_CONTEXT_HEALTH_CANARY_STRENGTHENING_PLAN.md",
+            "revision_or_freshness": "commit-89204c199bf26b9438c50c8b9dc62d57691de13f",
+            "visibility": "PUBLIC_TRACKED",
+            "proof_ceiling": "Strategic P114 semantics, ownership boundaries, execution graph, and migration obligations are settled; implementation remains unproven.",
+            "public_provider_ref_verified": false
+          }
+        ],
+        "execute_now": false
+      },
+      "adapter": {
+        "kind": "repo_runner",
+        "rung": 2
+      },
+      "launch": {
+        "mode": "runtime_tool",
+        "tool": "OpenCode",
+        "operation": "execute_locked_p114_context_health_regression_lane",
+        "arguments": {
+          "repository": "EndeavorEverlasting/web-excel-repair-triage",
+          "strategic_plan": "docs/plans/P114_CONTEXT_HEALTH_CANARY_STRENGTHENING_PLAN.md",
+          "planning_floor": "ee2fa75c99306607062445a5653af19129ac7c54",
+          "required_contract": "harness/conversation-continuity/context-health.v1.json",
+          "required_test": "tests/test_p114_context_health_prompt.py",
+          "required_eval": "harness/evals/prompt-strength/p114-context-health-regression-matrix.v1.json",
+          "semantic_authority": "plan sections 3-10 are locked; executor may implement tests/contracts only",
+          "isolation": "separate fresh isolated worktree/branch from refreshed origin/main"
+        }
+      },
+      "expected_artifacts": [
+        "machine-readable context-health contract with exact locked CTX enum/actions/telemetry rules/owner map",
+        "focused deterministic positive and negative regression suite",
+        "adversarial regression matrix covering all plan section 10 cases",
+        "proof that live-thread-p02-checkpoint/v1 is reused unchanged unless a demonstrated incompatibility is escalated"
+      ],
+      "validation": [
+        "no exact context percentage can be derived from visible text, P76 repository estimates, elapsed time, message count, or attachments",
+        "authoritative telemetry is consumed only when supplied; missing capacity telemetry remains UNKNOWN without preventing continuity classification",
+        "COMPACTION_RISK checkpoints then permits same-chat continuation when coherent",
+        "HANDOFF_REQUIRED routes to existing P02 checkpoint/recovery semantics",
+        "all 18 locked regression scenarios are represented and sensitive to forbidden state/owner changes"
+      ],
+      "convergence_owner": "p114-convergence-build-integration",
+      "status": "PLANNED"
+    },
+    {
+      "lane_id": "p114-convergence-build-integration",
+      "mission": "Converge the two locked Wave 1 implementations, register only repository-required routes/test-floor entries, run exact combined proof, build Prompt Kit canonically, integrate, and preserve the TokenCorridor migration obligation.",
+      "dependencies": [
+        "p114-semantic-implementation",
+        "p114-context-health-contract-regressions"
+      ],
+      "owned_mutation_surfaces": [
+        "harness/test-floor.v1.json",
+        "CODEBASE_MAP.md",
+        "docs/plans/AFK_FACTORY_INTERFACE_CONVERGENCE_SPRINT_MAP.md"
+      ],
+      "forbidden_surfaces": [
+        "docs/plans/P114_CONTEXT_HEALTH_CANARY_STRENGTHENING_PLAN.md",
+        "Outputs/prompt-parallel-dispatch/manifest.json",
+        "harness/conversation-continuity/checkpoint.schema.v1.json unless a demonstrated incompatibility is escalated to the strategic owner",
+        "new P114 replacement prompt identity",
+        "new TokenCorridor context-health authority",
+        "agent-execution-tiering authority changes",
+        "unrelated PR #669 surfaces"
+      ],
+      "runtime_partition_input": {
+        "work_unit_id": "p114-convergence-build-integration",
+        "required_capabilities": [
+          "git",
+          "python",
+          "prompt-kit.builder",
+          "repository.integration"
+        ],
+        "capability_facts": {
+          "current_runtime_available": true,
+          "current_runtime_authorized": true,
+          "local_runtime_required": true,
+          "ci_remote_required": false,
+          "operator_physical_required": false
+        },
+        "provider_access": [
+          {
+            "provider_family": "github",
+            "operation": "p114_convergence_build_integration",
+            "authority_state": "VERIFIED",
+            "mutation_authority": true
+          }
+        ],
+        "inherited_evidence": [
+          {
+            "evidence_type": "strategic_plan",
+            "source_owner": "P04 remote strategic owner",
+            "sanitized_ref": "path:docs/plans/P114_CONTEXT_HEALTH_CANARY_STRENGTHENING_PLAN.md",
+            "revision_or_freshness": "commit-89204c199bf26b9438c50c8b9dc62d57691de13f",
+            "visibility": "PUBLIC_TRACKED",
+            "proof_ceiling": "Strategic P114 semantics, ownership boundaries, execution graph, and migration obligations are settled; implementation remains unproven.",
+            "public_provider_ref_verified": false
+          }
+        ]
+      },
+      "runtime_partition": {
+        "execution_environment": "LOCAL_AGENT_RUNTIME",
+        "provider_access": [
+          {
+            "provider_family": "github",
+            "operation": "p114_convergence_build_integration",
+            "authority_state": "VERIFIED",
+            "mutation_authority": true
+          }
+        ],
+        "required_capabilities": [
+          "git",
+          "python",
+          "prompt-kit.builder",
+          "repository.integration"
+        ],
+        "evidence_inputs": [
+          {
+            "evidence_type": "strategic_plan",
+            "source_owner": "P04 remote strategic owner",
+            "sanitized_ref": "path:docs/plans/P114_CONTEXT_HEALTH_CANARY_STRENGTHENING_PLAN.md",
+            "revision_or_freshness": "commit-89204c199bf26b9438c50c8b9dc62d57691de13f",
+            "visibility": "PUBLIC_TRACKED",
+            "proof_ceiling": "Strategic P114 semantics, ownership boundaries, execution graph, and migration obligations are settled; implementation remains unproven.",
+            "public_provider_ref_verified": false
+          }
+        ],
+        "execute_now": false
+      },
+      "adapter": {
+        "kind": "repo_runner",
+        "rung": 2
+      },
+      "launch": {
+        "mode": "runtime_tool",
+        "tool": "Cursor",
+        "operation": "converge_validate_integrate_p114_context_health",
+        "arguments": {
+          "repository": "EndeavorEverlasting/web-excel-repair-triage",
+          "strategic_plan": "docs/plans/P114_CONTEXT_HEALTH_CANARY_STRENGTHENING_PLAN.md",
+          "merge_policy": "integrate exact green candidate to refreshed default branch; preserve unrelated writers",
+          "required_migration_note": "TokenCorridor LM2 must transplant strengthened P114 + helper + regressions with semantic parity before M4 donor authority downgrade",
+          "required_validation": "plan section 13 plus registered Prompt Kit/skill/operational harness floors and post-merge main containment/parity"
+        }
+      },
+      "expected_artifacts": [
+        "combined exact candidate containing both Wave 1 outputs without semantic drift",
+        "repository-required test-floor/index/convergence-plan bindings only",
+        "green focused + adversarial + broad Prompt Kit/continuity/context validation",
+        "implementation PR and merge receipt",
+        "refreshed default-branch containment and generated Prompt Kit parity proof",
+        "durable migration obligation that carries the strengthened P114 capability into TokenCorridor LM2 without duplicate authority"
+      ],
+      "validation": [
+        "python scripts/prompt_registry_ops.py inspect",
+        "python tests/test_p114_context_health_prompt.py",
+        "python tests/test_prompt_semantic_coverage.py",
+        "python tests/test_prompt_quality_history.py",
+        "python scripts/validate_conversation_handoff_checkpoint.py --schema-only",
+        "python scripts/validate_context_architecture.py --summary",
+        "python scripts/build_prompt_kit_registry.py --check",
+        "registered Prompt Kit web/skill/operational harness floors for changed surfaces",
+        "git diff --check over exact candidate range",
+        "post-merge refreshed main contains the implementation and canonical generated site parity passes"
+      ],
+      "convergence_owner": "P114 strategic owner / P04 convergence contract",
+      "status": "PLANNED"
     }
   ]
 }
