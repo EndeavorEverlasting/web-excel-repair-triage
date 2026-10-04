@@ -2,8 +2,8 @@
   "schema_version": "prompt-parallel-dispatch/v1",
   "run_id": "p114-context-health-canary-20261003-p04",
   "graph_width": 2,
-  "parallel_disposition": "DEGRADED",
-  "autonomy_gap": "This ChatGPT runtime can persist the remote strategic plan and GitHub manifest but has no tool that can launch the operator's local Cursor/OpenCode runtimes. The first local executor must ingest this manifest and dispatch both Wave 1 lanes concurrently; human copy/paste is portability only and parallel execution remains UNPROVEN until the receipt observes overlap.",
+  "parallel_disposition": "REQUIRED",
+  "autonomy_gap": null,
   "lanes": [
     {
       "lane_id": "p114-semantic-implementation",
