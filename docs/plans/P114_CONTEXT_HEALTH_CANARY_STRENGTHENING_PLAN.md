@@ -1,13 +1,13 @@
 # P114 Context-Health Canary Strengthening — P04 Remote Execution Plan
 
-**Plan ID:** P114-CONTEXT-HEALTH-CANARY-2026-10-03  
-**Status:** REMOTE STRATEGIC PLAN — READY FOR BOUNDED EXECUTION  
-**Canonical donor repository:** `EndeavorEverlasting/web-excel-repair-triage`  
-**Planning floor:** `main@ee2fa75c99306607062445a5653af19129ac7c54`  
-**Destination convergence repository:** `EndeavorEverlasting/TokenCorridor`  
-**Observed destination floor while planning:** `main@dc58cfcbd00792a18e141c9ac6e0ccf92cf1b6f3`  
-**Strategic owner:** remote/frontier ChatGPT planning lane under `agent-execution-tiering/v1`  
-**Execution agents:** Cursor/OpenCode as bounded implementation executors only  
+**Plan ID:** P114-CONTEXT-HEALTH-CANARY-2026-10-03
+**Status:** REMOTE STRATEGIC PLAN — READY FOR BOUNDED EXECUTION
+**Canonical donor repository:** `EndeavorEverlasting/web-excel-repair-triage`
+**Planning floor:** `main@ee2fa75c99306607062445a5653af19129ac7c54`
+**Destination convergence repository:** `EndeavorEverlasting/TokenCorridor`
+**Observed destination floor while planning:** `main@dc58cfcbd00792a18e141c9ac6e0ccf92cf1b6f3`
+**Strategic owner:** remote/frontier ChatGPT planning lane under `agent-execution-tiering/v1`
+**Execution agents:** Cursor/OpenCode as bounded implementation executors only
 **Prompt identity:** strengthen **P114 — Conversation Context Canary & Handoff Guard**; DO NOT allocate a new prompt identity.
 
 ## 1. Operator outcome
@@ -325,9 +325,9 @@ Ambiguity in a locked semantic is an escalation to the strategic owner, not loca
 
 #### Lane A — P114 canonical semantic implementation
 
-**Owner:** bounded Cursor/OpenCode executor under this locked plan  
-**Owns:** P114 canonical registry body + semantic migration/history record  
-**Must use:** `scripts/prompt_registry_ops.py edit`  
+**Owner:** bounded Cursor/OpenCode executor under this locked plan
+**Owns:** P114 canonical registry body + semantic migration/history record
+**Must use:** `scripts/prompt_registry_ops.py edit`
 **Forbidden:** context-health helper/tests; plan/manifest; P02/P76 semantics; migration authority
 
 Output:
@@ -337,8 +337,8 @@ Output:
 
 #### Lane B — context-health contract and regression floor
 
-**Owner:** bounded Cursor/OpenCode executor under this locked plan  
-**Owns:** new context-health helper contract, focused deterministic tests, prompt-strength/adversarial matrix  
+**Owner:** bounded Cursor/OpenCode executor under this locked plan
+**Owns:** new context-health helper contract, focused deterministic tests, prompt-strength/adversarial matrix
 **Forbidden:** canonical P114 source; plan/manifest; P02/P76 semantics; generated site
 
 Output:
@@ -513,4 +513,3 @@ Use the smallest applicable set from:
 The profile-level `evidence_refs` must retain the current P114 evidence set and add the strategic plan, checkpoint schema/validator, context-health helper, and focused context-health test after those paths exist.
 
 Do not add a new PRIMARY capability. P114 remains a continuity sensor/guard and handoff trigger, not the canonical plan owner, recovery executor, or implementation owner.
-
