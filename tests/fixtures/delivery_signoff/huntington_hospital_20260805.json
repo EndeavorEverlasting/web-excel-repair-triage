@@ -1,0 +1,26 @@
+{
+  "schema": "delivery-signoff-spec/v1",
+  "site": {
+    "code": "HUNTINGTON-HOSPITAL",
+    "name": "Huntington Hospital"
+  },
+  "signoff": {
+    "id": "HUNTINGTON-STOCK-20260805-001",
+    "title": "Equipment Delivery Sign-Off",
+    "subtitle": "Huntington Hospital Stock Transfer",
+    "delivery_date": ""
+  },
+  "recipient": {
+    "name": "Morgan Mitchell",
+    "title": "Point of Contact",
+    "building_room": "",
+    "phone": ""
+  },
+  "equipment_rows": [
+    {"equipment_type": "Repurposed Arm", "model_or_part": "", "color_or_variant": "", "quantity": 7},
+    {"equipment_type": "Neuron Arm", "model_or_part": "FLP-0008-05B", "color_or_variant": "", "quantity": 10},
+    {"equipment_type": "DR-0015-79", "model_or_part": "", "color_or_variant": "", "quantity": 10}
+  ],
+  "serialized_assets": [],
+  "reject_tokens": ["Melville", "3HQ", "Timothy W. Seeberger", "JTM", "SSUH"]
+}

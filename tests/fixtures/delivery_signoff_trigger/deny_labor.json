@@ -1,0 +1,12 @@
+{
+  "request": {
+    "request_text": "Repair the roster hours",
+    "task_kind": "labor_reconstruction",
+    "input_schema": "delivery-signoff-spec/v1"
+  },
+  "expected": {
+    "decision": "deny",
+    "rule_id": "labor-only-task",
+    "route": "deny"
+  }
+}
