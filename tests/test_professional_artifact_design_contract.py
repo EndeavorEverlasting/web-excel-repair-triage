@@ -1,4 +1,8 @@
+import json
+import tempfile
 import unittest
+from pathlib import Path
+from unittest import mock
 
 from scripts import validate_professional_artifact_design as validator
 
@@ -28,27 +32,57 @@ class ProfessionalArtifactDesignContractTests(unittest.TestCase):
         self.assertLessEqual(len(copy), 12000)
         self.assertIn("palette is not a substitute for composition", copy.lower())
 
-    def test_regressions_cover_flatness_collision_motion_and_evidence(self) -> None:
+    def test_regressions_cover_each_scenario_independently(self) -> None:
         cases = validator.load_json(validator.CASES)["cases"]
         indexed = {row["id"]: row for row in cases}
-        for case_id in validator.REQUIRED_CASES:
+        for case_id, terms in validator.REQUIRED_CASE_TERMS.items():
             self.assertIn(case_id, indexed)
-        joined = " ".join(
-            str(value)
-            for row in cases
-            if row["id"] in validator.REQUIRED_CASES
-            for value in (row.get("title"), row.get("input"), row.get("expected"))
-        ).lower()
-        for phrase in (
-            "blank canvas",
-            "collision",
-            "stable",
-            "transition",
-            "illustrative",
-            "contact-sheet",
-            "palette",
-        ):
-            self.assertIn(phrase, joined)
+            row_text = json.dumps(indexed[case_id], ensure_ascii=False).lower()
+            for term in terms:
+                self.assertIn(term.lower(), row_text, f"{case_id} missing {term}")
+
+    def test_json_root_must_be_object(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp) / "bad.json"
+            path.write_text("[]", encoding="utf-8")
+            with self.assertRaisesRegex(validator.ValidationError, "JSON object root"):
+                validator.load_json(path)
+
+    def test_copy_content_must_be_string(self) -> None:
+        real = validator.load_json(validator.DRAFT)
+        malformed = dict(real)
+        malformed["copyContent"] = list(validator.REQUIRED_PROMPT_PHRASES)
+
+        def fake_load(path):
+            if path == validator.DRAFT:
+                return malformed
+            return validator.load_json(path)
+
+        original = validator.load_json
+        def routed(path):
+            if path == validator.DRAFT:
+                return malformed
+            return original(path)
+
+        with mock.patch.object(validator, "load_json", side_effect=routed):
+            with self.assertRaisesRegex(validator.ValidationError, "copyContent must be"):
+                validator.validate()
+
+    def test_every_scene_contract_field_is_enforced(self) -> None:
+        real = validator.load_json(validator.CONTRACT)
+        for field in ("environment_or_metaphor", "density_budget"):
+            broken = json.loads(json.dumps(real))
+            del broken["presentation_cinematic"]["scene_contract"][field]
+            original = validator.load_json
+
+            def routed(path, broken=broken, original=original):
+                if path == validator.CONTRACT:
+                    return broken
+                return original(path)
+
+            with mock.patch.object(validator, "load_json", side_effect=routed):
+                with self.assertRaisesRegex(validator.ValidationError, f"scene contract missing {field}"):
+                    validator.validate()
 
     def test_contract_is_project_neutral(self) -> None:
         contract = validator.CONTRACT.read_text(encoding="utf-8")
