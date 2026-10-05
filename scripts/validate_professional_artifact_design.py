@@ -42,6 +42,15 @@ REQUIRED_UPSTREAM = {
     "pptxgenjs-masters-notes",
 }
 REQUIRED_CASES = {f"PAAB{i:03d}" for i in range(13, 20)}
+REQUIRED_CASE_TERMS = {
+    "PAAB013": ("blank canvas", "one dominant message"),
+    "PAAB014": ("collision", "rerender"),
+    "PAAB015": ("stable element identities", "transition communicates"),
+    "PAAB016": ("semantic transition plan", "static fallback"),
+    "PAAB017": ("illustrative scenery", "not proof"),
+    "PAAB018": ("contact-sheet", "single-layout-everywhere"),
+    "PAAB019": ("composition before palette", "color-only polish"),
+}
 REQUIRED_PROMPT_PHRASES = (
     "sequence of scenes",
     "one dominant message per frame",
@@ -59,7 +68,10 @@ class ValidationError(RuntimeError):
 
 
 def load_json(path: Path) -> dict:
-    return json.loads(path.read_text(encoding="utf-8"))
+    payload = json.loads(path.read_text(encoding="utf-8"))
+    if not isinstance(payload, dict):
+        raise ValidationError(f"{path.relative_to(ROOT)} must contain a JSON object root")
+    return payload
 
 
 def _ids(rows: list[dict]) -> set[str]:
@@ -103,17 +115,33 @@ def validate() -> dict:
     if leaked:
         raise ValidationError(f"project-specific terms leaked into reusable contract: {leaked}")
 
-    copy = str(draft.get("copyContent", ""))
+    copy = draft.get("copyContent")
+    if not isinstance(copy, str) or not copy.strip():
+        raise ValidationError("candidate copyContent must be a non-empty string")
     missing_phrases = [phrase for phrase in REQUIRED_PROMPT_PHRASES if phrase not in copy]
     if missing_phrases:
         raise ValidationError(f"candidate prompt missing cinematic product-design phrases: {missing_phrases}")
     if len(copy) > 12000:
         raise ValidationError(f"candidate copyContent exceeds protected contribution ceiling: {len(copy)}")
 
-    case_ids = {str(row.get("id", "")) for row in cases.get("cases", [])}
-    missing_cases = REQUIRED_CASES - case_ids
+    case_rows = cases.get("cases")
+    if not isinstance(case_rows, list):
+        raise ValidationError("regression cases must be a list")
+    indexed_cases = {
+        str(row.get("id", "")): row
+        for row in case_rows
+        if isinstance(row, dict)
+    }
+    missing_cases = REQUIRED_CASES - set(indexed_cases)
     if missing_cases:
         raise ValidationError(f"missing cinematic regression cases: {sorted(missing_cases)}")
+    for case_id, terms in REQUIRED_CASE_TERMS.items():
+        row_text = json.dumps(indexed_cases[case_id], ensure_ascii=False).lower()
+        missing_terms = [term for term in terms if term.lower() not in row_text]
+        if missing_terms:
+            raise ValidationError(
+                f"{case_id} lost required behavior terms: {missing_terms}"
+            )
 
     if "professional-artifact-design.v1.json" not in context:
         raise ValidationError("50k context router does not expose professional artifact design contract")
@@ -125,8 +153,10 @@ def validate() -> dict:
         "dominant_message",
         "visual_anchor",
         "spatial_layers",
+        "environment_or_metaphor",
         "evidence_staging",
         "continuity_identity",
+        "density_budget",
         "transition_intent",
         "deck_rhythm",
         "static_fallback",
