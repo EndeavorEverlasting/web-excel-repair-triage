@@ -148,6 +148,8 @@ REQUIRED_VALIDATOR_IDS = {
     "prompt-runtime-compliance-tests",
     "prompt-semantic-coverage-audit",
     "prompt-semantic-coverage-tests",
+    "professional-artifact-design-audit",
+    "professional-artifact-design-tests",
 }
 PRE_COMMIT_SNAPSHOT_PROFILE = "pre_commit_snapshot"
 PRE_COMMIT_SNAPSHOT_VALIDATOR_IDS = (
