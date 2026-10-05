@@ -70,7 +70,11 @@ class ValidationError(RuntimeError):
 def load_json(path: Path) -> dict:
     payload = json.loads(path.read_text(encoding="utf-8"))
     if not isinstance(payload, dict):
-        raise ValidationError(f"{path.relative_to(ROOT)} must contain a JSON object root")
+        try:
+            label = path.relative_to(ROOT)
+        except ValueError:
+            label = path
+        raise ValidationError(f"{label} must contain a JSON object root")
     return payload
 
 
