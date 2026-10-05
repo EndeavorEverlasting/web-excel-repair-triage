@@ -257,3 +257,22 @@ Do not call the prompt “added” until the P79 helper has:
 - passed Prompt Kit validation and focused tests.
 
 Until then the state is **COMMITTED P79 CANDIDATE / PROTECTED ADD PENDING EXECUTABLE CHECKOUT**.
+
+
+## P97 cinematic product-design prior-art addendum — 2026-10-05
+
+A 2026-10-05 comparison between a structurally correct but flat operational deck and a stronger cinematic reference exposed a narrower recurrence not covered by PAAB001–PAAB012: a presentation can preserve correct information and still fail product quality through flat scene architecture, collisions, absent spatial hierarchy, non-semantic transitions, or a palette-only notion of polish.
+
+P97 external inspection contributes mechanics, not dependencies:
+
+| Upstream | Observed mechanic | Disposition |
+| --- | --- | --- |
+| reveal.js Auto-Animate + backgrounds | Stable element identity can interpolate adjacent scenes; full-frame/parallax backgrounds make spatial context first-class. | ADAPT continuity + environment mechanics |
+| Slidev animations/components | Clicks model deliberate reveal state; reusable layouts/components keep a design language coherent. | ADAPT state + reusable scene-family mechanics |
+| Motion Canvas | Scene-oriented animation plus realtime preview treats visual story and motion as one authoring surface. | ADAPT scene/timeline mental model |
+| Remotion TransitionSeries | Transition presentation/timing are explicit between sequences instead of being accidental page switches. | ADAPT semantic transition-object model |
+| PptxGenJS masters/notes/images/scheme colors | Deterministic PowerPoint substrate supports reusable masters, evidence images, scheme colors, and speaker notes. | ADOPT substrate; do not infer advanced motion capability |
+
+Reusable conclusion: cinematic quality is not a dark theme or a pile of effects. It is a testable composition system: scene job -> dominant message -> visual anchor -> spatial layers -> evidence staging -> continuity identity -> semantic transition -> static fallback -> deck-wide rhythm inspection.
+
+The public harness contract remains project-neutral. Official P79 registered-source prior-art and protected ADD gates remain separately pending.

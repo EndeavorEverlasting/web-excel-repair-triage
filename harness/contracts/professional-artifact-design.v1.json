@@ -1,0 +1,201 @@
+{
+  "schema_version": "professional-artifact-design/v1",
+  "contract_id": "professional-artifact-design",
+  "owner": "P01",
+  "mission": "Make professional artifact design a durable harness concern: preserve semantic truth, derive visual authority, compose intentional scenes, use motion only when it communicates state or continuity, prove the rendered result, and backport repeatable corrections into canonical artifact machinery.",
+  "scope": {
+    "applies_to": [
+      "documents",
+      "spreadsheets",
+      "presentations",
+      "web_or_static_artifacts",
+      "database_or_ledger_projections",
+      "other professional artifacts with a visual acceptance surface"
+    ],
+    "presentation_specialization": "Presentation work is treated as a sequence of scenes rather than isolated pages when narrative, executive, cinematic, immersive, or reference-led quality is requested.",
+    "non_goals": [
+      "project-specific visual hard-coding",
+      "forcing one palette or one cinematic style on every artifact",
+      "treating generated scenery as operational evidence",
+      "duplicating Drive synchronization or provider publication ownership"
+    ]
+  },
+  "design_ladder": [
+    "SEMANTIC_TRUTH",
+    "VISUAL_AUTHORITY",
+    "SCENE_ARCHITECTURE",
+    "MOTION_CONTINUITY",
+    "POLISH",
+    "DURABLE_BACKPORT"
+  ],
+  "principles": [
+    {
+      "id": "semantic_truth_before_style",
+      "rule": "Resolve facts, evidence, workflow semantics, and archetype obligations before visual treatment. Styling cannot promote unsupported claims or erase operational meaning."
+    },
+    {
+      "id": "visual_authority_precedence",
+      "rule": "Use the strongest observed visual authority available. A verified rendered exemplar outranks inferred theme internals or a generic aesthetic default."
+    },
+    {
+      "id": "scene_architecture_before_decoration",
+      "rule": "For presentations, define each scene's job, dominant message, visual anchor, spatial hierarchy, evidence role, and relationship to adjacent scenes before choosing decorative treatments."
+    },
+    {
+      "id": "motion_has_semantic_job",
+      "rule": "Transitions and reveals must communicate continuity, comparison, drill-down, state change, emphasis, or progression. Motion without a semantic job is decoration and does not satisfy the cinematic gate."
+    },
+    {
+      "id": "evidence_illustration_boundary",
+      "rule": "Authentic evidence, privacy-safe derivatives, diagrams, and generated illustrative scenery must remain distinguishable. Illustrative imagery may establish context or metaphor but cannot be presented as proof."
+    },
+    {
+      "id": "composition_before_palette",
+      "rule": "Palette is a semantic layer, not a substitute for composition. Layout, depth, hierarchy, typography, rhythm, imagery, evidence staging, and continuity must work independently of color branding."
+    },
+    {
+      "id": "prototype_render_compare",
+      "rule": "A material visual change remains a prototype until the actual artifact is rendered/opened, compared against its authority and rubric, and defects are dispositioned."
+    },
+    {
+      "id": "durable_backport",
+      "rule": "When a correction should recur, encode it in the canonical generator, template, spec, profile, validator, or test before treating repeated manual restyling as complete."
+    }
+  ],
+  "presentation_cinematic": {
+    "required_when": [
+      "the operator requests cinematic, immersive, cutting-edge, or reference-led presentation quality",
+      "a visual exemplar or prior deck is supplied as the quality bar",
+      "the deck is an executive narrative where spatial continuity materially improves comprehension"
+    ],
+    "scene_contract": {
+      "dominant_message": "Each frame has one primary takeaway. Supporting text and evidence serve that takeaway rather than competing with it.",
+      "visual_anchor": "Each frame has a deliberate focal object, evidence card, diagram, metric, or environmental anchor instead of undifferentiated prose.",
+      "spatial_layers": "Foreground, midground, background, whitespace, blur, scale, and contrast create intentional depth and reading order when the style calls for it.",
+      "environment_or_metaphor": "Scenery or metaphor can carry the story, but it must be relevant to the concept and remain subordinate to truth-bearing evidence.",
+      "evidence_staging": "Screenshots, diagrams, photos, and charts are framed, cropped, captioned, and positioned as evidence objects; do not drop them into a scene without hierarchy.",
+      "continuity_identity": "Elements that represent the same concept across adjacent scenes retain recognizable identity and position/scale lineage where continuity matters.",
+      "transition_intent": "Every nontrivial transition declares its semantic job such as reveal, compare, drill-down, handoff, branch, merge, zoom, or state change.",
+      "density_budget": "Do not solve crowding by shrinking type until it becomes technically fit but operationally unreadable. Split the story into additional scenes when needed.",
+      "deck_rhythm": "Inspect the whole deck as a sequence: vary scene families deliberately while preserving a coherent visual grammar and pacing.",
+      "static_fallback": "A deck remains coherent when motion is unavailable or exported to static/PDF; no key claim may exist only inside animation."
+    },
+    "speaker_note_metadata": [
+      "scene_id",
+      "scene_job",
+      "evidence_or_visual_anchor",
+      "proof_or_claim_boundary",
+      "transition_intent",
+      "privacy_or_safety_constraint"
+    ]
+  },
+  "hard_failures": [
+    {
+      "id": "collision_or_overflow",
+      "rule": "Text, evidence cards, or shapes collide, clip, overflow, or obscure one another in the target renderer."
+    },
+    {
+      "id": "generic_blank_canvas_default",
+      "rule": "A cinematic/reference-led deck falls back to title-plus-prose on an empty canvas when the reference establishes a richer scene grammar."
+    },
+    {
+      "id": "palette_only_polish",
+      "rule": "The artifact changes colors or theme while leaving weak hierarchy, composition, spatial depth, or evidence staging unresolved."
+    },
+    {
+      "id": "motion_without_meaning",
+      "rule": "Animation exists only to make the deck move, with no declared semantic transition purpose."
+    },
+    {
+      "id": "teleporting_continuity",
+      "rule": "Persistent concepts jump arbitrarily between scenes without an intentional discontinuity."
+    },
+    {
+      "id": "evidence_illustration_conflation",
+      "rule": "Generated or decorative imagery is presented in a way that can be mistaken for captured operational evidence."
+    },
+    {
+      "id": "unreadable_density",
+      "rule": "A slide passes only because type, labels, or evidence were squeezed below practical presentation readability."
+    },
+    {
+      "id": "single_layout_everywhere",
+      "rule": "Every frame repeats the same card/grid composition despite materially different narrative jobs."
+    }
+  ],
+  "reference_comparison": {
+    "strong_reference_signals": [
+      "environment establishes story context before labels",
+      "evidence is staged inside a deliberate composition",
+      "foreground/background separation creates reading order",
+      "adjacent scenes retain spatial or conceptual continuity",
+      "speaker notes can carry scene intent and proof constraints",
+      "transitions support narrative state rather than merely switching pages"
+    ],
+    "anti_copy_rule": "Extract mechanics, not project-specific imagery, names, claims, or palette."
+  },
+  "upstream_prior_art": [
+    {
+      "id": "revealjs-auto-animate",
+      "evidence_state": "OBSERVED_IMPLEMENTED",
+      "disposition": "ADAPT",
+      "source": "https://revealjs.com/auto-animate/",
+      "mechanic": "Stable element identities across adjacent slides enable automatic interpolation and spatial continuity."
+    },
+    {
+      "id": "revealjs-backgrounds",
+      "evidence_state": "OBSERVED_IMPLEMENTED",
+      "disposition": "ADAPT",
+      "source": "https://revealjs.com/backgrounds/",
+      "mechanic": "Full-frame image/video/color and parallax backgrounds make environmental scene layers first-class presentation primitives."
+    },
+    {
+      "id": "slidev-animations-components",
+      "evidence_state": "OBSERVED_IMPLEMENTED",
+      "disposition": "ADAPT",
+      "source": "https://sli.dev/guide/animations",
+      "mechanic": "Animation steps are deliberate presentation state; reusable components/layouts support a coherent design language."
+    },
+    {
+      "id": "motion-canvas-scenes",
+      "evidence_state": "OBSERVED_IMPLEMENTED",
+      "disposition": "ADAPT",
+      "source": "https://motioncanvas.io/docs/",
+      "mechanic": "Scene-based animation with realtime preview supports authoring story and motion as one design system."
+    },
+    {
+      "id": "remotion-transition-series",
+      "evidence_state": "OBSERVED_IMPLEMENTED",
+      "disposition": "ADAPT",
+      "source": "https://www.remotion.dev/docs/transitions/transitionseries",
+      "mechanic": "Transitions are explicit objects between sequences, separating scene content from transition presentation and timing."
+    },
+    {
+      "id": "pptxgenjs-masters-notes",
+      "evidence_state": "OBSERVED_IMPLEMENTED",
+      "disposition": "ADOPT",
+      "source": "https://gitbrent.github.io/PptxGenJS/docs/masters/",
+      "mechanic": "Reusable masters, images, scheme colors, and speaker notes provide a deterministic PowerPoint substrate; cinematic semantics remain an upper-layer contract."
+    }
+  ],
+  "acceptance": {
+    "must_pass": [
+      "semantic/content proof gate",
+      "archetype completeness",
+      "target-renderer collision/overflow inspection",
+      "scene-job and dominant-message inspection for presentation scenes",
+      "evidence-versus-illustration boundary",
+      "deck-wide rhythm/contact-sheet inspection when presentation has multiple scenes",
+      "static fallback when motion is material",
+      "durable backport when repeatability is expected"
+    ],
+    "presentation_cinematic_additional": [
+      "scene architecture exists before motion",
+      "persistent concepts use stable continuity or intentional discontinuity",
+      "each material transition has a semantic job",
+      "palette is not the only source of polish",
+      "the final frame sequence is inspected as a whole rather than only slide-by-slide"
+    ]
+  },
+  "proof_ceiling": "Static contract, prompt-fixture, regression, and harness validation can prove that cinematic/product-design requirements are encoded and connected. It cannot prove a particular deck is visually excellent or that PowerPoint/Google Slides renders motion identically; that requires artifact-native render/runtime observation."
+}
