@@ -541,9 +541,9 @@
       "prompt-kit-parity",
       "artifact-hygiene",
       "app-harness-validation",
-      "patch-hygiene",
       "professional-artifact-design-audit",
-      "professional-artifact-design-tests"
+      "professional-artifact-design-tests",
+      "patch-hygiene"
     ],
     "artifact-engine": [
       "artifact-hygiene",
@@ -609,9 +609,9 @@
       "prompt-kit-parity",
       "artifact-hygiene",
       "app-harness-validation",
-      "patch-hygiene",
       "professional-artifact-design-audit",
-      "professional-artifact-design-tests"
+      "professional-artifact-design-tests",
+      "patch-hygiene"
     ],
     "pre_commit_snapshot": [
       "repository-work-ledger-audit",
