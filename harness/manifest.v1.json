@@ -312,6 +312,8 @@
     "python3 scripts/build_prompt_kit_registry.py --output web/prompt-kit/index.html --check",
     "python3 -m triage.gitignore_hygiene",
     "python3 scripts/validate_app_harness.py --output Outputs/app-harness-validation.json",
-    "git diff --check"
+    "git diff --check",
+    "python3 scripts/validate_professional_artifact_design.py --summary",
+    "python3 -m unittest tests.test_professional_artifact_design_contract -v"
   ]
 }
