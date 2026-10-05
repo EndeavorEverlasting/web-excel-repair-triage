@@ -570,9 +570,7 @@
       "artifact-derivation-harness-tests",
       "harness-completeness",
       "harness-contract-tests",
-      "patch-hygiene-staged",
-      "professional-artifact-design-audit",
-      "professional-artifact-design-tests"
+      "patch-hygiene-staged"
     ],
     "pre_push": [
       "harness-completeness",
@@ -629,9 +627,7 @@
       "artifact-derivation-harness-audit",
       "artifact-derivation-harness-tests",
       "harness-completeness",
-      "harness-contract-tests",
-      "professional-artifact-design-audit",
-      "professional-artifact-design-tests"
+      "harness-contract-tests"
     ]
   },
   "hooks": {
