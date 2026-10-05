@@ -133,6 +133,78 @@
         "route repository/provider synchronization to its canonical sync owner",
         "do not invent a second sync mechanism"
       ]
+    },
+    {
+      "id": "PAAB013",
+      "title": "Cinematic presentation rejects generic blank canvas",
+      "input": "A reference-led executive deck has correct content but renders as title plus dense prose on a mostly empty white slide.",
+      "expected": [
+        "treat deck as a sequence of scenes rather than isolated pages",
+        "one dominant message and visual anchor per frame",
+        "generic blank canvas is a hard failure when the reference establishes richer scene grammar",
+        "revise composition before cosmetic color tuning"
+      ]
+    },
+    {
+      "id": "PAAB014",
+      "title": "Text collision and overflow are hard failures",
+      "input": "A slide contains a body paragraph and a KPI block that overlap in the target renderer.",
+      "expected": [
+        "collision or overflow fails visual acceptance",
+        "do not shrink type as the primary escape hatch",
+        "recompose or split the scene and rerender in the target presentation surface"
+      ]
+    },
+    {
+      "id": "PAAB015",
+      "title": "Adjacent scenes preserve intentional continuity",
+      "input": "A concept persists across two adjacent slides but its visual representation jumps arbitrarily between unrelated positions and scales.",
+      "expected": [
+        "stable element identities are used when continuity matters",
+        "position and scale lineage remain recognizable or the discontinuity is explicitly intentional",
+        "transition communicates comparison, zoom, drill-down, handoff, branch, merge, or state change"
+      ]
+    },
+    {
+      "id": "PAAB016",
+      "title": "Motion must have semantic intent and static fallback",
+      "input": "A deck has flashy transitions, but no transition communicates a state change and exported PDF loses essential meaning.",
+      "expected": [
+        "semantic transition plan required",
+        "motion without meaning fails",
+        "static fallback retains every key claim",
+        "animation is not accepted merely because it looks dynamic"
+      ]
+    },
+    {
+      "id": "PAAB017",
+      "title": "Illustrative scenery never impersonates evidence",
+      "input": "Generated cinematic background imagery and real operational screenshots appear together in a technical deck.",
+      "expected": [
+        "authentic evidence separately from illustrative scenery",
+        "generated scenery may establish context or metaphor but is not proof",
+        "evidence cards remain legible, framed, and provenance-safe"
+      ]
+    },
+    {
+      "id": "PAAB018",
+      "title": "Deck-wide rhythm is inspected as a sequence",
+      "input": "Every slide is individually attractive but all slides use the same layout and the deck feels mechanically repetitive.",
+      "expected": [
+        "contact-sheet or montage inspection of the full sequence",
+        "vary scene families according to narrative job while preserving design grammar",
+        "single-layout-everywhere is a hard failure for a cinematic narrative"
+      ]
+    },
+    {
+      "id": "PAAB019",
+      "title": "Palette cannot substitute for composition",
+      "input": "A weak deck is recolored with a dramatic tech palette while hierarchy, depth, evidence staging, and spacing remain flat.",
+      "expected": [
+        "composition before palette",
+        "color-only polish does not pass",
+        "hierarchy, depth, evidence staging, typography, and rhythm must work independently of brand colors"
+      ]
     }
   ]
 }
