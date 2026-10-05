@@ -117,8 +117,8 @@ def validate() -> dict:
 
     if "professional-artifact-design.v1.json" not in context:
         raise ValidationError("50k context router does not expose professional artifact design contract")
-    if "presentation design quality" not in context.lower():
-        raise ValidationError("50k context router lacks presentation design quality route")
+    if "artifact / presentation design" not in context.lower():
+        raise ValidationError("50k context router lacks artifact/presentation design route")
 
     scene = contract.get("presentation_cinematic", {}).get("scene_contract", {})
     for field in (
