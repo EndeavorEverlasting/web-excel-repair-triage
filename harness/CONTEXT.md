@@ -18,6 +18,7 @@ Then choose one domain. Do not eagerly read every root contract, every skill, th
 | Harness/spec structure, context bloat | `CODEBASE_MAP.md` | harness-infrastructure skill + selected contract/validator |
 | Agent stops at a material/arbitrary boundary; boundary-to-sprint routing | `CODEBASE_MAP.md` → `TRIGGERS.md` (`harness-infrastructure-change`) | capability use case `execution-boundary-continuation` + existing harness-infrastructure workflow/skill |
 | Artifact creation / derivation | `harness/artifact-derivation/CODEBASE_MAP.md` | artifact-derivation skill + create-new-from-source contract |
+| Professional artifact / presentation design quality | `harness/contracts/professional-artifact-design.v1.json` | #644 professional-artifact candidate + focused validator/tests |
 | Repo-native codegen | `harness/repo-native-update/CODEBASE_MAP.md` | contract + `scripts/run_repo_native_update.py` |
 | Artifact alias/download handoff | `harness/artifact-handoff/CODEBASE_MAP.md` | share-alias skill + share-alias-download contract |
 | Prompt Kit use/acquisition | `PROMPT_KIT_ACCESS.md` | technician-prompt-kit-acquisition skill |
