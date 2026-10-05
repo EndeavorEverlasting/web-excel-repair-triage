@@ -224,6 +224,15 @@
       "launcher": "Run-RepoNativeUpdate.cmd",
       "operator_report": "harness/repo-native-update/reports/CURRENT_STATE.md",
       "sprint_plan": "harness/repo-native-update/SPRINT_PLAN.md"
+    },
+    "professional_artifact_design": {
+      "contract": "harness/contracts/professional-artifact-design.v1.json",
+      "validator": "scripts/validate_professional_artifact_design.py",
+      "contract_tests": "tests/test_professional_artifact_design_contract.py",
+      "workflow": "WORKFLOW.md#c-harness-infrastructure-change",
+      "harness_gate": "python3 scripts/validate_professional_artifact_design.py --summary",
+      "candidate": "harness/fixtures/prompt-contributions/professional-artifact-archetype-builder.draft.json",
+      "regression_cases": "harness/fixtures/prompt-contributions/professional-artifact-archetype-builder.regression-cases.json"
     }
   },
   "skills": [
