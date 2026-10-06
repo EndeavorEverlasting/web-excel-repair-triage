@@ -173,6 +173,9 @@ def compose(request: dict[str, Any], contract: dict[str, Any]) -> dict[str, Any]
         if state == "ACCEPTED_CURRENT":
             inherited["P05"].add("planning.runtime_partition")
             residual["P05"].discard("planning.runtime_partition")
+            if "P04" in projected and "planning.runtime_partition" in projected["P04"]:
+                inherited["P04"].add("planning.runtime_partition")
+                residual["P04"].discard("planning.runtime_partition")
             pushback.append({
                 "code": "P05_CONSUME_P04_ARTIFACT",
                 "state": state,
@@ -240,6 +243,22 @@ def compose(request: dict[str, Any], contract: dict[str, Any]) -> dict[str, Any]
                 pass
             elif relation != "DISJOINT":
                 raise CompositionError(f"unsupported relation {relation!r}")
+
+    # An invoked prompt whose applicable contribution is fully satisfied by
+    # canonicalized overlap has no executable residual. Preserve the fact in
+    # the receipt, but do not execute it merely because it was named.
+    fully_residualized = sorted(
+        (p for p in active if not residual.get(p)),
+        key=_prompt_number,
+    )
+    for prompt_id in fully_residualized:
+        suppressed.append({
+            "prompt_id": prompt_id,
+            "state": "INVOKED_NO_APPLICABLE_RESIDUAL",
+            "reason": "all applicable facets were satisfied by canonicalized overlap",
+            "inherited_facets": sorted(inherited.get(prompt_id, set())),
+        })
+        active.remove(prompt_id)
 
     for edge in contract.get("lifecycle_edges", []):
         left, right = edge.get("from"), edge.get("to")
