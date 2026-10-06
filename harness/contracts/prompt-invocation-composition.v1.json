@@ -1,7 +1,7 @@
 {
   "schema_version": "prompt-invocation-composition/v1",
   "contract_id": "prompt-invocation-composition",
-  "status": "INTEGRATED",
+  "status": "CANDIDATE",
   "purpose": "Compile multiple explicit prompt invocations into one deterministic execution contract without wholesale prompt inclusion, duplicate ownership, probabilistic tie-breaking, or additive authority.",
   "terminology": {
     "invocation": "Request evaluation of a prompt's task-applicable facets. Invocation does not require using every clause of the prompt.",
@@ -37,30 +37,84 @@
     "Prompt composition MUST NOT widen mutation, merge, deployment, secret, destructive, or live-target authority."
   ],
   "prompt_facets": {
-    "P01": ["harness.integrity", "harness.build"],
-    "P04": ["planning.factor", "planning.runtime_partition", "planning.dispatch_manifest"],
-    "P05": ["planning.pack", "planning.runtime_partition", "planning.launch_order"],
-    "P07": ["execution.repository_mutation", "execution.mainline_convergence"],
-    "P08": ["proof.live_runtime"],
-    "P82": ["iteration.empirical"],
-    "P97": ["research.prior_art"]
+    "P01": [
+      "harness.integrity",
+      "harness.build"
+    ],
+    "P04": [
+      "planning.factor",
+      "planning.runtime_partition",
+      "planning.dispatch_manifest"
+    ],
+    "P05": [
+      "planning.pack",
+      "planning.runtime_partition",
+      "planning.launch_order"
+    ],
+    "P07": [
+      "execution.repository_mutation",
+      "execution.mainline_convergence"
+    ],
+    "P08": [
+      "proof.live_runtime"
+    ],
+    "P82": [
+      "iteration.empirical"
+    ],
+    "P97": [
+      "research.prior_art"
+    ]
   },
   "pair_rules": [
     {
       "id": "P04_P05_ORDERED_OVERLAP",
-      "prompts": ["P04", "P05"],
+      "prompts": [
+        "P04",
+        "P05"
+      ],
       "relation": "ORDERED_OVERLAP",
-      "shared_facets": ["planning.runtime_partition"],
+      "shared_facets": [
+        "planning.runtime_partition"
+      ],
       "canonical_shared_owner": "harness/contracts/planning-runtime-partition.v1.json + scripts/prompt_runtime_partition.py",
       "ordering_rule": "When new/revised factoring is required, P04 precedes P05. When an ACCEPTED_CURRENT P04 factoring artifact already satisfies the task and only packing remains, P05 consumes that artifact and P04 is not re-invoked.",
       "required_fact": "p04_factoring_artifact_state",
-      "allowed_fact_values": ["ABSENT", "ACCEPTED_CURRENT", "STALE", "CONTRADICTED"]
+      "allowed_fact_values": [
+        "ABSENT",
+        "ACCEPTED_CURRENT",
+        "STALE",
+        "CONTRADICTED"
+      ]
     }
   ],
   "lifecycle_edges": [
-    {"from": "P04", "to": "P07", "when_facets": ["planning.factor", "execution.repository_mutation"], "reason": "factoring precedes bounded implementation"},
-    {"from": "P07", "to": "P08", "when_facets": ["execution.repository_mutation", "proof.live_runtime"], "reason": "implementation precedes live proof of that implementation"},
-    {"from": "P97", "to": "P07", "when_facets": ["research.prior_art", "execution.repository_mutation"], "reason": "prior-art research narrows an implementation target before execution when explicitly invoked"}
+    {
+      "from": "P04",
+      "to": "P07",
+      "when_facets": [
+        "planning.factor",
+        "execution.repository_mutation"
+      ],
+      "reason": "factoring precedes bounded implementation"
+    },
+    {
+      "from": "P07",
+      "to": "P08",
+      "when_facets": [
+        "execution.repository_mutation",
+        "proof.live_runtime"
+      ],
+      "reason": "implementation precedes live proof of that implementation"
+    },
+    {
+      "from": "P97",
+      "to": "P07",
+      "when_facets": [
+        "research.prior_art",
+        "execution.repository_mutation"
+      ],
+      "reason": "prior-art research narrows an implementation target before execution when explicitly invoked"
+    }
   ],
   "p97_prior_art": [
     {
@@ -96,6 +150,12 @@
       "disposition": "ADAPT"
     }
   ],
-  "output_states": ["COMPOSED", "ROUTE_REQUIRED", "INCOHERENT_INVOCATION", "INSUFFICIENT_CONTEXT", "NO_APPLICABLE_FACETS"],
-  "proof_ceiling": "Deterministic repository/static composition semantics and executable contract tests. This does not prove downstream model obedience or automatic product/UI invocation routing until consumers call the composer."
+  "output_states": [
+    "COMPOSED",
+    "ROUTE_REQUIRED",
+    "INCOHERENT_INVOCATION",
+    "INSUFFICIENT_CONTEXT",
+    "NO_APPLICABLE_FACETS"
+  ],
+  "proof_ceiling": "Deterministic repository/static composition semantics and executable contract tests on an exact candidate head. Provider integration and downstream model/UI consumer wiring remain separate proof gates."
 }
