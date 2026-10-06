@@ -24,16 +24,18 @@
     "authority_source_invariant": "Invocation contributes no authority. For every contemplated action a, effective_authority(a) = external_task_authority(a) ∧ repository_policy(a) ∧ safety_policy(a) ∧ verified_capability(a) ∧ selected_owner_scope(a).",
     "authority_divergence_guard": "For every prompt node v, A_out(v) \\ (A_in(v) ∪ A_external) MUST be empty. A prompt may route or narrow authority; it may not create it.",
     "routing_cycle_guard": "A closed prompt-routing cycle with no changed evidence, proof floor, artifact identity, or task state is invalid no-progress circulation and MUST fail rather than loop.",
-    "note": "This is set algebra plus graph ordering. Vector-space orthogonality, divergence, and curl are analogies until a typed numerical field is defined."
+    "note": "This is set algebra plus graph ordering. Vector-space orthogonality, divergence, and curl are analogies until a typed numerical field is defined.",
+    "prerequisite_rule": "Derived prerequisites may expand execution only from an explicit routing rule, and each injected prompt is still projected against task facets; the composer MUST NOT invent unrelated facets."
   },
   "composition_rules": [
     "Project before composing: invoked prompts contribute only facets present in task_facets.",
     "Empty projection means INVOKED_NO_APPLICABLE_RESIDUAL, not forced use.",
     "Applicable negative constraints and forbidden scopes are monotone unless superseded by a higher-precedence platform/repository rule.",
     "If overlapping projected facets lack an explicit relation, return INCOHERENT_INVOCATION.",
+    "A pair rule applies only to its declared shared_facets; any additional overlap is unresolved and MUST fail closed until explicitly classified.",
     "If precedence edges cannot be topologically linearized, return INCOHERENT_INVOCATION.",
     "Disjoint prompts are canonically tie-broken by numeric prompt id so equivalent invocation sets compile reproducibly.",
-    "A user-selected prompt may be pushed back to a prerequisite or successor when typed facts satisfy an explicit routing rule. No similarity score or probabilistic preference may override that route.",
+    "A user-selected prompt may be pushed back to a prerequisite or successor only when typed task facets and an explicit routing rule require it. Existing canonical fallback authority must not be silently stolen by the composer.",
     "Prompt composition MUST NOT widen mutation, merge, deployment, secret, destructive, or live-target authority."
   ],
   "prompt_facets": {
@@ -77,14 +79,21 @@
         "planning.runtime_partition"
       ],
       "canonical_shared_owner": "harness/contracts/planning-runtime-partition.v1.json + scripts/prompt_runtime_partition.py",
-      "ordering_rule": "When new/revised factoring is required, P04 precedes P05. When an ACCEPTED_CURRENT P04 factoring artifact already satisfies the task and only packing remains, P05 consumes that artifact and P04 is not re-invoked.",
+      "ordering_rule": "When the task explicitly requires planning.factor, P04 owns that factoring before P05 packing. Otherwise P05 consumes an ACCEPTED_CURRENT P04 artifact when present, and if no usable P04 artifact exists P05 retains its canonical bounded recovery factoring authority.",
       "required_fact": "p04_factoring_artifact_state",
       "allowed_fact_values": [
         "ABSENT",
         "ACCEPTED_CURRENT",
         "STALE",
         "CONTRADICTED"
-      ]
+      ],
+      "deterministic_routing": {
+        "P05+ACCEPTED_CURRENT": "P05_CONSUME_P04_ARTIFACT",
+        "P05+ABSENT_WITHOUT_planning.factor": "P05_BOUNDED_RECOVERY_FACTORING",
+        "P05+STALE_WITHOUT_planning.factor": "P05_BOUNDED_RECOVERY_FACTORING",
+        "P05+CONTRADICTED_WITHOUT_planning.factor": "P05_BOUNDED_RECOVERY_FACTORING",
+        "P05+noncurrent_WITH_planning.factor": "ROUTE_P04_THEN_P05"
+      }
     }
   ],
   "lifecycle_edges": [
