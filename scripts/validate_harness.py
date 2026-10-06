@@ -146,6 +146,8 @@ REQUIRED_VALIDATOR_IDS = {
     "repo-native-update-parity",
     "prompt-runtime-compliance-receipt-audit",
     "prompt-runtime-compliance-tests",
+    "prompt-invocation-composition-audit",
+    "prompt-invocation-composition-tests",
     "prompt-semantic-coverage-audit",
     "prompt-semantic-coverage-tests",
     "professional-artifact-design-audit",

@@ -1,0 +1,170 @@
+{
+  "schema_version": "prompt-invocation-composition/v1",
+  "contract_id": "prompt-invocation-composition",
+  "status": "CANDIDATE",
+  "purpose": "Compile multiple explicit prompt invocations into one deterministic execution contract without wholesale prompt inclusion, duplicate ownership, probabilistic tie-breaking, or additive authority.",
+  "terminology": {
+    "invocation": "Request evaluation of a prompt's task-applicable facets. Invocation does not require using every clause of the prompt.",
+    "projection": "The subset of one prompt's declared invocation facets relevant to the current typed task facets.",
+    "residual": "A prompt's projected facets after already-satisfied canonical overlap is removed.",
+    "coherence": "A composition is coherent only when overlapping facets have one explicit canonicalization, ordering, or constraining rule.",
+    "pushback": "A deterministic route change produced by contract facts, not model preference."
+  },
+  "relation_kinds": {
+    "DISJOINT": "Projected facet sets do not intersect. They commute unless an explicit task dependency orders them.",
+    "DUPLICATE": "The same semantic contribution is supplied more than once. Keep one canonical owner and suppress duplicates.",
+    "ORDERED_OVERLAP": "The prompts legitimately share a facet, but one decision/artifact must precede and feed the downstream residual.",
+    "CONSTRAINING_OVERLAP": "One invocation contributes a guardrail or proof constraint over another. The constraint remains monotone and cannot grant authority.",
+    "CONFLICT": "The same facet has incompatible unresolved owners or instructions. Composition fails closed."
+  },
+  "mathematical_model": {
+    "task_projection": "A_i = F_i ∩ T",
+    "residualization": "R_i = A_i \\ C_i, where C_i is the already-canonicalized applicable overlap supplied by an accepted upstream owner/artifact.",
+    "duplicate_union": "The composed procedure is the union of residual contributions plus one canonical copy of each shared invariant.",
+    "authority_source_invariant": "Invocation contributes no authority. For every contemplated action a, effective_authority(a) = external_task_authority(a) ∧ repository_policy(a) ∧ safety_policy(a) ∧ verified_capability(a) ∧ selected_owner_scope(a).",
+    "authority_divergence_guard": "For every prompt node v, A_out(v) \\ (A_in(v) ∪ A_external) MUST be empty. A prompt may route or narrow authority; it may not create it.",
+    "routing_cycle_guard": "A closed prompt-routing cycle with no changed evidence, proof floor, artifact identity, or task state is invalid no-progress circulation and MUST fail rather than loop.",
+    "note": "This is set algebra plus graph ordering. Vector-space orthogonality, divergence, and curl are analogies until a typed numerical field is defined.",
+    "prerequisite_rule": "Derived prerequisites may expand execution only from an explicit routing rule, and each injected prompt is still projected against task facets; the composer MUST NOT invent unrelated facets."
+  },
+  "composition_rules": [
+    "Project before composing: invoked prompts contribute only facets present in task_facets.",
+    "Empty projection means INVOKED_NO_APPLICABLE_RESIDUAL, not forced use.",
+    "Applicable negative constraints and forbidden scopes are monotone unless superseded by a higher-precedence platform/repository rule.",
+    "If overlapping projected facets lack an explicit relation, return INCOHERENT_INVOCATION.",
+    "A pair rule applies only to its declared shared_facets; any additional overlap is unresolved and MUST fail closed until explicitly classified.",
+    "If precedence edges cannot be topologically linearized, return INCOHERENT_INVOCATION.",
+    "Disjoint prompts are canonically tie-broken by numeric prompt id so equivalent invocation sets compile reproducibly.",
+    "A user-selected prompt may be pushed back to a prerequisite or successor only when typed task facets and an explicit routing rule require it. Existing canonical fallback authority must not be silently stolen by the composer.",
+    "Prompt composition MUST NOT widen mutation, merge, deployment, secret, destructive, or live-target authority."
+  ],
+  "prompt_facets": {
+    "P01": [
+      "harness.integrity",
+      "harness.build"
+    ],
+    "P04": [
+      "planning.factor",
+      "planning.runtime_partition",
+      "planning.dispatch_manifest"
+    ],
+    "P05": [
+      "planning.pack",
+      "planning.runtime_partition",
+      "planning.launch_order"
+    ],
+    "P07": [
+      "execution.repository_mutation",
+      "execution.mainline_convergence"
+    ],
+    "P08": [
+      "proof.live_runtime"
+    ],
+    "P82": [
+      "iteration.empirical"
+    ],
+    "P97": [
+      "research.prior_art"
+    ]
+  },
+  "pair_rules": [
+    {
+      "id": "P04_P05_ORDERED_OVERLAP",
+      "prompts": [
+        "P04",
+        "P05"
+      ],
+      "relation": "ORDERED_OVERLAP",
+      "shared_facets": [
+        "planning.runtime_partition"
+      ],
+      "canonical_shared_owner": "harness/contracts/planning-runtime-partition.v1.json + scripts/prompt_runtime_partition.py",
+      "ordering_rule": "When the task explicitly requires planning.factor, P04 owns that factoring before P05 packing. Otherwise P05 consumes an ACCEPTED_CURRENT P04 artifact when present, and if no usable P04 artifact exists P05 retains its canonical bounded recovery factoring authority.",
+      "required_fact": "p04_factoring_artifact_state",
+      "allowed_fact_values": [
+        "ABSENT",
+        "ACCEPTED_CURRENT",
+        "STALE",
+        "CONTRADICTED"
+      ],
+      "deterministic_routing": {
+        "P05+ACCEPTED_CURRENT": "P05_CONSUME_P04_ARTIFACT",
+        "P05+ABSENT_WITHOUT_planning.factor": "P05_BOUNDED_RECOVERY_FACTORING",
+        "P05+STALE_WITHOUT_planning.factor": "P05_BOUNDED_RECOVERY_FACTORING",
+        "P05+CONTRADICTED_WITHOUT_planning.factor": "P05_BOUNDED_RECOVERY_FACTORING",
+        "P05+noncurrent_WITH_planning.factor": "ROUTE_P04_THEN_P05"
+      }
+    }
+  ],
+  "lifecycle_edges": [
+    {
+      "from": "P04",
+      "to": "P07",
+      "when_facets": [
+        "planning.factor",
+        "execution.repository_mutation"
+      ],
+      "reason": "factoring precedes bounded implementation"
+    },
+    {
+      "from": "P07",
+      "to": "P08",
+      "when_facets": [
+        "execution.repository_mutation",
+        "proof.live_runtime"
+      ],
+      "reason": "implementation precedes live proof of that implementation"
+    },
+    {
+      "from": "P97",
+      "to": "P07",
+      "when_facets": [
+        "research.prior_art",
+        "execution.repository_mutation"
+      ],
+      "reason": "prior-art research narrows an implementation target before execution when explicitly invoked"
+    }
+  ],
+  "p97_prior_art": [
+    {
+      "repository": "cedar-policy/cedar-go",
+      "commit": "cda92d0d9345fce26b36366288afd3c909fc7bd8",
+      "path": "authorize.go",
+      "evidence_state": "OBSERVED_IMPLEMENTED",
+      "mechanic": "Evaluate independent policies, deny if any forbid matches, otherwise allow only if a permit matches; constraints cannot be canceled by a permit.",
+      "disposition": "ADAPT"
+    },
+    {
+      "repository": "rust-lang/reference",
+      "commit": "a286e1ecb8ce193d50056e4bb042eea9b23876ef",
+      "path": "src/items/implementations.md",
+      "evidence_state": "OBSERVED_IMPLEMENTED",
+      "mechanic": "Overlapping trait implementations are incoherent when the same instance can satisfy both.",
+      "disposition": "ADAPT"
+    },
+    {
+      "repository": "python/cpython",
+      "commit": "85c03d47a240247d41799c2075f85f690558534c",
+      "path": "Objects/typeobject.c",
+      "evidence_state": "OBSERVED_IMPLEMENTED",
+      "mechanic": "Python's C3 MRO contract preserves local precedence and monotonicity and rejects inconsistent linearizations.",
+      "disposition": "ADAPT"
+    },
+    {
+      "repository": "NixOS/nixpkgs",
+      "commit": "1a4a2cfed97c08c551ccfb891008adbb95b19f5b",
+      "path": "lib/modules.nix",
+      "evidence_state": "OBSERVED_IMPLEMENTED",
+      "mechanic": "Module definitions merge by typed rules with explicit override and order priorities rather than implicit last-writer wins.",
+      "disposition": "ADAPT"
+    }
+  ],
+  "output_states": [
+    "COMPOSED",
+    "ROUTE_REQUIRED",
+    "INCOHERENT_INVOCATION",
+    "INSUFFICIENT_CONTEXT",
+    "NO_APPLICABLE_FACETS"
+  ],
+  "proof_ceiling": "Deterministic repository/static composition semantics and executable contract tests on an exact candidate head. Provider integration and downstream model/UI consumer wiring remain separate proof gates."
+}
