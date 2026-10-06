@@ -36,7 +36,7 @@ This is intentionally set algebra, not a claim that natural-language prompts for
 | `CONSTRAINING_OVERLAP` | Keep the constraint; it may narrow but never grant authority. |
 | `CONFLICT` | Fail closed. No model preference, similarity score, or "best guess" chooses an owner. |
 
-An overlap with no explicit rule is itself `INCOHERENT_INVOCATION`.
+An overlap with no explicit rule is itself `INCOHERENT_INVOCATION`. A pair rule covers only its declared `shared_facets`; a future additional overlap is incoherent until explicitly classified.
 
 ## Authority is not additive
 
@@ -71,13 +71,15 @@ A prompt node may route, specialize, or narrow authority. It may not become an a
 
 P04 and P05 intentionally overlap on `planning.runtime_partition`, but they do not compete for the same terminal job.
 
-- **P04** owns new/revised factoring, ownership/collision decisions, and dispatch structure.
-- **P05** packages accepted factoring into an ordered serialized launch pack.
-- If P05 is invoked and the P04 artifact is `ABSENT`, `STALE`, or `CONTRADICTED`, the compiler returns `ROUTE_REQUIRED` with **P04 → P05**.
-- If the P04 artifact is `ACCEPTED_CURRENT`, P05 consumes it and the shared intersection is not recomputed.
+- **P04** owns full new/revised factoring, ownership/collision decisions, and dispatch structure.
+- **P05** packages accepted factoring into an ordered serialized launch pack and retains its canonical **bounded recovery factoring** when no usable P04 artifact exists.
+- If the task explicitly requires `planning.factor`, P04 is the prerequisite and the compiler returns `ROUTE_REQUIRED` with **P04 → P05**.
+- If the task requires only P05 packing and the P04 artifact is `ABSENT`, `STALE`, or `CONTRADICTED`, P05 stays the owner of its bounded recovery fallback; the composer does not steal that authority.
+- If the P04 artifact is `ACCEPTED_CURRENT`, P05 consumes it and the shared projected intersection is not recomputed.
+- A shared facet is inherited only when that facet was actually projected from the task. The compiler may not invent `planning.runtime_partition` merely because the pair is known to share it.
 - Missing artifact state is `INSUFFICIENT_CONTEXT`; the agent does not flip a coin.
 
-This makes pushback fact-driven rather than probabilistic.
+This makes pushback fact-driven rather than probabilistic **without overriding canonical prompt ownership**.
 
 ## P97 prior art
 
