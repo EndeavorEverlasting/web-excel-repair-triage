@@ -1,0 +1,139 @@
+from __future__ import annotations
+
+import importlib.util
+import json
+import unittest
+from pathlib import Path
+
+ROOT = Path(__file__).resolve().parents[1]
+SCRIPT = ROOT / "scripts/prompt_invocation_composition.py"
+CONTRACT = ROOT / "harness/contracts/prompt-invocation-composition.v1.json"
+
+spec = importlib.util.spec_from_file_location("prompt_invocation_composition", SCRIPT)
+mod = importlib.util.module_from_spec(spec)
+assert spec and spec.loader
+spec.loader.exec_module(mod)
+
+
+class PromptInvocationCompositionTests(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls) -> None:
+        cls.contract = json.loads(CONTRACT.read_text(encoding="utf-8"))
+
+    def request(self, invocations, facets, **facts):
+        return {
+            "schema_version": "prompt-invocation-request/v1",
+            "invocations": invocations,
+            "task_facets": facets,
+            "facts": facts,
+        }
+
+    def test_contract_validates_and_has_prior_art(self) -> None:
+        self.assertEqual(mod.validate_contract(self.contract), [])
+        self.assertGreaterEqual(len(self.contract["p97_prior_art"]), 4)
+        self.assertIn("authority_divergence_guard", self.contract["mathematical_model"])
+
+    def test_invocation_projects_instead_of_importing_everything(self) -> None:
+        result = mod.compose(
+            self.request(["P01", "P07"], ["harness.integrity"]),
+            self.contract,
+        )
+        self.assertEqual(result["state"], "COMPOSED")
+        self.assertEqual(result["linearization"], ["P01"])
+        self.assertEqual(result["selected"][0]["residual_facets"], ["harness.integrity"])
+        self.assertEqual(result["suppressed"][0]["prompt_id"], "P07")
+
+    def test_orthogonal_hybrid_linearizes_without_super_authority(self) -> None:
+        result = mod.compose(
+            self.request(
+                ["P82", "P08", "P07", "P04", "P01"],
+                [
+                    "harness.integrity",
+                    "planning.factor",
+                    "execution.repository_mutation",
+                    "proof.live_runtime",
+                    "iteration.empirical",
+                ],
+            ),
+            self.contract,
+        )
+        self.assertEqual(result["state"], "COMPOSED")
+        self.assertEqual(result["linearization"], ["P01", "P04", "P07", "P08", "P82"])
+        self.assertEqual(result["authority_effect"], "NO_AUTHORITY_EXPANSION")
+        self.assertIn(["P04", "P07"], result["precedence_edges"])
+        self.assertIn(["P07", "P08"], result["precedence_edges"])
+
+    def test_p05_pushes_back_to_p04_when_factoring_absent(self) -> None:
+        result = mod.compose(
+            self.request(
+                ["P05"],
+                ["planning.pack", "planning.runtime_partition"],
+                p04_factoring_artifact_state="ABSENT",
+            ),
+            self.contract,
+        )
+        self.assertEqual(result["state"], "ROUTE_REQUIRED")
+        self.assertEqual(result["linearization"], ["P04", "P05"])
+        self.assertEqual(result["pushback"][0]["code"], "ROUTE_P04_THEN_P05")
+        p05 = next(x for x in result["selected"] if x["prompt_id"] == "P05")
+        self.assertEqual(p05["inherited_facets"], ["planning.runtime_partition"])
+        self.assertEqual(p05["residual_facets"], ["planning.pack"])
+
+    def test_p05_consumes_current_p04_artifact_without_reinvoking_p04(self) -> None:
+        result = mod.compose(
+            self.request(
+                ["P05"],
+                ["planning.pack", "planning.runtime_partition"],
+                p04_factoring_artifact_state="ACCEPTED_CURRENT",
+            ),
+            self.contract,
+        )
+        self.assertEqual(result["state"], "COMPOSED")
+        self.assertEqual(result["linearization"], ["P05"])
+        self.assertEqual(result["pushback"][0]["code"], "P05_CONSUME_P04_ARTIFACT")
+        self.assertEqual(result["selected"][0]["residual_facets"], ["planning.pack"])
+
+    def test_p05_missing_artifact_fact_fails_context_deterministically(self) -> None:
+        result = mod.compose(
+            self.request(["P05"], ["planning.pack"]),
+            self.contract,
+        )
+        self.assertEqual(result["state"], "INSUFFICIENT_CONTEXT")
+        self.assertEqual(result["pushback"][0]["code"], "P04_ARTIFACT_STATE_REQUIRED")
+
+    def test_unresolved_overlap_fails_closed(self) -> None:
+        contract = json.loads(json.dumps(self.contract))
+        contract["prompt_facets"]["P01"].append("collision.demo")
+        contract["prompt_facets"]["P07"].append("collision.demo")
+        result = mod.compose(
+            self.request(["P01", "P07"], ["collision.demo"]),
+            contract,
+        )
+        self.assertEqual(result["state"], "INCOHERENT_INVOCATION")
+        self.assertEqual(result["pushback"][-1]["code"], "UNRESOLVED_OVERLAP")
+
+    def test_precedence_cycle_fails_closed(self) -> None:
+        request = self.request(
+            ["P04", "P07"],
+            ["planning.factor", "execution.repository_mutation"],
+        )
+        request["explicit_precedence"] = [["P07", "P04"]]
+        result = mod.compose(request, self.contract)
+        self.assertEqual(result["state"], "INCOHERENT_INVOCATION")
+        self.assertEqual(result["pushback"][-1]["code"], "PRECEDENCE_CYCLE")
+
+    def test_disjoint_invocation_order_has_canonical_linearization(self) -> None:
+        a = mod.compose(
+            self.request(["P82", "P01"], ["iteration.empirical", "harness.integrity"]),
+            self.contract,
+        )
+        b = mod.compose(
+            self.request(["P01", "P82"], ["iteration.empirical", "harness.integrity"]),
+            self.contract,
+        )
+        self.assertEqual(a["linearization"], ["P01", "P82"])
+        self.assertEqual(a["linearization"], b["linearization"])
+
+
+if __name__ == "__main__":
+    unittest.main()
