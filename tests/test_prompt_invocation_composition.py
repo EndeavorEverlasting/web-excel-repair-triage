@@ -93,6 +93,27 @@ class PromptInvocationCompositionTests(unittest.TestCase):
         self.assertEqual(result["pushback"][0]["code"], "P05_CONSUME_P04_ARTIFACT")
         self.assertEqual(result["selected"][0]["residual_facets"], ["planning.pack"])
 
+    def test_current_p04_artifact_subtracts_shared_intersection_from_both_invocations(self) -> None:
+        result = mod.compose(
+            self.request(
+                ["P04", "P05"],
+                ["planning.pack", "planning.runtime_partition"],
+                p04_factoring_artifact_state="ACCEPTED_CURRENT",
+            ),
+            self.contract,
+        )
+        self.assertEqual(result["state"], "COMPOSED")
+        self.assertEqual(result["linearization"], ["P05"])
+        suppressed = {row["prompt_id"]: row for row in result["suppressed"]}
+        self.assertEqual(
+            suppressed["P04"]["state"],
+            "INVOKED_NO_APPLICABLE_RESIDUAL",
+        )
+        self.assertEqual(
+            suppressed["P04"]["inherited_facets"],
+            ["planning.runtime_partition"],
+        )
+
     def test_p05_missing_artifact_fact_fails_context_deterministically(self) -> None:
         result = mod.compose(
             self.request(["P05"], ["planning.pack"]),
