@@ -1,7 +1,7 @@
 # Prompt Invocation Composition Algebra
 
-**Contract:** `harness/contracts/prompt-invocation-composition.v1.json`  
-**Compiler:** `scripts/prompt_invocation_composition.py`  
+**Contract:** `harness/contracts/prompt-invocation-composition.v1.json`
+**Compiler:** `scripts/prompt_invocation_composition.py`
 **Status:** candidate shared harness contract; no new P-number. Promotion requires exact-head validation and provider integration.
 
 ## Core language rule
