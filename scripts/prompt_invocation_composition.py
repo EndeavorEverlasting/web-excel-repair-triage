@@ -44,7 +44,7 @@ def _stable_toposort(nodes: set[str], edges: set[tuple[str, str]]) -> list[str]:
     incoming = {node: set() for node in nodes}
     outgoing = {node: set() for node in nodes}
     for left, right in edges:
-        if left == right or left not in nodes or right not in nodes:
+        if left not in nodes or right not in nodes:
             continue
         outgoing[left].add(right)
         incoming[right].add(left)
@@ -170,31 +170,49 @@ def compose(request: dict[str, Any], contract: dict[str, Any]) -> dict[str, Any]
                 [{"code": "P04_ARTIFACT_STATE_REQUIRED", "route": "SUPPLY_TYPED_FACT"}],
                 contract,
             )
+
+        shared_facet = "planning.runtime_partition"
         if state == "ACCEPTED_CURRENT":
-            inherited["P05"].add("planning.runtime_partition")
-            residual["P05"].discard("planning.runtime_partition")
-            if "P04" in projected and "planning.runtime_partition" in projected["P04"]:
-                inherited["P04"].add("planning.runtime_partition")
-                residual["P04"].discard("planning.runtime_partition")
+            if shared_facet in projected["P05"]:
+                inherited["P05"].add(shared_facet)
+                residual["P05"].discard(shared_facet)
+            if "P04" in projected and shared_facet in projected["P04"]:
+                inherited["P04"].add(shared_facet)
+                residual["P04"].discard(shared_facet)
             pushback.append({
                 "code": "P05_CONSUME_P04_ARTIFACT",
                 "state": state,
-                "message": "Use the accepted current P04 factoring artifact; do not re-factor it probabilistically.",
+                "message": "Consume the accepted current P04 factoring artifact; do not recompute its accepted overlap.",
             })
-        else:
+        elif "planning.factor" in task_set:
             if "P04" not in projected:
-                projected["P04"] = {"planning.factor", "planning.runtime_partition"}
-                residual["P04"] = set(projected["P04"])
+                p04_facets = set(facet_map["P04"]) & task_set
+                if not p04_facets:
+                    raise CompositionError("planning.factor requires a projected P04 facet")
+                projected["P04"] = p04_facets
+                residual["P04"] = set(p04_facets)
                 inherited["P04"] = set()
-                pushback.append({
-                    "code": "ROUTE_P04_THEN_P05",
-                    "state": state,
-                    "message": "P05 packing is blocked on missing/stale/contradicted factoring; route through P04 first.",
-                })
             edges.add(("P04", "P05"))
-            shared = (projected["P04"] & projected["P05"]) & {"planning.runtime_partition"}
+            shared = projected["P04"] & projected["P05"] & {shared_facet}
             inherited["P05"].update(shared)
             residual["P05"].difference_update(shared)
+            pushback.append({
+                "code": "ROUTE_P04_THEN_P05",
+                "state": state,
+                "message": "The task explicitly requires full factoring, so P04 owns that prerequisite before P05 packing.",
+            })
+        else:
+            # Canonical P05 owns bounded recovery factoring when no usable
+            # P04 artifact exists. Do not steal that fallback by routing to P04.
+            if "P04" in projected:
+                shared = projected["P04"] & projected["P05"] & {shared_facet}
+                inherited["P04"].update(shared)
+                residual["P04"].difference_update(shared)
+            pushback.append({
+                "code": "P05_BOUNDED_RECOVERY_FACTORING",
+                "state": state,
+                "message": "No usable P04 artifact exists; preserve P05's canonical bounded recovery factoring authority.",
+            })
 
     active = set(projected)
     active_list = sorted(active, key=_prompt_number)
@@ -212,6 +230,19 @@ def compose(request: dict[str, Any], contract: dict[str, Any]) -> dict[str, Any]
                         "code": "UNRESOLVED_OVERLAP",
                         "prompts": [left, right],
                         "facets": sorted(overlap),
+                    }],
+                    contract,
+                )
+            declared_shared = set(rule.get("shared_facets", []))
+            uncovered_overlap = overlap - declared_shared
+            if uncovered_overlap:
+                return _receipt(
+                    "INCOHERENT_INVOCATION", invocations, task_set, [], projected,
+                    residual, inherited, suppressed,
+                    pushback + [{
+                        "code": "UNDECLARED_PAIR_OVERLAP",
+                        "prompts": [left, right],
+                        "facets": sorted(uncovered_overlap),
                     }],
                     contract,
                 )
@@ -301,19 +332,51 @@ def validate_contract(contract: dict[str, Any]) -> list[str]:
     errors: list[str] = []
     if contract.get("schema_version") != "prompt-invocation-composition/v1":
         errors.append("schema_version mismatch")
-    for pid, facets in contract.get("prompt_facets", {}).items():
+
+    relation_kinds = contract.get("relation_kinds")
+    if not isinstance(relation_kinds, dict) or not relation_kinds:
+        errors.append("relation_kinds must be a non-empty object")
+
+    mathematical_model = contract.get("mathematical_model")
+    if not isinstance(mathematical_model, dict):
+        errors.append("mathematical_model must be an object")
+    elif not isinstance(mathematical_model.get("authority_source_invariant"), str) or not mathematical_model.get("authority_source_invariant", "").strip():
+        errors.append("mathematical_model.authority_source_invariant must be a non-empty string")
+
+    if not isinstance(contract.get("proof_ceiling"), str) or not contract.get("proof_ceiling", "").strip():
+        errors.append("proof_ceiling must be a non-empty string")
+
+    prompt_facets = contract.get("prompt_facets")
+    if not isinstance(prompt_facets, dict) or not prompt_facets:
+        errors.append("prompt_facets must be a non-empty object")
+        prompt_facets = {}
+
+    for pid, facets in prompt_facets.items():
         try:
             _prompt_number(pid)
         except CompositionError as exc:
             errors.append(str(exc))
         if not isinstance(facets, list) or not facets or len(facets) != len(set(facets)):
             errors.append(f"{pid} facets must be a non-empty unique list")
+
     for rule in contract.get("pair_rules", []):
+        rule_id = rule.get("id")
         prompts = rule.get("prompts")
         if not isinstance(prompts, list) or len(prompts) != 2:
-            errors.append(f"pair rule {rule.get('id')} must name exactly two prompts")
-        if rule.get("relation") not in contract.get("relation_kinds", {}):
-            errors.append(f"pair rule {rule.get('id')} relation is unsupported")
+            errors.append(f"pair rule {rule_id} must name exactly two prompts")
+            continue
+        if any(prompt_id not in prompt_facets for prompt_id in prompts):
+            errors.append(f"pair rule {rule_id} references an unknown prompt")
+        if rule.get("relation") not in (relation_kinds or {}):
+            errors.append(f"pair rule {rule_id} relation is unsupported")
+        shared = rule.get("shared_facets")
+        if not isinstance(shared, list) or not shared or len(shared) != len(set(shared)):
+            errors.append(f"pair rule {rule_id} shared_facets must be a non-empty unique list")
+        elif all(prompt_id in prompt_facets for prompt_id in prompts):
+            common = set(prompt_facets[prompts[0]]) & set(prompt_facets[prompts[1]])
+            if not set(shared) <= common:
+                errors.append(f"pair rule {rule_id} declares facets not shared by both prompts")
+
     return sorted(set(errors))
 
 
