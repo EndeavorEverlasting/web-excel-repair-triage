@@ -133,10 +133,11 @@ class TeamsAttendanceRosterPromptTests(unittest.TestCase):
             "do not downgrade independently supported activity observations",
             "BLOCK a requested quantitative conclusion",
             "merely CONTEXT",
-            "When a manager's operational or hours-policy question is supplied",
+            "For MANAGEMENT DECISION-SUPPORT requests",
         ):
             with self.subTest(phrase=phrase):
                 self.assertIn(phrase, content)
+        self.assertIn("full per-date roster/event ledger only if the operator requests a detailed audit", content)
         self.assertIn("ATTENDANCE ROSTER", content)
         self.assertIn("PASS 2 — NOTCH RECOVERY + CONFLICT SEARCH", content)
 
