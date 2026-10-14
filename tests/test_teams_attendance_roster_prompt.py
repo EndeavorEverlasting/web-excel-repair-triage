@@ -98,6 +98,48 @@ class TeamsAttendanceRosterPromptTests(unittest.TestCase):
         self.assertIn("This pass is required even when pass 1 produced a plausible roster", content)
         self.assertIn("every in-scope person/date is represented by an evidence-supported state or an explicit gap", content)
 
+    def test_activity_assessment_is_distinct_from_efficiency(self) -> None:
+        content = self.target["copyContent"]
+        for phrase in (
+            "OPTIONAL MANAGEMENT DECISION-SUPPORT LENS",
+            "A. ACTIVITY CONSISTENCY",
+            "actual scoped person/date cells",
+            "B. OPERATIONAL EFFECTIVENESS / EFFICIENCY",
+            "Consistent check-ins and site/task reports",
+            "they do NOT by themselves establish completed tickets",
+            "without withholding the narrower supported assessment",
+        ):
+            with self.subTest(phrase=phrase):
+                self.assertIn(phrase, content)
+
+    def test_conditional_hours_policy_without_fake_approval(self) -> None:
+        content = self.target["copyContent"]
+        for phrase in (
+            "C. HOURS-POLICY / APPROVAL-RESPONSE SUPPORT",
+            "at or below 40",
+            "CONDITIONAL MANAGER RESPONSE",
+            "Never represent that response as independently verified hours",
+            "Approval authority stays with authorized humans",
+            "Do not demand exhaustive clock-out history",
+            "final unconditional approval",
+        ):
+            with self.subTest(phrase=phrase):
+                self.assertIn(phrase, content)
+
+    def test_partial_source_coverage_does_not_erase_supported_observations(self) -> None:
+        content = self.target["copyContent"]
+        for phrase in (
+            "SUPPORTED OBSERVATION | NOT PROVEN | POLICY DECISION OR CONDITIONAL ACTION",
+            "do not downgrade independently supported activity observations",
+            "BLOCK a requested quantitative conclusion",
+            "merely CONTEXT",
+            "When a manager's operational or hours-policy question is supplied",
+        ):
+            with self.subTest(phrase=phrase):
+                self.assertIn(phrase, content)
+        self.assertIn("ATTENDANCE ROSTER", content)
+        self.assertIn("PASS 2 — NOTCH RECOVERY + CONFLICT SEARCH", content)
+
     def test_generated_site_is_exact_and_prompt_is_discoverable(self) -> None:
         html = build_prompt_kit_registry.DEFAULT_OUTPUT.read_text(encoding="utf-8")
         self.assertEqual(html, build_prompt_kit_registry.render())
