@@ -152,7 +152,7 @@ class TeamsAttendanceRosterPromptTests(unittest.TestCase):
             "Missing clock-outs in an informal Teams channel are NOT an automatic exception",
             "READY TO APPROVE is a recommendation",
             "If actual totals are unavailable, use UNVERIFIED",
-            "private minimal approval screen",
+            "minimal approval screen",
         ):
             with self.subTest(marker=marker):
                 self.assertIn(marker, content)
@@ -163,7 +163,7 @@ class TeamsAttendanceRosterPromptTests(unittest.TestCase):
             "WEEKLY FAST MODE OUTPUT OVERRIDE",
             "Omit the full event ledger",
             "Never autonomously send, schedule, close tickets",
-            "separately optional external approval wording",
+            "SEPARATE 1–3 sentence approval/exception message",
             "only the smallest missing decision-changing record",
         ):
             with self.subTest(marker=marker):
