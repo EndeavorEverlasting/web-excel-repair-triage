@@ -141,6 +141,36 @@ class TeamsAttendanceRosterPromptTests(unittest.TestCase):
         self.assertIn("ATTENDANCE ROSTER", content)
         self.assertIn("PASS 2 — NOTCH RECOVERY + CONFLICT SEARCH", content)
 
+    def test_weekly_exception_only_mode_requires_original_submissions(self) -> None:
+        content = self.target["copyContent"]
+        for marker in (
+            "WEEKLY EXCEPTION-ONLY HOURS REVIEW",
+            "source-of-record submitted total",
+            "At or below 40 hours is WITHIN LIMIT",
+            "over 40 hours is THRESHOLD EXCEPTION",
+            "Teams check-ins are supplementary plausibility evidence",
+            "Missing clock-outs in an informal Teams channel are NOT an automatic exception",
+            "READY TO APPROVE is a recommendation",
+            "If actual totals are unavailable, use UNVERIFIED",
+            "private minimal approval screen",
+        ):
+            with self.subTest(marker=marker):
+                self.assertIn(marker, content)
+
+    def test_weekly_fast_mode_avoids_forensic_reporting_or_auto_send(self) -> None:
+        content = self.target["copyContent"]
+        for marker in (
+            "WEEKLY FAST MODE OUTPUT OVERRIDE",
+            "Omit the full event ledger",
+            "Never autonomously send, schedule, close tickets",
+            "separately optional external approval wording",
+            "only the smallest missing decision-changing record",
+        ):
+            with self.subTest(marker=marker):
+                self.assertIn(marker, content)
+        self.assertIn("PASS 2 — NOTCH RECOVERY + CONFLICT SEARCH", content)
+        self.assertIn("P89 `Teams Work-Evidence Harvester` owns", content)
+
     def test_generated_site_is_exact_and_prompt_is_discoverable(self) -> None:
         html = build_prompt_kit_registry.DEFAULT_OUTPUT.read_text(encoding="utf-8")
         self.assertEqual(html, build_prompt_kit_registry.render())
