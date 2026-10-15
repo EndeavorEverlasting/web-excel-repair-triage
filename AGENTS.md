@@ -18,7 +18,7 @@ Order: (1) Platform, security, legal, and repository-owner instructions. (2) Thi
 
 ## 3. Mandatory sprint declaration
 Every writing sprint must state repository and branch or worktree; lane and mission; owned scope and forbidden scope; expected artifacts; validation commands and their order; proof ceiling; integration authority.
-Before overlapping work, refresh default. Verify ancestor with `git merge-base --is-ancestor <required-sha> <refreshed-default>` **and** check current content/validator against reverts. Reconcile failures before editing.
+Before modifying or integrating overlapping prior work, refresh default. Verify ancestor with `git merge-base --is-ancestor <required-sha> <refreshed-default>` **and** check current content/validator against reverts. Reconcile failures before editing.
 
 ## 4. Completion standard
 A task is complete only when exact files changed, validations run, commit SHA, push or PR/integration state, blockers/skips, proof ceiling, final Git state, one exact next command are reported.
