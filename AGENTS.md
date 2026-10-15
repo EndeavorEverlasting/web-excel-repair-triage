@@ -1,4 +1,8 @@
 # Agent Governance Contract
+
+## Retired product and canonical routing (P00 / P01 / P04)
+AgentSwitchboard is a retired product; historical donor evidence and verified existing caller compatibility only. TokenCorridor owns the product control plane: prompts, routing, dispatch authority, Work Graph, proofs and website. Automation supplies reusable primitives; native agents/FirstMate are runtimes, not products. Technical cleanup does not reopen retirement. Do not assign new product work to AgentSwitchboard or infer authority from old plans.
+
 This file is the single repository governance authority for `EndeavorEverlasting/web-excel-repair-triage`.
 
 ## 1. Agent operating principles
