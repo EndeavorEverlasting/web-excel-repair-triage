@@ -1,7 +1,7 @@
 # Agent Governance Contract
 
 ## Retired product and canonical routing (P00 / P01 / P04)
-AgentSwitchboard is a retired product; historical donor evidence and verified existing caller compatibility only. TokenCorridor owns the product control plane: prompts, routing, dispatch authority, Work Graph, proofs and website. Automation supplies reusable primitives; native agents/FirstMate are runtimes, not products. Technical cleanup does not reopen retirement. Do not assign new product work to AgentSwitchboard or infer authority from old plans.
+AgentSwitchboard is a retired product (donor/old-callers only). TokenCorridor owns the product control plane. Technical cleanup does not reopen retirement. No new ASB work; native agents are runtimes.
 
 This file is the single repository governance authority for `EndeavorEverlasting/web-excel-repair-triage`.
 
@@ -18,7 +18,7 @@ Order: (1) Platform, security, legal, and repository-owner instructions. (2) Thi
 
 ## 3. Mandatory sprint declaration
 Every writing sprint must state repository and branch or worktree; lane and mission; owned scope and forbidden scope; expected artifacts; validation commands and their order; proof ceiling; integration authority.
-Before modifying or integrating overlapping prior work, refresh the default branch. Prove each required integrated slice is an ancestor with `git merge-base --is-ancestor <required-sha> <refreshed-default>` and still materially present using current content plus its owning validator. Ancestry alone cannot prove current content after a revert. Any failed check requires reconciliation and fresh proof before mutation or integration.
+Before overlapping work, refresh default. Verify ancestor with `git merge-base --is-ancestor <required-sha> <refreshed-default>` **and** check current content/validator against reverts. Reconcile failures before editing.
 
 ## 4. Completion standard
 A task is complete only when exact files changed, validations run, commit SHA, push or PR/integration state, blockers/skips, proof ceiling, final Git state, one exact next command are reported.
@@ -31,7 +31,7 @@ Material behavior changes require proof.
 Client-facing delivery uses **minimum sufficient explanation**: purpose, period, totals, attachment, consequence. Omit internal evidence mechanics, private allocation logic, singled-out edge cases, defensive caveats, invitation-to-question closings unless needed for recipient action.
 
 ### Provider degradation and merge continuity
-Actions minute/billing exhaustion, never-started checks, review-bot/CI limits are expected degradation, NOT merge blockers. Continue via refresh base, exact-head validation, local proof (`.githooks/pre-push`, `scripts/validate_pr_merge_gate.py`), merge when authorized. Real blockers: conflicts, draft, head-moved, failed validators, review, authority. See `harness/contracts/pr-merge-gate.v1.json`.
+Actions/billing/review-bot degradation isn't automatically a merge blocker. Refresh head and use local validators (`.githooks/pre-push`, `scripts/validate_pr_merge_gate.py`); real blockers are conflicts, unvalidated head, unauthorized merge. Contract: `harness/contracts/pr-merge-gate.v1.json`.
 
 ## 6. Repository identity and product boundary
 The core product domain is **spreadsheet intelligence**. Web Excel compatibility, billing, roster/time evidence, triage are first-class.
