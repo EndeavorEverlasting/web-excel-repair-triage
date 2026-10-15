@@ -1,7 +1,7 @@
 # Agent Governance Contract
 
 ## Retired product and canonical routing (P00 / P01 / P04)
-AgentSwitchboard is a retired product (donor/old-callers only). TokenCorridor owns the product control plane. Technical cleanup does not reopen retirement. No new ASB work; native agents are runtimes.
+AgentSwitchboard is a retired product, donor/old callers only. TokenCorridor owns the product control plane. Technical cleanup does not reopen retirement.
 
 This file is the single repository governance authority for `EndeavorEverlasting/web-excel-repair-triage`.
 
@@ -22,7 +22,7 @@ Before modifying or integrating overlapping prior work, refresh the default bran
 
 ## 4. Completion standard
 A task is complete only when exact files changed, validations run, commit SHA, push or PR/integration state, blockers/skips, proof ceiling, final Git state, one exact next command are reported.
-NEXT COMMAND advances next unproven state. Fetch without force, preserve dirty work in an isolated worktree, validate against canonical artifacts and propagate failures; never execute production by default.
+NEXT COMMAND advances next unproven state: fetch without force; use an isolated worktree; propagate nonzero exit codes; must not execute production by default.
 Use `none; no safe actionable work remains` only after implementation, validation, integration.
 
 ## 5. Safety and mutation boundaries
@@ -47,5 +47,5 @@ Panels are agent transport; ingest/dispatch, not emit-and-wait.
 `/teach <topic>` uses `.teach/`, repo truth, first principles, one mechanism + code exercise. VERIFIED/MASTERED requires demonstrated understanding. `/teach recap` resumes first weak frontier.
 
 ### Agent execution tiering and parallel delegation
-Parallelism is capability-earned, not equal-authority. Strategic/harness owners are `ChatGPT` and `Auggie`; `desktop-app` and `OpenCode` are bounded executors. Shared contracts precede parallel work. No executor can change strategic routing without promotion.
+Parallelism is capability-earned, not equal-authority. Strategic/harness owners are `ChatGPT` and `Auggie`; `desktop-app` and `OpenCode` are executors. Machine policy: `harness/contracts/agent-execution-tiering.v1.json`. Promotion requires explicit operator approval and evaluation evidence. Shared contracts precede parallel consumers.
 Machine policy: `harness/contracts/agent-execution-tiering.v1.json`. Availability is not authority. Promotion requires explicit operator approval and evaluation evidence. Shared contracts precede parallel consumers.
