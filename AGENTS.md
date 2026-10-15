@@ -1,4 +1,8 @@
 # Agent Governance Contract
+
+## Retired product and canonical routing (P00 / P01 / P04)
+AgentSwitchboard is a retired product, donor/old callers only. TokenCorridor owns the product control plane. Technical cleanup does not reopen retirement.
+
 This file is the single repository governance authority for `EndeavorEverlasting/web-excel-repair-triage`.
 
 ## 1. Agent operating principles
@@ -18,7 +22,7 @@ Before modifying or integrating overlapping prior work, refresh the default bran
 
 ## 4. Completion standard
 A task is complete only when exact files changed, validations run, commit SHA, push or PR/integration state, blockers/skips, proof ceiling, final Git state, one exact next command are reported.
-NEXT COMMAND advances next unproven state. Remote/unmerged: fetch without force; pin branch/commit; preserve dirty work in isolated worktree; run owner validator/builder/launcher; resolve artifacts from tracked authority; propagate nonzero exit codes; must not execute production by default.
+NEXT COMMAND advances next unproven state: fetch without force; use an isolated worktree; propagate nonzero exit codes; must not execute production by default.
 Use `none; no safe actionable work remains` only after implementation, validation, integration.
 
 ## 5. Safety and mutation boundaries
@@ -27,7 +31,7 @@ Material behavior changes require proof.
 Client-facing delivery uses **minimum sufficient explanation**: purpose, period, totals, attachment, consequence. Omit internal evidence mechanics, private allocation logic, singled-out edge cases, defensive caveats, invitation-to-question closings unless needed for recipient action.
 
 ### Provider degradation and merge continuity
-Actions minute/billing exhaustion, never-started checks, review-bot/CI limits are expected degradation, NOT merge blockers. Continue via refresh base, exact-head validation, local proof (`.githooks/pre-push`, `scripts/validate_pr_merge_gate.py`), merge when authorized. Real blockers: conflicts, draft, head-moved, failed validators, review, authority. See `harness/contracts/pr-merge-gate.v1.json`.
+Actions/billing/review-bot degradation isn't automatically a merge blocker. Refresh head and use local validators (`.githooks/pre-push`, `scripts/validate_pr_merge_gate.py`); real blockers are conflicts, unvalidated head, unauthorized merge. Contract: `harness/contracts/pr-merge-gate.v1.json`.
 
 ## 6. Repository identity and product boundary
 The core product domain is **spreadsheet intelligence**. Web Excel compatibility, billing, roster/time evidence, triage are first-class.
@@ -43,5 +47,5 @@ Panels are agent transport; ingest/dispatch, not emit-and-wait.
 `/teach <topic>` uses `.teach/`, repo truth, first principles, one mechanism + code exercise. VERIFIED/MASTERED requires demonstrated understanding. `/teach recap` resumes first weak frontier.
 
 ### Agent execution tiering and parallel delegation
-Parallelism is capability-earned, not equal-authority. Strategic/harness owners are `ChatGPT` and `Auggie`; they may own governance, harness spine, skills, capabilities, triggers, routing, proof gates. `desktop-app` and `OpenCode` are executors; they consume settled product/test/doc contracts but may not mutate strategic surfaces without promotion.
+Parallelism is capability-earned, not equal-authority. Strategic/harness owners are `ChatGPT` and `Auggie`; `desktop-app` and `OpenCode` are executors. Machine policy: `harness/contracts/agent-execution-tiering.v1.json`. Promotion requires explicit operator approval and evaluation evidence. Shared contracts precede parallel consumers.
 Machine policy: `harness/contracts/agent-execution-tiering.v1.json`. Availability is not authority. Promotion requires explicit operator approval and evaluation evidence. Shared contracts precede parallel consumers.
