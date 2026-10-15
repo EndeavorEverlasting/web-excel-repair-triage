@@ -2,7 +2,7 @@
 
 Human-facing Operant releases. Git commit/artifact identity remains the forensic freshness proof.
 
-## 0.11.0 - 2026-10-05
+## 0.11.0 - 2026-10-15
 
 ### Features / breaking pre-1.0 changes
 
