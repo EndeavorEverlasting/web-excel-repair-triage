@@ -18,11 +18,11 @@ Order: (1) Platform, security, legal, and repository-owner instructions. (2) Thi
 
 ## 3. Mandatory sprint declaration
 Every writing sprint must state repository and branch or worktree; lane and mission; owned scope and forbidden scope; expected artifacts; validation commands and their order; proof ceiling; integration authority.
-Before modifying or integrating overlapping prior work, refresh default. Verify ancestor with `git merge-base --is-ancestor <required-sha> <refreshed-default>` **and** check current content/validator against reverts. Reconcile failures before editing.
+Before modifying or integrating overlapping prior work, refresh the default branch. Prove each required integrated slice is an ancestor with `git merge-base --is-ancestor <required-sha> <refreshed-default>` and still materially present using current content plus its owning validator. Ancestry alone cannot prove current content after a revert. Any failed check requires reconciliation and fresh proof before mutation or integration.
 
 ## 4. Completion standard
 A task is complete only when exact files changed, validations run, commit SHA, push or PR/integration state, blockers/skips, proof ceiling, final Git state, one exact next command are reported.
-NEXT COMMAND advances next unproven state. Remote/unmerged: fetch without force; pin branch/commit; preserve dirty work in isolated worktree; run owner validator/builder/launcher; resolve artifacts from tracked authority; propagate nonzero exit codes; must not execute production by default.
+NEXT COMMAND advances next unproven state. Fetch without force, preserve dirty work in an isolated worktree, validate against canonical artifacts and propagate failures; never execute production by default.
 Use `none; no safe actionable work remains` only after implementation, validation, integration.
 
 ## 5. Safety and mutation boundaries
@@ -47,5 +47,5 @@ Panels are agent transport; ingest/dispatch, not emit-and-wait.
 `/teach <topic>` uses `.teach/`, repo truth, first principles, one mechanism + code exercise. VERIFIED/MASTERED requires demonstrated understanding. `/teach recap` resumes first weak frontier.
 
 ### Agent execution tiering and parallel delegation
-Parallelism is capability-earned, not equal-authority. Strategic/harness owners are `ChatGPT` and `Auggie`; they may own governance, harness spine, skills, capabilities, triggers, routing, proof gates. `desktop-app` and `OpenCode` are executors; they consume settled product/test/doc contracts but may not mutate strategic surfaces without promotion.
+Parallelism is capability-earned, not equal-authority. Strategic/harness owners are `ChatGPT` and `Auggie`; `desktop-app` and `OpenCode` are bounded executors. Shared contracts precede parallel work. No executor can change strategic routing without promotion.
 Machine policy: `harness/contracts/agent-execution-tiering.v1.json`. Availability is not authority. Promotion requires explicit operator approval and evaluation evidence. Shared contracts precede parallel consumers.
