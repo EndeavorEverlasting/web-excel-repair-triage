@@ -98,6 +98,79 @@ class TeamsAttendanceRosterPromptTests(unittest.TestCase):
         self.assertIn("This pass is required even when pass 1 produced a plausible roster", content)
         self.assertIn("every in-scope person/date is represented by an evidence-supported state or an explicit gap", content)
 
+    def test_activity_assessment_is_distinct_from_efficiency(self) -> None:
+        content = self.target["copyContent"]
+        for phrase in (
+            "OPTIONAL MANAGEMENT DECISION-SUPPORT LENS",
+            "A. ACTIVITY CONSISTENCY",
+            "actual scoped person/date cells",
+            "B. OPERATIONAL EFFECTIVENESS / EFFICIENCY",
+            "Consistent check-ins and site/task reports",
+            "they do NOT by themselves establish completed tickets",
+            "without withholding the narrower supported assessment",
+        ):
+            with self.subTest(phrase=phrase):
+                self.assertIn(phrase, content)
+
+    def test_conditional_hours_policy_without_fake_approval(self) -> None:
+        content = self.target["copyContent"]
+        for phrase in (
+            "C. HOURS-POLICY / APPROVAL-RESPONSE SUPPORT",
+            "at or below 40",
+            "CONDITIONAL MANAGER RESPONSE",
+            "Never represent that response as independently verified hours",
+            "Approval authority stays with authorized humans",
+            "Do not demand exhaustive clock-out history",
+            "final unconditional approval",
+        ):
+            with self.subTest(phrase=phrase):
+                self.assertIn(phrase, content)
+
+    def test_partial_source_coverage_does_not_erase_supported_observations(self) -> None:
+        content = self.target["copyContent"]
+        for phrase in (
+            "SUPPORTED OBSERVATION | NOT PROVEN | POLICY DECISION OR CONDITIONAL ACTION",
+            "do not downgrade independently supported activity observations",
+            "BLOCK a requested quantitative conclusion",
+            "merely CONTEXT",
+            "For MANAGEMENT DECISION-SUPPORT requests",
+        ):
+            with self.subTest(phrase=phrase):
+                self.assertIn(phrase, content)
+        self.assertIn("full per-date roster/event ledger only if the operator requests a detailed audit", content)
+        self.assertIn("ATTENDANCE ROSTER", content)
+        self.assertIn("PASS 2 — NOTCH RECOVERY + CONFLICT SEARCH", content)
+
+    def test_weekly_exception_only_mode_requires_original_submissions(self) -> None:
+        content = self.target["copyContent"]
+        for marker in (
+            "WEEKLY EXCEPTION-ONLY HOURS REVIEW",
+            "source-of-record submitted total",
+            "At or below 40 hours is WITHIN LIMIT",
+            "over 40 hours is THRESHOLD EXCEPTION",
+            "Teams check-ins are supplementary plausibility evidence",
+            "Missing clock-outs in an informal Teams channel are NOT an automatic exception",
+            "READY TO APPROVE is a recommendation",
+            "If actual totals are unavailable, use UNVERIFIED",
+            "minimal approval screen",
+        ):
+            with self.subTest(marker=marker):
+                self.assertIn(marker, content)
+
+    def test_weekly_fast_mode_avoids_forensic_reporting_or_auto_send(self) -> None:
+        content = self.target["copyContent"]
+        for marker in (
+            "WEEKLY FAST MODE OUTPUT OVERRIDE",
+            "Omit the full event ledger",
+            "Never autonomously send, schedule, close tickets",
+            "SEPARATE 1–3 sentence approval/exception message",
+            "only the smallest missing decision-changing record",
+        ):
+            with self.subTest(marker=marker):
+                self.assertIn(marker, content)
+        self.assertIn("PASS 2 — NOTCH RECOVERY + CONFLICT SEARCH", content)
+        self.assertIn("P89 `Teams Work-Evidence Harvester` owns", content)
+
     def test_generated_site_is_exact_and_prompt_is_discoverable(self) -> None:
         html = build_prompt_kit_registry.DEFAULT_OUTPUT.read_text(encoding="utf-8")
         self.assertEqual(html, build_prompt_kit_registry.render())
