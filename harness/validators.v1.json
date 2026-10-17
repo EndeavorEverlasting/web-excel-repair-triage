@@ -418,6 +418,22 @@
       "proof_ceiling": "Executable contract, fixture, semantic validator, pilot runner, receipt corpus, and regression-linkage proof; no external-agent runtime claim."
     },
     {
+      "id": "prompt-invocation-composition-audit",
+      "class": "contract",
+      "command": "python3 scripts/prompt_invocation_composition.py validate-contract --summary",
+      "blocking": true,
+      "output": "process log",
+      "proof_ceiling": "Static prompt-invocation projection, overlap/coherence, non-additive authority, deterministic P04/P05 pushback, and P97 prior-art contract proof."
+    },
+    {
+      "id": "prompt-invocation-composition-tests",
+      "class": "test",
+      "command": "python3 -m unittest tests.test_prompt_invocation_composition -v",
+      "blocking": true,
+      "output": "process log",
+      "proof_ceiling": "Executable regression proof for residual invocation, orthogonal composition, fail-closed overlap/cycles, and deterministic P04/P05 routing."
+    },
+    {
       "id": "prompt-semantic-coverage-audit",
       "class": "contract",
       "command": "python3 scripts/validate_prompt_semantic_coverage.py",
@@ -494,6 +510,8 @@
       "repo-native-update-parity",
       "prompt-runtime-compliance-receipt-audit",
       "prompt-runtime-compliance-tests",
+      "prompt-invocation-composition-audit",
+      "prompt-invocation-composition-tests",
       "prompt-semantic-coverage-audit",
       "prompt-semantic-coverage-tests",
       "prompt-kit-header-contract",
@@ -535,6 +553,8 @@
       "repo-native-update-parity",
       "prompt-runtime-compliance-receipt-audit",
       "prompt-runtime-compliance-tests",
+      "prompt-invocation-composition-audit",
+      "prompt-invocation-composition-tests",
       "prompt-semantic-coverage-audit",
       "prompt-semantic-coverage-tests",
       "prompt-kit-header-contract",
@@ -603,6 +623,8 @@
       "repo-native-update-parity",
       "prompt-runtime-compliance-receipt-audit",
       "prompt-runtime-compliance-tests",
+      "prompt-invocation-composition-audit",
+      "prompt-invocation-composition-tests",
       "prompt-semantic-coverage-audit",
       "prompt-semantic-coverage-tests",
       "prompt-kit-header-contract",

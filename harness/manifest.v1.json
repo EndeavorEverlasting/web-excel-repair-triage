@@ -306,6 +306,8 @@
     "python3 scripts/run_repo_native_update.py generate --surface canary-constants --check",
     "python3 scripts/validate_prompt_runtime_compliance_receipt.py harness/evals/runtime-compliance/contract-fixtures/pilot-receipt.positive.v1.json --summary",
     "python3 -m unittest tests.test_prompt_runtime_compliance_contract tests.test_prompt_runtime_compliance_fixtures tests.test_prompt_runtime_compliance_validator tests.test_prompt_runtime_compliance_runner tests.test_prompt_runtime_compliance_receipt_corpus tests.test_prompt_runtime_compliance_linkage -v",
+    "python3 scripts/prompt_invocation_composition.py validate-contract --summary",
+    "python3 -m unittest tests.test_prompt_invocation_composition -v",
     "python3 scripts/validate_prompt_semantic_coverage.py",
     "python3 -m unittest tests.test_prompt_semantic_coverage tests.test_prompt_semantic_validator_1b -v",
     "python3 tests/test_prompt_kit_header_contract.py",
