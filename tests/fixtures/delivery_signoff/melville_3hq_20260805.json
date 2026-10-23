@@ -1,0 +1,39 @@
+{
+  "schema": "delivery-signoff-spec/v1",
+  "site": {
+    "code": "MELVILLE-3HQ",
+    "name": "Melville / 3HQ"
+  },
+  "signoff": {
+    "id": "MELVILLE-3HQ-STOCK-20260805-001",
+    "title": "Equipment Delivery Sign-Off",
+    "subtitle": "Melville / 3HQ Stock Transfer",
+    "delivery_date": ""
+  },
+  "recipient": {
+    "name": "Timothy W. Seeberger",
+    "title": "Point of Contact",
+    "building_room": "",
+    "phone": ""
+  },
+  "equipment_rows": [
+    {"equipment_type": "Neuron Power Supply", "model_or_part": "", "color_or_variant": "", "quantity": 8},
+    {"equipment_type": "CBCC402237", "model_or_part": "", "color_or_variant": "", "quantity": 14},
+    {"equipment_type": "B1-CFW", "model_or_part": "", "color_or_variant": "", "quantity": 6},
+    {"equipment_type": "SPEC999015", "model_or_part": "", "color_or_variant": "", "quantity": 7},
+    {"equipment_type": "B1-CFB", "model_or_part": "", "color_or_variant": "", "quantity": 18},
+    {"equipment_type": "B1-CFU", "model_or_part": "", "color_or_variant": "", "quantity": 4},
+    {"equipment_type": "DIM", "model_or_part": "", "color_or_variant": "", "quantity": 75},
+    {"equipment_type": "B1-CFY", "model_or_part": "", "color_or_variant": "", "quantity": 4},
+    {"equipment_type": "B1-CFH", "model_or_part": "", "color_or_variant": "", "quantity": 1},
+    {"equipment_type": "B1-DAE", "model_or_part": "", "color_or_variant": "", "quantity": 1},
+    {"equipment_type": "CBCC0001395", "model_or_part": "", "color_or_variant": "", "quantity": 1},
+    {"equipment_type": "Tap Badge Scanner", "model_or_part": "", "color_or_variant": "", "quantity": 9},
+    {"equipment_type": "B1-CFD", "model_or_part": "", "color_or_variant": "", "quantity": 2},
+    {"equipment_type": "B1-CFT", "model_or_part": "", "color_or_variant": "", "quantity": 2},
+    {"equipment_type": "Keyboard", "model_or_part": "", "color_or_variant": "", "quantity": 27},
+    {"equipment_type": "Pedestal Mount", "model_or_part": "FLP-0008-02E", "color_or_variant": "", "quantity": 8}
+  ],
+  "serialized_assets": [],
+  "reject_tokens": ["Huntington Hospital", "Morgan Mitchell", "JTM", "SSUH"]
+}
