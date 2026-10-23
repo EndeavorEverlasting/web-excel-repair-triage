@@ -1,0 +1,97 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "version": "1.0.0",
+  "description": "Artifact registry: defines every known artifact type, its expected location, validator profile, and proof ceiling.",
+  "artifacts": {
+    "bonita_neuron_track_hours": {
+      "type": "workbook",
+      "expected_location": "Outputs/neuron_track_hours_<batch>/",
+      "delivery": true,
+      "validator_profile": "bonita",
+      "required_sidecars": [
+        "manifest.json",
+        "review_queue.csv",
+        "preflight.json"
+      ],
+      "privacy_class": "internal",
+      "proof_ceiling": "operator_acceptance",
+      "description": "Two-tab (Apr/May) Neuron Track Hours submission workbook from roster log."
+    },
+    "blank_shell_workbook": {
+      "type": "workbook",
+      "expected_location": "Outputs/blank_shell_<batch>/",
+      "delivery": true,
+      "validator_profile": "blank_shell",
+      "required_sidecars": [
+        "manifest.json",
+        "preflight.json"
+      ],
+      "privacy_class": "internal",
+      "proof_ceiling": "package",
+      "description": "Blank-shell workbook for roster review scaffolding."
+    },
+    "billing_summary": {
+      "type": "workbook",
+      "expected_location": "Outputs/billing_summary_<batch>/",
+      "delivery": true,
+      "validator_profile": "billing_summary",
+      "required_sidecars": [
+        "manifest.json",
+        "preflight.json"
+      ],
+      "privacy_class": "confidential",
+      "proof_ceiling": "operator_acceptance",
+      "description": "Admin-facing billing summary workbook."
+    },
+    "roster_diagnostic_report": {
+      "type": "report",
+      "expected_location": "Outputs/runs/<run_id>/",
+      "delivery": false,
+      "validator_profile": "json_schema",
+      "required_sidecars": [],
+      "privacy_class": "internal",
+      "proof_ceiling": "harness",
+      "description": "Structured diagnostic report for roster workbook auditing."
+    },
+    "validation_report": {
+      "type": "report",
+      "expected_location": "Outputs/runs/<run_id>/",
+      "delivery": false,
+      "validator_profile": "json_schema",
+      "required_sidecars": [],
+      "privacy_class": "internal",
+      "proof_ceiling": "harness",
+      "description": "Harness validation report for a completed run."
+    },
+    "manifest": {
+      "type": "sidecar",
+      "expected_location": "<artifact_output_dir>/",
+      "delivery": false,
+      "validator_profile": "json_schema",
+      "required_sidecars": [],
+      "privacy_class": "internal",
+      "proof_ceiling": "harness",
+      "description": "JSON manifest accompanying a generated artifact."
+    },
+    "preflight": {
+      "type": "sidecar",
+      "expected_location": "<artifact_output_dir>/",
+      "delivery": false,
+      "validator_profile": "json_schema",
+      "required_sidecars": [],
+      "privacy_class": "internal",
+      "proof_ceiling": "package",
+      "description": "Web Excel preflight check results."
+    },
+    "review_queue": {
+      "type": "sidecar",
+      "expected_location": "<artifact_output_dir>/",
+      "delivery": false,
+      "validator_profile": "csv",
+      "required_sidecars": [],
+      "privacy_class": "internal",
+      "proof_ceiling": "harness",
+      "description": "CSV review queue for operator attention items."
+    }
+  }
+}
