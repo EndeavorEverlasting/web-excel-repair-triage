@@ -63,6 +63,33 @@ def _images(z: zipfile.ZipFile, sheet_part: str, root: ET.Element) -> list[tuple
     return sorted(images)
 
 
+def _tables(z: zipfile.ZipFile, sheet_part: str, root: ET.Element) -> list[tuple]:
+    rels = _relationships(z, sheet_part)
+    tables = []
+    for node in root.findall(f"{{{S}}}tableParts/{{{S}}}tablePart"):
+        part = rels.get(node.attrib.get(f"{{{R}}}id", ""), "")
+        if part not in z.namelist():
+            tables.append(("broken_table",))
+            continue
+        table = ET.fromstring(z.read(part))
+        columns = tuple(c.attrib.get("name", "") for c in table.findall(f"{{{S}}}tableColumns/{{{S}}}tableColumn"))
+        auto_filter = table.find(f"{{{S}}}autoFilter")
+        tables.append((table.attrib.get("name", ""), table.attrib.get("ref", ""),
+                       columns, auto_filter.attrib.get("ref", "") if auto_filter is not None else ""))
+    return sorted(tables)
+
+
+def _conditional_formats(root: ET.Element) -> list[tuple]:
+    blocks = []
+    for block in root.findall(f"{{{S}}}conditionalFormatting"):
+        rules = []
+        for rule in block.findall(f"{{{S}}}cfRule"):
+            formulas = tuple((e.text or "") for e in rule.findall(f"{{{S}}}formula"))
+            rules.append((rule.attrib.get("type", ""), formulas, rule.attrib.get("stopIfTrue", "")))
+        blocks.append((block.attrib.get("sqref", ""), tuple(rules)))
+    return sorted(blocks)
+
+
 def snapshot(path: str | Path) -> dict:
     """Capture only structural signatures, never workbook cell values."""
     with zipfile.ZipFile(path) as z:
@@ -86,6 +113,8 @@ def snapshot(path: str | Path) -> dict:
                 "panes": panes,
                 "validations": sorted(validations),
                 "images": _images(z, part, root),
+                "tables": _tables(z, part, root),
+                "conditional_formats": _conditional_formats(root),
             }
         return {"sheet_names": names, "sheets": sheets}
 
@@ -100,7 +129,7 @@ def compare_features(before: str | Path, after: str | Path) -> dict:
         other = candidate["sheets"].get(name)
         if other is None:
             continue
-        for feature in ("filters", "panes", "validations", "images"):
+        for feature in ("filters", "panes", "validations", "images", "tables", "conditional_formats"):
             if features[feature] != other[feature]:
                 issues.append({"code": f"{feature}_changed", "sheet": name,
                                "baseline_count": len(features[feature]),
