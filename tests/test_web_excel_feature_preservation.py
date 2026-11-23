@@ -13,23 +13,33 @@ DRAW = 'http://schemas.openxmlformats.org/drawingml/2006/spreadsheetDrawing'
 ART = 'http://schemas.openxmlformats.org/drawingml/2006/main'
 
 
-def _fixture(path, *, filters=True, freeze=True, validations=True, picture=True):
+def _fixture(path, *, filters=True, freeze=True, validations=True, picture=True, table=True, conditional=True):
     workbook = f'<workbook xmlns="{ROOT}" xmlns:r="{REL}"><sheets><sheet name="Tickets" sheetId="1" r:id="rId1"/></sheets></workbook>'
     rels = f'<Relationships xmlns="{PKG}"><Relationship Id="rId1" Target="worksheets/sheet1.xml" Type="{REL}/worksheet"/></Relationships>'
     autofilter = '<autoFilter ref="A1:B8"/>' if filters else ''
     pane = '<sheetViews><sheetView workbookViewId="0"><pane ySplit="1" topLeftCell="A2" state="frozen"/></sheetView></sheetViews>' if freeze else ''
     dv = '<dataValidations count="1"><dataValidation type="list" sqref="A2:A100"><formula1>"Open,Done"</formula1></dataValidation></dataValidations>' if validations else ''
     draw = '<drawing r:id="rId2"/>' if picture else ''
-    worksheet = f'<worksheet xmlns="{ROOT}" xmlns:r="{REL}">{pane}<sheetData><row r="1"><c r="A1" t="inlineStr"><is><t>Status</t></is></c></row></sheetData>{autofilter}{dv}{draw}</worksheet>'
+    cf = '<conditionalFormatting sqref="A2:A100"><cfRule type="expression" priority="1"><formula>$A2="Open"</formula></cfRule></conditionalFormatting>' if conditional else ''
+    table_ref = '<tableParts count="1"><tablePart r:id="rId4"/></tableParts>' if table else ''
+    worksheet = f'<worksheet xmlns="{ROOT}" xmlns:r="{REL}">{pane}<sheetData><row r="1"><c r="A1" t="inlineStr"><is><t>Status</t></is></c></row></sheetData>{autofilter}{dv}{cf}{draw}{table_ref}</worksheet>'
     with zipfile.ZipFile(path, 'w', zipfile.ZIP_DEFLATED) as z:
         z.writestr('xl/workbook.xml', workbook)
         z.writestr('xl/_rels/workbook.xml.rels', rels)
         z.writestr('xl/worksheets/sheet1.xml', worksheet)
         if picture:
-            z.writestr('xl/worksheets/_rels/sheet1.xml.rels', f'<Relationships xmlns="{PKG}"><Relationship Id="rId2" Type="{REL}/drawing" Target="../drawings/drawing1.xml"/></Relationships>')
+            if not table:
+                z.writestr('xl/worksheets/_rels/sheet1.xml.rels', f'<Relationships xmlns="{PKG}"><Relationship Id="rId2" Type="{REL}/drawing" Target="../drawings/drawing1.xml"/></Relationships>')
             z.writestr('xl/drawings/drawing1.xml', f'<xdr:wsDr xmlns:xdr="{DRAW}" xmlns:a="{ART}" xmlns:r="{REL}"><xdr:oneCellAnchor><xdr:from><xdr:col>9</xdr:col><xdr:row>1</xdr:row></xdr:from><xdr:ext cx="500" cy="400"/><xdr:pic><xdr:blipFill><a:blip r:embed="rId3"/></xdr:blipFill></xdr:pic></xdr:oneCellAnchor></xdr:wsDr>')
             z.writestr('xl/drawings/_rels/drawing1.xml.rels', f'<Relationships xmlns="{PKG}"><Relationship Id="rId3" Type="{REL}/image" Target="../media/image1.png"/></Relationships>')
             z.writestr('xl/media/image1.png', b'fake-png-content-for-synthetic-test')
+        if table:
+            if picture:
+                current = f'<Relationships xmlns="{PKG}"><Relationship Id="rId2" Type="{REL}/drawing" Target="../drawings/drawing1.xml"/><Relationship Id="rId4" Type="{REL}/table" Target="../tables/table1.xml"/></Relationships>'
+            else:
+                current = f'<Relationships xmlns="{PKG}"><Relationship Id="rId4" Type="{REL}/table" Target="../tables/table1.xml"/></Relationships>'
+            z.writestr('xl/worksheets/_rels/sheet1.xml.rels', current)
+            z.writestr('xl/tables/table1.xml', f'<table xmlns="{ROOT}" id="1" name="Tickets" displayName="Tickets" ref="A1:B8"><autoFilter ref="A1:B8"/><tableColumns count="2"><tableColumn id="1" name="Status"/><tableColumn id="2" name="Ticket"/></tableColumns></table>')
 
 
 def test_preserves_all_user_features(tmp_path):
@@ -54,3 +64,11 @@ def test_catches_missing_dropdowns_and_guidance_picture(tmp_path):
     _fixture(b, validations=False, picture=False)
     codes = {x['code'] for x in compare_features(a, b)['issues']}
     assert codes == {'validations_changed', 'images_changed'}
+
+
+def test_catches_lost_table_and_conditional_formatting(tmp_path):
+    a, b = tmp_path / 'baseline.xlsx', tmp_path / 'regressed.xlsx'
+    _fixture(a)
+    _fixture(b, table=False, conditional=False)
+    codes = {x['code'] for x in compare_features(a, b)['issues']}
+    assert codes == {'tables_changed', 'conditional_formats_changed'}
