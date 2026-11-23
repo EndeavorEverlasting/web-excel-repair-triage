@@ -20,8 +20,8 @@ python -c "from triage.web_excel_compatibility_rules import assert_web_excel_com
 ```
 
 The pairwise feature guard checks worksheet names/order, auto-filter ranges,
-frozen pane definitions, data-validation ranges/formulas, and attached image
-content/anchors. Output is JSON with SHA-256 receipts and named feature failures;
+frozen pane definitions, data-validation ranges/formulas, attached image
+content/anchors, table definitions, and conditional-formatting rules. Output is JSON with SHA-256 receipts and named feature failures;
 it does **not** emit private cell values.
 
 A passing local guard is not proof of live Excel-for-Web compatibility. The
@@ -33,11 +33,15 @@ repair banners, with provider-backed readback if available.
 A round-trip of an uploaded, Excel-repaired tracker with a generic workbook
 serializer silently **removed the AutoFilter on each of two worksheets**.
 The source's frozen panes, validation rules, and guidance image survived in
-that particular test. The pairwise guard rejected the round-trip, whereas
+that particular test. Comparing an Excel-repaired download with its exact
+Drive-source predecessor also proved that Excel removed one table definition
+and five conditional-formatting blocks, even though all 993 populated cell
+payloads matched. The repaired package passed static compatibility checks,
+which is why paired feature preservation is a separate release gate. The pairwise guard rejected the round-trip, whereas
 single-package structural checks alone did not establish feature preservation.
 
 The private workbook and its cell contents were never committed to this
-repository. Synthetic tests exercise the same failure mode.
+repository. Synthetic tests exercise the same failure mode without using private ticket data.
 
 ### Boundaries
 
